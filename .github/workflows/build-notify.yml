@@ -1,14 +1,10 @@
 name: BuildNotify
 
+# Auto-trigger disabled on this private fork: DISCORD_WEBHOOK_GOOSE_STATUS
+# points at the upstream project's own Discord and isn't configured here.
+# Re-enable the workflow_run trigger below once a webhook secret is set.
 on:
-  workflow_run:
-    workflows:
-      - CI
-      - Release
-      - Canary
-    types: [completed]
-    branches-ignore:
-      - "release/**"
+  workflow_dispatch:
 
 
 jobs:

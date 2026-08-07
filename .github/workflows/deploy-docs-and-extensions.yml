@@ -1,11 +1,10 @@
 name: Deploy Documentation
 
+# Auto-trigger disabled on this private fork: GitHub Pages for private
+# repositories isn't available on the current plan. Re-enable the push
+# trigger below once Pages is available (upgraded plan or public repo).
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'documentation/**'
+  workflow_dispatch:
 
 concurrency:
   group: pages
