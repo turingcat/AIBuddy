@@ -266,11 +266,11 @@ jobs:
         shell: bash
         run: |
           cd ui/desktop
-          mkdir -p ./out/Goose-win32-x64/resources/bin
-          cp -r src/bin/* out/Goose-win32-x64/resources/bin/
+          mkdir -p ./out/HeyBuddy-win32-x64/resources/bin
+          cp -r src/bin/* out/HeyBuddy-win32-x64/resources/bin/
 
           mkdir -p ./dist-windows
-          cp -r ./out/Goose-win32-x64/* ./dist-windows/
+          cp -r ./out/HeyBuddy-win32-x64/* ./dist-windows/
 
           ls -la ./dist-windows/
           ls -la ./dist-windows/resources/bin/
@@ -313,14 +313,14 @@ jobs:
           trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
           certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
           files: |
-            ${{ github.workspace }}/dist-windows/Goose.exe
+            ${{ github.workspace }}/dist-windows/HeyBuddy.exe
             ${{ github.workspace }}/dist-windows/resources/bin/goose.exe
 
       - name: Verify signed executables
         shell: pwsh
         run: |
           $files = @(
-            "dist-windows/Goose.exe",
+            "dist-windows/HeyBuddy.exe",
             "dist-windows/resources/bin/goose.exe"
           )
           foreach ($file in $files) {
@@ -334,13 +334,13 @@ jobs:
         shell: bash
         env:
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "Goose-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
+        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
 
       - name: Upload signed Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
+          path: HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
           if-no-files-found: error
           overwrite: true
 
@@ -360,12 +360,12 @@ jobs:
         shell: bash
         env:
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "Goose-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
+        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
 
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
+          path: HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
           if-no-files-found: error
           overwrite: true

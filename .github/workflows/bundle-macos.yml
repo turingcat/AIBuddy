@@ -288,7 +288,7 @@ jobs:
 
       - name: Verify macOS updater resources
         env:
-          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'out/Goose-darwin-x64/Goose.app' || 'out/Goose-darwin-arm64/Goose.app' }}
+          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'out/HeyBuddy-darwin-x64/HeyBuddy.app' || 'out/HeyBuddy-darwin-arm64/HeyBuddy.app' }}
         run: node scripts/verify-mac-update-resources.js "$APP_PATH"
         working-directory: ui/desktop
 
@@ -309,23 +309,23 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: ${{ inputs.target == 'x86_64-apple-darwin' && 'Goose-darwin-x64' || 'Goose-darwin-arm64' }}
-          path: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/Goose-darwin-x64/Goose_intel_mac.zip' || 'ui/desktop/out/Goose-darwin-arm64/Goose.zip' }}
+          path: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/HeyBuddy-darwin-x64/HeyBuddy_intel_mac.zip' || 'ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.zip' }}
           if-no-files-found: error
           overwrite: true
 
       - name: Quick launch test (macOS)
         env:
-          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/Goose-darwin-x64/Goose.app' || 'ui/desktop/out/Goose-darwin-arm64/Goose.app' }}
+          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/HeyBuddy-darwin-x64/HeyBuddy.app' || 'ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.app' }}
         run: |
           xattr -cr "$APP_PATH"
-          echo "Opening Goose.app..."
+          echo "Opening HeyBuddy.app..."
           open -g "$APP_PATH"
           sleep 5
 
-          if pgrep -f "Goose.app/Contents/MacOS/Goose" > /dev/null; then
+          if pgrep -f "HeyBuddy.app/Contents/MacOS/HeyBuddy" > /dev/null; then
             echo "App appears to be running."
           else
             echo "App did not stay open. Possible crash or startup error."
             exit 1
           fi
-          pkill -f "Goose.app/Contents/MacOS/Goose"
+          pkill -f "HeyBuddy.app/Contents/MacOS/HeyBuddy"
