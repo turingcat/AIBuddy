@@ -12,7 +12,7 @@
  *
  * Display modes:
  * - "inline" | "fullscreen" | "pip" — standard MCP display modes
- * - "standalone" — Goose-specific mode for dedicated Electron windows
+ * - "standalone" — HeyBuddy-specific mode for dedicated Electron windows
  */
 
 import {

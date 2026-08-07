@@ -36,9 +36,9 @@ let cfg = {
     ],
     // Usage descriptions for macOS TCC (Transparency, Consent, and Control)
     NSMicrophoneUsageDescription:
-      'Goose needs access to your microphone for voice dictation.',
+      'HeyBuddy needs access to your microphone for voice dictation.',
     NSAppleEventsUsageDescription:
-      'Goose needs access to send Apple Events to control other apps on your behalf.',
+      'HeyBuddy needs access to send Apple Events to control other apps on your behalf.',
   },
 };
 
@@ -65,8 +65,8 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: process.env.GITHUB_OWNER || 'aaif-goose',
-          name: process.env.GITHUB_REPO || 'goose',
+          owner: process.env.GITHUB_OWNER || 'turingcat',
+          name: process.env.GITHUB_REPO || 'HeyBuddy',
         },
         prerelease: false,
         draft: true,
@@ -87,10 +87,10 @@ module.exports = {
     {
       name: '@electron-forge/maker-deb',
       config: {
-        name: 'Goose',
-        bin: 'Goose',
+        name: 'HeyBuddy',
+        bin: 'HeyBuddy',
         maintainer: 'AAIF (Agentic AI Foundation)',
-        homepage: 'https://goose-docs.ai/',
+        homepage: 'https://github.com/turingcat/HeyBuddy',
         categories: ['Development'],
         desktopTemplate: './forge.deb.desktop',
         options: {
@@ -103,10 +103,10 @@ module.exports = {
     {
       name: '@electron-forge/maker-rpm',
       config: {
-        name: 'Goose',
-        bin: 'Goose',
+        name: 'HeyBuddy',
+        bin: 'HeyBuddy',
         maintainer: 'AAIF (Agentic AI Foundation)',
-        homepage: 'https://goose-docs.ai/',
+        homepage: 'https://github.com/turingcat/HeyBuddy',
         categories: ['Development'],
         desktopTemplate: './forge.rpm.desktop',
         options: {
@@ -127,10 +127,10 @@ module.exports = {
             scalable: 'src/images/icon.svg',
             '512x512': 'src/images/icon-512.png',
           },
-          homepage: 'https://goose-docs.ai/',
+          homepage: 'https://github.com/turingcat/HeyBuddy',
           runtimeVersion: '25.08',
           baseVersion: '25.08',
-          bin: 'Goose',
+          bin: 'HeyBuddy',
           modules: [
             {
               name: 'libbz2-shim',

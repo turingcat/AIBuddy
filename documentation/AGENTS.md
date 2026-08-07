@@ -2,20 +2,21 @@
 
 ## Brand Guidelines
 
-**IMPORTANT**: The product name "goose" should ALWAYS be written in lowercase "g" in all documentation, blog posts, and any content within this documentation directory.
+This site is a private fork ("HeyBuddy") of the upstream `goose` project. Two names now coexist here — do not mix them up:
 
-- ✅ Correct: "goose", "using goose", "goose provides"
-- ❌ Incorrect: "Goose", "using Goose", "Goose provides"
+- **"HeyBuddy"** — the fork's own brand: site title, navbar/footer chrome, page titles, and any new UI copy this site adds. Capitalized, standard proper-noun casing (not "heybuddy" or "Hey Buddy").
+- **"goose"** — the underlying CLI, environment variables (`GOOSE_*`), config files (`.goosehints`), and all existing documentation/blog content, which was written for and still accurately describes the unchanged upstream engine. **IMPORTANT**: keep writing "goose" in lowercase "g" everywhere it already appears — do not rename it to HeyBuddy.
 
-This is a brand guideline that must be strictly followed.
+  - ✅ Correct: "goose", "using goose", "goose provides"
+  - ❌ Incorrect: "Goose", "using Goose", "Goose provides"
 
 ## Context
 
-This rule applies to:
+The lowercase-"goose" rule applies to:
 - All markdown files in `/docs/`
 - All blog posts in `/blog/`
 - README files
 - Configuration files with user-facing text
-- Any other documentation content
+- Any other existing documentation content
 
-When editing or creating content in this documentation directory, always ensure "goose" uses a lowercase "g".
+When editing existing content in this documentation directory, keep "goose" lowercase. When adding new chrome/branding for this site itself (not documenting the underlying CLI), use "HeyBuddy" instead.

@@ -1,7 +1,7 @@
 {
   "name": "@aaif/goose-sdk",
   "version": "0.20.2",
-  "description": "Agent Client Protocol (ACP) SDK for Goose AI agent",
+  "description": "Agent Client Protocol (ACP) SDK for HeyBuddy AI agent",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

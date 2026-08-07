@@ -19,7 +19,7 @@ import { defineMessages, useIntl } from '../../i18n';
 const i18n = defineMessages({
   welcomeTitle: {
     id: 'onboardingGuard.welcomeTitle',
-    defaultMessage: 'Welcome to goose',
+    defaultMessage: 'Welcome to HeyBuddy',
   },
   welcomeDescription: {
     id: 'onboardingGuard.welcomeDescription',
@@ -27,7 +27,7 @@ const i18n = defineMessages({
   },
   checkProviderErrorTitle: {
     id: 'onboardingGuard.checkProviderErrorTitle',
-    defaultMessage: 'Unable to connect to Goose server',
+    defaultMessage: 'Unable to connect to HeyBuddy server',
   },
   checkProviderErrorDescription: {
     id: 'onboardingGuard.checkProviderErrorDescription',

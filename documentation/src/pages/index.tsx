@@ -11,7 +11,7 @@ function HeroSection() {
     <header className={styles.hero}>
       <div className={styles.heroInner}>
         <div className={styles.heroBadge}>
-          Open Source · Apache 2.0 · Agentic AI Foundation
+          Open Source · Apache 2.0 · Fork of goose (Agentic AI Foundation)
         </div>
         <div className={styles.heroLogo}>
           <GooseLogo />
@@ -25,7 +25,7 @@ function HeroSection() {
             className="button button--primary button--lg"
             to="docs/getting-started/installation"
           >
-            Install goose
+            Install HeyBuddy
           </Link>
           <Link
             className={`button button--outline button--lg ${styles.secondaryButton}`}
@@ -33,22 +33,6 @@ function HeroSection() {
           >
             Quickstart
           </Link>
-        </div>
-        <div className={styles.heroStats}>
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>45k+</span>
-            <span className={styles.statLabel}>GitHub stars</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>500+</span>
-            <span className={styles.statLabel}>Contributors</span>
-          </div>
-          <div className={styles.statDivider} />
-          <div className={styles.stat}>
-            <span className={styles.statNumber}>70+</span>
-            <span className={styles.statLabel}>MCP extensions</span>
-          </div>
         </div>
       </div>
     </header>
@@ -91,9 +75,9 @@ function FeaturesSection() {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <h2 className={styles.sectionTitle}>What goose does</h2>
+        <h2 className={styles.sectionTitle}>What HeyBuddy does</h2>
         <p className={styles.sectionSubtitle}>
-          goose is a general-purpose AI agent that runs on your machine. Not
+          HeyBuddy is a general-purpose AI agent that runs on your machine. Not
           just for code — use it for research, writing, automation, data
           analysis, or anything you need to get done.
         </p>
@@ -157,7 +141,7 @@ function FeaturesSection() {
             title="MCP Apps"
             description={
               <p>
-                Extensions can render interactive UIs directly inside goose
+                Extensions can render interactive UIs directly inside HeyBuddy
                 Desktop — buttons, forms, visualizations. A new way to build{" "}
                 <Link to="/docs/tutorials/building-mcp-apps">
                   agent-powered tools
@@ -208,9 +192,9 @@ function StandardsSection() {
             <p>
               <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">MCP</a>{" "}
               is the open standard for connecting AI agents to tools and data
-              sources. goose was one of the earliest adopters and has one of the
-              deepest integrations in the ecosystem — with 70+ documented
-              extensions and growing.
+              sources. The underlying engine was one of the earliest adopters
+              and has one of the deepest integrations in the ecosystem — with
+              70+ documented extensions and growing.
             </p>
             <Link to="/docs/category/mcp-servers">Browse MCP extensions →</Link>
           </div>
@@ -218,21 +202,24 @@ function StandardsSection() {
             <h3>Agent Client Protocol</h3>
             <p>
               <a href="https://agentclientprotocol.com/" target="_blank" rel="noopener">ACP</a>{" "}
-              is a standard for communicating with coding agents. goose works as
-              an ACP server — connect from Zed, JetBrains, or VS Code — and can
-              use ACP agents like Claude Code and Codex as providers.
+              is a standard for communicating with coding agents. HeyBuddy works
+              as an ACP server — connect from Zed, JetBrains, or VS Code — and
+              can use ACP agents like Claude Code and Codex as providers.
             </p>
-            <Link to="/docs/guides/acp-clients">goose as ACP server →</Link>
+            <Link to="/docs/guides/acp-clients">HeyBuddy as ACP server →</Link>
           </div>
           <div className={styles.standardCard}>
-            <h3>Agentic AI Foundation</h3>
+            <h3>Built on goose</h3>
             <p>
-              goose is part of the{" "}
+              HeyBuddy is a private fork of{" "}
+              <a href="https://github.com/aaif-goose/goose" target="_blank" rel="noopener">
+                goose
+              </a>
+              , an open source project of the{" "}
               <a href="https://aaif.io/" target="_blank" rel="noopener">
                 Agentic AI Foundation
               </a>{" "}
-              at the Linux Foundation — ensuring the project remains
-              vendor-neutral, community-governed, and open for the long term.
+              at the Linux Foundation.
             </p>
             <a href="https://aaif.io/" target="_blank" rel="noopener">
               Learn about AAIF →
@@ -256,28 +243,13 @@ function CommunitySection() {
         </p>
         <div className={styles.communityGrid}>
           <a
-            href="https://discord.gg/n8R5VaWDAn"
-            target="_blank"
-            rel="noopener"
-            className={styles.communityCard}
-          >
-            <h3>💬 Discord</h3>
-            <p>
-              Ask questions, share what you've built, get help from the
-              community.
-            </p>
-          </a>
-          <a
-            href="https://github.com/aaif-goose/goose"
+            href="https://github.com/turingcat/HeyBuddy"
             target="_blank"
             rel="noopener"
             className={styles.communityCard}
           >
             <h3>🐙 GitHub</h3>
-            <p>
-              Star, fork, file issues, contribute code. goose is built in the
-              open.
-            </p>
+            <p>Star, fork, file issues, contribute code.</p>
           </a>
           <Link to="/extensions" className={styles.communityCard}>
             <h3>🧩 Extensions</h3>
@@ -331,25 +303,6 @@ function InstallSection() {
   );
 }
 
-function VideoSection() {
-  return (
-    <section className={styles.section}>
-      <div className={styles.container}>
-        <h2 className={styles.sectionTitle}>See goose in action</h2>
-        <div className={styles.videoWrapper}>
-          <iframe
-            src="https://www.youtube.com/embed/D-DpDunrbpo"
-            className={styles.video}
-            title="vibe coding with goose"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export default function Home(): ReactNode {
   return (
     <Layout description="Your native open source AI agent. Desktop app, CLI, and API — for code, workflows, and everything in between.">
@@ -359,7 +312,6 @@ export default function Home(): ReactNode {
         <StandardsSection />
         <CommunitySection />
         <InstallSection />
-        <VideoSection />
       </main>
     </Layout>
   );

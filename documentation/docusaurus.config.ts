@@ -19,20 +19,21 @@ type SidebarItem = {
 };
 
 const config: Config = {
-  title: "goose | Your open source AI agent",
+  title: "HeyBuddy | Your open source AI agent",
   tagline: "your local AI agent, automating engineering tasks seamlessly",
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: "https://goose-docs.ai/",
+  // TODO: no HeyBuddy docs site is deployed yet — replace with the real origin once one exists.
+  url: "https://example.com/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: process.env.TARGET_PATH || "/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "aaif-goose", // Usually your GitHub org/user name.
-  projectName: "goose", // Usually your repo name.
+  organizationName: "turingcat", // Usually your GitHub org/user name.
+  projectName: "HeyBuddy", // Usually your repo name.
 
   onBrokenLinks: "throw",
 
@@ -429,9 +430,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "",
+      title: "HeyBuddy",
       logo: {
-        alt: "goose Logo", // TODO: replace logo assets with AAIF branding
+        alt: "HeyBuddy Logo",
         src: "img/logo_light.png",
         srcDark: "img/logo_dark.png",
       },
@@ -473,12 +474,7 @@ const config: Config = {
         },
 
         {
-          href: "https://discord.gg/n8R5VaWDAn",
-          label: "Discord",
-          position: "right",
-        },
-        {
-          href: "https://github.com/aaif-goose/goose",
+          href: "https://github.com/turingcat/HeyBuddy",
           label: "GitHub",
           position: "right",
         },
@@ -490,45 +486,12 @@ const config: Config = {
           title: "Quick Links",
           items: [
             {
-              label: "Install goose",
+              label: "Install HeyBuddy",
               to: "docs/getting-started/installation",
             },
             {
               label: "Extensions",
               to: "/extensions",
-            },
-          ],
-        },
-        {
-          title: "Community",
-          items: [
-            {
-              label: "Spotlight",
-              to: "community",
-            },
-            {
-              label: "Discord",
-              href: "https://discord.gg/n8R5VaWDAn",
-            },
-            {
-              label: "YouTube",
-              href: "https://www.youtube.com/@goose-oss",
-            },
-            {
-              label: "LinkedIn",
-              href: "https://www.linkedin.com/company/goose-oss",
-            },
-            {
-              label: "Twitter / X",
-              href: "https://x.com/goose_oss",
-            },
-            {
-              label: "BlueSky",
-              href: "https://bsky.app/profile/opensource.block.xyz",
-            },
-            {
-              label: "Nostr",
-              href: "https://njump.me/opensource@block.xyz",
             },
           ],
         },
@@ -541,12 +504,12 @@ const config: Config = {
             },
             {
               label: "GitHub",
-              href: "https://github.com/aaif-goose/goose",
+              href: "https://github.com/turingcat/HeyBuddy",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} AAIF (Agentic AI Foundation)`,
+      copyright: `Copyright © ${new Date().getFullYear()} HeyBuddy contributors. Based on <a href="https://github.com/aaif-goose/goose">goose</a>, © AAIF (Agentic AI Foundation).`,
     },
     prism: {
       theme: prismThemes.github,
@@ -559,14 +522,6 @@ const config: Config = {
         organizationId: inkeepOrgId,
         primaryBrandColor: "#1E1E1E",
       },
-    },
-    announcementBar: {
-      id: 'goose-aaif-announcement', // Increment on new announcements to reuse the bar
-      content:
-        '✨ goose has moved to the Agentic AI Foundation (AAIF): <a href="/blog/2026/04/07/goose-moves-to-aaif">Learn more</a>! ✨',
-      backgroundColor: '#20232a',
-      textColor: '#fff',
-      isCloseable: true,
     },
   } satisfies Preset.ThemeConfig,
 };

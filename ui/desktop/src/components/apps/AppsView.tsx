@@ -30,7 +30,7 @@ const i18n = defineMessages({
   description: {
     id: 'appsView.description',
     defaultMessage:
-      'Applications from your MCP servers and Apps built by goose itself. You can ask it to create new apps through the chat interface and they will appear here.',
+      'Applications from your MCP servers and Apps built by HeyBuddy itself. You can ask it to create new apps through the chat interface and they will appear here.',
   },
   loading: {
     id: 'appsView.loading',
@@ -43,7 +43,7 @@ const i18n = defineMessages({
   noAppsDescription: {
     id: 'appsView.noAppsDescription',
     defaultMessage:
-      'Open a chat and ask goose for the app you want to have. It can build one for you and that will appear here. Or if somebody shared an app, you can import it using the button above.',
+      'Open a chat and ask HeyBuddy for the app you want to have. It can build one for you and that will appear here. Or if somebody shared an app, you can import it using the button above.',
   },
   customApp: {
     id: 'appsView.customApp',
@@ -103,7 +103,7 @@ export default function AppsView() {
     const loadCachedApps = async () => {
       try {
         const cachedApps = await listMcpApps();
-        // Only show apps from the "apps" extension (vibe coded apps built by Goose)
+        // Only show apps from the "apps" extension (vibe coded apps built by HeyBuddy)
         setApps(cachedApps.filter((a) => a.mcpServers?.includes('apps')));
       } catch (err) {
         console.warn('Failed to load cached apps:', err);
@@ -250,7 +250,7 @@ export default function AppsView() {
       await importMcpApp(text);
 
       const cachedApps = await listMcpApps();
-      // Only show apps from the "apps" extension (vibe coded apps built by Goose)
+      // Only show apps from the "apps" extension (vibe coded apps built by HeyBuddy)
       setApps(cachedApps.filter((a) => a.mcpServers?.includes('apps')));
       setError(null);
     } catch (err) {
