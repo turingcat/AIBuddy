@@ -1,13 +1,10 @@
-# This workflow is for canary releases, automatically triggered by push to main
-# This workflow is identical to "release.yml" with these exceptions:
-#  - Triggered by push to main
-#  - GitHub Release tagged as "canary"
+# This workflow builds canary releases (macOS arm64 + Windows).
+# Auto-trigger disabled on this private fork: even trimmed to 2 platforms,
+# every push burns enough Actions minutes to hit the billing/spending
+# limit (one macOS+Windows run took ~1h47m of macOS/Windows-rate time).
+# Run manually via workflow_dispatch when a canary build is actually needed.
 on:
-  push:
-    paths-ignore:
-      - "documentation/**"
-    branches:
-      - main
+  workflow_dispatch:
 
 name: Canary
 
