@@ -40,16 +40,7 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
   # ------------------------------------
-  # 2) Build CLI targets not produced by desktop workflows
-  # ------------------------------------
-  build-cli-linux:
-    needs: [prepare-version]
-    uses: ./.github/workflows/build-cli-linux.yml
-    with:
-      version: ${{ needs.prepare-version.outputs.version }}
-
-  # ------------------------------------
-  # 3) Upload Install CLI Script (we only need to do this once)
+  # 2) Upload Install CLI Script (we only need to do this once)
   # ------------------------------------
   install-script:
     name: Upload Install Script
@@ -62,7 +53,7 @@ jobs:
           path: download_cli.sh
 
   # ------------------------------------------------------------
-  # 4) Bundle CLI and Desktop (macOS ARM64)
+  # 3) Bundle CLI and Desktop (macOS ARM64)
   # ------------------------------------------------------------
   bundle-macos-arm64:
     needs: [prepare-version]
@@ -77,31 +68,7 @@ jobs:
       signing: false
 
   # ------------------------------------------------------------
-  # 5) Bundle CLI and Desktop (macOS x64)
-  # ------------------------------------------------------------
-  bundle-macos-x64:
-    needs: [prepare-version]
-    uses: ./.github/workflows/bundle-macos.yml
-    permissions:
-      contents: read
-    with:
-      version: ${{ needs.prepare-version.outputs.version }}
-      target: x86_64-apple-darwin
-      package_cli: true
-      package_desktop: true
-      signing: false
-
-  # ------------------------------------------------------------
-  # 6) Bundle Desktop App (Linux)
-  # ------------------------------------------------------------
-  bundle-desktop-linux:
-    needs: [prepare-version]
-    uses: ./.github/workflows/bundle-desktop-linux.yml
-    with:
-      version: ${{ needs.prepare-version.outputs.version }}
-
-  # ------------------------------------------------------------
-  # 7) Bundle CLI and Desktop (Windows)
+  # 4) Bundle CLI and Desktop (Windows, standard)
   # ------------------------------------------------------------
   bundle-windows:
     needs: [prepare-version]
@@ -115,26 +82,13 @@ jobs:
       package_desktop: true
       signing: false
 
-  bundle-windows-cuda:
-    needs: [prepare-version]
-    uses: ./.github/workflows/bundle-windows.yml
-    permissions:
-      contents: read
-      id-token: write
-    with:
-      version: ${{ needs.prepare-version.outputs.version }}
-      package_cli: true
-      package_desktop: true
-      signing: false
-      windows_variant: cuda
-
   # ------------------------------------
-  # 8) Create/Update GitHub Release
+  # 5) Create/Update GitHub Release
   # ------------------------------------
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: [build-cli-linux, install-script, bundle-macos-arm64, bundle-macos-x64, bundle-desktop-linux, bundle-windows, bundle-windows-cuda]
+    needs: [install-script, bundle-macos-arm64, bundle-windows]
     permissions:
       contents: write
       id-token: write      # Required for Sigstore OIDC signing
@@ -155,9 +109,6 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             Goose*.zip
-            *.deb
-            *.rpm
-            *.flatpak
             download_cli.sh
 
       # Create/update the canary release
@@ -172,9 +123,6 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             Goose*.zip
-            *.deb
-            *.rpm
-            *.flatpak
             download_cli.sh
           allowUpdates: true
           omitBody: true
