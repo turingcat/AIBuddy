@@ -1,15 +1,10 @@
 name: Publish Docker Image
 
+# Auto-trigger disabled on this private fork: the desktop app runs its
+# own local backend and doesn't need this container image. Re-enable
+# the push/tags triggers below if a headless/server deployment of the
+# CLI is ever needed.
 on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
-      - 'v*.*.*-*'  # For pre-releases like v1.2.3-beta
-    paths-ignore:
-      - 'documentation/**'
-      - '*.md'
   workflow_dispatch:
 
 permissions:
