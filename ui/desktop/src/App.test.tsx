@@ -164,6 +164,8 @@ const mockElectron = {
   getSetting: vi.fn().mockResolvedValue(null),
   setSetting: vi.fn().mockResolvedValue(undefined),
   getIsFullScreen: vi.fn().mockResolvedValue(false),
+  // OnboardingGuard 现在基于登录状态放行 children；这里默认登录，保持原有渲染路径
+  isLoggedIn: vi.fn().mockResolvedValue(true),
 };
 
 // Mock appConfig
