@@ -36,6 +36,7 @@ import ProviderSettings from './components/settings/providers/ProviderSettingsPa
 import { AppLayout } from './components/Layout/AppLayout';
 import { ChatProvider, DEFAULT_CHAT_TITLE } from './contexts/ChatContext';
 import LauncherView from './components/LauncherView';
+import LoginView from './components/auth/LoginView';
 
 import 'react-toastify/dist/ReactToastify.css';
 import { useConfig } from './components/ConfigContext';
@@ -633,6 +634,7 @@ export function AppInner() {
             <Route path="launcher" element={<LauncherView />} />
             <Route path="configure-providers" element={<ConfigureProvidersRoute />} />
             <Route path="standalone-app" element={<StandaloneAppView />} />
+            <Route path="login" element={<LoginView />} />
             <Route
               path="/"
               element={
