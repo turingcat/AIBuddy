@@ -2147,9 +2147,6 @@
   "modelAndProviderContext.unknownProviderTitle": {
     "defaultMessage": "提供商名称查找"
   },
-  "modelSettingsButtons.configureProviders": {
-    "defaultMessage": "配置提供商"
-  },
   "modelSettingsButtons.switchModels": {
     "defaultMessage": "切换模型"
   },
@@ -4028,9 +4025,6 @@
   "settingsView.tabApp": {
     "defaultMessage": "应用"
   },
-  "settingsView.tabAuth": {
-    "defaultMessage": "身份验证"
-  },
   "settingsView.tabChat": {
     "defaultMessage": "聊天"
   },
@@ -4039,9 +4033,6 @@
   },
   "settingsView.tabKeyboard": {
     "defaultMessage": "键盘"
-  },
-  "settingsView.tabLocalInference": {
-    "defaultMessage": "本地推理"
   },
   "settingsView.tabModels": {
     "defaultMessage": "模型"
@@ -4211,14 +4202,8 @@
   "subRecipeModal.subtitle": {
     "defaultMessage": "配置一个可在配方执行过程中作为工具调用的子配方"
   },
-  "switchModelModal.backToModelList": {
-    "defaultMessage": "返回模型列表"
-  },
   "switchModelModal.cancel": {
     "defaultMessage": "取消"
-  },
-  "switchModelModal.checkProviderConfig": {
-    "defaultMessage": "请在 设置 → 提供商 中检查你的提供商配置"
   },
   "switchModelModal.chooseModel": {
     "defaultMessage": "选择一个模型："
@@ -4244,38 +4229,14 @@
   "switchModelModal.claudeEnabled": {
     "defaultMessage": "启用 - 固定思考令牌预算"
   },
-  "switchModelModal.couldNotContactProvider": {
-    "defaultMessage": "无法连接提供商"
-  },
-  "switchModelModal.customModelName": {
-    "defaultMessage": "自定义模型名称"
-  },
   "switchModelModal.description": {
     "defaultMessage": "选择用于对话的提供商和模型。"
-  },
-  "switchModelModal.enterModelNotListed": {
-    "defaultMessage": "输入未列出的模型…"
   },
   "switchModelModal.extendedThinking": {
     "defaultMessage": "扩展思考"
   },
   "switchModelModal.geminiOnly": {
     "defaultMessage": "（仅 Gemini 3 模型）"
-  },
-  "switchModelModal.goToSettings": {
-    "defaultMessage": "前往设置"
-  },
-  "switchModelModal.loadingModels": {
-    "defaultMessage": "正在加载模型…"
-  },
-  "switchModelModal.localModelsDescription": {
-    "defaultMessage": "要使用本地推理，你需要先下载一个模型到电脑上。前往 设置 → 模型 管理本地模型。"
-  },
-  "switchModelModal.localModelsTitle": {
-    "defaultMessage": "本地模型需要先下载"
-  },
-  "switchModelModal.providerPlaceholder": {
-    "defaultMessage": "提供商，输入以搜索"
   },
   "switchModelModal.quickStartGuide": {
     "defaultMessage": "快速入门指南"
@@ -4291,15 +4252,6 @@
   },
   "switchModelModal.selectModelButton": {
     "defaultMessage": "选择模型"
-  },
-  "switchModelModal.selectModelPlaceholder": {
-    "defaultMessage": "选择模型，输入以搜索"
-  },
-  "switchModelModal.selectOrEnterModel": {
-    "defaultMessage": "请选择或输入模型"
-  },
-  "switchModelModal.selectProvider": {
-    "defaultMessage": "请选择提供商"
   },
   "switchModelModal.selectThinkingLevel": {
     "defaultMessage": "选择思考级别"
@@ -4327,12 +4279,6 @@
   },
   "switchModelModal.title": {
     "defaultMessage": "切换模型"
-  },
-  "switchModelModal.typeModelName": {
-    "defaultMessage": "在此输入模型名称"
-  },
-  "switchModelModal.useOtherProvider": {
-    "defaultMessage": "使用其他提供商"
   },
   "telemetryConsentPrompt.description": {
     "defaultMessage": "是否愿意分享匿名使用数据帮助改进 HeyBuddy？我们绝不采集你的对话、代码或个人数据。"

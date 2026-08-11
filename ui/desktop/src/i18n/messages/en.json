@@ -2147,9 +2147,6 @@
   "modelAndProviderContext.unknownProviderTitle": {
     "defaultMessage": "Provider name lookup"
   },
-  "modelSettingsButtons.configureProviders": {
-    "defaultMessage": "Configure providers"
-  },
   "modelSettingsButtons.switchModels": {
     "defaultMessage": "Switch models"
   },
@@ -4028,9 +4025,6 @@
   "settingsView.tabApp": {
     "defaultMessage": "App"
   },
-  "settingsView.tabAuth": {
-    "defaultMessage": "Auth"
-  },
   "settingsView.tabChat": {
     "defaultMessage": "Chat"
   },
@@ -4039,9 +4033,6 @@
   },
   "settingsView.tabKeyboard": {
     "defaultMessage": "Keyboard"
-  },
-  "settingsView.tabLocalInference": {
-    "defaultMessage": "Local Inference"
   },
   "settingsView.tabModels": {
     "defaultMessage": "Models"
@@ -4211,14 +4202,8 @@
   "subRecipeModal.subtitle": {
     "defaultMessage": "Configure a subrecipe that can be called as a tool during recipe execution"
   },
-  "switchModelModal.backToModelList": {
-    "defaultMessage": "Back to model list"
-  },
   "switchModelModal.cancel": {
     "defaultMessage": "Cancel"
-  },
-  "switchModelModal.checkProviderConfig": {
-    "defaultMessage": "Check your provider configuration in Settings → Providers"
   },
   "switchModelModal.chooseModel": {
     "defaultMessage": "Choose a model:"
@@ -4244,38 +4229,14 @@
   "switchModelModal.claudeEnabled": {
     "defaultMessage": "Enabled - Fixed token budget for thinking"
   },
-  "switchModelModal.couldNotContactProvider": {
-    "defaultMessage": "Could not contact provider"
-  },
-  "switchModelModal.customModelName": {
-    "defaultMessage": "Custom model name"
-  },
   "switchModelModal.description": {
     "defaultMessage": "Select a provider and model to use for your conversations."
-  },
-  "switchModelModal.enterModelNotListed": {
-    "defaultMessage": "Enter a model not listed..."
   },
   "switchModelModal.extendedThinking": {
     "defaultMessage": "Extended Thinking"
   },
   "switchModelModal.geminiOnly": {
     "defaultMessage": "(Gemini 3 models only)"
-  },
-  "switchModelModal.goToSettings": {
-    "defaultMessage": "Go to Settings"
-  },
-  "switchModelModal.loadingModels": {
-    "defaultMessage": "Loading models…"
-  },
-  "switchModelModal.localModelsDescription": {
-    "defaultMessage": "To use local inference, you need to download a model to your computer first. Go to Settings → Models to manage local models."
-  },
-  "switchModelModal.localModelsTitle": {
-    "defaultMessage": "Local models need to be downloaded first"
-  },
-  "switchModelModal.providerPlaceholder": {
-    "defaultMessage": "Provider, type to search"
   },
   "switchModelModal.quickStartGuide": {
     "defaultMessage": "Quick start guide"
@@ -4291,15 +4252,6 @@
   },
   "switchModelModal.selectModelButton": {
     "defaultMessage": "Select model"
-  },
-  "switchModelModal.selectModelPlaceholder": {
-    "defaultMessage": "Select a model, type to search"
-  },
-  "switchModelModal.selectOrEnterModel": {
-    "defaultMessage": "Please select or enter a model"
-  },
-  "switchModelModal.selectProvider": {
-    "defaultMessage": "Please select a provider"
   },
   "switchModelModal.selectThinkingLevel": {
     "defaultMessage": "Select thinking level"
@@ -4327,12 +4279,6 @@
   },
   "switchModelModal.title": {
     "defaultMessage": "Switch models"
-  },
-  "switchModelModal.typeModelName": {
-    "defaultMessage": "Type model name here"
-  },
-  "switchModelModal.useOtherProvider": {
-    "defaultMessage": "Use other provider"
   },
   "telemetryConsentPrompt.description": {
     "defaultMessage": "Would you like to share anonymous usage data to help improve HeyBuddy? We never collect your conversations, code, or personal data."
