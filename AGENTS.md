@@ -2,6 +2,29 @@
 
 goose is an AI agent framework in Rust with CLI and Electron desktop interfaces.
 
+## Development Standards
+
+These standards apply to all code changes in the HeyBuddy fork.
+
+### Branching
+
+- Any new feature must be developed on a **new branch**, not committed directly to `main`.
+- A feature branch may only be merged into `main` after it has been **fully tested and verified**.
+
+### Testing
+
+- All functional code must include **unit tests**.
+- Test coverage is measured by **path coverage**.
+- Coverage must be **at least 80%**.
+
+### Bug Fixes
+
+When fixing a bug:
+
+1. First check whether the upstream repository has already fixed it: https://github.com/aaif-goose/goose.git
+2. If the upstream fix exists, **ask the user** before doing anything else whether to create a new branch to pull the upstream fix in.
+3. Only proceed with a local fix when there is no upstream fix, or after the user has decided against pulling it in.
+
 ## Contribution Workflow
 
 The issue is the source of truth for work intended for an upstream pull request. Track issue status on the [Goose Issues board](https://github.com/orgs/aaif-goose/projects/1).
