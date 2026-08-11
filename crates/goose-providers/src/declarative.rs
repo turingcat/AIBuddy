@@ -52,6 +52,7 @@ pub(crate) mod declarative_providers {
         vercel_ai_gateway,
         zai,
         zhipu,
+        heybuddy,
     );
 }
 
@@ -366,6 +367,20 @@ mod tests {
             deserialize_provider_config(crate::groq::JSON).expect("groq.json should parse");
 
         assert!(!config.preserves_thinking);
+    }
+
+    // @author: logic
+    // @date: 2026-08-11
+    // 校验内置 heybuddy provider 的 JSON 字段与登录注入的网关约定一致
+    #[test]
+    fn heybuddy_provider_is_bundled_and_valid() {
+        let json = crate::declarative::declarative_providers::heybuddy::JSON;
+        let config: serde_json::Value = serde_json::from_str(json).unwrap();
+        assert_eq!(config["name"], "heybuddy");
+        assert_eq!(config["engine"], "openai");
+        assert_eq!(config["api_key_env"], "HEYBUDDY_API_KEY");
+        assert_eq!(config["base_url"], "${HEYBUDDY_BASE_URL}");
+        assert_eq!(config["dynamic_models"], true);
     }
 
     fn placeholder_var_names(template: &str) -> Vec<String> {

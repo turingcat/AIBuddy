@@ -1,0 +1,21 @@
+{
+  "name": "heybuddy",
+  "engine": "openai",
+  "display_name": "HeyBuddy",
+  "description": "HeyBuddy gateway. base_url and API key are injected at runtime after login.",
+  "api_key_env": "HEYBUDDY_API_KEY",
+  "base_url": "${HEYBUDDY_BASE_URL}",
+  "env_vars": [
+    {
+      "name": "HEYBUDDY_BASE_URL",
+      "required": true,
+      "secret": false,
+      "description": "HeyBuddy gateway base URL, injected after login."
+    }
+  ],
+  "dynamic_models": true,
+  "models": [],
+  "skip_canonical_filtering": true,
+  "preserves_thinking": true,
+  "supports_streaming": true
+}
