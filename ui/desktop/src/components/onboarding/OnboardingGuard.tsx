@@ -2,15 +2,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useConfig } from '../ConfigContext';
 import { useModelAndProvider } from '../ModelAndProviderContext';
-import { acpListProviderDetails, acpReadDefaults, acpSaveDefaults } from '../../acp/providers';
+import { acpReadDefaults } from '../../acp/providers';
 import { Goose } from '../icons';
 import { Button } from '../ui/button';
-import ProviderSelector from './ProviderSelector';
 import OnboardingSuccess from './OnboardingSuccess';
 import {
   trackOnboardingStarted,
   trackOnboardingCompleted,
-  trackOnboardingProviderSelected,
   trackTelemetryPreference,
   setTelemetryEnabled as setAnalyticsTelemetryEnabled,
 } from '../../utils/analytics';
@@ -54,12 +52,9 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
   const [isCheckingProvider, setIsCheckingProvider] = useState(true);
   const [hasProvider, setHasProvider] = useState(false);
   const [checkProviderError, setCheckProviderError] = useState(false);
-  const [hasSelection, setHasSelection] = useState(false);
-  const [configuredProvider, setConfiguredProvider] = useState<string | null>(null);
-  const [configuredProviderDisplayName, setConfiguredProviderDisplayName] = useState<string | null>(
-    null
-  );
-  const [configuredModel, setConfiguredModel] = useState<string | null>(null);
+  const [configuredProvider] = useState<string | null>(null);
+  const [configuredProviderDisplayName] = useState<string | null>(null);
+  const [configuredModel] = useState<string | null>(null);
   const hasTrackedOnboardingStart = useRef(false);
 
   const checkProvider = async (retries = 3, delay = 1000) => {
@@ -112,18 +107,6 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
     }
   }, [isCheckingProvider, hasProvider, checkProviderError]);
 
-  const handleConfigured = async (providerName: string, modelId?: string) => {
-    trackOnboardingProviderSelected({ provider: providerName });
-    const providers = await acpListProviderDetails();
-    const matchedProvider = providers.find((p) => p.name === providerName);
-    const resolvedModel = modelId ?? matchedProvider?.metadata.default_model ?? null;
-    await acpSaveDefaults(providerName, resolvedModel);
-    setConfiguredModel(resolvedModel);
-    await refreshCurrentModelAndProvider();
-    setConfiguredProvider(providerName);
-    setConfiguredProviderDisplayName(matchedProvider?.metadata.display_name || providerName);
-  };
-
   const finishOnboarding = async (telemetryEnabled: boolean) => {
     try {
       await upsert(TELEMETRY_CONFIG_KEY, telemetryEnabled, false);
@@ -172,32 +155,11 @@ export default function OnboardingGuard({ children }: OnboardingGuardProps) {
     );
   }
 
-  return (
-    <div className="h-screen w-full bg-background-default overflow-hidden">
-      <div className="h-full overflow-y-auto">
-        <div
-          className={`flex flex-col items-center p-4 pb-8 transition-all duration-500 ease-in-out ${hasSelection ? 'pt-8' : 'pt-[15vh]'}`}
-        >
-          <div className="max-w-2xl w-full mx-auto">
-            <div
-              className={`text-left transition-all duration-500 ease-in-out overflow-hidden ${hasSelection ? 'max-h-0 opacity-0 mb-0' : 'max-h-60 opacity-100 mb-8'}`}
-            >
-              <div className="mb-4">
-                <Goose className="size-8" />
-              </div>
-              <h1 className="text-2xl sm:text-4xl font-light mb-3">{intl.formatMessage(i18n.welcomeTitle)}</h1>
-              <p className="text-text-muted text-base sm:text-lg">
-                {intl.formatMessage(i18n.welcomeDescription)}
-              </p>
-            </div>
-
-            <ProviderSelector
-              onConfigured={handleConfigured}
-              onFirstSelection={() => setHasSelection(true)}
-            />
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  /**
+   * 阶段一：provider 配置入口已隐藏，未配置时直接放行 children。
+   * 登录判定由后续任务接管，本任务仅消除 provider 引导 UI。
+   * @author: logic
+   * @date: 2026-08-11
+   */
+  return <>{children}</>;
 }

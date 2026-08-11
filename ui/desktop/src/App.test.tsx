@@ -163,6 +163,7 @@ const mockElectron = {
   createChatWindow: vi.fn(),
   getSetting: vi.fn().mockResolvedValue(null),
   setSetting: vi.fn().mockResolvedValue(undefined),
+  getIsFullScreen: vi.fn().mockResolvedValue(false),
 };
 
 // Mock appConfig
@@ -262,7 +263,7 @@ describe('App Component - Brand New State', () => {
       expect(mockElectron.reactReady).toHaveBeenCalled();
     });
 
-    expect(screen.getByText(/^Welcome to HeyBuddy/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Welcome to HeyBuddy/)).not.toBeInTheDocument();
   });
 
   it('should not redirect when provider is configured', async () => {
