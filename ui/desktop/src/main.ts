@@ -27,6 +27,7 @@ import os from 'node:os';
 import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
+import { resolvePredefinedModels, type PredefinedModel } from './bundledConfig';
 import { startGooseServe } from './gooseServe';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
@@ -847,7 +848,7 @@ const parseArgs = () => {
 interface BundledConfig {
   defaultProvider?: string;
   defaultModel?: string;
-  predefinedModels?: string;
+  predefinedModels?: PredefinedModel[];
   version?: string;
 }
 
@@ -858,7 +859,7 @@ const getBundledConfig = (): BundledConfig => {
   return {
     defaultProvider: process.env.GOOSE_DEFAULT_PROVIDER,
     defaultModel: process.env.GOOSE_DEFAULT_MODEL,
-    predefinedModels: process.env.GOOSE_PREDEFINED_MODELS,
+    predefinedModels: resolvePredefinedModels(process.env.GOOSE_PREDEFINED_MODELS),
     version: process.env.GOOSE_VERSION,
   };
 };
