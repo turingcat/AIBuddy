@@ -4,7 +4,6 @@ import { View, ViewOptions } from '../../utils/navigationUtils';
 import ModelsSection from './models/ModelsSection';
 import ExternalBackendSection from './app/ExternalBackendSection';
 import AppSettingsSection from './app/AppSettingsSection';
-import ConfigSettings from './config/ConfigSettings';
 import PromptsSettingsSection from './PromptsSettingsSection';
 import type { ExtensionConfig } from '../../types/extensions';
 import { MainPanelLayout } from '../Layout/MainPanelLayout';
@@ -15,17 +14,11 @@ import {
   MessageSquare,
   FileText,
   Keyboard,
-  HardDrive,
-  KeyRound,
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import ChatSettingsSection from './chat/ChatSettingsSection';
 import KeyboardShortcutsSection from './keyboard/KeyboardShortcutsSection';
-import AuthSettingsSection from './auth/AuthSettingsSection';
-import LocalInferenceSection from './localInference/LocalInferenceSection';
-import { CONFIGURATION_ENABLED } from '../../updates';
 import { trackSettingsTabViewed } from '../../utils/analytics';
-import { useFeatures } from '../../contexts/FeaturesContext';
 import { defineMessages, useIntl } from '../../i18n';
 
 const i18n = defineMessages({
@@ -36,10 +29,6 @@ const i18n = defineMessages({
   tabModels: {
     id: 'settingsView.tabModels',
     defaultMessage: 'Models',
-  },
-  tabLocalInference: {
-    id: 'settingsView.tabLocalInference',
-    defaultMessage: 'Local Inference',
   },
   tabChat: {
     id: 'settingsView.tabChat',
@@ -56,10 +45,6 @@ const i18n = defineMessages({
   tabKeyboard: {
     id: 'settingsView.tabKeyboard',
     defaultMessage: 'Keyboard',
-  },
-  tabAuth: {
-    id: 'settingsView.tabAuth',
-    defaultMessage: 'Auth',
   },
   tabApp: {
     id: 'settingsView.tabApp',
@@ -84,7 +69,6 @@ export default function SettingsView({
 }) {
   const [activeTab, setActiveTab] = useState('models');
   const hasTrackedInitialTab = useRef(false);
-  const { localInference } = useFeatures();
   const intl = useIntl();
 
   const handleTabChange = (tab: string) => {
@@ -107,23 +91,14 @@ export default function SettingsView({
         chat: 'chat',
         prompts: 'prompts',
         keyboard: 'keyboard',
-        auth: 'auth',
-        'local-inference': 'local-inference',
       };
 
       const targetTab = sectionToTab[viewOptions.section];
-      if (targetTab && (targetTab !== 'local-inference' || localInference)) {
+      if (targetTab) {
         setActiveTab(targetTab);
       }
     }
-  }, [viewOptions.section, localInference]);
-
-  // Reset active tab if local-inference becomes unavailable
-  useEffect(() => {
-    if (!localInference && activeTab === 'local-inference') {
-      setActiveTab('models');
-    }
-  }, [localInference, activeTab]);
+  }, [viewOptions.section]);
 
   useEffect(() => {
     if (!hasTrackedInitialTab.current) {
@@ -174,16 +149,6 @@ export default function SettingsView({
                     <Bot className="h-4 w-4" />
                     {intl.formatMessage(i18n.tabModels)}
                   </TabsTrigger>
-                  {localInference && (
-                    <TabsTrigger
-                      value="local-inference"
-                      className="flex gap-2"
-                      data-testid="settings-local-inference-tab"
-                    >
-                      <HardDrive className="h-4 w-4" />
-                      {intl.formatMessage(i18n.tabLocalInference)}
-                    </TabsTrigger>
-                  )}
                   <TabsTrigger value="chat" className="flex gap-2" data-testid="settings-chat-tab">
                     <MessageSquare className="h-4 w-4" />
                     {intl.formatMessage(i18n.tabChat)}
@@ -212,10 +177,6 @@ export default function SettingsView({
                     <Keyboard className="h-4 w-4" />
                     {intl.formatMessage(i18n.tabKeyboard)}
                   </TabsTrigger>
-                  <TabsTrigger value="auth" className="flex gap-2" data-testid="settings-auth-tab">
-                    <KeyRound className="h-4 w-4" />
-                    {intl.formatMessage(i18n.tabAuth)}
-                  </TabsTrigger>
                   <TabsTrigger value="app" className="flex gap-2" data-testid="settings-app-tab">
                     <Monitor className="h-4 w-4" />
                     {intl.formatMessage(i18n.tabApp)}
@@ -230,15 +191,6 @@ export default function SettingsView({
                 >
                   <ModelsSection setView={setView} />
                 </TabsContent>
-
-                {localInference && (
-                  <TabsContent
-                    value="local-inference"
-                    className="mt-0 focus-visible:outline-none focus-visible:ring-0"
-                  >
-                    <LocalInferenceSection />
-                  </TabsContent>
-                )}
 
                 <TabsContent
                   value="chat"
@@ -271,18 +223,11 @@ export default function SettingsView({
                 </TabsContent>
 
                 <TabsContent
-                  value="auth"
-                  className="mt-0 focus-visible:outline-none focus-visible:ring-0"
-                >
-                  <AuthSettingsSection />
-                </TabsContent>
-
-                <TabsContent
                   value="app"
                   className="mt-0 focus-visible:outline-none focus-visible:ring-0"
                 >
                   <div className="space-y-8">
-                    {CONFIGURATION_ENABLED && <ConfigSettings />}
+                    {/* 阶段一：隐藏 ConfigSettings 原始 config 编辑器 */}
                     <AppSettingsSection scrollToSection={viewOptions.section} />
                   </div>
                 </TabsContent>

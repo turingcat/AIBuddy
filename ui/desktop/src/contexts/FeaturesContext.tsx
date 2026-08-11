@@ -9,14 +9,14 @@ interface FeaturesContextValue {
 const FeaturesContext = createContext<FeaturesContextValue | null>(null);
 
 export function FeaturesProvider({ children }: { children: React.ReactNode }) {
-  const [localInference, setLocalInference] = useState(false);
+  // 阶段一：桌面版不提供本地推理，强制关闭
+  const localInference = false;
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const capabilities = await getAcpFeatureCapabilities();
-        setLocalInference(capabilities.localInference);
+        await getAcpFeatureCapabilities();
       } catch (error) {
         console.warn('[FeaturesContext] Failed to fetch features:', error);
       } finally {
