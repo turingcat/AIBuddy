@@ -28,6 +28,12 @@ import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { resolvePredefinedModels, type PredefinedModel } from './bundledConfig';
+import {
+  readCredentials,
+  writeCredentials,
+  clearCredentials,
+  type LoginCredentials,
+} from './credentials';
 import { startGooseServe } from './gooseServe';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
@@ -171,6 +177,7 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
+const CREDENTIALS_FILE = path.join(app.getPath('userData'), 'credentials.json');
 const STARTUP_LOGS_DIR = path.join(app.getPath('userData'), 'logs', 'startup');
 const validLanguageSettings = new Set<Settings['language']>(['system', 'en', 'zh-CN']);
 
@@ -1960,6 +1967,15 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   if (key === 'disableAutoDownload') {
     setAutoDownloadDisabled(value as boolean);
   }
+});
+
+ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE));
+ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE) !== null);
+ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
+  writeCredentials(CREDENTIALS_FILE, creds);
+});
+ipcMain.handle('clear-login-credentials', () => {
+  clearCredentials(CREDENTIALS_FILE);
 });
 
 ipcMain.handle('get-secret-key', (event) => {

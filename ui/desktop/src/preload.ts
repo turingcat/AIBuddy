@@ -1,5 +1,6 @@
 import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
+import type { LoginCredentials } from './credentials';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
@@ -96,7 +97,7 @@ export interface CreateChatWindowOptions {
 }
 
 // Define the API types in a single place
-type ElectronAPI = {
+export type ElectronAPI = {
   platform: string;
   arch: string;
   reactReady: () => void;
@@ -178,6 +179,10 @@ type ElectronAPI = {
   addRecentDir: (dir: string) => Promise<boolean>;
   listRecentDirs: () => Promise<string[]>;
   listGitWorktreeDirs: (dir: string) => Promise<string[]>;
+  getLoginCredentials: () => Promise<LoginCredentials | null>;
+  isLoggedIn: () => Promise<boolean>;
+  setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
+  clearLoginCredentials: () => Promise<void>;
 };
 
 type AppConfigAPI = {
@@ -335,6 +340,11 @@ const electronAPI: ElectronAPI = {
   addRecentDir: (dir: string) => ipcRenderer.invoke('add-recent-dir', dir),
   listRecentDirs: () => ipcRenderer.invoke('list-recent-dirs'),
   listGitWorktreeDirs: (dir: string) => ipcRenderer.invoke('list-git-worktree-dirs', dir),
+  getLoginCredentials: () => ipcRenderer.invoke('get-login-credentials'),
+  isLoggedIn: () => ipcRenderer.invoke('is-logged-in'),
+  setLoginCredentials: (creds: LoginCredentials) =>
+    ipcRenderer.invoke('set-login-credentials', creds),
+  clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
 };
 
 function getAppLocale(): unknown {
