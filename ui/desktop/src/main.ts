@@ -35,6 +35,7 @@ import {
   type LoginCredentials,
 } from './credentials';
 import { startGooseServe } from './gooseServe';
+import { buildHeyBuddyEnv } from './gooseServeEnv';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -1156,6 +1157,7 @@ const createChat = async (
         tls: true,
         env: {
           GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
+          ...buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE)),
         },
         loginShellPath,
         isPackaged: app.isPackaged,
