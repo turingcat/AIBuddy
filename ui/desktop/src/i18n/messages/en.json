@@ -2324,12 +2324,6 @@
   "modelsBottomBar.selectModel": {
     "defaultMessage": "Select Model"
   },
-  "modelsSection.resetDescription": {
-    "defaultMessage": "Clear your selected model and provider settings to start fresh"
-  },
-  "modelsSection.resetTitle": {
-    "defaultMessage": "Reset Provider and Model"
-  },
   "navigation.itemApps": {
     "defaultMessage": "Apps"
   },

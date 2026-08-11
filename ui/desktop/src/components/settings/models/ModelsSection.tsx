@@ -5,20 +5,8 @@ import { acpListProviderDetails, acpReadDefaults } from '../../../acp/providers'
 import { modelAndProviderMessages, useModelAndProvider } from '../../ModelAndProviderContext';
 import { toastError } from '../../../toasts';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import ResetProviderSection from '../reset_provider/ResetProviderSection';
-import { defineMessages, useIntl } from '../../../i18n';
-
-const i18n = defineMessages({
-  resetTitle: {
-    id: 'modelsSection.resetTitle',
-    defaultMessage: 'Reset Provider and Model',
-  },
-  resetDescription: {
-    id: 'modelsSection.resetDescription',
-    defaultMessage: 'Clear your selected model and provider settings to start fresh',
-  },
-});
+import { Card, CardContent } from '../../ui/card';
+import { useIntl } from '../../../i18n';
 
 interface ModelsSectionProps {
   setView: (view: View) => void;
@@ -108,15 +96,6 @@ export default function ModelsSection({ setView }: ModelsSectionProps) {
             </div>
           )}
           <ModelSettingsButtons setView={setView} />
-        </CardContent>
-      </Card>
-      <Card className="pb-2 rounded-lg">
-        <CardHeader className="pb-0">
-          <CardTitle className="">{intl.formatMessage(i18n.resetTitle)}</CardTitle>
-          <CardDescription>{intl.formatMessage(i18n.resetDescription)}</CardDescription>
-        </CardHeader>
-        <CardContent className="px-2">
-          <ResetProviderSection setView={setView} />
         </CardContent>
       </Card>
     </section>

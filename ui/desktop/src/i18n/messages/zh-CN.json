@@ -2324,12 +2324,6 @@
   "modelsBottomBar.selectModel": {
     "defaultMessage": "选择模型"
   },
-  "modelsSection.resetDescription": {
-    "defaultMessage": "清空已选的模型和提供商设置，重新开始"
-  },
-  "modelsSection.resetTitle": {
-    "defaultMessage": "重置提供商和模型"
-  },
   "navigation.itemApps": {
     "defaultMessage": "应用"
   },
