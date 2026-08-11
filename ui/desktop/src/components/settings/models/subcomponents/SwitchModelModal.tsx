@@ -99,10 +99,6 @@ const i18n = defineMessages({
     id: 'switchModelModal.selectThinkingLevel',
     defaultMessage: 'Select thinking level',
   },
-  useOtherProvider: {
-    id: 'switchModelModal.useOtherProvider',
-    defaultMessage: 'Use other provider',
-  },
   providerPlaceholder: {
     id: 'switchModelModal.providerPlaceholder',
     defaultMessage: 'Provider, type to search',
@@ -487,10 +483,6 @@ export const SwitchModelModal = ({
             value: name,
             label: metadata.display_name,
           })),
-          {
-            value: 'configure_providers',
-            label: intl.formatMessage(i18n.useOtherProvider),
-          },
         ]);
       } catch (error: unknown) {
         console.error('Failed to query providers:', error);
@@ -816,16 +808,10 @@ export const SwitchModelModal = ({
                   value={providerOptions.find((option) => option.value === provider) || null}
                   onChange={(newValue: unknown) => {
                     const option = newValue as { value: string; label: string } | null;
-                    if (option?.value === 'configure_providers') {
-                      // Navigate to ConfigureProviders view
-                      setView('ConfigureProviders');
-                      onClose(); // Close the current modal
-                    } else {
-                      setProvider(option?.value || null);
-                      setModel('');
-                      setIsCustomModel(false);
-                      setUserClearedModel(false);
-                    }
+                    setProvider(option?.value || null);
+                    setModel('');
+                    setIsCustomModel(false);
+                    setUserClearedModel(false);
                   }}
                   placeholder={intl.formatMessage(i18n.providerPlaceholder)}
                   isClearable

@@ -10,7 +10,6 @@ export type View =
   | 'moreModels'
   | 'configureProviders'
   | 'configPage'
-  | 'ConfigureProviders'
   | 'settingsV2'
   | 'sessions'
   | 'schedules'
@@ -68,9 +67,6 @@ export const createNavigationHandler = (navigate: NavigateFunction) => {
         break;
       case 'permission':
         navigate('/permission', { state: options });
-        break;
-      case 'ConfigureProviders':
-        navigate('/configure-providers', { state: options });
         break;
       case 'extensions':
         navigate('/extensions', { state: options });
