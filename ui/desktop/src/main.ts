@@ -1406,7 +1406,6 @@ const createChat = async (
     recipes: '/recipes',
     skills: '/skills',
     permission: '/permission',
-    ConfigureProviders: '/configure-providers',
   };
 
   if (viewType) {

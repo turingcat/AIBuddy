@@ -22,7 +22,9 @@ describe('OnboardingGuard', () => {
    */
   it('未登录时不放行 children', async () => {
     const mockIsLoggedIn = vi.fn().mockResolvedValue(false);
-    (window as any).electron = { isLoggedIn: mockIsLoggedIn };
+    (window as unknown as { electron: { isLoggedIn: typeof mockIsLoggedIn } }).electron = {
+      isLoggedIn: mockIsLoggedIn,
+    };
     render(
       <MemoryRouter>
         <OnboardingGuard>
@@ -40,7 +42,9 @@ describe('OnboardingGuard', () => {
 
   it('已登录时放行 children', async () => {
     const mockIsLoggedIn = vi.fn().mockResolvedValue(true);
-    (window as any).electron = { isLoggedIn: mockIsLoggedIn };
+    (window as unknown as { electron: { isLoggedIn: typeof mockIsLoggedIn } }).electron = {
+      isLoggedIn: mockIsLoggedIn,
+    };
     render(
       <MemoryRouter>
         <OnboardingGuard>

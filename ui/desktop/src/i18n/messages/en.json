@@ -2384,21 +2384,6 @@
   "navigationPanel.untitledSession": {
     "defaultMessage": "Untitled session"
   },
-  "onboardingGuard.checkProviderErrorDescription": {
-    "defaultMessage": "The server may be starting up or temporarily unavailable."
-  },
-  "onboardingGuard.checkProviderErrorTitle": {
-    "defaultMessage": "Unable to connect to HeyBuddy server"
-  },
-  "onboardingGuard.retry": {
-    "defaultMessage": "Retry"
-  },
-  "onboardingGuard.welcomeDescription": {
-    "defaultMessage": "Your local AI agent. Connect an AI model provider to get started."
-  },
-  "onboardingGuard.welcomeTitle": {
-    "defaultMessage": "Welcome to HeyBuddy"
-  },
   "onboardingSuccess.allSet": {
     "defaultMessage": "You're all set to start using HeyBuddy."
   },
@@ -4224,7 +4209,7 @@
     "defaultMessage": "Enabled - Fixed token budget for thinking"
   },
   "switchModelModal.description": {
-    "defaultMessage": "Select a provider and model to use for your conversations."
+    "defaultMessage": "Select a model to use for your conversations."
   },
   "switchModelModal.extendedThinking": {
     "defaultMessage": "Extended Thinking"

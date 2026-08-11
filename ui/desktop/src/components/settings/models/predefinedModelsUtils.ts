@@ -1,14 +1,11 @@
 import Model from './modelInterface';
 
-// Helper functions for predefined models - shared across components
 export function getPredefinedModelsFromEnv(): Model[] {
   try {
-    const envModels = window.appConfig.get('GOOSE_PREDEFINED_MODELS'); // process.env.GOOSE_PREDEFINED_MODELS
-    if (envModels && typeof envModels === 'string') {
-      return JSON.parse(envModels) as Model[];
-    }
+    const envModels = window.appConfig.get('GOOSE_PREDEFINED_MODELS');
+    if (Array.isArray(envModels)) return envModels as Model[];
   } catch (error) {
-    console.warn('Failed to parse GOOSE_PREDEFINED_MODELS environment variable:', error);
+    console.warn('Failed to parse GOOSE_PREDEFINED_MODELS:', error);
   }
   return [];
 }

@@ -2384,21 +2384,6 @@
   "navigationPanel.untitledSession": {
     "defaultMessage": "未命名会话"
   },
-  "onboardingGuard.checkProviderErrorDescription": {
-    "defaultMessage": "服务器可能正在启动或暂时不可用。"
-  },
-  "onboardingGuard.checkProviderErrorTitle": {
-    "defaultMessage": "无法连接到 HeyBuddy 服务器"
-  },
-  "onboardingGuard.retry": {
-    "defaultMessage": "重试"
-  },
-  "onboardingGuard.welcomeDescription": {
-    "defaultMessage": "你的本地 AI agent。连接 AI 模型提供商即可开始。"
-  },
-  "onboardingGuard.welcomeTitle": {
-    "defaultMessage": "欢迎使用 HeyBuddy"
-  },
   "onboardingSuccess.allSet": {
     "defaultMessage": "一切就绪，可以开始使用 HeyBuddy 了。"
   },
@@ -4224,7 +4209,7 @@
     "defaultMessage": "启用 - 固定思考令牌预算"
   },
   "switchModelModal.description": {
-    "defaultMessage": "选择用于对话的提供商和模型。"
+    "defaultMessage": "选择用于对话的模型。"
   },
   "switchModelModal.extendedThinking": {
     "defaultMessage": "扩展思考"

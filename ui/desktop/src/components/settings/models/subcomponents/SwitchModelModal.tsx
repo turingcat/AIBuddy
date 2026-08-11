@@ -60,7 +60,7 @@ const i18n = defineMessages({
   },
   description: {
     id: 'switchModelModal.description',
-    defaultMessage: 'Select a provider and model to use for your conversations.',
+    defaultMessage: 'Select a model to use for your conversations.',
   },
   chooseModel: {
     id: 'switchModelModal.chooseModel',
