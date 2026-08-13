@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { stubLogin } from '../../stubLogin';
+import { login } from '../../login';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Card } from '../ui/card';
+import { Goose } from '../icons/Goose';
 
 /**
  * @author logic
  * @date 2026-08-11
- * 登录页：表单提交后调用桩登录，写入凭证并跳转主界面；阶段三替换 stubLogin 即接通真实服务端
+ * 登录页：表单提交后调用真实 OA 登录，写入凭证并跳转主界面
  */
 export default function LoginView() {
   const navigate = useNavigate();
@@ -19,7 +23,7 @@ export default function LoginView() {
     setSubmitting(true);
     setError(null);
     try {
-      const creds = await stubLogin(account, password);
+      const creds = await login(account, password);
       await window.electron.setLoginCredentials(creds);
       navigate('/', { replace: true });
     } catch (err) {
@@ -30,38 +34,37 @@ export default function LoginView() {
   };
 
   return (
-    <div className="h-screen w-full bg-background-default flex items-center justify-center">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4 p-6">
-        <h1 className="text-2xl font-light">登录 HeyBuddy</h1>
-        <label className="block">
-          <span className="text-text-muted">账号</span>
-          <input
-            className="block w-full mt-1 p-2 border rounded"
-            value={account}
-            onChange={(e) => setAccount(e.target.value)}
-            aria-label="account"
-          />
-        </label>
-        <label className="block">
-          <span className="text-text-muted">密码</span>
-          <input
-            type="password"
-            className="block w-full mt-1 p-2 border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-label="password"
-          />
-        </label>
-        {error && <p className="text-red-500">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full p-2 bg-primary text-white rounded"
-          aria-label="login"
-        >
-          {submitting ? '登录中…' : '登录'}
-        </button>
-      </form>
+    <div className="h-screen w-full bg-background-primary flex flex-col items-center justify-center px-4">
+      <Card className="w-full max-w-sm p-6">
+        <Goose className="size-10 mx-auto text-block-orange mb-4" />
+        <h1 className="text-xl font-light text-text-primary text-center mb-1">登录 HeyBuddy</h1>
+        <p className="text-text-secondary text-sm text-center mb-6">登录以开始使用</p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <label className="block">
+            <span className="text-text-secondary text-xs">登录名</span>
+            <Input
+              className="mt-1"
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+              aria-label="login-name"
+            />
+          </label>
+          <label className="block">
+            <span className="text-text-secondary text-xs">密码</span>
+            <Input
+              className="mt-1"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              aria-label="password"
+            />
+          </label>
+          {error && <p className="text-background-danger text-sm">{error}</p>}
+          <Button type="submit" className="w-full" disabled={submitting} aria-label="login">
+            {submitting ? '登录中…' : '登录'}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

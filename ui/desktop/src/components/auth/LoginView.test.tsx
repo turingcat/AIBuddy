@@ -7,18 +7,19 @@ vi.mock('../../acp/providers', () => ({ acpListProviderDetails: vi.fn().mockReso
 
 const setLoginCredentials = vi.fn();
 
-vi.mock('../../stubLogin', () => ({
-  stubLogin: vi.fn().mockResolvedValue({
-    token: 'stub-token',
-    baseUrl: 'https://stub-gw/v1',
-    apiKey: 'stub-key',
+vi.mock('../../login', () => ({
+  login: vi.fn().mockResolvedValue({
+    token: 'access-token-sample',
+    baseUrl: 'http://localhost:3001/v1',
+    apiKey: 'sk-sample-key',
   }),
 }));
 
 import LoginView from './LoginView';
+import { login } from '../../login';
 
-describe('LoginView 桩登录', () => {
-  it('提交后写凭证并跳转 /', async () => {
+describe('LoginView OA 登录', () => {
+  it('提交后以 login_name/password 调用 login，写凭证并跳转 /', async () => {
     window.electron.setLoginCredentials = setLoginCredentials;
     render(
       <MemoryRouter initialEntries={['/login']}>
@@ -28,14 +29,15 @@ describe('LoginView 桩登录', () => {
         </Routes>
       </MemoryRouter>,
     );
-    await userEvent.type(screen.getByLabelText(/account/i), 'alice');
-    await userEvent.type(screen.getByLabelText(/password/i), 'pw');
+    await userEvent.type(screen.getByLabelText(/login-name/i), 'seeyon6');
+    await userEvent.type(screen.getByLabelText(/password/i), 'test@1234');
     await userEvent.click(screen.getByRole('button', { name: /login/i }));
     await waitFor(() => {
+      expect(login).toHaveBeenCalledWith('seeyon6', 'test@1234');
       expect(setLoginCredentials).toHaveBeenCalledWith({
-        token: 'stub-token',
-        baseUrl: 'https://stub-gw/v1',
-        apiKey: 'stub-key',
+        token: 'access-token-sample',
+        baseUrl: 'http://localhost:3001/v1',
+        apiKey: 'sk-sample-key',
       });
       expect(screen.getByText('main')).toBeInTheDocument();
     });

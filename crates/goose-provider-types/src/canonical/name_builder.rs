@@ -204,6 +204,10 @@ fn infer_provider_from_model(model: &str) -> Option<&'static str> {
         return Some("deepseek");
     }
 
+    if model_lower.contains("glm") {
+        return Some("zai");
+    }
+
     if model_lower.contains("qwen") {
         return Some("qwen");
     }

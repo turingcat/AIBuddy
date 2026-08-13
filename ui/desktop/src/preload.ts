@@ -183,6 +183,8 @@ export type ElectronAPI = {
   isLoggedIn: () => Promise<boolean>;
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
+  loginViaOA: (loginName: string, password: string) => Promise<LoginCredentials>;
+  listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
 };
 
 type AppConfigAPI = {
@@ -345,6 +347,9 @@ const electronAPI: ElectronAPI = {
   setLoginCredentials: (creds: LoginCredentials) =>
     ipcRenderer.invoke('set-login-credentials', creds),
   clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
+  loginViaOA: (loginName: string, password: string) =>
+    ipcRenderer.invoke('login-via-oa', loginName, password),
+  listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
 };
 
 function getAppLocale(): unknown {

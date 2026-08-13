@@ -27,7 +27,7 @@ import os from 'node:os';
 import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
-import { resolvePredefinedModels, type PredefinedModel } from './bundledConfig';
+import { authConfig } from './authConfig';
 import {
   readCredentials,
   writeCredentials,
@@ -856,7 +856,6 @@ const parseArgs = () => {
 interface BundledConfig {
   defaultProvider?: string;
   defaultModel?: string;
-  predefinedModels?: PredefinedModel[];
   version?: string;
 }
 
@@ -867,12 +866,11 @@ const getBundledConfig = (): BundledConfig => {
   return {
     defaultProvider: process.env.GOOSE_DEFAULT_PROVIDER,
     defaultModel: process.env.GOOSE_DEFAULT_MODEL,
-    predefinedModels: resolvePredefinedModels(process.env.GOOSE_PREDEFINED_MODELS),
     version: process.env.GOOSE_VERSION,
   };
 };
 
-const { defaultProvider, defaultModel, predefinedModels, version } = getBundledConfig();
+const { defaultProvider, defaultModel, version } = getBundledConfig();
 
 const GENERATED_SECRET = crypto.randomBytes(32).toString('hex');
 
@@ -958,7 +956,6 @@ const getExternalBackendForCsp = (settings: Settings) => {
 let appConfig = {
   GOOSE_DEFAULT_PROVIDER: defaultProvider,
   GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PREDEFINED_MODELS: predefinedModels,
   GOOSE_PATH_ROOT: sanitizeGoosePathRoot(process.env),
   GOOSE_WORKING_DIR: '',
   // Start with the env-var override; the OS region locale is filled in after app.ready
@@ -1149,6 +1146,7 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
+    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE));
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
       gooseServeResult = await startGooseServe({
@@ -1157,7 +1155,7 @@ const createChat = async (
         tls: true,
         env: {
           GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE)),
+          ...heyBuddyEnv,
         },
         loginShellPath,
         isPackaged: app.isPackaged,
@@ -1977,6 +1975,50 @@ ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
 });
 ipcMain.handle('clear-login-credentials', () => {
   clearCredentials(CREDENTIALS_FILE);
+});
+
+// 登录走主进程 fetch：绕开 renderer 的 CSP（connect-src 白名单 + upgrade-insecure-requests）
+// @author logic
+// @date 2026-08-12
+ipcMain.handle('login-via-oa', async (_event, loginName: string, password: string) => {
+  const res = await net.fetch(`${authConfig.apiBaseUrl}/api/user/login/oa`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ login_name: loginName, password }),
+  });
+  const body = await res.json();
+  if (!body.success) {
+    throw new Error(body.message || '登录失败');
+  }
+  const data = body.data;
+  return {
+    token: data.access_token,
+    baseUrl: data.base_url,
+    apiKey: data.api_key,
+  } as LoginCredentials;
+});
+
+// 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
+// @author logic
+// @date 2026-08-12
+ipcMain.handle('list-models-via-api', async () => {
+  const creds = readCredentials(CREDENTIALS_FILE);
+  if (!creds) return [];
+  try {
+    const res = await net.fetch(`${creds.baseUrl}/models`, {
+      headers: { Authorization: `Bearer ${creds.apiKey}` },
+    });
+    const body = await res.json();
+    return (body.data ?? []).map((m: { id: string }) => ({
+      id: m.id,
+      name: m.id,
+      contextLimit: null,
+      reasoning: null,
+    }));
+  } catch (e) {
+    log.error(`[HeyBuddy] list-models-via-api failed: ${e}`);
+    return [];
+  }
 });
 
 ipcMain.handle('get-secret-key', (event) => {

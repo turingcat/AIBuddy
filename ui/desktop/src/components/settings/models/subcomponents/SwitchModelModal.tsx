@@ -17,7 +17,6 @@ import { acpReadThinkingEffort, acpSaveThinkingEffort } from '../../../../acp/pr
 import { useModelAndProvider } from '../../../ModelAndProviderContext';
 import type { View } from '../../../../utils/navigationUtils';
 import Model, { fetchModelReasoning } from '../modelInterface';
-import { getPredefinedModelsFromEnv } from '../predefinedModelsUtils';
 import type { ThinkingEffort } from '../../../../types/providers';
 import { trackModelChanged } from '../../../../utils/analytics';
 
@@ -157,7 +156,7 @@ export const SwitchModelModal = ({
     { value: 'max', label: intl.formatMessage(i18n.claudeEffortMax) },
   ];
 
-  const { changeModel, currentModel: configModel } = useModelAndProvider();
+  const { changeModel, currentModel: configModel, currentProvider } = useModelAndProvider();
   // Use session-specific model if available, otherwise fall back to config default
   const currentModel = sessionModel ?? configModel;
   const [validationErrors, setValidationErrors] = useState({ model: '' });
@@ -257,8 +256,7 @@ export const SwitchModelModal = ({
   // Separate effect so it re-runs when currentModel loads asynchronously.
   useEffect(() => {
     if (!currentModel) return;
-    const models = getPredefinedModelsFromEnv();
-    const matchingModel = models.find((m) => m.name === currentModel);
+    const matchingModel = predefinedModels.find((m) => m.name === currentModel);
     if (matchingModel) {
       setSelectedPredefinedModel(matchingModel);
       resolveSelectedModelReasoning(
@@ -267,12 +265,29 @@ export const SwitchModelModal = ({
         matchingModel.reasoning
       );
     }
-  }, [currentModel, resolveSelectedModelReasoning]);
+  }, [currentModel, predefinedModels, resolveSelectedModelReasoning]);
 
+  // 模型列表数据源：主进程直接 fetch new-api /v1/models（绕过 goose inventory refresh 依赖）。
+  // @author logic
+  // @date 2026-08-12
   useEffect(() => {
-    const models = getPredefinedModelsFromEnv();
-    setPredefinedModels(models);
-  }, []);
+    let cancelled = false;
+    const load = async () => {
+      const raw = await window.electron.listModelsViaApi();
+      if (cancelled) return;
+      const mapped = raw.map((m) => ({
+        name: m.id,
+        provider: currentProvider ?? 'heybuddy',
+        context_limit: m.contextLimit ?? undefined,
+        reasoning: m.reasoning ?? undefined,
+      }));
+      setPredefinedModels(mapped);
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentProvider]);
 
   const handlePredefinedModelChange = (model: Model) => {
     setSelectedPredefinedModel(model);

@@ -68,6 +68,16 @@ export async function acpListProviderModels(providerId: string) {
   return entries.find((e) => e.providerId === providerId)?.models ?? [];
 }
 
+// 主动触发后端刷新指定 provider 的 inventory（GET /v1/models 重建 SQLite 快照）。
+// GooseExtClient 类型未暴露该 unstable 方法，用类型断言调用 generated client。
+export async function acpRefreshProviderInventory(providerId: string): Promise<void> {
+  const client = await getAcpClient();
+  const goose = client.goose as {
+    providersInventoryRefresh_unstable: (params: { providerIds: string[] }) => Promise<unknown>;
+  };
+  await goose.providersInventoryRefresh_unstable({ providerIds: [providerId] });
+}
+
 export async function acpListProviderCatalogEntries(
   format?: string
 ): Promise<ProviderTemplateCatalogEntryDto[]> {

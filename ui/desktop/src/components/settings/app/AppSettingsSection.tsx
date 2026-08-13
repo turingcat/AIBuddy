@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import { defineMessages, useIntl } from '../../../i18n';
 import { Switch } from '../../ui/switch';
 import { Button } from '../../ui/button';
@@ -295,7 +296,17 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
     }
   };
 
+  const navigate = useNavigate();
   const intl = useIntl();
+
+  // 退出登录：清本地凭证并回到登录页
+  // @author logic
+  // @date 2026-08-12
+  const handleLogout = async () => {
+    if (!window.confirm('确定退出登录吗？')) return;
+    await window.electron.clearLoginCredentials();
+    navigate('/login', { replace: true });
+  };
   const selectedLanguage =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ?? LANGUAGE_OPTIONS[0];
 
@@ -540,6 +551,19 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
           </Card>
         </div>
       )}
+
+      {/* 账户：退出登录 @author logic @date 2026-08-12 */}
+      <Card className="rounded-lg">
+        <CardHeader className="pb-0">
+          <CardTitle className="mb-1">账户</CardTitle>
+          <CardDescription>退出当前登录的 HeyBuddy 账号</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4 px-4">
+          <Button variant="secondary" size="sm" onClick={handleLogout}>
+            退出登录
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Notification Instructions Modal */}
       <Dialog

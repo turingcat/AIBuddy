@@ -11,5 +11,7 @@ export function buildHeyBuddyEnv(creds: LoginCredentials | null): Record<string,
   return {
     HEYBUDDY_BASE_URL: creds.baseUrl,
     HEYBUDDY_API_KEY: creds.apiKey,
+    // 强制 active provider 为 heybuddy，覆盖 config.yaml 里残留的旧 active_provider
+    GOOSE_PROVIDER: 'heybuddy',
   };
 }
