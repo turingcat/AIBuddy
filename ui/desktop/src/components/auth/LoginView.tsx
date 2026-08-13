@@ -39,7 +39,7 @@ export default function LoginView() {
       <Card className="w-full max-w-sm p-6">
         <Goose className="size-10 mx-auto text-block-orange mb-4" />
         <h1 className="text-xl font-light text-text-primary text-center mb-1">登录 HeyBuddy</h1>
-        <p className="text-text-secondary text-sm text-center mb-6">登录以开始使用</p>
+        <p className="text-text-secondary text-sm text-center mb-6">请使用公司OA登录</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
             <span className="text-text-secondary text-xs">登录名</span>
