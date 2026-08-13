@@ -6,6 +6,7 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 vi.mock('../../acp/providers', () => ({ acpListProviderDetails: vi.fn().mockResolvedValue([]) }));
 
 const setLoginCredentials = vi.fn();
+const restartApp = vi.fn();
 
 vi.mock('../../login', () => ({
   login: vi.fn().mockResolvedValue({
@@ -19,8 +20,9 @@ import LoginView from './LoginView';
 import { login } from '../../login';
 
 describe('LoginView OA 登录', () => {
-  it('提交后以 login_name/password 调用 login，写凭证并跳转 /', async () => {
+  it('提交后以 login_name/password 调用 login，写凭证并重启应用', async () => {
     window.electron.setLoginCredentials = setLoginCredentials;
+    window.electron.restartApp = restartApp;
     render(
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
@@ -39,7 +41,7 @@ describe('LoginView OA 登录', () => {
         baseUrl: 'http://localhost:3001/v1',
         apiKey: 'sk-sample-key',
       });
-      expect(screen.getByText('main')).toBeInTheDocument();
+      expect(restartApp).toHaveBeenCalled();
     });
   });
 });

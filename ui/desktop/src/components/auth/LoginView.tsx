@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { login } from '../../login';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -9,10 +8,9 @@ import { Goose } from '../icons/Goose';
 /**
  * @author logic
  * @date 2026-08-11
- * 登录页：表单提交后调用真实 OA 登录，写入凭证并跳转主界面
+ * 登录页：表单提交后调用真实 OA 登录，写入凭证并重启应用让新凭证生效
  */
 export default function LoginView() {
-  const navigate = useNavigate();
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +23,10 @@ export default function LoginView() {
     try {
       const creds = await login(account, password);
       await window.electron.setLoginCredentials(creds);
-      navigate('/', { replace: true });
+      // 重启整个应用，让新凭证随全新 goose serve 子进程生效（凭证是 spawn 时固定的环境变量）
+      // @author logic
+      // @date 2026-08-13
+      window.electron.restartApp();
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {

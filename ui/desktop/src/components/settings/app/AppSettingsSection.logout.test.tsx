@@ -12,6 +12,7 @@ vi.mock('./TelemetrySettings', () => ({ default: () => null }));
 vi.mock('./UpdateSection', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();
+const restartApp = vi.fn();
 
 function renderWith(ui: React.ReactElement) {
   return render(
@@ -31,6 +32,7 @@ describe('AppSettingsSection 退出登录', () => {
     vi.clearAllMocks();
     (window as any).electron = {
       clearLoginCredentials,
+      restartApp,
       getSetting: vi.fn().mockResolvedValue(undefined),
       getMenuBarIconState: vi.fn().mockResolvedValue(true),
       getWakelockState: vi.fn().mockResolvedValue(true),
@@ -40,21 +42,21 @@ describe('AppSettingsSection 退出登录', () => {
     (window as any).appConfig = { get: vi.fn().mockReturnValue(undefined) };
   });
 
-  it('确认退出后清凭证并跳 /login', async () => {
+  it('确认退出后清凭证并重启应用', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderWith(<AppSettingsSection />);
     await userEvent.click(screen.getByRole('button', { name: /退出登录/ }));
     await waitFor(() => {
       expect(clearLoginCredentials).toHaveBeenCalled();
-      expect(screen.getByText('login page')).toBeInTheDocument();
+      expect(restartApp).toHaveBeenCalled();
     });
   });
 
-  it('取消确认则不清凭证、不跳转', async () => {
+  it('取消确认则不清凭证、不重启', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderWith(<AppSettingsSection />);
     await userEvent.click(screen.getByRole('button', { name: /退出登录/ }));
     expect(clearLoginCredentials).not.toHaveBeenCalled();
-    expect(screen.queryByText('login page')).not.toBeInTheDocument();
+    expect(restartApp).not.toHaveBeenCalled();
   });
 });

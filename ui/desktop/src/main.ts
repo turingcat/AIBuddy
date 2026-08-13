@@ -3004,8 +3004,11 @@ async function appMain() {
     }
   });
 
-  // Handle app restart
-  ipcMain.on('restart-app', () => {
+  // 重启前先清理 goose serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
+  // @author logic
+  // @date 2026-08-13
+  ipcMain.on('restart-app', async () => {
+    await gooseServeLeases.cleanupAll();
     app.relaunch();
     app.exit(0);
   });

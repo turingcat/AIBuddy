@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router';
 import { defineMessages, useIntl } from '../../../i18n';
 import { Switch } from '../../ui/switch';
 import { Button } from '../../ui/button';
@@ -296,16 +295,15 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
     }
   };
 
-  const navigate = useNavigate();
   const intl = useIntl();
 
-  // 退出登录：清本地凭证并回到登录页
+  // 退出登录：清本地凭证并重启应用，让旧凭证从 goose serve 环境变量中清除
   // @author logic
-  // @date 2026-08-12
+  // @date 2026-08-13
   const handleLogout = async () => {
     if (!window.confirm('确定退出登录吗？')) return;
     await window.electron.clearLoginCredentials();
-    navigate('/login', { replace: true });
+    window.electron.restartApp();
   };
   const selectedLanguage =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ?? LANGUAGE_OPTIONS[0];
