@@ -14,6 +14,17 @@ vi.mock('./UpdateSection', () => ({ default: () => null }));
 const clearLoginCredentials = vi.fn();
 const restartApp = vi.fn();
 
+const electronMock = {
+  clearLoginCredentials,
+  restartApp,
+  getSetting: vi.fn().mockResolvedValue(undefined),
+  getMenuBarIconState: vi.fn().mockResolvedValue(true),
+  getWakelockState: vi.fn().mockResolvedValue(true),
+  getDockIconState: vi.fn().mockResolvedValue(true),
+  platform: 'win32',
+};
+const appConfigMock = { get: vi.fn().mockReturnValue(undefined) };
+
 function renderWith(ui: React.ReactElement) {
   return render(
     <IntlProvider locale="en" onError={() => {}}>
@@ -30,16 +41,8 @@ function renderWith(ui: React.ReactElement) {
 describe('AppSettingsSection 退出登录', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (window as any).electron = {
-      clearLoginCredentials,
-      restartApp,
-      getSetting: vi.fn().mockResolvedValue(undefined),
-      getMenuBarIconState: vi.fn().mockResolvedValue(true),
-      getWakelockState: vi.fn().mockResolvedValue(true),
-      getDockIconState: vi.fn().mockResolvedValue(true),
-      platform: 'win32',
-    };
-    (window as any).appConfig = { get: vi.fn().mockReturnValue(undefined) };
+    (window as unknown as { electron: typeof electronMock }).electron = electronMock;
+    (window as unknown as { appConfig: typeof appConfigMock }).appConfig = appConfigMock;
   });
 
   it('确认退出后清凭证并重启应用', async () => {
