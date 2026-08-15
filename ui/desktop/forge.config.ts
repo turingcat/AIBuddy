@@ -84,6 +84,11 @@ module.exports = {
         },
       },
     },
+    // maker-squirrel 已移除：其 Update.exe 安装收尾会连 GitHub 下载卸载图标，网络受限时
+    // 安装窗口滞留约 85 秒；Windows 安装包改由 Inno Setup 生成（ui/desktop/heybuddy-setup.iss，
+    // 由根目录 build-windows.ps1 调用）。需要时可从 git 历史恢复本段。
+    // @author logic
+    // @date 2026-08-15
     {
       name: '@electron-forge/maker-deb',
       config: {
