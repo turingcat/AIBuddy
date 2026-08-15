@@ -319,18 +319,6 @@
   }
 }
 
-@keyframes wind {
-  0% {
-    transform: translate(0, 0);
-  }
-  99.99% {
-    transform: translate(-100%, 100%);
-  }
-  100% {
-    transform: translate(0, 0);
-  }
-}
-
 /* Non-blocking sidebar animations */
 .sidebar-item {
   /* Start hidden and positioned to the right */
@@ -408,11 +396,6 @@
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  /* Wind/rain animation in welcome logo */
-  [class*='animate-[wind'] {
-    animation: none !important;
   }
 
   /* Elements that use opacity-0 with appear animation need to be visible when animations are disabled */

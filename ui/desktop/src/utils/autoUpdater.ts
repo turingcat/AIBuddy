@@ -778,10 +778,10 @@ function updateTrayIcon(hasUpdate: boolean) {
   }
 
   const icon = nativeImage.createFromPath(iconPath);
-  if (process.platform === 'darwin') {
-    // Mark as template for macOS to handle dark/light mode
-    icon.setTemplateImage(true);
-  }
+  // 新品牌托盘图标为彩色 logo，不再标记为 template image：
+  // macOS 的 template 渲染会把彩色位图强制压成单色剪影
+  // @author logic
+  // @date 2026-08-14
   trayRef.setImage(icon);
 
   // Update tray menu when icon changes

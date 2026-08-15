@@ -1,20 +1,20 @@
 import React from 'react';
+import { cn } from '../../utils';
+import logoUrl from '../../images/logo.png';
 
-type Props = React.ComponentPropsWithoutRef<'svg'>;
+type Props = Omit<React.ComponentPropsWithoutRef<'img'>, 'src' | 'alt'>;
 
-export function Geese({ ...props }: Props) {
+// Geese 品牌图标：由内置 SVG 改为 logo.png 位图，默认 24x24
+// @author logic
+// @date 2026-08-14
+export function Geese({ className, ...props }: Props) {
   return (
-    <svg
-      width="35"
-      height="37"
-      viewBox="0 0 35 37"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <img
+      src={logoUrl}
+      alt=""
+      draggable={false}
+      className={cn('h-6 w-6', className)}
       {...props}
-    >
-      <rect y="0.5" width="35" height="36" rx="14" fill="#FF6B4A" />
-      <rect x="8" y="10" width="19" height="13" rx="5" fill="white" />
-      <path d="M13 23L13 27L17 23Z" fill="white" />
-    </svg>
+    />
   );
 }

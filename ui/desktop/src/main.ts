@@ -1228,6 +1228,23 @@ const createChat = async (
       defaultHeight: 800,
     });
 
+    // 窗口图标按平台选择文件；打包后位于 resources/images，开发时位于 src/images。
+    // 旧实现三平台统一指向 icon.icns，在 Windows/Linux 上无法解析，打包后相对路径
+    // 也落不到 extraResource 的实际位置，只会静默回退默认图标。
+    // @author logic
+    // @date 2026-08-14
+    const windowIconName =
+      process.platform === 'win32'
+        ? 'icon.ico'
+        : process.platform === 'darwin'
+          ? 'icon.icns'
+          : 'icon.png';
+    const windowIcon = [
+      path.join(process.resourcesPath, 'images', windowIconName),
+      path.join(process.cwd(), 'src', 'images', windowIconName),
+      path.join(__dirname, '..', 'images', windowIconName),
+    ].find((p) => fsSync.existsSync(p));
+
     mainWindow = new BrowserWindow({
       show: false,
       titleBarStyle: process.platform === 'darwin' ? 'hidden' : 'default',
@@ -1245,7 +1262,7 @@ const createChat = async (
       minWidth: 480,
       minHeight: 400,
       resizable: true,
-      icon: path.join(__dirname, '../images/icon.icns'),
+      icon: windowIcon,
       webPreferences: {
         spellcheck: settings.spellcheckEnabled ?? true,
         preload: path.join(__dirname, 'preload.js'),
