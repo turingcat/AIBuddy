@@ -28,6 +28,7 @@ import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
+import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
   writeCredentials,
@@ -1995,25 +1996,13 @@ ipcMain.handle('clear-login-credentials', () => {
 });
 
 // 登录走主进程 fetch：绕开 renderer 的 CSP（connect-src 白名单 + upgrade-insecure-requests）
+// 请求与错误处理逻辑在 oaLogin.ts（可单测）；以 result 模式返回而非抛异常，
+// 避免 Electron 给 IPC 异常加 "Error invoking remote method" 前缀
 // @author logic
 // @date 2026-08-12
-ipcMain.handle('login-via-oa', async (_event, loginName: string, password: string) => {
-  const res = await net.fetch(`${authConfig.apiBaseUrl}/api/user/login/oa`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login_name: loginName, password }),
-  });
-  const body = await res.json();
-  if (!body.success) {
-    throw new Error(body.message || '登录失败');
-  }
-  const data = body.data;
-  return {
-    token: data.access_token,
-    baseUrl: data.base_url,
-    apiKey: data.api_key,
-  } as LoginCredentials;
-});
+ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
+  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch)),
+);
 
 // 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
 // @author logic

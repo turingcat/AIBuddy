@@ -1,6 +1,7 @@
 import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
+import type { OaLoginResult } from './oaLogin';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
@@ -183,7 +184,7 @@ export type ElectronAPI = {
   isLoggedIn: () => Promise<boolean>;
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
-  loginViaOA: (loginName: string, password: string) => Promise<LoginCredentials>;
+  loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
   listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
 };
 
