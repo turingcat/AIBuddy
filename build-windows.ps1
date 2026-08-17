@@ -14,7 +14,9 @@ param(
     # electron 二进制镜像（@electron/get 不读 HTTPS_PROXY，直连 GitHub 拉校验文件会卡死）
     [string]$ElectronMirror = 'https://npmmirror.com/mirrors/electron/',
     # node 目录（默认本机 node 24.10.0，规避 node 24.16 与 electron-packager 的 packaging 静默退出 bug）
-    [string]$NodePath = 'C:\soft\node-v24.10.0-win-x64'
+    [string]$NodePath = 'C:\soft\node-v24.10.0-win-x64',
+    # 登录服务生产地址：烘焙进安装包主进程（开发模式 just run-ui 不经此脚本，仍默认 localhost:3001）
+    [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,6 +36,10 @@ if ($ElectronMirror) {
     $env:ELECTRON_BUILDER_BINARIES_MIRROR = $ElectronMirror
     Write-Host "已设置 ELECTRON_MIRROR：$ElectronMirror"
 }
+
+# 登录服务地址：vite 构建时经 define 烘焙进主进程产物，子进程（build-main.js / forge make）继承
+$env:HEYBUDDY_AUTH_API_BASE_URL = $AuthApiBaseUrl
+Write-Host "登录服务地址已设置：$AuthApiBaseUrl"
 
 # 使用指定 node（前置到 PATH），并用其 corepack 准备 pnpm
 if ($NodePath) {
