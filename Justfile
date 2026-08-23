@@ -32,12 +32,6 @@ release-windows:
 release-windows:
     @powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'rustup target add x86_64-pc-windows-msvc; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Write-Host "Windows executable created at ./target/x86_64-pc-windows-msvc/release/goose.exe"'
 
-# Build for Intel Mac
-release-intel:
-    @echo "Building release version for Intel Mac..."
-    cargo build --release --target x86_64-apple-darwin
-    @just copy-binary-intel
-
 copy-binary BUILD_MODE="release":
     @rm -f ./ui/desktop/src/bin/goosed
     @if [ -f ./target/{{BUILD_MODE}}/goose ]; then \
@@ -49,17 +43,6 @@ copy-binary BUILD_MODE="release":
         exit 1; \
     fi
 
-# Copy binary command for Intel build
-copy-binary-intel:
-    @rm -f ./ui/desktop/src/bin/goosed
-    @if [ -f ./target/x86_64-apple-darwin/release/goose ]; then \
-        echo "Copying Intel goose CLI binary to ui/desktop/src/bin..."; \
-        rm -f ./ui/desktop/src/bin/goose; \
-        cp -p ./target/x86_64-apple-darwin/release/goose ./ui/desktop/src/bin/; \
-    else \
-        echo "Intel goose CLI binary not found."; \
-        exit 1; \
-    fi
 
 # Copy Windows binary command on a Windows host
 [unix]
@@ -205,13 +188,6 @@ make-ui-windows:
     @just release-windows
     @just copy-binary-windows
     @powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'Set-Location ui/desktop; $env:ELECTRON_PLATFORM="win32"; node scripts/prepare-platform-binaries.js; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; pnpm run make --platform=win32 --arch=x64; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; Write-Host "Windows package build complete!"'
-
-# make GUI with latest binary
-make-ui-intel:
-    @just release-intel
-    cd ui/desktop && pnpm run bundle:intel
-
-
 
 # Run UI with debug build
 run-dev:

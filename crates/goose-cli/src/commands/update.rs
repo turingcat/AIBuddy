@@ -18,10 +18,7 @@ fn asset_name() -> &'static str {
     {
         "goose-aarch64-apple-darwin.tar.bz2"
     }
-    #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-    {
-        "goose-x86_64-apple-darwin.tar.bz2"
-    }
+
     #[cfg(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu"))]
     {
         "goose-x86_64-unknown-linux-gnu.tar.bz2"

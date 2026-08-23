@@ -11,7 +11,7 @@
   };
 
   outputs = { self, nixpkgs, flake-utils, rust-overlay }:
-    flake-utils.lib.eachDefaultSystem (system:
+    flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ] (system:
       let
         overlays = [ rust-overlay.overlays.default ];
         pkgs = import nixpkgs { inherit system overlays; };
@@ -54,13 +54,11 @@
             rustyV8Target = {
               "x86_64-linux" = "x86_64-unknown-linux-gnu";
               "aarch64-linux" = "aarch64-unknown-linux-gnu";
-              "x86_64-darwin" = "x86_64-apple-darwin";
               "aarch64-darwin" = "aarch64-apple-darwin";
             }.${system} or (throw "Unsupported system: ${system}");
             rustyV8Sha256 = {
               "x86_64-linux" = "sha256-chV1PAx40UH3Ute5k3lLrgfhih39Rm3KqE+mTna6ysE=";
               "aarch64-linux" = "sha256-4IivYskhUSsMLZY97+g23UtUYh4p5jk7CzhMbMyqXyY=";
-              "x86_64-darwin" = "sha256-1jUuC+z7saQfPYILNyRJanD4+zOOhXU2ac/LFoytwho=";
               "aarch64-darwin" = "sha256-yHa1eydVCrfYGgrZANbzgmmf25p7ui1VMas2A7BhG6k=";
             }.${system};
           in pkgs.fetchurl {

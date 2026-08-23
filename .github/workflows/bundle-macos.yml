@@ -1,14 +1,6 @@
 on:
   workflow_dispatch:
     inputs:
-      target:
-        description: 'macOS Rust target'
-        required: true
-        type: choice
-        default: aarch64-apple-darwin
-        options:
-          - aarch64-apple-darwin
-          - x86_64-apple-darwin
       signing:
         description: 'Whether to perform signing and notarization'
         required: false
@@ -30,10 +22,6 @@ on:
         description: 'Version to set for the build'
         required: false
         default: ""
-        type: string
-      target:
-        description: 'macOS Rust target: aarch64-apple-darwin or x86_64-apple-darwin'
-        required: true
         type: string
       signing:
         description: 'Whether to perform signing and notarization'
@@ -61,12 +49,15 @@ on:
         type: string
         default: ''
 
-name: "Bundle CLI and Desktop (macOS)"
+name: "Bundle CLI and Desktop (macOS ARM64)"
+
+env:
+  MACOS_TARGET: aarch64-apple-darwin
 
 jobs:
   build-goose:
-    name: Build Goose (macOS)
-    runs-on: ${{ inputs.target == 'x86_64-apple-darwin' && 'macos-15-intel' || 'macos-latest' }}
+    name: Build Goose (macOS ARM64)
+    runs-on: macos-latest
     env:
       MACOSX_DEPLOYMENT_TARGET: "12.0"
     permissions:
@@ -80,7 +71,6 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           INPUT_REF: ${{ inputs.ref }}
           INPUT_VERSION: ${{ inputs.version }}
-          INPUT_TARGET: ${{ inputs.target }}
           INPUT_SIGNING: ${{ inputs.signing }}
           INPUT_PACKAGE_CLI: ${{ inputs.package_cli }}
           INPUT_PACKAGE_DESKTOP: ${{ inputs.package_desktop }}
@@ -94,7 +84,7 @@ jobs:
           echo "=== Input Parameters ==="
           echo "Build ref: ${INPUT_REF:-<default branch>}"
           echo "Version: ${INPUT_VERSION:-not set}"
-          echo "Target: ${INPUT_TARGET}"
+          echo "Target: ${MACOS_TARGET}"
           echo "Signing: ${INPUT_SIGNING:-false}"
           echo "Package CLI: ${INPUT_PACKAGE_CLI:-false}"
           echo "Package Desktop: ${INPUT_PACKAGE_DESKTOP:-false}"
@@ -131,34 +121,30 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
         with:
-          key: ${{ inputs.target == 'x86_64-apple-darwin' && 'intel-macos-deployment-target-12' || 'macos-deployment-target-12' }}
+          key: macos-arm64-deployment-target-12
 
       - name: Build goose
-        env:
-          TARGET: ${{ inputs.target }}
         run: |
           source ./bin/activate-hermit
-          rustup target add "$TARGET"
-          cargo build --release -p goose-cli --bin goose --target "$TARGET"
+          rustup target add "$MACOS_TARGET"
+          cargo build --release -p goose-cli --bin goose --target "$MACOS_TARGET"
 
       - name: Prepare binary artifact
-        env:
-          TARGET: ${{ inputs.target }}
         run: |
           mkdir -p artifacts
-          cp "target/${TARGET}/release/goose" "artifacts/internal-goose-${TARGET}"
+          cp "target/${MACOS_TARGET}/release/goose" "artifacts/internal-goose-${MACOS_TARGET}"
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-${{ inputs.target }}
-          path: artifacts/internal-goose-${{ inputs.target }}
+          name: internal-goose-aarch64-apple-darwin
+          path: artifacts/internal-goose-aarch64-apple-darwin
           if-no-files-found: error
           retention-days: 1
           overwrite: true
 
   package-cli:
-    name: Package CLI (macOS)
+    name: Package CLI (macOS ARM64)
     if: ${{ inputs.package_cli }}
     needs: build-goose
     runs-on: ubuntu-latest
@@ -167,34 +153,32 @@ jobs:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-${{ inputs.target }}
+          name: internal-goose-aarch64-apple-darwin
           path: package
 
       - name: Package CLI
-        env:
-          TARGET: ${{ inputs.target }}
         run: |
-          mv "package/internal-goose-${TARGET}" package/goose
+          mv "package/internal-goose-${MACOS_TARGET}" package/goose
           chmod +x package/goose
           mkdir -p dist
-          tar -cjf "dist/goose-${TARGET}.tar.bz2" -C package .
-          tar -czf "dist/goose-${TARGET}.tar.gz" -C package .
+          tar -cjf "dist/goose-${MACOS_TARGET}.tar.bz2" -C package .
+          tar -czf "dist/goose-${MACOS_TARGET}.tar.gz" -C package .
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: goose-${{ inputs.target }}
+          name: goose-aarch64-apple-darwin
           path: |
-            dist/goose-${{ inputs.target }}.tar.bz2
-            dist/goose-${{ inputs.target }}.tar.gz
+            dist/goose-aarch64-apple-darwin.tar.bz2
+            dist/goose-aarch64-apple-darwin.tar.gz
           if-no-files-found: error
           overwrite: true
 
   package-desktop:
-    name: Package Desktop (macOS)
+    name: Package Desktop (macOS ARM64)
     if: ${{ inputs.package_desktop }}
     needs: build-goose
-    runs-on: ${{ inputs.target == 'x86_64-apple-darwin' && 'macos-15-intel' || 'macos-latest' }}
+    runs-on: macos-latest
     environment: ${{ inputs.environment || '' }}
     env:
       MACOSX_DEPLOYMENT_TARGET: "12.0"
@@ -223,15 +207,13 @@ jobs:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-${{ inputs.target }}
+          name: internal-goose-aarch64-apple-darwin
           path: ui/desktop/src/bin
 
       - name: Prepare desktop backend
-        env:
-          TARGET: ${{ inputs.target }}
         run: |
           rm -f ui/desktop/src/bin/goose
-          mv "ui/desktop/src/bin/internal-goose-${TARGET}" ui/desktop/src/bin/goose
+          mv "ui/desktop/src/bin/internal-goose-${MACOS_TARGET}" ui/desktop/src/bin/goose
           chmod +x ui/desktop/src/bin/goose
           ls -la ui/desktop/src/bin/
 
@@ -241,17 +223,12 @@ jobs:
           path: |
             ui/desktop/node_modules
             .hermit/node/cache
-          key: ${{ inputs.target == 'x86_64-apple-darwin' && 'intel-pnpm-cache-v1' || 'macos-pnpm-cache-v1' }}-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          key: macos-arm64-pnpm-cache-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ inputs.target == 'x86_64-apple-darwin' && 'intel-pnpm-cache-v1' || 'macos-pnpm-cache-v1' }}-${{ runner.os }}-
+            macos-arm64-pnpm-cache-v1-${{ runner.os }}-
 
       - name: Install dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
-        working-directory: ui/desktop
-
-      - name: Configure for Intel build
-        if: ${{ inputs.target == 'x86_64-apple-darwin' }}
-        run: jq '.build.mac.target[0].arch = "x64"' package.json > package.json.tmp && mv package.json.tmp package.json
         working-directory: ui/desktop
 
       - name: Import Apple signing certificate
@@ -269,13 +246,12 @@ jobs:
           APPLE_ID: ${{ inputs.signing && secrets.APPLE_ID || '' }}
           APPLE_ID_PASSWORD: ${{ inputs.signing && secrets.APPLE_ID_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ inputs.signing && secrets.APPLE_TEAM_ID || '' }}
-          BUNDLE_SCRIPT: ${{ inputs.target == 'x86_64-apple-darwin' && 'bundle:intel' || 'bundle:default' }}
         run: |
           source ../../bin/activate-hermit
           attempt=0
           max_attempts=2
           until [ $attempt -ge $max_attempts ]; do
-            pnpm run "$BUNDLE_SCRIPT" && break
+            pnpm run bundle:default && break
             attempt=$((attempt + 1))
             echo "Attempt $attempt failed. Retrying..."
             sleep 5
@@ -288,7 +264,7 @@ jobs:
 
       - name: Verify macOS updater resources
         env:
-          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'out/HeyBuddy-darwin-x64/HeyBuddy.app' || 'out/HeyBuddy-darwin-arm64/HeyBuddy.app' }}
+          APP_PATH: out/HeyBuddy-darwin-arm64/HeyBuddy.app
         run: node scripts/verify-mac-update-resources.js "$APP_PATH"
         working-directory: ui/desktop
 
@@ -308,14 +284,14 @@ jobs:
         id: upload-app-bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: ${{ inputs.target == 'x86_64-apple-darwin' && 'Goose-darwin-x64' || 'Goose-darwin-arm64' }}
-          path: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/HeyBuddy-darwin-x64/HeyBuddy_intel_mac.zip' || 'ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.zip' }}
+          name: Goose-darwin-arm64
+          path: ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.zip
           if-no-files-found: error
           overwrite: true
 
       - name: Quick launch test (macOS)
         env:
-          APP_PATH: ${{ inputs.target == 'x86_64-apple-darwin' && 'ui/desktop/out/HeyBuddy-darwin-x64/HeyBuddy.app' || 'ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.app' }}
+          APP_PATH: ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.app
         run: |
           xattr -cr "$APP_PATH"
           echo "Opening HeyBuddy.app..."

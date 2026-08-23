@@ -3,7 +3,6 @@ import { dirname, join } from "node:path";
 
 const PLATFORMS: Record<string, string> = {
   "darwin-arm64": "@aaif/goose-binary-darwin-arm64",
-  "darwin-x64": "@aaif/goose-binary-darwin-x64",
   "linux-arm64": "@aaif/goose-binary-linux-arm64",
   "linux-x64": "@aaif/goose-binary-linux-x64",
   "win32-x64": "@aaif/goose-binary-win32-x64",

@@ -68,10 +68,6 @@ function writeManifest({ directory, version }) {
       sourceName: 'HeyBuddy.zip',
       updateName: 'HeyBuddy-darwin-arm64.zip',
     },
-    {
-      sourceName: 'HeyBuddy_intel_mac.zip',
-      updateName: 'HeyBuddy-darwin-x64.zip',
-    },
   ];
 
   const entries = files.map(({ sourceName, updateName }) => {

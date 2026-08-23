@@ -8,7 +8,7 @@ set -eu
 # and installs it to your system.
 #
 # Supported OS: macOS (darwin), Linux, Windows (MSYS2/Git Bash/WSL), Android (Termux)
-# Supported Architectures: x86_64, arm64
+# Supported Architectures: macOS arm64; Linux arm64/x86_64; Windows x86_64
 #
 # Usage:
 #   curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
@@ -144,6 +144,11 @@ case "$ARCH" in
     exit 1
     ;;
 esac
+
+if [ "$OS" = "darwin" ] && [ "$ARCH" != "aarch64" ]; then
+  echo "Error: macOS currently only supports Apple Silicon (arm64)."
+  exit 1
+fi
 
 detect_linux_musl() {
   if [[ "$OSTYPE" == "linux-musl"* ]]; then
