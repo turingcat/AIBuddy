@@ -52,7 +52,6 @@
   },
   "optionalDependencies": {
     "@aaif/goose-binary-darwin-arm64": "workspace:*",
-    "@aaif/goose-binary-darwin-x64": "workspace:*",
     "@aaif/goose-binary-linux-arm64": "workspace:*",
     "@aaif/goose-binary-linux-x64": "workspace:*",
     "@aaif/goose-binary-win32-x64": "workspace:*"

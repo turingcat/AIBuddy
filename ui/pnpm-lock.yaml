@@ -337,8 +337,6 @@ importers:
 
   goose-binary/goose-binary-darwin-arm64: {}
 
-  goose-binary/goose-binary-darwin-x64: {}
-
   goose-binary/goose-binary-linux-arm64: {}
 
   goose-binary/goose-binary-linux-x64: {}
@@ -379,9 +377,6 @@ importers:
       '@aaif/goose-binary-darwin-arm64':
         specifier: workspace:*
         version: link:../goose-binary/goose-binary-darwin-arm64
-      '@aaif/goose-binary-darwin-x64':
-        specifier: workspace:*
-        version: link:../goose-binary/goose-binary-darwin-x64
       '@aaif/goose-binary-linux-arm64':
         specifier: workspace:*
         version: link:../goose-binary/goose-binary-linux-arm64

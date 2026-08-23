@@ -79,7 +79,6 @@ Platform-specific npm packages for the `goose` binary are located in
 | Package | Platform |
 |---------|----------|
 | `@aaif/goose-binary-darwin-arm64` | macOS Apple Silicon |
-| `@aaif/goose-binary-darwin-x64` | macOS Intel |
 | `@aaif/goose-binary-linux-arm64` | Linux ARM64 |
 | `@aaif/goose-binary-linux-x64` | Linux x64 |
 | `@aaif/goose-binary-win32-x64` | Windows x64 |

@@ -102,12 +102,7 @@ export class GitHubUpdater {
       log.info(`GitHubUpdater: Looking for asset for platform: ${platform}, arch: ${arch}`);
 
       if (platform === 'darwin') {
-        // macOS
-        if (arch === 'arm64') {
-          assetName = `${this.bundleName}.zip`;
-        } else {
-          assetName = `${this.bundleName}_intel_mac.zip`;
-        }
+        assetName = `${this.bundleName}.zip`;
       } else if (platform === 'win32') {
         // Windows - for future support
         assetName = `${this.bundleName}-win32-x64.zip`;

@@ -18,7 +18,7 @@ set -euo pipefail
 #
 # Requires:
 #   - Docker with buildx (linux/amd64 + linux/arm64)
-#   - Rust toolchain with aarch64-apple-darwin and x86_64-apple-darwin targets
+#   - Rust toolchain with the aarch64-apple-darwin target
 #   - pnpm
 #   - NPM_PUBLISH_TOKEN env var (or ~/.npm-publish-token file)
 
@@ -66,7 +66,6 @@ build_macos() {
 }
 
 build_macos darwin-arm64 aarch64-apple-darwin
-build_macos darwin-x64   x86_64-apple-darwin
 
 # ---------------------------------------------------------------------------
 # Step 2: Build Linux binaries in Docker on native arch
@@ -156,7 +155,7 @@ build_linux_docker linux-arm64 linux/arm64
 # ---------------------------------------------------------------------------
 echo ""
 echo "==> Verifying binaries"
-for plat in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+for plat in darwin-arm64 linux-arm64 linux-x64; do
   bin="${NATIVE_DIR}/goose-binary-${plat}/bin/goose"
   if [[ ! -f "${bin}" ]]; then
     echo "    ❌ MISSING: ${bin}"
@@ -212,7 +211,7 @@ echo "==> Publishing @aaif/goose-sdk"
 (cd "${REPO_ROOT}/ui" && pnpm publish "${PUBLISH_ARGS[@]}" acp)
 
 echo "==> Publishing native binary packages"
-for plat in darwin-arm64 darwin-x64 linux-arm64 linux-x64; do
+for plat in darwin-arm64 linux-arm64 linux-x64; do
   pkg="goose-binary/goose-binary-${plat}"
   echo "    Publishing @aaif/goose-binary-${plat}"
   (cd "${REPO_ROOT}/ui" && pnpm publish "${PUBLISH_ARGS[@]}" "${pkg}")

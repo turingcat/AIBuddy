@@ -24,19 +24,12 @@ name: "Reusable workflow to build CLI"
 
 jobs:
   build-cli-macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - x86_64-apple-darwin
-          - aarch64-apple-darwin
     uses: ./.github/workflows/bundle-macos.yml
     permissions:
       contents: read
     with:
       version: ${{ inputs.version }}
       ref: ${{ inputs.ref }}
-      target: ${{ matrix.target }}
       signing: false
       package_cli: true
       package_desktop: false
