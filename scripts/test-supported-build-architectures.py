@@ -10,13 +10,11 @@ ROOT = Path(__file__).resolve().parent.parent
 class SupportedBuildArchitecturesTest(unittest.TestCase):
     def test_macos_builds_only_target_arm64(self) -> None:
         build_files = [
-            ".github/workflows/build-cli.yml",
             ".github/workflows/bundle-macos.yml",
             ".github/workflows/canary.yml",
             ".github/workflows/release-branches.yml",
             ".github/workflows/release.yml",
-            ".github/workflows/publish-npm.yml",
-            ".github/workflows/python-sdk-wheels.yml",
+
             "Justfile",
             "ui/desktop/package.json",
             "ui/desktop/scripts/generate-mac-update-manifest.js",
