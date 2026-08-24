@@ -125,6 +125,27 @@
   "backButton.back": {
     "defaultMessage": "Back"
   },
+  "balanceWidget.loadFailed": {
+    "defaultMessage": "Balance load failed"
+  },
+  "balanceWidget.noPat": {
+    "defaultMessage": "Re-login to view balance"
+  },
+  "balanceWidget.refresh": {
+    "defaultMessage": "Refresh balance"
+  },
+  "balanceWidget.requests": {
+    "defaultMessage": "Requests: {count}"
+  },
+  "balanceWidget.unauthorized": {
+    "defaultMessage": "Login expired, please re-login"
+  },
+  "balanceWidget.updatedAt": {
+    "defaultMessage": "Updated {time}"
+  },
+  "balanceWidget.used": {
+    "defaultMessage": "Used: {value}"
+  },
   "baseChat.failedToLoadSession": {
     "defaultMessage": "Failed to Load Session"
   },

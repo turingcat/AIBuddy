@@ -2,6 +2,7 @@ import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
 import type { OaLoginResult } from './oaLogin';
+import type { BalanceResult } from './balance';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
@@ -185,6 +186,7 @@ export type ElectronAPI = {
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
   loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
+  getUserBalance: () => Promise<BalanceResult>;
   listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
 };
 
@@ -350,6 +352,7 @@ const electronAPI: ElectronAPI = {
   clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
   loginViaOA: (loginName: string, password: string) =>
     ipcRenderer.invoke('login-via-oa', loginName, password),
+  getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
   listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
 };
 

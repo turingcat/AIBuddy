@@ -14,6 +14,7 @@ import {
 import { AppEvents } from '../../constants/events';
 import { InlineEditText } from '../common/InlineEditText';
 import { SessionIndicators } from '../SessionIndicators';
+import { BalanceWidget } from './BalanceWidget';
 import { acpRenameSession, type SessionListItem } from '../../acp/sessions';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
 import { formatMessageTimestamp } from '../../utils/timeUtils';
@@ -400,6 +401,7 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
       </div>
 
       <div className="px-2 pt-2 pb-2 border-t border-border-secondary">
+        <BalanceWidget />
         <NavRow
           item={SETTINGS_NAV_ITEM}
           active={isActive(SETTINGS_NAV_ITEM.path)}

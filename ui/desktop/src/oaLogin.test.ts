@@ -55,6 +55,57 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
+  it('P1b: 响应携带 pat 时透传到凭证（供余额查询使用）', async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            access_token: 'access-token',
+            base_url: 'http://localhost:3001/v1',
+            api_key: 'sk-abc',
+            pat: 'pat-token',
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    const result = await performOaLogin(
+      'http://localhost:3001',
+      'seeyon6',
+      'test@1234',
+      mockFetch,
+    );
+
+    expect(result.pat).toBe('pat-token');
+  });
+
+  it('P10: 旧网关响应无 pat 字段时 pat 为 undefined（向后兼容）', async () => {
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          data: {
+            access_token: 'access-token',
+            base_url: 'http://localhost:3001/v1',
+            api_key: 'sk-abc',
+          },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    const result = await performOaLogin(
+      'http://localhost:3001',
+      'seeyon6',
+      'test@1234',
+      mockFetch,
+    );
+
+    expect(result.pat).toBeUndefined();
+  });
+
   it('P2: success=false 且带 message 时抛出服务端 message', async () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ success: false, message: '账号或密码错误' }), {

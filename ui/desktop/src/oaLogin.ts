@@ -8,7 +8,7 @@ import type { LoginCredentials } from './credentials';
  * 避免把网关纯文本响应（如 "default backend - 404"）的 SyntaxError 直接抛给渲染进程。
  */
 type OaLoginResponse =
-  | { success: true; data: { access_token: string; base_url: string; api_key: string } }
+  | { success: true; data: { access_token: string; base_url: string; api_key: string; pat?: string } }
   | { success: false; message?: string };
 
 // 结构化最小 fetch 类型：同时兼容全局 fetch 与 Electron 的 net.fetch
@@ -64,6 +64,7 @@ export async function performOaLogin(
     token: body.data.access_token,
     baseUrl: body.data.base_url,
     apiKey: body.data.api_key,
+    pat: body.data.pat,
   };
 }
 

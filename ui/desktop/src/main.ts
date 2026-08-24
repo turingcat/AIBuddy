@@ -35,6 +35,14 @@ import {
   clearCredentials,
   type LoginCredentials,
 } from './credentials';
+import {
+  fetchCurrencyWithCache,
+  fetchUserBalance,
+  runBalanceFetch,
+  type BalanceResult,
+  type CurrencyCacheState,
+} from './balance';
+import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { startGooseServe } from './gooseServe';
 import { buildHeyBuddyEnv } from './gooseServeEnv';
 import { getLoginShellPath } from './loginShellPath';
@@ -2003,6 +2011,33 @@ ipcMain.handle('clear-login-credentials', () => {
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
   runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch)),
 );
+
+// 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
+// /api/status 的货币显示配置带 1 小时模块级缓存；currency 拉取失败且无缓存时
+// 降级默认换算配置，余额照常返回
+// @author logic
+// @date 2026-08-24
+const currencyCache: CurrencyCacheState = { config: null, fetchedAt: 0 };
+
+ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
+  const creds = readCredentials(CREDENTIALS_FILE);
+  if (!creds) {
+    return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
+  }
+  const pat = creds.pat;
+  if (!pat) {
+    return { ok: false, kind: 'no-pat', message: '请重新登录后查看余额' };
+  }
+  return runBalanceFetch(async () => {
+    const [balance, currency] = await Promise.all([
+      fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
+      fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
+        () => DEFAULT_CURRENCY_CONFIG,
+      ),
+    ]);
+    return { balance, currency };
+  });
+});
 
 // 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
 // @author logic

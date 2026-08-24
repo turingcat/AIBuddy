@@ -21,6 +21,16 @@ describe('credentials 读写', () => {
     writeCredentials(tmpFile, creds);
     expect(readCredentials(tmpFile)).toEqual(creds);
   });
+  it('含 pat 时 write/read 往返保留', () => {
+    writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k', pat: 'pat-x' });
+    expect(readCredentials(tmpFile)).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k', pat: 'pat-x' });
+  });
+  it('旧登录文件无 pat 字段时仍可读（pat 为 undefined）', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
+    const creds = readCredentials(tmpFile);
+    expect(creds).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+    expect(creds?.pat).toBeUndefined();
+  });
   // Windows 上 Unix 权限位不生效，仅在 Linux/macOS 校验 0o600
   it.skipIf(process.platform === 'win32')('write 后文件权限为 0o600', () => {
     writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k' });
