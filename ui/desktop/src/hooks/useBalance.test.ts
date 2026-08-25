@@ -1,9 +1,11 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 
-import { useBalance } from './useBalance';
+import { useBalance, markSessionStreamState } from './useBalance';
+import type { SessionStreamState } from './useBalance';
 import type { BalanceResult } from '../balance';
 import { DEFAULT_CURRENCY_CONFIG } from '../quotaFormat';
+import { AppEvents } from '../constants/events';
 
 /**
  * @author logic
@@ -11,16 +13,28 @@ import { DEFAULT_CURRENCY_CONFIG } from '../quotaFormat';
  * useBalance hook 单测：fake timers + mock window.electron.getUserBalance。
  * 说明：React 19 的 act 环境会在每个 act 边界重放 effect（挂载后可能多次拉取），
  * 因此断言采用调用数增量与状态契约，不依赖挂载期的绝对调用次数。
+ * @date 2026-08-25
+ * 新增会话完成边沿刷新（M 系列为 markSessionStreamState 纯函数精确断言；
+ * H12/H15/H16 为 hook 事件接线验证——受 act 边界重放影响，接线用例只做
+ * 容错式增量断言，非触发语义全部由纯函数用例保证）。
  *
- * 路径分析（useBalance，V(G)=7）：
+ * 路径分析（markSessionStreamState，V(G)=3）：
+ *   M1 首见会话默认 idle / M2 idle→streaming 不触发 / M3 streaming→idle 触发并落库 /
+ *   M4 loading→idle / M5 idle→idle（重复派发）/ M6 streaming→error /
+ *   M7 streaming→loading / M8 error→idle / M9 多会话独立（全局单状态会漏检的回归）。
+ * 路径分析（useBalance，V(G)=8）：
  *   H1 loading→ready / H2 定时轮询持续拉取 / H3 手动 refresh /
  *   H4 no-pat / H5 not-logged-in / H6 unauthorized / H7 其他错误 message /
- *   H8 invoke 意外抛异常 / H9 卸载后停止轮询 / H10 慢响应竞态丢弃旧结果。
+ *   H8 invoke 意外抛异常 / H9 卸载后停止轮询 / H10 慢响应竞态丢弃旧结果 /
+ *   H12 事件边沿触发刷新（接线）/ H15 卸载移除事件监听 / H16 事件与轮询互不干扰。
  * 条件矩阵：
  *   | 原子条件 | 取真用例 | 取假用例 |
  *   | result.ok | H1 | H4-H7 |
  *   | seq === seqRef.current（非竞态） | H1-H8 | H10 |
  *   | kind ∈ {no-pat, not-logged-in, unauthorized} | H4/H5/H6 | H7 |
+ *   | Map 命中（非首见会话） | M2-M8 | M1 |
+ *   | previous === 'streaming' | M3/M9 | M2/M4-M8 |
+ *   | streamState === 'idle' | M3/M4/M5/M8/M9 | M2/M6/M7 |
  */
 
 const electronMock = window.electron as unknown as {
@@ -56,6 +70,17 @@ const okResult2: BalanceResult = {
 async function flush(): Promise<void> {
   await act(async () => {
     await vi.runOnlyPendingTimersAsync();
+  });
+}
+
+// 模拟 BaseChat 派发的会话状态事件（dispatch 会触发 setState，需包 act）
+function dispatchStatus(sessionId: string, streamState: SessionStreamState) {
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent(AppEvents.SESSION_STATUS_UPDATE, {
+        detail: { sessionId, streamState, messageCount: 1 },
+      }),
+    );
   });
 }
 
@@ -221,5 +246,91 @@ describe('useBalance（余额轮询 hook）', () => {
       await vi.runOnlyPendingTimersAsync();
     });
     expect(result.current.state).toMatchObject({ status: 'ready', balance: { quota: 2500000 } });
+  });
+
+  it('H12: 会话 streaming→idle 边沿事件接入刷新（接线验证，非触发语义由 M 系列保证）', async () => {
+    electronMock.getUserBalance.mockResolvedValue(okResult());
+    renderHook(() => useBalance());
+    await flush();
+    const baseline = electronMock.getUserBalance.mock.calls.length;
+
+    dispatchStatus('s1', 'streaming');
+    dispatchStatus('s1', 'idle');
+    await flush();
+    expect(electronMock.getUserBalance.mock.calls.length).toBeGreaterThanOrEqual(baseline + 1);
+  });
+
+  it('H15: 卸载后移除事件监听，对话完成不再刷新', async () => {
+    electronMock.getUserBalance.mockResolvedValue(okResult());
+    const { unmount } = renderHook(() => useBalance());
+    await flush();
+    const baseline = electronMock.getUserBalance.mock.calls.length;
+    unmount();
+
+    dispatchStatus('s1', 'streaming');
+    dispatchStatus('s1', 'idle');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(600_000);
+    });
+    expect(electronMock.getUserBalance.mock.calls.length).toBe(baseline);
+  });
+
+  it('H16: 事件触发刷新与 5 分钟轮询互不干扰', async () => {
+    electronMock.getUserBalance.mockResolvedValue(okResult());
+    renderHook(() => useBalance());
+    await flush();
+    const baseline = electronMock.getUserBalance.mock.calls.length;
+
+    // 事件刷新不依赖定时器，flush 后立即生效
+    dispatchStatus('s1', 'streaming');
+    dispatchStatus('s1', 'idle');
+    await flush();
+    const afterEvent = electronMock.getUserBalance.mock.calls.length;
+    expect(afterEvent).toBeGreaterThanOrEqual(baseline + 1);
+
+    // 轮询照常：推进 5 分钟仍有增量
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300_000);
+    });
+    expect(electronMock.getUserBalance.mock.calls.length).toBeGreaterThan(afterEvent);
+  });
+});
+
+describe('markSessionStreamState（会话完成边沿判定）', () => {
+  it('M1: 首见会话默认 previous=idle，落库新状态', () => {
+    const states = new Map<string, SessionStreamState>();
+    expect(markSessionStreamState(states, 's1', 'streaming')).toBe(false);
+    expect(states.get('s1')).toBe('streaming');
+  });
+
+  it.each([
+    ['loading→idle', 'loading', 'idle'],
+    ['idle→idle（重复派发，含挂载初始 idle）', 'idle', 'idle'],
+    ['streaming→error', 'streaming', 'error'],
+    ['streaming→loading', 'streaming', 'loading'],
+    ['error→idle', 'error', 'idle'],
+  ] as const)('M4-M8: 非完成边沿不触发（%s）', (_label, first, second) => {
+    const states = new Map<string, SessionStreamState>([['s1', first]]);
+    expect(markSessionStreamState(states, 's1', second)).toBe(false);
+    expect(states.get('s1')).toBe(second);
+  });
+
+  it('M2+M3: idle→streaming 不触发，streaming→idle 触发（一轮对话完成）', () => {
+    const states = new Map<string, SessionStreamState>();
+    markSessionStreamState(states, 's1', 'streaming');
+    expect(markSessionStreamState(states, 's1', 'idle')).toBe(true);
+    expect(states.get('s1')).toBe('idle');
+  });
+
+  it('M9: 多会话独立记边沿（全局单状态会漏检的回归用例）', () => {
+    const states = new Map<string, SessionStreamState>();
+    markSessionStreamState(states, 's1', 'streaming');
+    markSessionStreamState(states, 's2', 'streaming');
+
+    expect(markSessionStreamState(states, 's1', 'idle')).toBe(true);
+    // s1 先完成把全局状态置 idle 后，s2 完成仍须触发
+    expect(markSessionStreamState(states, 's2', 'idle')).toBe(true);
+    // 重复 idle 不再触发
+    expect(markSessionStreamState(states, 's1', 'idle')).toBe(false);
   });
 });
