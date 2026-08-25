@@ -19,8 +19,6 @@ import { acpListProviderDetails } from '../acp/providers';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { toastError } from '../toasts';
 import MentionPopover, { DisplayItemWithMatch } from './MentionPopover';
-import { COST_TRACKING_ENABLED } from '../updates';
-import { CostTracker } from './bottom_menu/CostTracker';
 import { ContextWindowIndicator } from './bottom_menu/ContextWindowIndicator';
 import { DroppedFile, useFileDrop } from '../hooks/useFileDrop';
 import { Recipe } from '../recipe';
@@ -170,9 +168,6 @@ interface ChatInputProps {
   onFilesProcessed?: () => void;
   setView: (view: View) => void;
   totalTokens?: number;
-  accumulatedInputTokens?: number;
-  accumulatedOutputTokens?: number;
-  accumulatedCost?: number | null;
   messages?: Message[];
   disableAnimation?: boolean;
   recipe?: Recipe | null;
@@ -205,9 +200,6 @@ export default function ChatInput({
   onFilesProcessed,
   setView,
   totalTokens,
-  accumulatedInputTokens,
-  accumulatedOutputTokens,
-  accumulatedCost,
   messages = [],
   disableAnimation = false,
   recipe: _recipe,
@@ -1686,17 +1678,6 @@ export default function ChatInput({
 
         {!isBottomBarNarrow && (
           <>
-            {/* Right: cost tracker (when enabled) */}
-            {COST_TRACKING_ENABLED && (
-              <CostTracker
-                inputTokens={accumulatedInputTokens}
-                outputTokens={accumulatedOutputTokens}
-                accumulatedCost={accumulatedCost}
-                model={effectiveModel}
-                provider={effectiveProvider}
-              />
-            )}
-
             {/* Right: context window indicator */}
             <ContextWindowIndicator
               totalTokens={totalTokens || 0}

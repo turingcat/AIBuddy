@@ -140,8 +140,6 @@ export default function Hub({
             initialValue=""
             setView={setView}
             totalTokens={0}
-            accumulatedInputTokens={0}
-            accumulatedOutputTokens={0}
             droppedFiles={[]}
             onFilesProcessed={() => {}}
             messages={[]}

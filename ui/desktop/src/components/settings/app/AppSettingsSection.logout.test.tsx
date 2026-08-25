@@ -5,7 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 import { IntlProvider } from 'react-intl';
 import AppSettingsSection from './AppSettingsSection';
 
-vi.mock('../../../updates', () => ({ COST_TRACKING_ENABLED: false, UPDATES_ENABLED: false }));
+vi.mock('../../../updates', () => ({ UPDATES_ENABLED: false }));
 vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
 vi.mock('../../GooseSidebar/ThemeSelector', () => ({ default: () => null }));
 vi.mock('./TelemetrySettings', () => ({ default: () => null }));

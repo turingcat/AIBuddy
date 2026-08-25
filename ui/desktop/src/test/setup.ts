@@ -27,7 +27,6 @@ afterEach(() => {
 });
 
 // Mock console methods to avoid noise in tests
-// eslint-disable-next-line no-undef
 global.console = {
   ...console,
   log: vi.fn(),
@@ -69,7 +68,6 @@ const mockSettings: Record<string, unknown> = {
   useSystemTheme: true,
   language: 'system',
   responseStyle: 'concise',
-  showPricing: true,
   seenAnnouncementIds: [],
 };
 

@@ -347,18 +347,6 @@
   "conversationLimitsDropdown.maxTurnsDescription": {
     "defaultMessage": "Maximum agent turns before HeyBuddy asks for user input"
   },
-  "costTracker.costUnavailable": {
-    "defaultMessage": "Cost data not available for {model} ({inputTokens} input, {outputTokens} output tokens)"
-  },
-  "costTracker.inputOutputTooltip": {
-    "defaultMessage": "Input: {inputTokens} tokens ({inputCost}) | Output: {outputTokens} tokens ({outputCost})"
-  },
-  "costTracker.pricingUnavailable": {
-    "defaultMessage": "Pricing data unavailable for {model}"
-  },
-  "costTracker.totalSessionCost": {
-    "defaultMessage": "Total session cost: {cost}"
-  },
   "createEditRecipe.clickToGenerateDeeplink": {
     "defaultMessage": "Click to generate deeplink"
   },
@@ -3904,12 +3892,6 @@
   },
   "settings.close": {
     "defaultMessage": "Close"
-  },
-  "settings.costTracking.description": {
-    "defaultMessage": "Show model pricing and usage costs"
-  },
-  "settings.costTracking.title": {
-    "defaultMessage": "Cost Tracking"
   },
   "settings.dockIcon.description": {
     "defaultMessage": "Show HeyBuddy in the dock"

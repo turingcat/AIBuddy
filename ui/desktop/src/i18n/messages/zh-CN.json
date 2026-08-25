@@ -347,18 +347,6 @@
   "conversationLimitsDropdown.maxTurnsDescription": {
     "defaultMessage": "HeyBuddy 请求用户输入前的最大 agent 轮次"
   },
-  "costTracker.costUnavailable": {
-    "defaultMessage": "无法获取 {model} 的费用数据（输入 {inputTokens}、输出 {outputTokens} 令牌）"
-  },
-  "costTracker.inputOutputTooltip": {
-    "defaultMessage": "输入：{inputTokens} 令牌（{inputCost}）| 输出：{outputTokens} 令牌（{outputCost}）"
-  },
-  "costTracker.pricingUnavailable": {
-    "defaultMessage": "无法获取 {model} 的定价数据"
-  },
-  "costTracker.totalSessionCost": {
-    "defaultMessage": "本次会话总费用：{cost}"
-  },
   "createEditRecipe.clickToGenerateDeeplink": {
     "defaultMessage": "点击生成深层链接"
   },
@@ -3904,12 +3892,6 @@
   },
   "settings.close": {
     "defaultMessage": "关闭"
-  },
-  "settings.costTracking.description": {
-    "defaultMessage": "显示模型定价和使用费用"
-  },
-  "settings.costTracking.title": {
-    "defaultMessage": "费用跟踪"
   },
   "settings.dockIcon.description": {
     "defaultMessage": "在 Dock 中显示 HeyBuddy"

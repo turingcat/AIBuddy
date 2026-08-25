@@ -510,17 +510,6 @@ export default function BaseChat({
             initialValue={initialPrompt}
             setView={setView}
             totalTokens={tokenState?.totalTokens ?? session?.usage?.total_tokens ?? undefined}
-            accumulatedInputTokens={
-              tokenState?.accumulatedInputTokens ??
-              session?.accumulated_usage?.input_tokens ??
-              undefined
-            }
-            accumulatedOutputTokens={
-              tokenState?.accumulatedOutputTokens ??
-              session?.accumulated_usage?.output_tokens ??
-              undefined
-            }
-            accumulatedCost={tokenState?.accumulatedCost ?? session?.accumulated_cost ?? undefined}
             droppedFiles={droppedFiles}
             onFilesProcessed={() => setDroppedFiles([])} // Clear dropped files after processing
             messages={messages}

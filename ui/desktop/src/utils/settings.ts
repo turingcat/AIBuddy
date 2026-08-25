@@ -43,7 +43,6 @@ export interface Settings {
   useSystemTheme: boolean;
   language: LanguageSetting;
   responseStyle: string;
-  showPricing: boolean;
   seenAnnouncementIds: string[];
 }
 
@@ -83,7 +82,6 @@ export const defaultSettings: Settings = {
   useSystemTheme: true,
   language: 'system',
   responseStyle: 'concise',
-  showPricing: true,
   seenAnnouncementIds: [],
 };
 

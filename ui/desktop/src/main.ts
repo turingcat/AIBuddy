@@ -1958,7 +1958,6 @@ const validSettingKeys: Set<string> = new Set([
   'useSystemTheme',
   'language',
   'responseStyle',
-  'showPricing',
   'seenAnnouncementIds',
   'disableAutoDownload',
 ]);
