@@ -2,8 +2,8 @@
 
 ## 测试概要
 
-- 分支: `feat/sidebar-balance-display`（HeyBuddy）/ `feat/oa-login-pat`（new-api）
-- 测试时间: 2026-08-24 16:47:19
+- 分支: `main`（合并自 `feat/sidebar-balance-display`，提交 `9a4caaa`；覆盖率数据为合并后 main 复测结果，与分支上首次测量一致）
+- 测试时间: 2026-08-24 17:03:31
 - 测试框架: Vitest 4.1.0（jsdom 环境）+ @vitest/coverage-v8；Go testing + glebarez/sqlite 内存库
 - 测试文件:
   - `ui/desktop/src/quotaFormat.test.ts`（15 用例）
@@ -91,5 +91,6 @@ W1-W7 见上文路径列表。jsdom 缺 ResizeObserver（Radix Tooltip 依赖）
 ## 关联
 
 - 功能: 侧边栏显示 new-api 用户余额（OA 登录下发 PAT → `/api/user/self` 查询 → 站点货币配置换算显示）
-- 验证: `pnpm run typecheck` 通过；`pnpm i18n:compile` + `pnpm i18n:check` 通过（zh-CN 1506 条）；全量 `pnpm test` 见提交前验证记录
+- 验证: `pnpm run typecheck` 通过；`pnpm i18n:compile` + `pnpm i18n:check` 通过（zh-CN 1506 条）；全量 `pnpm test` 见下
+- new-api 侧配套报告: `C:\zb\new-api\tests\oa-pat-unit-test-report.md`（`ensureUserPat` 语句覆盖 82.4%）
 - 注意: 全量 `pnpm test`（含/不含覆盖率插桩）在高负载下 `RecipeFormFields`/`ExtensionModal` 两个存量文件偶发 3-4 个 5s 超时。已验证与本次改动无关：① 两文件单独运行 57/57 通过；② 在 `main` 基线跑全量同样出现相同超时（2026-08-24 16:49，635 用例 3 失败/627 通过），属存量负载抖动。本分支全量 692 用例，除上述存量抖动外全部通过（684 通过/5 存量跳过）
