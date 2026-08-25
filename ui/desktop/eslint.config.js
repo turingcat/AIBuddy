@@ -57,6 +57,7 @@ module.exports = [
         Buffer: 'readonly',
         TextDecoder: 'readonly',
         TextEncoder: 'readonly',
+        global: 'readonly', // Node 测试环境全局变量（@author logic @date 2026-08-25）
         // Browser globals
         window: 'readonly',
         document: 'readonly',
@@ -88,6 +89,8 @@ module.exports = [
         Response: 'readonly',
         ReadableStream: 'readonly',
         AbortController: 'readonly',
+        AbortSignal: 'readonly', // @author logic @date 2026-08-25
+        RequestInit: 'readonly', // @author logic @date 2026-08-25
         RequestCredentials: 'readonly',
         HeadersInit: 'readonly',
         KeyboardEvent: 'readonly',
