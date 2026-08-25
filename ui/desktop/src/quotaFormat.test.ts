@@ -8,9 +8,10 @@ import {
 
 /**
  * @author logic
- * @date 2026-08-24
+ * @date 2026-08-25
  * 货币格式化单测。预期值按 new-api 面板余额显示语义推导
- * （web/src/lib/currency.ts：quota/quotaPerUnit → USD → 显示货币）。
+ * （web/src/lib/currency.ts：quota/quotaPerUnit 直接得到显示货币金额，
+ * CNY 记账站点不乘 usd_exchange_rate）。
  *
  * 路径分析（parseCurrencyConfig，V(G)=5）：
  *   P1 type 合法采用 / P2 type 非法且 display_in_currency=false → TOKENS /
@@ -125,10 +126,12 @@ describe('formatQuotaWithCurrency', () => {
     expect(formatQuotaWithCurrency(25, usd)).toBe('$0.0001');
   });
 
-  it('P8b: CNY 模式乘以汇率显示人民币符号', () => {
-    // 5000000/500000=10 美元 ×7.3 = 73 元
-    expect(formatQuotaWithCurrency(5000000, cny)).toBe('¥73');
-    expect(formatQuotaWithCurrency(6250000, cny)).toBe('¥91.25');
+  it('P8b: CNY 模式不乘汇率，quota 直接按人民币计价显示（回归：此前误乘 7.3）', () => {
+    // CNY 记账站点：5000000/500000=10 → ¥10；usdExchangeRate 恒不参与
+    expect(formatQuotaWithCurrency(5000000, cny)).toBe('¥10');
+    expect(formatQuotaWithCurrency(6250000, cny)).toBe('¥12.5');
+    // 线上实际案例：quota=14947826 → ¥29.9（修复前误乘 7.3 显示 ¥218.24）
+    expect(formatQuotaWithCurrency(14947826, cny)).toBe('¥29.9');
   });
 
   it('P9: CUSTOM 模式以"符号 + 空格 + 数字"显示', () => {

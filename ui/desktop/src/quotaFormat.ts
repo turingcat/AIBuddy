@@ -1,9 +1,11 @@
 /**
  * @author logic
- * @date 2026-08-24
+ * @date 2026-08-25
  * 用户余额的货币格式化，显示语义对齐 new-api 面板余额路径
- * （web/src/lib/currency.ts 的 formatQuota → formatCurrencyFromUSD 链路）：
- * - 余额原始值 quota（token 额度）先除以 quotaPerUnit 得美元，再按站点配置显示
+ * （web/src/lib/currency.ts 的 getDisplayMeta 链路）：
+ * - 余额原始值 quota 除以 quotaPerUnit 直接得到显示货币金额，不再乘汇率
+ * - CNY 站点 quota 本身即人民币计价（500000 quota = ¥1），
+ *   显示不乘 usd_exchange_rate（new-api 端 CNY 模式下该汇率亦归一为 1）
  * - |值|≥1 用 2 位小数，<1 用 4 位小数；舍入后会变 0 的极小非零值抬到当前精度最小值
  * - TOKENS 模式直接显示 token 数，≥1000 缩写为 k（1 位小数去尾零）
  * 纯函数、无副作用，main 与 renderer 共用。
@@ -15,7 +17,7 @@ export interface CurrencyConfig {
   /** 1 美元对应的 token 额度数，默认 500000 */
   quotaPerUnit: number;
   quotaDisplayType: QuotaDisplayType;
-  /** 1 美元兑人民币汇率，仅 CNY 模式使用 */
+  /** 站点 usd_exchange_rate 原值；CNY 记账站点的余额显示不使用它（new-api 端 CNY 模式归一为 1） */
   usdExchangeRate: number;
   customCurrencySymbol: string;
   customCurrencyExchangeRate: number;
@@ -80,7 +82,10 @@ type DisplayMeta =
 function getDisplayMeta(config: CurrencyConfig): DisplayMeta {
   switch (config.quotaDisplayType) {
     case 'CNY':
-      return { kind: 'currency', code: 'CNY', exchangeRate: config.usdExchangeRate };
+      // 对齐 web 端 getDisplayMeta：CNY 模式下 quota 即人民币计价
+      // （quotaPerUnit 个 quota = ¥1），不乘 usd_exchange_rate，
+      // 否则已是人民币的余额会被再乘一次汇率（回归用例见 P8b）
+      return { kind: 'currency', code: 'CNY', exchangeRate: 1 };
     case 'CUSTOM':
       return {
         kind: 'custom',
