@@ -103,7 +103,9 @@ describe('ChatInput toolbar', () => {
     );
 
     expect(screen.getByText('附件')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '附件' })).toBeInTheDocument();
+    const attachButton = screen.getByRole('button', { name: '附件' });
+    expect(attachButton).toHaveClass('text-xs', 'mr-1');
+    expect(attachButton).not.toHaveClass('w-8', 'rounded-full');
     expect(screen.getByText('发送')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
   });

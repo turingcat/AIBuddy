@@ -11,7 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { defineMessages, useIntl } from '../i18n';
 import { AppEvents } from '../constants/events';
 import ChatInput from './ChatInput';
-import { ChatInputCard } from './ChatInputCard';
+import { ChatInputCard, CHAT_INPUT_MAX_WIDTH_CLASS } from './ChatInputCard';
 import { ChatState } from '../types/chatState';
 import 'react-toastify/dist/ReactToastify.css';
 import { View, ViewOptions } from '../utils/navigationUtils';
@@ -127,7 +127,7 @@ export default function Hub({
 
   return (
     <div className="flex flex-col h-full min-h-0 items-center justify-center px-6 relative">
-      <div className="w-full max-w-3xl">
+      <div className={`w-full ${CHAT_INPUT_MAX_WIDTH_CLASS}`}>
         <div className="flex items-baseline gap-2 mb-1">
           <span className="text-6xl font-light text-text-primary tracking-tight tabular-nums">
             {time}

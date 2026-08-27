@@ -1,6 +1,8 @@
 import React from 'react';
 import { cn } from '../utils';
 
+export const CHAT_INPUT_MAX_WIDTH_CLASS = 'max-w-4xl';
+
 /**
  * Shared visual wrapper for the ChatInput.
  *
@@ -15,7 +17,8 @@ export const ChatInputCard: React.FC<{
 }> = ({ className, children }) => (
   <div
     className={cn(
-      'rounded-2xl border border-border-primary shadow-sm overflow-hidden bg-background-primary',
+      'w-full mx-auto rounded-2xl border border-border-primary shadow-sm overflow-hidden bg-background-primary',
+      CHAT_INPUT_MAX_WIDTH_CLASS,
       className
     )}
   >

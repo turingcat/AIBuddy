@@ -1771,9 +1771,9 @@ export default function ChatInput({
                   aria-label={intl.formatMessage(i18n.attachFile)}
                   variant="ghost"
                   size="sm"
-                  shape="round"
+                  shape="pill"
                   className={cn(
-                    'text-text-primary/70 hover:text-text-primary transition-colors',
+                    'mr-1 text-xs text-text-primary/70 hover:text-text-primary transition-colors',
                     isFilePickerOpen ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                   )}
                 >

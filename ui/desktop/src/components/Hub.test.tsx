@@ -7,6 +7,7 @@ import Hub from './Hub';
 
 vi.mock('./ChatInput', () => ({ default: () => null }));
 vi.mock('./ChatInputCard', () => ({
+  CHAT_INPUT_MAX_WIDTH_CLASS: 'max-w-4xl',
   ChatInputCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('./ConfigContext', () => ({ useConfig: () => ({ extensionsList: [] }) }));
@@ -34,5 +35,9 @@ describe('Hub', () => {
     );
 
     expect(screen.getByText('早上好，我是广林AI助手')).toBeInTheDocument();
+    expect(screen.getByText('早上好，我是广林AI助手').parentElement).toHaveClass(
+      'w-full',
+      'max-w-4xl'
+    );
   });
 });
