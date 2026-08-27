@@ -590,6 +590,19 @@ mod tests {
             .with_extensions(extensions.into_iter())
             .build();
 
-        assert_snapshot!(system_prompt);
+        assert!(system_prompt.contains("HeyBuddy"));
+        assert!(system_prompt.contains("默认使用中文"));
+
+        #[cfg(feature = "code-mode")]
+        {
+            assert!(system_prompt.contains("## code_execution"));
+            assert_snapshot!("all_platform_extensions_code_mode", system_prompt);
+        }
+
+        #[cfg(not(feature = "code-mode"))]
+        {
+            assert!(!system_prompt.contains("## code_execution"));
+            assert_snapshot!("all_platform_extensions_default", system_prompt);
+        }
     }
 }
