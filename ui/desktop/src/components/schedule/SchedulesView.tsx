@@ -19,13 +19,13 @@ import { Plus, RefreshCw, Pause, Play, Edit, Square, Eye, CircleDotDashed } from
 import { NewSchedulePayload, ScheduleModal } from './ScheduleModal';
 import ScheduleDetailView from './ScheduleDetailView';
 import { toastError, toastSuccess } from '../../toasts';
-import cronstrue from 'cronstrue';
 import { formatToLocalDateWithTimezone } from '../../utils/date';
 import { errorMessage } from '../../utils/conversionUtils';
 import { MainPanelLayout } from '../Layout/MainPanelLayout';
 import { ViewOptions } from '../../utils/navigationUtils';
 import { trackScheduleCreated, trackScheduleDeleted, getErrorType } from '../../utils/analytics';
 import { defineMessages, useIntl } from '../../i18n';
+import { formatCronDescription, formatJobInspection } from './scheduleDisplay';
 
 const i18n = defineMessages({
   running: { id: 'schedulesView.running', defaultMessage: 'Running' },
@@ -106,12 +106,7 @@ const ScheduleCard: React.FC<{
   actionInProgress,
 }) => {
   const intl = useIntl();
-  let readableCron: string;
-  try {
-    readableCron = cronstrue.toString(job.cron);
-  } catch {
-    readableCron = job.cron;
-  }
+  const readableCron = formatCronDescription(job.cron, intl.locale);
 
   const formattedLastRun = formatToLocalDateWithTimezone(job.lastRun);
 
@@ -451,12 +446,12 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
     try {
       const result = await acpInspectRunningJob(id);
       if (result.sessionId) {
-        const duration = result.runningDurationSeconds
-          ? `${Math.floor(result.runningDurationSeconds / 60)}m ${result.runningDurationSeconds % 60}s`
-          : 'Unknown';
         toastSuccess({
           title: intl.formatMessage(i18n.jobInspection),
-          msg: `Session: ${result.sessionId}\nRunning for: ${duration}`,
+          msg: formatJobInspection(intl, {
+            sessionId: result.sessionId,
+            runningDurationSeconds: result.runningDurationSeconds,
+          }),
         });
       } else {
         toastSuccess({

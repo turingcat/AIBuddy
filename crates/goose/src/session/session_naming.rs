@@ -182,12 +182,60 @@ pub(crate) async fn generate_session_name(
         .collect::<Vec<_>>()
         .join(" ");
 
-    Ok(safe_truncate(&extract_short_title(&description), 100))
+    let title = extract_short_title(&description);
+    if title.chars().any(is_chinese_character) {
+        Ok(title)
+    } else {
+        Ok(safe_truncate(&title, 100))
+    }
+}
+
+fn is_chinese_character(character: char) -> bool {
+    ('\u{4e00}'..='\u{9fff}').contains(&character)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use goose_providers::{
+        base::{MessageStream, Provider},
+        conversation::token_usage::ProviderUsage,
+        errors::ProviderError,
+        model::ModelConfig,
+    };
+    use rmcp::model::Tool;
+
+    struct LongChineseTitleProvider(String);
+
+    #[async_trait::async_trait]
+    impl Provider for LongChineseTitleProvider {
+        fn get_name(&self) -> &str {
+            "long-title-test"
+        }
+
+        async fn stream(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> std::result::Result<MessageStream, ProviderError> {
+            unreachable!("session naming calls complete")
+        }
+
+        async fn complete(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> std::result::Result<(Message, ProviderUsage), ProviderError> {
+            Ok((
+                Message::assistant().with_text(&self.0),
+                ProviderUsage::new("test".to_string(), Default::default()),
+            ))
+        }
+    }
 
     #[test]
     fn session_name_prompt_requires_a_short_chinese_title() {
@@ -280,5 +328,24 @@ mod tests {
             ),
             "List current folder files"
         );
+    }
+
+    #[tokio::test]
+    async fn generated_session_name_preserves_over_100_continuous_chinese_characters() {
+        let long_title = "这是一个用于验证连续中文会话标题不会被机械截断的完整标题".repeat(5);
+        assert!(long_title.chars().count() > 100);
+        let provider = LongChineseTitleProvider(long_title.clone());
+        let conversation = Conversation::new_unvalidated([Message::user().with_text("生成标题")]);
+
+        let title = generate_session_name(
+            &provider,
+            &ModelConfig::new("test"),
+            "session-id",
+            &conversation,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(title, long_title);
     }
 }

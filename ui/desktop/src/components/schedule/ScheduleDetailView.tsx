@@ -17,12 +17,12 @@ import {
 import { ScheduleModal, NewSchedulePayload } from './ScheduleModal';
 import { toastError, toastSuccess } from '../../toasts';
 import { Loader2, Pause, Play, Edit, Square, Eye } from 'lucide-react';
-import cronstrue from 'cronstrue';
 import { formatToLocalDateWithTimezone } from '../../utils/date';
 import { trackScheduleRunNow, getErrorType } from '../../utils/analytics';
 import { errorMessage } from '../../utils/conversionUtils';
 import { defineMessages, useIntl } from '../../i18n';
 import { useNavigation } from '../../hooks/useNavigation';
+import { formatCronDescription, formatJobInspection } from './scheduleDisplay';
 
 const i18n = defineMessages({
   scheduleNotFound: {
@@ -308,12 +308,12 @@ const ScheduleDetailView: React.FC<ScheduleDetailViewProps> = ({ scheduleId, onN
     try {
       const result = await acpInspectRunningJob(scheduleId);
       if (result.sessionId) {
-        const duration = result.runningDurationSeconds
-          ? `${Math.floor(result.runningDurationSeconds / 60)}m ${result.runningDurationSeconds % 60}s`
-          : 'Unknown';
         toastSuccess({
           title: intl.formatMessage(i18n.jobInspection),
-          msg: `Session: ${result.sessionId}\nRunning for: ${duration}`,
+          msg: formatJobInspection(intl, {
+            sessionId: result.sessionId,
+            runningDurationSeconds: result.runningDurationSeconds,
+          }),
         });
       } else {
         toastSuccess({
@@ -367,13 +367,7 @@ const ScheduleDetailView: React.FC<ScheduleDetailViewProps> = ({ scheduleId, onN
   }
 
   const readableCron = scheduleDetails
-    ? (() => {
-        try {
-          return cronstrue.toString(scheduleDetails.cron);
-        } catch {
-          return scheduleDetails.cron;
-        }
-      })()
+    ? formatCronDescription(scheduleDetails.cron, intl.locale)
     : '';
 
   return (

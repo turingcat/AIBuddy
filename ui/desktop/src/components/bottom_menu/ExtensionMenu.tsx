@@ -4,7 +4,8 @@ import type { FixedExtensionEntry } from '../ConfigContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { Input } from '../ui/input';
 import { Switch } from '../ui/switch';
-import { formatExtensionName } from '../settings/extensions/subcomponents/ExtensionList';
+import { getLocalizedExtensionCopy } from '../settings/extensions/subcomponents/ExtensionList';
+import { useIntl } from '../../i18n';
 
 interface ExtensionMenuProps {
   extensions: FixedExtensionEntry[];
@@ -37,25 +38,34 @@ export function ExtensionMenu({
   onToggle,
   onClose,
 }: ExtensionMenuProps) {
+  const intl = useIntl();
   const [searchQuery, setSearchQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
   const filteredExtensions = useMemo(() => {
     return extensions.filter((extension) => {
       const query = searchQuery.toLowerCase();
-      return (
-        extension.name.toLowerCase().includes(query) ||
-        (extension.description && extension.description.toLowerCase().includes(query))
-      );
+      const copy = getLocalizedExtensionCopy(extension, intl);
+      const aliases = [
+        copy.title,
+        copy.description,
+        extension.name,
+        'display_name' in extension ? extension.display_name : undefined,
+        extension.description,
+        extension.configKey,
+      ];
+      return aliases.some((alias) => alias?.toLowerCase().includes(query));
     });
-  }, [extensions, searchQuery]);
+  }, [extensions, intl, searchQuery]);
 
   const sortedExtensions = useMemo(() => {
     return [...filteredExtensions].sort((a, b) => {
       if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
-      return a.name.localeCompare(b.name);
+      return getLocalizedExtensionCopy(a, intl).title.localeCompare(
+        getLocalizedExtensionCopy(b, intl).title
+      );
     });
-  }, [filteredExtensions]);
+  }, [filteredExtensions, intl]);
 
   const activeCount = useMemo(() => {
     return extensions.filter((extension) => extension.enabled).length;
@@ -114,6 +124,7 @@ export function ExtensionMenu({
           ) : (
             sortedExtensions.map((extension) => {
               const isToggling = togglingExtensionName === extension.name;
+              const copy = getLocalizedExtensionCopy(extension, intl);
               return (
                 <div
                   key={extension.name}
@@ -121,10 +132,15 @@ export function ExtensionMenu({
                     isToggling ? 'cursor-wait opacity-70' : 'cursor-pointer'
                   }`}
                   onClick={() => !isToggling && onToggle(extension)}
-                  title={extension.description || extension.name}
+                  title={copy.description || copy.title}
                 >
-                  <div className="text-sm font-medium text-text-primary">
-                    {formatExtensionName(extension.name)}
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-text-primary">{copy.title}</div>
+                    {copy.description && (
+                      <div className="text-xs text-text-primary/60 truncate mt-0.5">
+                        {copy.description}
+                      </div>
+                    )}
                   </div>
                   <div onClick={(e) => e.stopPropagation()}>
                     <Switch

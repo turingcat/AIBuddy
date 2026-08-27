@@ -215,6 +215,12 @@
   "chatInput.contextWindow": {
     "defaultMessage": "上下文窗口"
   },
+  "chatInput.diagnostics": {
+    "defaultMessage": "诊断"
+  },
+  "chatInput.dictationNotConfigured": {
+    "defaultMessage": "语音输入未配置（设置）"
+  },
   "chatInput.attachFile": {
     "defaultMessage": "附件"
   },
@@ -245,6 +251,12 @@
   "chatInput.send": {
     "defaultMessage": "发送"
   },
+  "chatInput.stop": {
+    "defaultMessage": "停止"
+  },
+  "chatInput.stopRecording": {
+    "defaultMessage": "停止录音"
+  },
   "chatInput.transcribing": {
     "defaultMessage": "转写中…"
   },
@@ -253,6 +265,15 @@
   },
   "chatInput.unknownType": {
     "defaultMessage": "未知类型"
+  },
+  "chatInput.voice": {
+    "defaultMessage": "语音"
+  },
+  "chatInput.voiceDictation": {
+    "defaultMessage": "语音输入"
+  },
+  "chatInput.voiceDictationHint": {
+    "defaultMessage": "语音输入 · 说“发送”即可发送"
   },
   "chatInput.viewEditRecipe": {
     "defaultMessage": "查看/编辑模板"
@@ -3430,6 +3451,18 @@
   },
   "scheduleDetailView.viewingScheduleId": {
     "defaultMessage": "正在查看定时任务 ID：{id}"
+  },
+  "scheduleDisplay.duration": {
+    "defaultMessage": "{minutes} 分 {seconds} 秒"
+  },
+  "scheduleDisplay.runningFor": {
+    "defaultMessage": "已运行：{duration}"
+  },
+  "scheduleDisplay.session": {
+    "defaultMessage": "会话：{sessionId}"
+  },
+  "scheduleDisplay.unknown": {
+    "defaultMessage": "未知"
   },
   "scheduleModal.browseYaml": {
     "defaultMessage": "浏览 YAML 文件…"

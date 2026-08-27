@@ -215,8 +215,14 @@
   "chatInput.contextWindow": {
     "defaultMessage": "Context window"
   },
+  "chatInput.diagnostics": {
+    "defaultMessage": "Diagnostics"
+  },
   "chatInput.dictationError": {
     "defaultMessage": "Dictation Error"
+  },
+  "chatInput.dictationNotConfigured": {
+    "defaultMessage": "Dictation not configured (Settings)"
   },
   "chatInput.failedToReadImage": {
     "defaultMessage": "Failed to read image file"
@@ -242,6 +248,12 @@
   "chatInput.send": {
     "defaultMessage": "Send"
   },
+  "chatInput.stop": {
+    "defaultMessage": "Stop"
+  },
+  "chatInput.stopRecording": {
+    "defaultMessage": "Stop recording"
+  },
   "chatInput.transcribing": {
     "defaultMessage": "Transcribing..."
   },
@@ -253,6 +265,15 @@
   },
   "chatInput.viewEditRecipe": {
     "defaultMessage": "View/Edit Recipe"
+  },
+  "chatInput.voice": {
+    "defaultMessage": "Voice"
+  },
+  "chatInput.voiceDictation": {
+    "defaultMessage": "Voice dictation"
+  },
+  "chatInput.voiceDictationHint": {
+    "defaultMessage": "Voice dictation · Say \"submit\" to send"
   },
   "chatInput.waitingForCancellation": {
     "defaultMessage": "Waiting for cancellation to finish"
@@ -3427,6 +3448,18 @@
   },
   "scheduleDetailView.viewingScheduleId": {
     "defaultMessage": "Viewing Schedule ID: {id}"
+  },
+  "scheduleDisplay.duration": {
+    "defaultMessage": "{minutes}m {seconds}s"
+  },
+  "scheduleDisplay.runningFor": {
+    "defaultMessage": "Running for: {duration}"
+  },
+  "scheduleDisplay.session": {
+    "defaultMessage": "Session: {sessionId}"
+  },
+  "scheduleDisplay.unknown": {
+    "defaultMessage": "Unknown"
   },
   "scheduleModal.browseYaml": {
     "defaultMessage": "Browse for YAML file..."

@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
-import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import zhCatalog from '../i18n/messages/zh-CN.json';
 import { ChatState } from '../types/chatState';
 import ChatInput from './ChatInput';
@@ -13,12 +14,17 @@ vi.mock('./ModelAndProviderContext', () => ({
   }),
 }));
 vi.mock('../acp/providers', () => ({ acpListProviderDetails: vi.fn().mockResolvedValue([]) }));
+
+const audioRecorderState = vi.hoisted(() => ({
+  isEnabled: false,
+  dictationProvider: null as string | null,
+  isRecording: false,
+  isTranscribing: false,
+}));
+
 vi.mock('../hooks/useAudioRecorder', () => ({
   useAudioRecorder: () => ({
-    isEnabled: false,
-    dictationProvider: null,
-    isRecording: false,
-    isTranscribing: false,
+    ...audioRecorderState,
     startRecording: vi.fn(),
     stopRecording: vi.fn(),
   }),
@@ -67,12 +73,21 @@ class ResizeObserverStub {
   }
 
   observe() {}
+  unobserve() {}
   disconnect() {}
 }
 
 global.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 
 describe('ChatInput toolbar', () => {
+  beforeEach(() => {
+    audioRecorderState.isEnabled = false;
+    audioRecorderState.dictationProvider = null;
+    audioRecorderState.isRecording = false;
+    audioRecorderState.isTranscribing = false;
+    resizeObserverCallback = undefined;
+  });
+
   it('shows accessible Chinese attachment and send labels in the wide toolbar', () => {
     render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
@@ -118,5 +133,88 @@ describe('ChatInput toolbar', () => {
     expect(screen.queryByText('发送')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '模型' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
+  });
+
+  it('shows localized diagnostics and voice labels in a wide toolbar', () => {
+    audioRecorderState.isEnabled = true;
+    audioRecorderState.dictationProvider = 'test';
+
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId="session-id"
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Idle}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    expect(screen.getByRole('button', { name: '诊断' })).toHaveTextContent('诊断');
+    expect(screen.getByRole('button', { name: '语音输入' })).toHaveTextContent('语音');
+  });
+
+  it('uses localized voice state labels and tooltips in a narrow toolbar', async () => {
+    const user = userEvent.setup();
+    audioRecorderState.dictationProvider = 'test';
+
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Idle}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    act(() => {
+      resizeObserverCallback?.(
+        [{ contentRect: { width: 479 } } as ResizeObserverEntry],
+        {} as ResizeObserver
+      );
+    });
+
+    const voiceButton = screen.getByRole('button', { name: '语音输入未配置（设置）' });
+    expect(voiceButton).not.toHaveTextContent('语音');
+    await user.hover(voiceButton);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('语音输入未配置（设置）');
+  });
+
+  it('shows a localized stop label wide and keeps it accessible when narrow', () => {
+    const { rerender } = render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Streaming}
+          onStop={vi.fn()}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    expect(screen.getByRole('button', { name: '停止' })).toHaveTextContent('停止');
+
+    act(() => {
+      resizeObserverCallback?.(
+        [{ contentRect: { width: 479 } } as ResizeObserverEntry],
+        {} as ResizeObserver
+      );
+    });
+    rerender(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Streaming}
+          onStop={vi.fn()}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    expect(screen.getByRole('button', { name: '停止' })).not.toHaveTextContent('停止');
   });
 });

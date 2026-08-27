@@ -132,6 +132,8 @@ pub(crate) fn generate_simple_session_description(
             let desc = normalize_chinese_session_description(stripped);
             if desc.is_empty() {
                 "Simple task".to_string()
+            } else if desc.chars().any(is_chinese_character) {
+                desc
             } else {
                 safe_truncate(&desc, 100)
             }
@@ -245,6 +247,27 @@ mod tests {
             normalize_chinese_session_description("一二三四五六七八九十一二三"),
             "一二三四五六七八九十一二三"
         );
+    }
+
+    #[test]
+    fn local_session_description_preserves_over_100_continuous_chinese_characters() {
+        let long_title = "这是一个用于验证本地命令行会话标题不会被机械截断的完整标题".repeat(5);
+        assert!(long_title.chars().count() > 100);
+        let message = Message::user().with_text(format!(
+            "{SESSION_NAME_BEGIN_MARKER}\n{long_title}\n{SESSION_NAME_END_MARKER}\n\n{SESSION_NAME_SUFFIX}"
+        ));
+
+        let (result, _) = generate_simple_session_description("test", &[message]).unwrap();
+        let title = result
+            .content
+            .iter()
+            .find_map(|content| match content {
+                MessageContent::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .unwrap();
+
+        assert_eq!(title, long_title);
     }
 
     #[test]

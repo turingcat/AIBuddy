@@ -191,7 +191,9 @@ export function formatExtensionName(name: string): string {
     .join(' ');
 }
 
-export function getFriendlyTitle(extension: FixedExtensionEntry): string {
+type ExtensionCopySource = ExtensionConfig & { configKey?: string };
+
+export function getFriendlyTitle(extension: ExtensionCopySource): string {
   const name =
     ((extension.type === 'builtin' || extension.type === 'platform') && extension.display_name) ||
     extension.name;
@@ -203,7 +205,7 @@ function normalizeExtensionName(name: string): string {
 }
 
 export function getLocalizedExtensionCopy(
-  extension: FixedExtensionEntry,
+  extension: ExtensionCopySource,
   intl: IntlShape
 ): { title: string; description: string | null } {
   const stableId =

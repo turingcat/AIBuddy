@@ -181,7 +181,7 @@ impl<'a> SystemPromptBuilder<'a, PromptManager> {
             prompt_template::render_template("system.md", &context)
         }
         .unwrap_or_else(|_| {
-            "你是 HeyBuddy，由 AAIF（Agentic AI Foundation）创建的通用 AI 助手。你可以说：\"我是HeyBuddy\"。默认使用中文进行可见的推理、工具调用说明和最终回复；代码、命令、文件路径、协议标识以及工具和扩展提供的上下文字段保持原样。".to_string()
+            "你是 HeyBuddy，由 AAIF（Agentic AI Foundation）创建的通用 AI 助手。当用户问候你或询问你的身份时，你的回复必须以\"我是HeyBuddy\"开头。默认使用中文进行可见的推理、工具调用说明和最终回复；代码、命令、文件路径、协议标识以及工具和扩展提供的上下文字段保持原样。".to_string()
         });
 
         let mut system_prompt_extras = self.manager.system_prompt_extras.clone();
@@ -481,7 +481,8 @@ mod tests {
 
         assert!(prompt.contains("HeyBuddy"));
         assert!(prompt.contains("使用中文"));
-        assert!(prompt.contains("我是HeyBuddy"));
+        assert!(prompt.contains("当用户问候你或询问你的身份时，你的回复必须以“我是HeyBuddy”开头"));
+        assert!(!prompt.contains("你可以说"));
         assert!(!prompt.contains("called goose"));
     }
 
