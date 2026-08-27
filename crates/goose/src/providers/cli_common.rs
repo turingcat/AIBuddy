@@ -71,7 +71,17 @@ fn normalize_chinese_session_description(description: &str) -> String {
         .take(4)
         .collect();
     if phrases.len() > 1 {
-        return phrases.join(" ");
+        return phrases
+            .into_iter()
+            .take(4)
+            .map(|phrase| {
+                phrase
+                    .chars()
+                    .take(CHINESE_TITLE_GROUP_SIZE)
+                    .collect::<String>()
+            })
+            .collect::<Vec<_>>()
+            .join(" ");
     }
 
     description
@@ -216,11 +226,41 @@ mod tests {
     fn local_session_description_keeps_four_chinese_phrases() {
         assert_eq!(
             normalize_chinese_session_description("配置，云服务；登录问题。多云平台"),
-            "配置 云服务 登录问题 多云平台"
+            "配置 云服务 登录问 多云平"
         );
         assert_eq!(
             normalize_chinese_session_description("一二三四五六七八九十一二三"),
             "一二三 四五六 七八九 十一二"
+        );
+    }
+
+    #[test]
+    fn local_session_description_truncates_long_punctuation_separated_chinese_phrases() {
+        assert_eq!(
+            normalize_chinese_session_description(
+                "第一段包含很多内容用于测试，第二段也包含很多内容确保标题不会过长"
+            ),
+            "第一段 第二段"
+        );
+    }
+
+    #[test]
+    fn local_session_description_truncates_long_whitespace_separated_chinese_phrases() {
+        assert_eq!(
+            normalize_chinese_session_description(
+                "第一段包含很多内容用于测试 第二段也包含很多内容确保标题不会过长"
+            ),
+            "第一段 第二段"
+        );
+    }
+
+    #[test]
+    fn local_session_description_bounds_mixed_language_chinese_phrases() {
+        assert_eq!(
+            normalize_chinese_session_description(
+                "Please 修复会话标题生成过程 with 长段落内容需要截断"
+            ),
+            "修复会 长段落"
         );
     }
 }
