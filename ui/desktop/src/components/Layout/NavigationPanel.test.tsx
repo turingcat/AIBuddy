@@ -1,9 +1,9 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { IntlProvider } from 'react-intl';
 import { Navigation } from './NavigationPanel';
-import { IntlTestWrapper } from '../../i18n/test-utils';
 import type { SessionListItem } from '../../acp/sessions';
 
 const {
@@ -15,6 +15,7 @@ const {
   mockCancelElicitationRequests,
   mockToastError,
   session,
+  secondSession,
 } = vi.hoisted(() => ({
   mockHandleSessionClick: vi.fn(),
   mockFetchSessions: vi.fn(),
@@ -29,6 +30,14 @@ const {
     workingDir: '/tmp',
     updatedAt: '2026-08-27T00:00:00Z',
     createdAt: '2026-08-27T00:00:00Z',
+    messageCount: 1,
+  } satisfies SessionListItem,
+  secondSession: {
+    id: 'session-2',
+    name: 'Another session',
+    workingDir: '/tmp',
+    updatedAt: '2026-08-27T01:00:00Z',
+    createdAt: '2026-08-27T01:00:00Z',
     messageCount: 1,
   } satisfies SessionListItem,
 }));
@@ -55,7 +64,7 @@ vi.mock('../ConfigContext', () => ({
 
 vi.mock('../../hooks/useNavigationSessions', () => ({
   useNavigationSessions: () => ({
-    recentSessions: [session],
+    recentSessions: [session, secondSession],
     recentSessionsByProject: [],
     activeSessionId: undefined,
     fetchSessions: mockFetchSessions,
@@ -111,34 +120,59 @@ vi.mock('../ui/ConfirmationModal', () => ({
   ConfirmationModal: ({
     isOpen,
     title,
+    message,
     onConfirm,
     onCancel,
+    isSubmitting,
   }: {
     isOpen: boolean;
     title: string;
+    message: string;
     onConfirm: () => void;
     onCancel: () => void;
+    isSubmitting?: boolean;
   }) =>
     isOpen ? (
       <div role="dialog">
-        <button onClick={onConfirm}>{title}</button>
-        <button onClick={onCancel}>Cancel</button>
+        <span>{message}</span>
+        <button onClick={onConfirm} disabled={isSubmitting}>
+          {title}
+        </button>
+        <button onClick={onCancel} disabled={isSubmitting}>
+          取消
+        </button>
       </div>
     ) : null,
 }));
 
 function renderNavigation() {
   return render(
-    <IntlTestWrapper>
+    <IntlProvider
+      locale="zh-CN"
+      defaultLocale="zh-CN"
+      messages={{ 'sessions.delete.title': '删除会话', 'sessions.cancel': '取消' }}
+    >
       <Navigation />
-    </IntlTestWrapper>
+    </IntlProvider>
   );
+}
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
 }
 
 function sessionTitle() {
   return screen
     .getAllByText(session.name)
     .find((element) => element.classList.contains('truncate'));
+}
+
+function deleteButton(index = 0) {
+  return screen.getAllByRole('button', { name: '删除会话' })[index];
 }
 
 describe('Navigation sidebar session deletion', () => {
@@ -150,16 +184,16 @@ describe('Navigation sidebar session deletion', () => {
   it('shows an accessible delete button and truncates the visible session title', () => {
     renderNavigation();
 
-    expect(screen.getByRole('button', { name: 'Delete Session' })).toBeInTheDocument();
+    expect(deleteButton()).toBeInTheDocument();
     expect(sessionTitle()).toHaveClass('truncate', 'min-w-0');
-    expect(screen.getByRole('tooltip')).toHaveTextContent(session.name);
+    expect(screen.getAllByRole('tooltip')[0]).toHaveTextContent(session.name);
   });
 
   it('does not open the session when the delete button is clicked', async () => {
     const user = userEvent.setup();
     renderNavigation();
 
-    await user.click(screen.getByRole('button', { name: 'Delete Session' }));
+    await user.click(deleteButton());
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(mockHandleSessionClick).not.toHaveBeenCalled();
@@ -169,8 +203,8 @@ describe('Navigation sidebar session deletion', () => {
     const user = userEvent.setup();
     renderNavigation();
 
-    await user.click(screen.getByRole('button', { name: 'Delete Session' }));
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await user.click(deleteButton());
+    await user.click(screen.getByRole('button', { name: '取消' }));
 
     expect(mockDeleteSession).not.toHaveBeenCalled();
     expect(mockDeleteSnapshot).not.toHaveBeenCalled();
@@ -183,10 +217,8 @@ describe('Navigation sidebar session deletion', () => {
     window.addEventListener('session-deleted', sessionDeleted);
     renderNavigation();
 
-    await user.click(screen.getByRole('button', { name: 'Delete Session' }));
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete Session' })
-    );
+    await user.click(deleteButton());
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: '删除会话' }));
 
     await waitFor(() => expect(mockDeleteSession).toHaveBeenCalledWith(session.id));
     expect(mockCancelPermissionRequests).toHaveBeenCalledWith(session.id);
@@ -197,15 +229,65 @@ describe('Navigation sidebar session deletion', () => {
     window.removeEventListener('session-deleted', sessionDeleted);
   });
 
+  it('prevents duplicate confirmation and cancellation while ACP deletion is in flight', async () => {
+    const user = userEvent.setup();
+    const request = deferred<void>();
+    mockDeleteSession.mockReturnValueOnce(request.promise);
+    renderNavigation();
+
+    await user.click(deleteButton());
+    const dialog = screen.getByRole('dialog');
+    const confirmButton = within(dialog).getByRole('button', { name: '删除会话' });
+    const cancelButton = within(dialog).getByRole('button', { name: '取消' });
+
+    await user.dblClick(confirmButton);
+
+    try {
+      expect(mockDeleteSession).toHaveBeenCalledTimes(1);
+      expect(confirmButton).toBeDisabled();
+      expect(cancelButton).toBeDisabled();
+      await user.click(cancelButton);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    } finally {
+      request.resolve();
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    }
+  });
+
+  it('keeps a newer session pending when an older deletion finishes', async () => {
+    const user = userEvent.setup();
+    const request = deferred<void>();
+    mockDeleteSession.mockReturnValueOnce(request.promise);
+    renderNavigation();
+
+    await user.click(deleteButton());
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: '删除会话' }));
+    await waitFor(() => expect(mockDeleteSession).toHaveBeenCalledWith(session.id));
+
+    await user.click(deleteButton(1));
+    expect(screen.getByRole('dialog')).toHaveTextContent(secondSession.name);
+
+    await act(async () => {
+      request.resolve();
+      await request.promise;
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('dialog')).toHaveTextContent(secondSession.name);
+    expect(
+      within(screen.getByRole('dialog')).getByRole('button', { name: '删除会话' })
+    ).toBeEnabled();
+  });
+
   it('keeps the session and reports an error when ACP deletion fails', async () => {
     const user = userEvent.setup();
+    const sessionDeleted = vi.fn();
+    window.addEventListener('session-deleted', sessionDeleted);
     mockDeleteSession.mockRejectedValueOnce(new Error('ACP unavailable'));
     renderNavigation();
 
-    await user.click(screen.getByRole('button', { name: 'Delete Session' }));
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete Session' })
-    );
+    await user.click(deleteButton());
+    await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: '删除会话' }));
 
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());
     expect(sessionTitle()).toBeInTheDocument();
@@ -213,5 +295,7 @@ describe('Navigation sidebar session deletion', () => {
     expect(mockCancelElicitationRequests).not.toHaveBeenCalled();
     expect(mockDeleteSnapshot).not.toHaveBeenCalled();
     expect(mockFetchSessions).toHaveBeenCalledTimes(1);
+    expect(sessionDeleted).not.toHaveBeenCalled();
+    window.removeEventListener('session-deleted', sessionDeleted);
   });
 });

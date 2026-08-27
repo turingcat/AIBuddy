@@ -286,6 +286,8 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
 
   const [sessionStatuses, setSessionStatuses] = useState<Map<string, SessionStatus>>(new Map());
   const [sessionToDelete, setSessionToDelete] = useState<SessionListItem | null>(null);
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
+  const deleteRequestRef = useRef<symbol | null>(null);
 
   useEffect(() => {
     const handleStatusUpdate = (event: Event) => {
@@ -319,9 +321,12 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!sessionToDelete) return;
+    if (!sessionToDelete || deleteRequestRef.current) return;
 
     const { id, name } = sessionToDelete;
+    const requestToken = Symbol(id);
+    deleteRequestRef.current = requestToken;
+    setIsDeleteSubmitting(true);
 
     try {
       await acpDeleteSession(id);
@@ -342,9 +347,18 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
         })
       );
     } finally {
-      setSessionToDelete(null);
+      if (deleteRequestRef.current === requestToken) {
+        deleteRequestRef.current = null;
+        setIsDeleteSubmitting(false);
+        setSessionToDelete((pendingSession) => (pendingSession?.id === id ? null : pendingSession));
+      }
     }
   }, [fetchSessions, intl, sessionToDelete]);
+
+  const handleCancelDelete = useCallback(() => {
+    if (deleteRequestRef.current) return;
+    setSessionToDelete(null);
+  }, []);
 
   const navFocusRef = useRef<HTMLDivElement>(null);
 
@@ -484,8 +498,9 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
         confirmLabel={intl.formatMessage(i18n.deleteTitle)}
         cancelLabel={intl.formatMessage(i18n.cancel)}
         confirmVariant="destructive"
+        isSubmitting={isDeleteSubmitting}
         onConfirm={handleConfirmDelete}
-        onCancel={() => setSessionToDelete(null)}
+        onCancel={handleCancelDelete}
       />
     </motion.div>
   );
