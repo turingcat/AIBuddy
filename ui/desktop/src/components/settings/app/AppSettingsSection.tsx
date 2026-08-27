@@ -519,7 +519,7 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
           <CardDescription>退出当前登录的 HeyBuddy 账号</CardDescription>
         </CardHeader>
         <CardContent className="pt-4 px-4">
-          <Button variant="secondary" size="sm" onClick={logout}>
+          <Button variant="secondary" size="sm" onClick={() => logout(intl)}>
             退出登录
           </Button>
         </CardContent>

@@ -14,6 +14,9 @@
   "accountMenu.logout": {
     "defaultMessage": "退出登录"
   },
+  "accountMenu.logoutConfirmation": {
+    "defaultMessage": "确定退出登录吗？"
+  },
   "accountMenu.notLoggedIn": {
     "defaultMessage": "未登录用户"
   },

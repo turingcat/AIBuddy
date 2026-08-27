@@ -480,7 +480,10 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
       </div>
 
       <div className="px-2 pt-2 pb-2 border-t border-border-secondary">
-        <UserAccountMenu onOpenSettings={() => handleNavClick('/settings')} onLogout={logout} />
+        <UserAccountMenu
+          onOpenSettings={() => handleNavClick('/settings')}
+          onLogout={() => logout(intl)}
+        />
       </div>
       <ConfirmationModal
         isOpen={sessionToDelete !== null}

@@ -1,4 +1,4 @@
-import { ChevronUp, LogOut, Settings, UserRound } from 'lucide-react';
+import { ChevronUp, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
 
 import { useBalance, type BalanceState } from '../../hooks/useBalance';
 import { defineMessages, useIntl } from '../../i18n';
@@ -9,12 +9,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { BalanceRefreshButton, BalanceStatus } from './BalanceWidget';
+import { BalanceStatus } from './BalanceWidget';
 
 const i18n = defineMessages({
   notLoggedIn: { id: 'accountMenu.notLoggedIn', defaultMessage: 'Not signed in' },
   settings: { id: 'accountMenu.settings', defaultMessage: 'Settings' },
   logout: { id: 'accountMenu.logout', defaultMessage: 'Log out' },
+  refresh: { id: 'balanceWidget.refresh', defaultMessage: 'Refresh balance' },
 });
 
 interface UserAccountMenuProps {
@@ -53,10 +54,13 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
           </div>
           <div className="flex items-center gap-1 text-xs text-text-primary">
             <BalanceStatus state={state} />
-            <BalanceRefreshButton refreshing={refreshing} onRefresh={refresh} />
           </div>
         </div>
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={refresh}>
+          <RefreshCw className={refreshing ? 'animate-spin' : undefined} />
+          {intl.formatMessage(i18n.refresh)}
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onOpenSettings}>
           <Settings />
           {intl.formatMessage(i18n.settings)}

@@ -2,6 +2,9 @@
   "accountMenu.logout": {
     "defaultMessage": "Log out"
   },
+  "accountMenu.logoutConfirmation": {
+    "defaultMessage": "Are you sure you want to log out?"
+  },
   "accountMenu.notLoggedIn": {
     "defaultMessage": "Not signed in"
   },

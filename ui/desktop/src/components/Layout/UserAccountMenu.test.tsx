@@ -12,6 +12,7 @@ vi.mock('../../hooks/useBalance', () => ({ useBalance: vi.fn() }));
 const mockUseBalance = vi.mocked(useBalance);
 const mockOpenSettings = vi.fn();
 const mockLogout = vi.fn();
+const mockRefresh = vi.fn();
 
 const messages = {
   'accountMenu.notLoggedIn': '未登录用户',
@@ -20,7 +21,7 @@ const messages = {
 };
 
 function mockBalanceState(state: BalanceState) {
-  mockUseBalance.mockReturnValue({ state, refreshing: false, refresh: vi.fn() });
+  mockUseBalance.mockReturnValue({ state, refreshing: false, refresh: mockRefresh });
 }
 
 function renderMenu() {
@@ -136,6 +137,17 @@ describe('UserAccountMenu', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: '设置' }));
 
     expect(mockOpenSettings).toHaveBeenCalledTimes(1);
+  });
+
+  it('refreshes the balance when selected with the keyboard', async () => {
+    const user = userEvent.setup();
+    mockBalanceState({ status: 'loading' });
+    renderMenu();
+
+    await user.click(screen.getByRole('button', { name: /未登录用户/ }));
+    await user.keyboard('{ArrowDown}{Enter}');
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('invokes the shared logout action from the account menu', async () => {

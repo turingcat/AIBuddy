@@ -1,5 +1,14 @@
-export async function logout() {
-  if (!window.confirm('确定退出登录吗？')) return;
+import { defineMessages, type IntlShape } from 'react-intl';
+
+const i18n = defineMessages({
+  confirmation: {
+    id: 'accountMenu.logoutConfirmation',
+    defaultMessage: 'Are you sure you want to log out?',
+  },
+});
+
+export async function logout(intl: IntlShape) {
+  if (!window.confirm(intl.formatMessage(i18n.confirmation))) return;
   await window.electron.clearLoginCredentials();
   window.electron.restartApp();
 }
