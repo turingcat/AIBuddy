@@ -151,7 +151,19 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
       } catch (error) {
         console.error('[getFallbackModelAndProvider] Failed to write to config', error);
       }
+      return { model, provider };
     }
+
+    try {
+      const firstModel = (await window.electron.listModelsViaApi())[0];
+      if (provider && firstModel) {
+        await acpSaveDefaults(provider, firstModel.id);
+        return { model: firstModel.id, provider };
+      }
+    } catch (error) {
+      console.error('[getFallbackModelAndProvider] Failed to load available models', error);
+    }
+
     return { model: model, provider: provider };
   }, []);
 
