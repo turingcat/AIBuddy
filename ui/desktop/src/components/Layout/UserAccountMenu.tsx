@@ -1,4 +1,4 @@
-import { ChevronUp, LogOut, Settings, UserRound } from 'lucide-react';
+import { ChevronUp, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
 
 import { useBalance, type BalanceState } from '../../hooks/useBalance';
 import { defineMessages, useIntl } from '../../i18n';
@@ -9,12 +9,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
-import { BalanceRefreshButton, BalanceStatus } from './BalanceWidget';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
+import { BalanceStatus } from './BalanceWidget';
 
 const i18n = defineMessages({
   notLoggedIn: { id: 'accountMenu.notLoggedIn', defaultMessage: 'Not signed in' },
   settings: { id: 'accountMenu.settings', defaultMessage: 'Settings' },
   logout: { id: 'accountMenu.logout', defaultMessage: 'Log out' },
+  refresh: { id: 'balanceWidget.refresh', defaultMessage: 'Refresh balance' },
 });
 
 interface UserAccountMenuProps {
@@ -25,6 +27,35 @@ interface UserAccountMenuProps {
 function getAccountName(state: BalanceState, fallback: string): string {
   if (state.status !== 'ready') return fallback;
   return state.balance.displayName || state.balance.userName || fallback;
+}
+
+function BalanceRefreshMenuItem({
+  refreshing,
+  onRefresh,
+}: {
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const intl = useIntl();
+  const refreshLabel = intl.formatMessage(i18n.refresh);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuItem
+          aria-label={refreshLabel}
+          className="ml-auto shrink-0 p-1 text-text-secondary hover:text-text-primary"
+          onSelect={(event) => {
+            event.preventDefault();
+            onRefresh();
+          }}
+        >
+          <RefreshCw className={`size-3 ${refreshing ? 'animate-spin' : ''}`} />
+        </DropdownMenuItem>
+      </TooltipTrigger>
+      <TooltipContent>{refreshLabel}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuProps) {
@@ -59,7 +90,7 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
           <span className="min-w-0 shrink-0 text-xs text-text-primary">
             <BalanceStatus state={state} />
           </span>
-          <BalanceRefreshButton refreshing={refreshing} onRefresh={refresh} />
+          <BalanceRefreshMenuItem refreshing={refreshing} onRefresh={refresh} />
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onOpenSettings}>

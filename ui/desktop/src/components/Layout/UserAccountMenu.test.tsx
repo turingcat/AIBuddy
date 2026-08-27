@@ -21,6 +21,13 @@ const messages = {
   'balanceWidget.refresh': '刷新余额',
 };
 
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+
 function mockBalanceState(state: BalanceState, refreshing = false) {
   mockUseBalance.mockReturnValue({ state, refreshing, refresh: mockRefresh });
 }
@@ -134,7 +141,7 @@ describe('UserAccountMenu', () => {
     expect(menu).not.toHaveClass('w-64');
   });
 
-  it('places the account name, balance, and refresh button in one summary row', async () => {
+  it('places the account name, balance, and refresh menu item in one summary row', async () => {
     mockBalanceState({
       status: 'ready',
       balance: {
@@ -154,21 +161,36 @@ describe('UserAccountMenu', () => {
     const summary = screen.getByTestId('account-menu-summary');
     expect(within(summary).getByText('林也')).toBeInTheDocument();
     expect(within(summary).getByTestId('balance-value')).toBeInTheDocument();
-    expect(within(summary).getByRole('button', { name: '刷新余额' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: '刷新余额' })).toBeNull();
+    expect(within(summary).getByRole('menuitem', { name: '刷新余额' })).toBeInTheDocument();
   });
 
-  it('refreshes from the summary icon without closing the account menu', async () => {
+  it('refreshes from the summary with keyboard navigation without closing the account menu', async () => {
+    const user = userEvent.setup();
     mockBalanceState({ status: 'loading' }, true);
     renderMenu();
 
-    await userEvent.click(screen.getByRole('button', { name: /未登录用户/ }));
-    const refreshButton = screen.getByRole('button', { name: '刷新余额' });
-    expect(refreshButton.querySelector('svg')).toHaveClass('animate-spin');
-    await userEvent.click(refreshButton);
+    await user.tab();
+    await user.keyboard('{Enter}');
+    await user.keyboard('{ArrowDown}{ArrowUp}');
+
+    const refreshItem = screen.getByRole('menuitem', { name: '刷新余额' });
+    expect(refreshItem).toHaveFocus();
+    expect(refreshItem.querySelector('svg')).toHaveClass('animate-spin');
+    await user.keyboard('{Enter}');
 
     expect(mockRefresh).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('shows the localized refresh tooltip on summary icon hover', async () => {
+    const user = userEvent.setup();
+    mockBalanceState({ status: 'loading' });
+    renderMenu();
+
+    await user.click(screen.getByRole('button', { name: /未登录用户/ }));
+    await user.hover(screen.getByRole('menuitem', { name: '刷新余额' }));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('刷新余额');
   });
 
   it('opens Settings from the account menu', async () => {
