@@ -1796,7 +1796,7 @@ export default function ChatInput({
                 size="sm"
                 shape={isBottomBarNarrow ? 'round' : 'pill'}
                 onClick={() => {
-                  if (!isEnabled) return;
+                  if (!isEnabled || isTranscribing) return;
                   if (isRecording) {
                     trackVoiceDictation('stop');
                     stopRecording();
@@ -1805,18 +1805,14 @@ export default function ChatInput({
                     startRecording();
                   }
                 }}
-                // Keep the button hoverable when only !isEnabled so the
-                // "Dictation not configured" tooltip stays reachable.
-                // We still natively disable while transcribing.
-                disabled={isTranscribing}
-                aria-disabled={!isEnabled}
+                aria-disabled={!isEnabled || isTranscribing}
                 aria-label={voiceControlLabel}
                 className={cn(
                   'transition-colors',
                   isRecording
                     ? 'text-red-500 hover:text-red-600'
                     : 'text-text-primary/70 hover:text-text-primary',
-                  isTranscribing && 'animate-pulse',
+                  isTranscribing && 'animate-pulse opacity-50 cursor-not-allowed',
                   !isEnabled && 'opacity-50 cursor-not-allowed'
                 )}
               >

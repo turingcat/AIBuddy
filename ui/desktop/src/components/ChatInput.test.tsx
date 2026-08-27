@@ -20,13 +20,13 @@ const audioRecorderState = vi.hoisted(() => ({
   dictationProvider: null as string | null,
   isRecording: false,
   isTranscribing: false,
+  startRecording: vi.fn(),
+  stopRecording: vi.fn(),
 }));
 
 vi.mock('../hooks/useAudioRecorder', () => ({
   useAudioRecorder: () => ({
     ...audioRecorderState,
-    startRecording: vi.fn(),
-    stopRecording: vi.fn(),
   }),
 }));
 vi.mock('./alerts', () => ({
@@ -85,6 +85,8 @@ describe('ChatInput toolbar', () => {
     audioRecorderState.dictationProvider = null;
     audioRecorderState.isRecording = false;
     audioRecorderState.isTranscribing = false;
+    audioRecorderState.startRecording.mockReset();
+    audioRecorderState.stopRecording.mockReset();
     resizeObserverCallback = undefined;
   });
 
@@ -180,6 +182,74 @@ describe('ChatInput toolbar', () => {
     expect(voiceButton).not.toHaveTextContent('语音');
     await user.hover(voiceButton);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('语音输入未配置（设置）');
+  });
+
+  it('keeps the transcribing voice control accessible without triggering recording actions', async () => {
+    const user = userEvent.setup();
+    audioRecorderState.isEnabled = true;
+    audioRecorderState.dictationProvider = 'test';
+    audioRecorderState.isTranscribing = true;
+
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Idle}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    act(() => {
+      resizeObserverCallback?.(
+        [{ contentRect: { width: 479 } } as ResizeObserverEntry],
+        {} as ResizeObserver
+      );
+    });
+
+    const voiceButton = screen.getByRole('button', { name: '转写中…' });
+    expect(voiceButton).not.toBeDisabled();
+    expect(voiceButton).toHaveAttribute('aria-disabled', 'true');
+    voiceButton.focus();
+    expect(voiceButton).toHaveFocus();
+    await user.hover(voiceButton);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('转写中…');
+    await user.click(voiceButton);
+    expect(audioRecorderState.startRecording).not.toHaveBeenCalled();
+    expect(audioRecorderState.stopRecording).not.toHaveBeenCalled();
+  });
+
+  it('uses localized recording aria and tooltip copy in a narrow toolbar', async () => {
+    const user = userEvent.setup();
+    audioRecorderState.isEnabled = true;
+    audioRecorderState.dictationProvider = 'test';
+    audioRecorderState.isRecording = true;
+
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Idle}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    act(() => {
+      resizeObserverCallback?.(
+        [{ contentRect: { width: 479 } } as ResizeObserverEntry],
+        {} as ResizeObserver
+      );
+    });
+
+    const voiceButton = screen.getByRole('button', { name: '停止录音' });
+    await user.hover(voiceButton);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('停止录音');
+    await user.click(voiceButton);
+    expect(audioRecorderState.stopRecording).toHaveBeenCalledOnce();
+    expect(audioRecorderState.startRecording).not.toHaveBeenCalled();
   });
 
   it('shows a localized stop label wide and keeps it accessible when narrow', () => {

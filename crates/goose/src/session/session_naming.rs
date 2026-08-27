@@ -183,15 +183,11 @@ pub(crate) async fn generate_session_name(
         .join(" ");
 
     let title = extract_short_title(&description);
-    if title.chars().any(is_chinese_character) {
+    if crate::providers::cli_common::preserves_untruncated_chinese_title(&title) {
         Ok(title)
     } else {
         Ok(safe_truncate(&title, 100))
     }
-}
-
-fn is_chinese_character(character: char) -> bool {
-    ('\u{4e00}'..='\u{9fff}').contains(&character)
 }
 
 #[cfg(test)]
@@ -347,5 +343,23 @@ mod tests {
         .unwrap();
 
         assert_eq!(title, long_title);
+    }
+
+    #[tokio::test]
+    async fn generated_session_name_truncates_over_100_mixed_language_characters() {
+        let mixed_title = format!("{}中", "a".repeat(120));
+        let provider = LongChineseTitleProvider(mixed_title);
+        let conversation = Conversation::new_unvalidated([Message::user().with_text("生成标题")]);
+
+        let title = generate_session_name(
+            &provider,
+            &ModelConfig::new("test"),
+            "session-id",
+            &conversation,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(title, format!("{}...", "a".repeat(97)));
     }
 }

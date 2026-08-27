@@ -66,3 +66,32 @@
 - `pnpm i18n:validate-zh-CN` 的既有 extra key `navigation.itemApps` 仍存在，本轮新增 11 个 catalog key 已同步；该既有项不在本轮范围。
 - Hermit 在受限环境打印 metadata cache `operation not permitted`，但 Rust 命令继续并以 0 退出。
 - code-mode 链接打印既有 compact-unwind 大小警告，但测试以 0 退出。
+
+## Scoped re-review 修复（2026-08-27）
+
+### Important：ChatInput 转写态 tooltip
+
+- 修改：`ChatInput.tsx` 的转写态语音按钮不再使用原生 `disabled`；`isTranscribing` 合并进 `aria-disabled` 与点击早退。按钮保留 `animate-pulse`、低透明度和禁用光标，因此仍表达不可操作状态，同时可以获得焦点和 hover 以显示中文 tooltip。
+- 测试：`ChatInput.test.tsx` 新增窄栏转写态测试，覆盖 `转写中…` aria-label、aria-disabled、可聚焦/hover tooltip，以及点击不调用开始或停止录音；新增窄栏录音态测试，覆盖 `停止录音` aria-label/tooltip 和停止动作。
+- RED：`CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm exec vitest run src/components/ChatInput.test.tsx` 为 1 failed、6 passed；当前按钮仍有原生 `disabled`，且 `aria-disabled` 实际为 `false`。
+- GREEN：同一 focused 命令为 1 file、7 tests passed。
+
+### Important：混合语言标题边界
+
+- 修改：`cli_common.rs` 新增两条标题路径共享的 `preserves_untruncated_chinese_title` 判定。只有标题包含中文且其余字符均为 Han、Unicode 空白或 Unicode 标点时才保留完整内容；字母/数字混入的超长候选继续经过 `safe_truncate(..., 100)`。CLI 对超长混合候选在中文短语归一化前应用安全边界，普通短混合输入的既有中文短语提取行为不变；`session_naming.rs` 复用同一 helper。
+- 测试：`session_naming.rs` 与 `cli_common.rs` 各新增“120 个英文字符夹一个中文字符”回归测试，手工断言 97 字符加 `...`；两路径原有超过 100 字纯连续中文完整保留测试继续覆盖另一侧边界。
+- RED：`cargo test -p goose session_naming` 为 4 passed、1 failed，实际返回完整 121 字混合标题；`cargo test -p goose --lib providers::cli_common::tests` 为 13 passed、1 failed，实际返回仅 `中`。
+- GREEN：前一命令 5 passed；后一命令 14 passed，包含普通短混合输入的既有回归用例。
+
+### Re-review 最终验证
+
+- `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm exec vitest run src/components/ChatInput.test.tsx`（在 `ui/desktop`）：1 file、7 tests passed。
+- `cargo test -p goose session_naming`：5 passed。
+- `cargo test -p goose --lib providers::cli_common::tests`：14 passed。
+- `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm run typecheck`（在 `ui/desktop`）：exit 0。
+- `cargo fmt --all -- --check`：exit 0。
+- `git diff --check`：exit 0。
+
+### Re-review 残余担忧
+
+- 无新增功能性担忧。Hermit metadata cache 权限提示仍存在，但所有 Rust 命令均继续并以 0 退出。

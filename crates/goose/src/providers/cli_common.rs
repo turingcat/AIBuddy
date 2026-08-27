@@ -1,3 +1,6 @@
+use std::sync::LazyLock;
+
+use regex::Regex;
 use serde_json::Value;
 
 use crate::conversation::message::{Message, MessageContent};
@@ -98,6 +101,14 @@ fn is_chinese_character(character: char) -> bool {
     ('\u{4e00}'..='\u{9fff}').contains(&character)
 }
 
+pub(crate) fn preserves_untruncated_chinese_title(title: &str) -> bool {
+    static ALLOWED_TITLE_CHARACTERS: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^[\p{Han}\p{White_Space}\p{Punctuation}]+$").expect("valid title regex")
+    });
+
+    title.chars().any(is_chinese_character) && ALLOWED_TITLE_CHARACTERS.is_match(title)
+}
+
 pub(crate) fn generate_simple_session_description(
     model_name: &str,
     messages: &[Message],
@@ -129,11 +140,17 @@ pub(crate) fn generate_simple_session_description(
                 .unwrap_or(stripped)
                 .trim();
 
+            let preserve_full_title = preserves_untruncated_chinese_title(stripped);
+            let truncate_mixed_title = !preserve_full_title
+                && stripped.chars().count() > 100
+                && stripped.chars().any(is_chinese_character);
             let desc = normalize_chinese_session_description(stripped);
             if desc.is_empty() {
                 "Simple task".to_string()
-            } else if desc.chars().any(is_chinese_character) {
+            } else if preserve_full_title {
                 desc
+            } else if truncate_mixed_title {
+                safe_truncate(stripped, 100)
             } else {
                 safe_truncate(&desc, 100)
             }
@@ -268,6 +285,26 @@ mod tests {
             .unwrap();
 
         assert_eq!(title, long_title);
+    }
+
+    #[test]
+    fn local_session_description_truncates_over_100_mixed_language_characters() {
+        let mixed_title = format!("{}中", "a".repeat(120));
+        let message = Message::user().with_text(format!(
+            "{SESSION_NAME_BEGIN_MARKER}\n{mixed_title}\n{SESSION_NAME_END_MARKER}\n\n{SESSION_NAME_SUFFIX}"
+        ));
+
+        let (result, _) = generate_simple_session_description("test", &[message]).unwrap();
+        let title = result
+            .content
+            .iter()
+            .find_map(|content| match content {
+                MessageContent::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .unwrap();
+
+        assert_eq!(title, format!("{}...", "a".repeat(97)));
     }
 
     #[test]
