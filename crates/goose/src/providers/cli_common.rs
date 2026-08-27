@@ -38,6 +38,7 @@ pub(crate) fn error_from_event(provider_name: &str, parsed: &Value) -> ProviderE
 pub(crate) const SESSION_NAME_BEGIN_MARKER: &str = "---BEGIN USER MESSAGES---";
 pub(crate) const SESSION_NAME_END_MARKER: &str = "---END USER MESSAGES---";
 pub(crate) const SESSION_NAME_SUFFIX: &str = "Generate a short title for the above messages.";
+const CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 12;
 
 pub(crate) fn is_session_description_request(system: &str) -> bool {
     system.contains("four words or less")
@@ -56,12 +57,9 @@ fn normalize_chinese_session_description(description: &str) -> String {
 
     description
         .chars()
-        .filter(|character| character.is_alphanumeric() || *character == ' ')
-        .collect::<String>()
-        .split_whitespace()
-        .take(4)
-        .collect::<Vec<_>>()
-        .join("")
+        .filter(|character| *character >= '\u{4e00}' && *character <= '\u{9fff}')
+        .take(CHINESE_SESSION_TITLE_CHAR_LIMIT)
+        .collect()
 }
 
 pub(crate) fn generate_simple_session_description(
@@ -155,5 +153,40 @@ mod tests {
 
         assert_eq!(title, "请帮我整理");
         assert!(title.chars().all(|character| character.is_alphanumeric()));
+    }
+
+    #[test]
+    fn local_session_description_handles_unspaced_punctuation_and_length() {
+        let message = Message::user().with_text(format!(
+            "{SESSION_NAME_BEGIN_MARKER}\n请帮我制定下半年市场推广计划！\n{SESSION_NAME_END_MARKER}\n\n{SESSION_NAME_SUFFIX}"
+        ));
+
+        let (result, _) = generate_simple_session_description("test", &[message]).unwrap();
+        let title = result
+            .content
+            .iter()
+            .find_map(|content| match content {
+                MessageContent::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .unwrap();
+
+        assert_eq!(title, "请帮我制定下半年市场推广");
+        assert_eq!(title.chars().count(), CHINESE_SESSION_TITLE_CHAR_LIMIT);
+        assert!(title
+            .chars()
+            .all(|character| character >= '\u{4e00}' && character <= '\u{9fff}'));
+    }
+
+    #[test]
+    fn local_session_description_keeps_non_chinese_behavior_and_filters_mixed_input() {
+        assert_eq!(
+            normalize_chinese_session_description("List files now"),
+            "List files now"
+        );
+        assert_eq!(
+            normalize_chinese_session_description("请查看 project files"),
+            "请查看"
+        );
     }
 }
