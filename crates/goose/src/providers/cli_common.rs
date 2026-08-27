@@ -76,14 +76,16 @@ fn normalize_chinese_session_description(description: &str) -> String {
         let mut bounded_phrases = Vec::new();
         for phrase in phrases {
             let phrase_length = phrase.chars().count();
-            if phrase_length <= remaining_characters {
-                bounded_phrases.push(phrase);
-                remaining_characters -= phrase_length;
-                if remaining_characters == 0 {
-                    break;
+            if phrase_length > remaining_characters {
+                if bounded_phrases.is_empty() {
+                    bounded_phrases.push(phrase);
                 }
-            } else {
-                bounded_phrases.push(phrase.chars().take(remaining_characters).collect());
+                break;
+            }
+
+            bounded_phrases.push(phrase);
+            remaining_characters -= phrase_length;
+            if remaining_characters == 0 {
                 break;
             }
         }
@@ -217,21 +219,27 @@ mod tests {
     }
 
     #[test]
-    fn local_session_description_keeps_non_chinese_behavior_and_filters_mixed_input() {
+    fn local_session_description_keeps_first_four_non_chinese_tokens() {
         assert_eq!(
-            normalize_chinese_session_description("List files now"),
-            "List files now"
+            normalize_chinese_session_description("List files in current folder now"),
+            "List files in current"
         );
+    }
+
+    #[test]
+    fn local_session_description_prioritizes_chinese_in_mixed_input() {
         assert_eq!(
-            normalize_chinese_session_description("Please help me fix 登录 failure"),
-            "登录"
+            normalize_chinese_session_description(
+                "Please help me fix 登录问题 and review 云服务 behavior"
+            ),
+            "登录问题 云服务"
         );
     }
 
     #[test]
     fn local_session_description_preserves_complete_separated_chinese_phrases() {
         assert_eq!(
-            normalize_chinese_session_description("配置，云服务；登录问题。多云平台"),
+            normalize_chinese_session_description("配置，云服务；登录问题。多云平台！额外短语"),
             "配置 云服务 登录问题 多云平台"
         );
     }
@@ -245,35 +253,30 @@ mod tests {
     }
 
     #[test]
-    fn local_session_description_truncates_long_punctuation_separated_chinese_phrases() {
-        let title = normalize_chinese_session_description(
-            "第一段包含很多内容用于测试，第二段也包含很多内容确保标题不会过长",
-        );
-
-        assert_eq!(title, "第一段包含很多内容用于测试 第二段也包含很多内容确");
-        assert_eq!(
-            title
-                .chars()
-                .filter(|&character| is_chinese_character(character))
-                .count(),
-            24
-        );
-        assert_eq!(title.split_whitespace().count(), 2);
+    fn local_session_description_drops_a_phrase_that_does_not_fit() {
         assert_eq!(
             normalize_chinese_session_description(
-                "一二三四五六七八九十一二，甲乙丙丁戊己庚辛壬癸子丑，额外内容"
+                "这是一个已经占用大部分字符预算的完整标题短语，登录问题，云服务"
             ),
-            "一二三四五六七八九十一二 甲乙丙丁戊己庚辛壬癸子丑"
+            "这是一个已经占用大部分字符预算的完整标题短语"
         );
     }
 
     #[test]
-    fn local_session_description_truncates_long_whitespace_separated_chinese_phrases() {
+    fn local_session_description_keeps_the_first_complete_phrase_over_the_budget() {
         assert_eq!(
             normalize_chinese_session_description(
-                "第一段包含很多内容用于测试 第二段也包含很多内容确保标题不会过长"
+                "这是一个明显超过二十四字预算但仍然需要保持完整的中文标题短语，登录问题"
             ),
-            "第一段包含很多内容用于测试 第二段也包含很多内容确"
+            "这是一个明显超过二十四字预算但仍然需要保持完整的中文标题短语"
+        );
+    }
+
+    #[test]
+    fn local_session_description_preserves_whitespace_separated_chinese_phrases() {
+        assert_eq!(
+            normalize_chinese_session_description("配置 云服务 登录问题 多云平台 额外短语"),
+            "配置 云服务 登录问题 多云平台"
         );
     }
 
