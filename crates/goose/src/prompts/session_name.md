@@ -1,7 +1,2 @@
-Generate a short title (four words or less) that describes the topic of the user's messages. 
-Reply with only the title, nothing else. Do not show your reasoning.
-
-Examples:
-- "how do I reverse a list in python?" → Python list reversal
-- "what's the weather in Tokyo?" → Tokyo weather
-- "explain how transformers work in ML" → ML transformers explained
+请根据用户消息的主题生成一个简洁的中文标题，不超过四个有意义的词或短语。
+只输出标题，不要输出任何其他内容。不要展示思考过程、解释或标点符号。

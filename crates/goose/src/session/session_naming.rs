@@ -108,6 +108,18 @@ fn get_preprompt_context(messages: &Conversation) -> String {
         .join("\n")
 }
 
+fn render_session_name_prompt() -> Result<String> {
+    crate::prompt_template::render_template(
+        "session_name.md",
+        &std::collections::HashMap::<String, String>::new(),
+    )
+}
+
+#[cfg(test)]
+fn render_session_name_prompt_for_test() -> Result<String> {
+    render_session_name_prompt()
+}
+
 /// Generate a session name/description based on the conversation history
 /// Creates a prompt asking for a concise description in 4 words or less.
 pub(crate) async fn generate_session_name(
@@ -118,10 +130,7 @@ pub(crate) async fn generate_session_name(
 ) -> Result<String> {
     let context = get_initial_user_messages(messages);
     let preprompt_context = get_preprompt_context(messages);
-    let system = crate::prompt_template::render_template(
-        "session_name.md",
-        &std::collections::HashMap::<String, String>::new(),
-    )?;
+    let system = render_session_name_prompt()?;
 
     use crate::providers::cli_common::{
         SESSION_NAME_BEGIN_MARKER, SESSION_NAME_END_MARKER, SESSION_NAME_SUFFIX,
@@ -179,6 +188,15 @@ pub(crate) async fn generate_session_name(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn session_name_prompt_requires_a_short_chinese_title() {
+        let prompt = render_session_name_prompt_for_test().unwrap();
+
+        assert!(prompt.contains("简洁的中文"));
+        assert!(prompt.contains("只输出标题"));
+        assert!(!prompt.contains("Generate short title"));
+    }
 
     #[test]
     fn test_strip_xml_tags() {
