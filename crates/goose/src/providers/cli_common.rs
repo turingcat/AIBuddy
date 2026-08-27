@@ -95,7 +95,7 @@ fn normalize_chinese_session_description(description: &str) -> String {
 }
 
 fn is_chinese_character(character: char) -> bool {
-    character >= '\u{4e00}' && character <= '\u{9fff}'
+    ('\u{4e00}'..='\u{9fff}').contains(&character)
 }
 
 pub(crate) fn generate_simple_session_description(

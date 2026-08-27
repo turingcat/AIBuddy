@@ -122,3 +122,9 @@ cudaforge = { git = "https://github.com/jbg/cudaforge", rev = "e7c1967340e40673d
 # full debug info and stay fully debuggable; release builds are unaffected.
 [profile.dev.package."*"]
 debug = false
+strip = "none"
+
+# macOS 27's linker can emit malformed host dylibs when rustc strips debuginfo.
+# Dev package overrides outrank build overrides, while release can stay host-only.
+[profile.release.build-override]
+strip = "none"

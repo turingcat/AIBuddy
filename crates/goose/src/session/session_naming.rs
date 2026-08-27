@@ -109,10 +109,10 @@ fn get_preprompt_context(messages: &Conversation) -> String {
 }
 
 fn render_session_name_prompt() -> Result<String> {
-    crate::prompt_template::render_template(
+    Ok(crate::prompt_template::render_template(
         "session_name.md",
         &std::collections::HashMap::<String, String>::new(),
-    )
+    )?)
 }
 
 #[cfg(test)]
