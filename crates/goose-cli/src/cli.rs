@@ -5,15 +5,11 @@ use clap_complete_nushell::Nushell as ClapNushell;
 use goose::agents::GoosePlatform;
 use goose::builtin_extension::register_builtin_extensions;
 use goose::config::{Config, GooseMode};
-#[cfg(feature = "telemetry")]
-use goose::posthog::get_telemetry_choice;
 use goose::recipe::Recipe;
 use goose::source_roots::SourceRoot;
 use goose_mcp::mcp_server_runner::{serve, McpCommand};
 use goose_mcp::{AutoVisualiserRouter, ComputerControllerServer, MemoryServer, TutorialServer};
 
-#[cfg(feature = "telemetry")]
-use crate::commands::configure::configure_telemetry_consent_dialog;
 use crate::commands::configure::handle_configure;
 use crate::commands::info::handle_info;
 use crate::commands::plugin::{handle_plugin_install, handle_plugin_update};
@@ -1615,11 +1611,6 @@ async fn handle_interactive_session(
     session_opts: SessionOptions,
     extension_opts: ExtensionOptions,
 ) -> Result<()> {
-    #[cfg(feature = "telemetry")]
-    if get_telemetry_choice().is_none() {
-        configure_telemetry_consent_dialog()?;
-    }
-
     let session_start = std::time::Instant::now();
     let session_type = if fork {
         "forked"
@@ -1862,11 +1853,6 @@ async fn handle_run_command(
     output_opts: OutputOptions,
     model_opts: ModelOptions,
 ) -> Result<()> {
-    #[cfg(feature = "telemetry")]
-    if run_behavior.interactive && get_telemetry_choice().is_none() {
-        configure_telemetry_consent_dialog()?;
-    }
-
     let parsed = parse_run_input(&input_opts, output_opts.quiet)?;
 
     let Some((input_config, recipe)) = parsed else {
@@ -2173,11 +2159,6 @@ async fn handle_local_models_command(command: LocalModelsCommand) -> Result<()> 
 async fn handle_default_session() -> Result<()> {
     if !Config::global().exists() {
         return handle_configure().await;
-    }
-
-    #[cfg(feature = "telemetry")]
-    if get_telemetry_choice().is_none() {
-        configure_telemetry_consent_dialog()?;
     }
 
     let goose_mode = Config::global().get_goose_mode().unwrap_or_default();

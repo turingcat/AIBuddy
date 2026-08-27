@@ -334,7 +334,6 @@ These variables control security features, credential storage, and anonymous usa
 | `SECURITY_PROMPT_CLASSIFIER_ENABLED` | Enable ML-based prompt injection detection for advanced threat identification | true/false | false |
 | `SECURITY_PROMPT_CLASSIFIER_ENDPOINT` | Classification endpoint URL for ML-based prompt injection detection | URL (e.g., "https://api.example.com/classify") | Unset |
 | `SECURITY_PROMPT_CLASSIFIER_TOKEN` | Authentication token for `SECURITY_PROMPT_CLASSIFIER_ENDPOINT` | String | Unset |
-| `GOOSE_TELEMETRY_ENABLED` | Enable or disable [anonymous usage data collection](/docs/guides/usage-data) | true/false | false |
 
 **Examples**
 
@@ -351,10 +350,6 @@ export SECURITY_PROMPT_ENABLED=true
 export SECURITY_PROMPT_CLASSIFIER_ENABLED=true
 export SECURITY_PROMPT_CLASSIFIER_ENDPOINT="https://your-endpoint.com/classify"
 export SECURITY_PROMPT_CLASSIFIER_TOKEN="your-auth-token"
-
-# Control anonymous usage data collection
-export GOOSE_TELEMETRY_ENABLED=false  # Disable telemetry
-export GOOSE_TELEMETRY_ENABLED=true   # Enable telemetry
 ```
 
 :::tip

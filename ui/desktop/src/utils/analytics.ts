@@ -2,12 +2,8 @@
  * Frontend Analytics Module
  *
  * Compatibility layer for existing UI tracking call sites. Frontend telemetry is
- * disabled during the ACP migration, so events are intentionally not sent.
+ * permanently disabled in this fork, so events are intentionally not sent.
  */
-
-export function setTelemetryEnabled(_enabled: boolean): void {
-  // Frontend telemetry is disabled.
-}
 
 function sendEvent(
   _eventName: string,
@@ -300,13 +296,6 @@ export function trackSettingToggled(setting: string, enabled: boolean): void {
     name: 'setting_toggled',
     properties: { setting, enabled },
   });
-}
-
-export function trackTelemetryPreference(
-  enabled: boolean,
-  location: 'settings' | 'onboarding' | 'modal'
-): void {
-  sendEvent('telemetry_preference_set', { enabled, location });
 }
 
 export function getErrorType(error: unknown): string {

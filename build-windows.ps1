@@ -179,7 +179,7 @@ function Build-GooseBinary {
 
     Write-Host "首次编译依赖较多，可能耗时较长，请耐心等待..."
     # 禁用 local-inference 以跳过 llama.cpp 的 C++ 编译（本地无需本地推理，且其构建依赖易缺失）
-    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,tui,aws-providers,telemetry,nostr,otel,rustls-tls,system-keyring,update
+    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,tui,aws-providers,nostr,otel,rustls-tls,system-keyring,update
     if ($LASTEXITCODE -ne 0) { throw "cargo build 失败" }
 
     $gooseExe = Join-Path $ProjectRoot 'target\x86_64-pc-windows-msvc\release\goose.exe'
