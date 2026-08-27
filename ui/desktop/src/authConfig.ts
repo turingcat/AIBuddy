@@ -7,6 +7,7 @@ export interface AuthConfig {
 }
 
 export const LOCAL_AUTH_API_BASE_URL = 'http://localhost:3001';
+export const PRODUCTION_AUTH_API_BASE_URL = 'https://ai.linyeyun.cn';
 
 export interface AuthEnvironment {
   HEYBUDDY_AUTH_API_BASE_URL?: string;
@@ -16,7 +17,7 @@ declare const __HEYBUDDY_AUTH_API_BASE_URL__: string | undefined;
 
 export function resolveAuthApiBaseUrl(
   environment: AuthEnvironment,
-  fallback = LOCAL_AUTH_API_BASE_URL
+  fallback = PRODUCTION_AUTH_API_BASE_URL
 ): string {
   return environment.HEYBUDDY_AUTH_API_BASE_URL?.trim() || fallback;
 }

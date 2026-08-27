@@ -108,8 +108,20 @@ fn get_preprompt_context(messages: &Conversation) -> String {
         .join("\n")
 }
 
+fn render_session_name_prompt() -> Result<String> {
+    Ok(crate::prompt_template::render_template(
+        "session_name.md",
+        &std::collections::HashMap::<String, String>::new(),
+    )?)
+}
+
+#[cfg(test)]
+fn render_session_name_prompt_for_test() -> Result<String> {
+    render_session_name_prompt()
+}
+
 /// Generate a session name/description based on the conversation history
-/// Creates a prompt asking for a concise description in 4 words or less.
+/// Creates a prompt asking for a concise Chinese title of four meaningful words or short phrases or less.
 pub(crate) async fn generate_session_name(
     provider: &dyn Provider,
     model_config: &goose_providers::model::ModelConfig,
@@ -118,10 +130,7 @@ pub(crate) async fn generate_session_name(
 ) -> Result<String> {
     let context = get_initial_user_messages(messages);
     let preprompt_context = get_preprompt_context(messages);
-    let system = crate::prompt_template::render_template(
-        "session_name.md",
-        &std::collections::HashMap::<String, String>::new(),
-    )?;
+    let system = render_session_name_prompt()?;
 
     use crate::providers::cli_common::{
         SESSION_NAME_BEGIN_MARKER, SESSION_NAME_END_MARKER, SESSION_NAME_SUFFIX,
@@ -173,12 +182,68 @@ pub(crate) async fn generate_session_name(
         .collect::<Vec<_>>()
         .join(" ");
 
-    Ok(safe_truncate(&extract_short_title(&description), 100))
+    let title = extract_short_title(&description);
+    if crate::providers::cli_common::preserves_untruncated_chinese_title(&title) {
+        Ok(title)
+    } else {
+        Ok(safe_truncate(&title, 100))
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use goose_providers::{
+        base::{MessageStream, Provider},
+        conversation::token_usage::ProviderUsage,
+        errors::ProviderError,
+        model::ModelConfig,
+    };
+    use rmcp::model::Tool;
+
+    struct LongChineseTitleProvider(String);
+
+    #[async_trait::async_trait]
+    impl Provider for LongChineseTitleProvider {
+        fn get_name(&self) -> &str {
+            "long-title-test"
+        }
+
+        async fn stream(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> std::result::Result<MessageStream, ProviderError> {
+            unreachable!("session naming calls complete")
+        }
+
+        async fn complete(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> std::result::Result<(Message, ProviderUsage), ProviderError> {
+            Ok((
+                Message::assistant().with_text(&self.0),
+                ProviderUsage::new("test".to_string(), Default::default()),
+            ))
+        }
+    }
+
+    #[test]
+    fn session_name_prompt_requires_a_short_chinese_title() {
+        let prompt = render_session_name_prompt_for_test().unwrap();
+
+        assert!(prompt.contains("简洁的中文"));
+        assert!(prompt.contains("只输出标题"));
+        assert!(!prompt.contains("Generate a short title"));
+        assert!(prompt.contains("不要展示思考过程"));
+        assert!(prompt.contains("不要输出任何其他内容"));
+        assert!(prompt.contains("不要展示思考过程、解释或标点符号"));
+    }
 
     #[test]
     fn test_strip_xml_tags() {
@@ -259,5 +324,42 @@ mod tests {
             ),
             "List current folder files"
         );
+    }
+
+    #[tokio::test]
+    async fn generated_session_name_preserves_over_100_continuous_chinese_characters() {
+        let long_title = "这是一个用于验证连续中文会话标题不会被机械截断的完整标题".repeat(5);
+        assert!(long_title.chars().count() > 100);
+        let provider = LongChineseTitleProvider(long_title.clone());
+        let conversation = Conversation::new_unvalidated([Message::user().with_text("生成标题")]);
+
+        let title = generate_session_name(
+            &provider,
+            &ModelConfig::new("test"),
+            "session-id",
+            &conversation,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(title, long_title);
+    }
+
+    #[tokio::test]
+    async fn generated_session_name_truncates_over_100_mixed_language_characters() {
+        let mixed_title = format!("{}中", "a".repeat(120));
+        let provider = LongChineseTitleProvider(mixed_title);
+        let conversation = Conversation::new_unvalidated([Message::user().with_text("生成标题")]);
+
+        let title = generate_session_name(
+            &provider,
+            &ModelConfig::new("test"),
+            "session-id",
+            &conversation,
+        )
+        .await
+        .unwrap();
+
+        assert_eq!(title, format!("{}...", "a".repeat(97)));
     }
 }

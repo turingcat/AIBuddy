@@ -52,6 +52,10 @@ const i18n = defineMessages({
     id: 'bottomMenuExtensionSelection.extensionWillBeDisabled',
     defaultMessage: '{name} will be disabled in new chats',
   },
+  extensionLabel: {
+    id: 'bottomMenuExtensionSelection.extensionLabel',
+    defaultMessage: 'Extensions',
+  },
 });
 
 interface BottomMenuExtensionSelectionProps {
@@ -223,6 +227,7 @@ function DraftExtensionsMenu({
     <ExtensionMenu
       extensions={extensions}
       title={intl.formatMessage(i18n.manageExtensions)}
+      triggerLabel={intl.formatMessage(i18n.extensionLabel)}
       searchPlaceholder={intl.formatMessage(i18n.searchExtensions)}
       description={intl.formatMessage(i18n.extensionsForNewChats)}
       emptyMessage={intl.formatMessage(i18n.noExtensionsAvailable)}
@@ -261,7 +266,7 @@ function SessionExtensionsMenu({ sessionId }: { sessionId: string }) {
 
   const loadSessionExtensions = useCallback(
     async (targetSessionId: string, signal?: GetSessionExtensionsSignal) => {
-      const extensions = await getAcpSessionExtensions(targetSessionId)
+      const extensions = await getAcpSessionExtensions(targetSessionId);
 
       if (signal?.aborted || latestSessionIdRef.current !== targetSessionId) {
         return;
@@ -378,6 +383,7 @@ function SessionExtensionsMenu({ sessionId }: { sessionId: string }) {
     <ExtensionMenu
       extensions={extensions}
       title={intl.formatMessage(i18n.manageExtensions)}
+      triggerLabel={intl.formatMessage(i18n.extensionLabel)}
       searchPlaceholder={intl.formatMessage(i18n.searchExtensions)}
       description={intl.formatMessage(i18n.extensionsForThisSession)}
       emptyMessage={intl.formatMessage(i18n.noExtensionsAvailable)}

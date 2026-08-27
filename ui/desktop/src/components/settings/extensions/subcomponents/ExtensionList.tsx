@@ -4,6 +4,7 @@ import type { ExtensionConfig } from '../../../../types/extensions';
 import { FixedExtensionEntry } from '../../../ConfigContext';
 import { combineCmdAndArgs } from '../utils';
 import { defineMessages, useIntl } from '../../../../i18n';
+import type { IntlShape } from 'react-intl';
 
 const i18n = defineMessages({
   defaultExtensions: {
@@ -22,7 +23,61 @@ const i18n = defineMessages({
     id: 'extensionList.builtInExtension',
     defaultMessage: 'Built-in extension',
   },
+  developerTitle: {
+    id: 'extensionList.builtIns.developer.title',
+    defaultMessage: 'Developer',
+  },
+  developerDescription: {
+    id: 'extensionList.builtIns.developer.description',
+    defaultMessage: 'General development tools useful for software engineering.',
+  },
+  computerControllerTitle: {
+    id: 'extensionList.builtIns.computercontroller.title',
+    defaultMessage: 'Computer Controller',
+  },
+  computerControllerDescription: {
+    id: 'extensionList.builtIns.computercontroller.description',
+    defaultMessage: "General computer control tools that don't require development experience.",
+  },
+  autoVisualiserTitle: {
+    id: 'extensionList.builtIns.autovisualiser.title',
+    defaultMessage: 'Auto Visualiser',
+  },
+  autoVisualiserDescription: {
+    id: 'extensionList.builtIns.autovisualiser.description',
+    defaultMessage: 'Automatically visualize data and generate user interfaces.',
+  },
+  memoryTitle: {
+    id: 'extensionList.builtIns.memory.title',
+    defaultMessage: 'Memory',
+  },
+  memoryDescription: {
+    id: 'extensionList.builtIns.memory.description',
+    defaultMessage: 'Teach HeyBuddy your preferences as you go.',
+  },
+  tutorialTitle: {
+    id: 'extensionList.builtIns.tutorial.title',
+    defaultMessage: 'Tutorial',
+  },
+  tutorialDescription: {
+    id: 'extensionList.builtIns.tutorial.description',
+    defaultMessage: 'Access interactive tutorials and guides.',
+  },
 });
+
+const BUILT_IN_EXTENSION_MESSAGES = {
+  developer: { title: i18n.developerTitle, description: i18n.developerDescription },
+  computercontroller: {
+    title: i18n.computerControllerTitle,
+    description: i18n.computerControllerDescription,
+  },
+  autovisualiser: {
+    title: i18n.autoVisualiserTitle,
+    description: i18n.autoVisualiserDescription,
+  },
+  memory: { title: i18n.memoryTitle, description: i18n.memoryDescription },
+  tutorial: { title: i18n.tutorialTitle, description: i18n.tutorialDescription },
+} as const;
 
 interface ExtensionListProps {
   extensions: FixedExtensionEntry[];
@@ -41,21 +96,27 @@ export default function ExtensionList({
   disableConfiguration: _disableConfiguration,
   searchTerm = '',
 }: ExtensionListProps) {
+  const intl = useIntl();
+
   const matchesSearch = (extension: FixedExtensionEntry): boolean => {
     if (!searchTerm) return true;
 
     const searchLower = searchTerm.toLowerCase();
-    const title = getFriendlyTitle(extension).toLowerCase();
-    const name = extension.name.toLowerCase();
-    const subtitle = getSubtitle(extension);
-    const description = subtitle.description?.toLowerCase() || '';
+    const copy = getLocalizedExtensionCopy(extension, intl);
+    const originalSubtitle = getSubtitle(extension);
+    const aliases = [
+      copy.title,
+      copy.description,
+      getFriendlyTitle(extension),
+      originalSubtitle.description,
+      originalSubtitle.command,
+      extension.configKey,
+      extension.description,
+      extension.name,
+    ];
 
-    return (
-      title.includes(searchLower) || name.includes(searchLower) || description.includes(searchLower)
-    );
+    return aliases.some((alias) => alias?.toLowerCase().includes(searchLower));
   };
-
-  const intl = useIntl();
 
   // Separate enabled and disabled extensions, then filter by search term
   const enabledExtensions = extensions.filter((ext) => ext.enabled && matchesSearch(ext));
@@ -63,10 +124,10 @@ export default function ExtensionList({
 
   // Sort each group alphabetically by their friendly title
   const sortedEnabledExtensions = [...enabledExtensions].sort((a, b) =>
-    getFriendlyTitle(a).localeCompare(getFriendlyTitle(b))
+    getLocalizedExtensionCopy(a, intl).title.localeCompare(getLocalizedExtensionCopy(b, intl).title)
   );
   const sortedDisabledExtensions = [...disabledExtensions].sort((a, b) =>
-    getFriendlyTitle(a).localeCompare(getFriendlyTitle(b))
+    getLocalizedExtensionCopy(a, intl).title.localeCompare(getLocalizedExtensionCopy(b, intl).title)
   );
 
   return (
@@ -130,7 +191,9 @@ export function formatExtensionName(name: string): string {
     .join(' ');
 }
 
-export function getFriendlyTitle(extension: FixedExtensionEntry): string {
+type ExtensionCopySource = ExtensionConfig & { configKey?: string };
+
+export function getFriendlyTitle(extension: ExtensionCopySource): string {
   const name =
     ((extension.type === 'builtin' || extension.type === 'platform') && extension.display_name) ||
     extension.name;
@@ -138,7 +201,35 @@ export function getFriendlyTitle(extension: FixedExtensionEntry): string {
 }
 
 function normalizeExtensionName(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, '');
+  return name.toLowerCase().replace(/[\s_-]+/g, '');
+}
+
+export function getLocalizedExtensionCopy(
+  extension: ExtensionCopySource,
+  intl: IntlShape
+): { title: string; description: string | null } {
+  const stableId =
+    extension.type === 'builtin'
+      ? [extension.configKey, extension.name, extension.display_name]
+          .filter((name): name is string => Boolean(name))
+          .map(normalizeExtensionName)
+          .find((name) => name in BUILT_IN_EXTENSION_MESSAGES)
+      : undefined;
+  const messages = stableId
+    ? BUILT_IN_EXTENSION_MESSAGES[stableId as keyof typeof BUILT_IN_EXTENSION_MESSAGES]
+    : undefined;
+
+  if (!messages) {
+    return {
+      title: getFriendlyTitle(extension),
+      description: getSubtitle(extension).description,
+    };
+  }
+
+  return {
+    title: intl.formatMessage(messages.title),
+    description: intl.formatMessage(messages.description),
+  };
 }
 
 export function getSubtitle(config: ExtensionConfig) {

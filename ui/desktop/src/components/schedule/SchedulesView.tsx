@@ -19,13 +19,13 @@ import { Plus, RefreshCw, Pause, Play, Edit, Square, Eye, CircleDotDashed } from
 import { NewSchedulePayload, ScheduleModal } from './ScheduleModal';
 import ScheduleDetailView from './ScheduleDetailView';
 import { toastError, toastSuccess } from '../../toasts';
-import cronstrue from 'cronstrue';
 import { formatToLocalDateWithTimezone } from '../../utils/date';
 import { errorMessage } from '../../utils/conversionUtils';
 import { MainPanelLayout } from '../Layout/MainPanelLayout';
 import { ViewOptions } from '../../utils/navigationUtils';
 import { trackScheduleCreated, trackScheduleDeleted, getErrorType } from '../../utils/analytics';
 import { defineMessages, useIntl } from '../../i18n';
+import { formatCronDescription, formatJobInspection } from './scheduleDisplay';
 
 const i18n = defineMessages({
   running: { id: 'schedulesView.running', defaultMessage: 'Running' },
@@ -40,27 +40,45 @@ const i18n = defineMessages({
   refreshing: { id: 'schedulesView.refreshing', defaultMessage: 'Refreshing...' },
   refresh: { id: 'schedulesView.refresh', defaultMessage: 'Refresh' },
   createSchedule: { id: 'schedulesView.createSchedule', defaultMessage: 'Create Schedule' },
-  description: { id: 'schedulesView.description', defaultMessage: 'Create and manage scheduled tasks to run recipes automatically at specified times.' },
+  description: {
+    id: 'schedulesView.description',
+    defaultMessage:
+      'Create and manage scheduled tasks to run recipes automatically at specified times.',
+  },
   errorPrefix: { id: 'schedulesView.errorPrefix', defaultMessage: 'Error: {error}' },
   noSchedules: { id: 'schedulesView.noSchedules', defaultMessage: 'No schedules yet' },
   scheduleUpdated: { id: 'schedulesView.scheduleUpdated', defaultMessage: 'Schedule Updated' },
-  scheduleUpdatedMsg: { id: 'schedulesView.scheduleUpdatedMsg', defaultMessage: 'Successfully updated schedule "{id}"' },
+  scheduleUpdatedMsg: {
+    id: 'schedulesView.scheduleUpdatedMsg',
+    defaultMessage: 'Successfully updated schedule "{id}"',
+  },
   confirmDelete: {
     id: 'schedulesView.confirmDelete',
     defaultMessage: 'Remove schedule "{id}"? The recipe will be kept.',
   },
   schedulePaused: { id: 'schedulesView.schedulePaused', defaultMessage: 'Schedule Paused' },
-  schedulePausedMsg: { id: 'schedulesView.schedulePausedMsg', defaultMessage: 'Successfully paused schedule "{id}"' },
+  schedulePausedMsg: {
+    id: 'schedulesView.schedulePausedMsg',
+    defaultMessage: 'Successfully paused schedule "{id}"',
+  },
   pauseError: { id: 'schedulesView.pauseError', defaultMessage: 'Pause Schedule Error' },
   scheduleUnpaused: { id: 'schedulesView.scheduleUnpaused', defaultMessage: 'Schedule Unpaused' },
-  scheduleUnpausedMsg: { id: 'schedulesView.scheduleUnpausedMsg', defaultMessage: 'Successfully unpaused schedule "{id}"' },
+  scheduleUnpausedMsg: {
+    id: 'schedulesView.scheduleUnpausedMsg',
+    defaultMessage: 'Successfully unpaused schedule "{id}"',
+  },
   unpauseError: { id: 'schedulesView.unpauseError', defaultMessage: 'Unpause Schedule Error' },
   jobKilled: { id: 'schedulesView.jobKilled', defaultMessage: 'Job Killed' },
   killError: { id: 'schedulesView.killError', defaultMessage: 'Kill Job Error' },
   jobInspection: { id: 'schedulesView.jobInspection', defaultMessage: 'Job Inspection' },
-  inspectNoInfo: { id: 'schedulesView.inspectNoInfo', defaultMessage: 'No detailed information available for this job' },
+  inspectNoInfo: {
+    id: 'schedulesView.inspectNoInfo',
+    defaultMessage: 'No detailed information available for this job',
+  },
   inspectError: { id: 'schedulesView.inspectError', defaultMessage: 'Inspect Job Error' },
 });
+
+export { i18n as schedulesViewMessages };
 
 interface SchedulesViewProps {
   onClose?: () => void;
@@ -88,12 +106,7 @@ const ScheduleCard: React.FC<{
   actionInProgress,
 }) => {
   const intl = useIntl();
-  let readableCron: string;
-  try {
-    readableCron = cronstrue.toString(job.cron);
-  } catch {
-    readableCron = job.cron;
-  }
+  const readableCron = formatCronDescription(job.cron, intl.locale);
 
   const formattedLastRun = formatToLocalDateWithTimezone(job.lastRun);
 
@@ -433,12 +446,12 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
     try {
       const result = await acpInspectRunningJob(id);
       if (result.sessionId) {
-        const duration = result.runningDurationSeconds
-          ? `${Math.floor(result.runningDurationSeconds / 60)}m ${result.runningDurationSeconds % 60}s`
-          : 'Unknown';
         toastSuccess({
           title: intl.formatMessage(i18n.jobInspection),
-          msg: `Session: ${result.sessionId}\nRunning for: ${duration}`,
+          msg: formatJobInspection(intl, {
+            sessionId: result.sessionId,
+            runningDurationSeconds: result.runningDurationSeconds,
+          }),
         });
       } else {
         toastSuccess({
@@ -493,7 +506,9 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
                     className="flex items-center gap-2"
                   >
                     <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    {isRefreshing ? intl.formatMessage(i18n.refreshing) : intl.formatMessage(i18n.refresh)}
+                    {isRefreshing
+                      ? intl.formatMessage(i18n.refreshing)
+                      : intl.formatMessage(i18n.refresh)}
                   </Button>
                   <Button
                     onClick={() => {
@@ -519,7 +534,9 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
               <div className="h-full relative">
                 {apiError && (
                   <div className="mb-4 p-4 bg-background-danger border border-border-danger rounded-md">
-                    <p className="text-text-danger text-sm">{intl.formatMessage(i18n.errorPrefix, { error: apiError })}</p>
+                    <p className="text-text-danger text-sm">
+                      {intl.formatMessage(i18n.errorPrefix, { error: apiError })}
+                    </p>
                   </div>
                 )}
 

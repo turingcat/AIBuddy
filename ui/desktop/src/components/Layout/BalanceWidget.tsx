@@ -1,8 +1,7 @@
-import React from 'react';
 import { RefreshCw, Wallet } from 'lucide-react';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
-import { useBalance } from '../../hooks/useBalance';
+import { useBalance, type BalanceState } from '../../hooks/useBalance';
 import { formatQuotaWithCurrency } from '../../quotaFormat';
 import { formatMessageTimestamp } from '../../utils/timeUtils';
 import { defineMessages, useIntl } from '../../i18n';
@@ -45,16 +44,13 @@ const i18n = defineMessages({
   },
 });
 
-export function BalanceWidget() {
+export function BalanceStatus({ state }: { state: BalanceState }) {
   const intl = useIntl();
-  const { state, refreshing, refresh } = useBalance();
 
-  // 未登录不渲染（侧边栏本身处于登录后的应用内，此为登出竞态兜底）
   if (state.status === 'not-logged-in') {
     return null;
   }
 
-  let content: React.ReactNode;
   if (state.status === 'ready') {
     const tooltip = [
       state.balance.displayName,
@@ -66,7 +62,7 @@ export function BalanceWidget() {
     ]
       .filter(Boolean)
       .join('\n');
-    content = (
+    return (
       <Tooltip>
         <TooltipTrigger asChild>
           <span
@@ -82,49 +78,74 @@ export function BalanceWidget() {
         <TooltipContent>{tooltip}</TooltipContent>
       </Tooltip>
     );
-  } else if (state.status === 'loading') {
-    content = (
+  }
+
+  if (state.status === 'loading') {
+    return (
       <span className="font-mono text-text-secondary" data-testid="balance-loading">
         ...
       </span>
     );
-  } else {
-    const hint =
-      state.status === 'no-pat'
-        ? intl.formatMessage(i18n.noPat)
-        : state.status === 'unauthorized'
-          ? intl.formatMessage(i18n.unauthorized)
-          : intl.formatMessage(i18n.loadFailed);
-    const tooltip =
-      state.status === 'error' ? `${hint}\n${state.message}` : hint;
-    content = (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span
-            className="flex items-center gap-1 min-w-0 cursor-default text-text-secondary"
-            data-testid="balance-hint"
-          >
-            <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">{hint}</span>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{tooltip}</TooltipContent>
-      </Tooltip>
-    );
+  }
+
+  const hint =
+    state.status === 'no-pat'
+      ? intl.formatMessage(i18n.noPat)
+      : state.status === 'unauthorized'
+        ? intl.formatMessage(i18n.unauthorized)
+        : intl.formatMessage(i18n.loadFailed);
+  const tooltip = state.status === 'error' ? `${hint}\n${state.message}` : hint;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="flex items-center gap-1 min-w-0 cursor-default text-text-secondary"
+          data-testid="balance-hint"
+        >
+          <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
+          <span className="truncate">{hint}</span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+export function BalanceRefreshButton({
+  refreshing,
+  onRefresh,
+}: {
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const intl = useIntl();
+  return (
+    <button
+      type="button"
+      onClick={onRefresh}
+      className="ml-auto p-1 flex-shrink-0 text-text-secondary hover:text-text-primary transition-colors"
+      aria-label={intl.formatMessage(i18n.refresh)}
+      data-testid="balance-refresh"
+    >
+      <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+    </button>
+  );
+}
+
+export function BalanceWidget() {
+  const { state, refreshing, refresh } = useBalance();
+
+  if (state.status === 'not-logged-in') {
+    return null;
   }
 
   return (
-    <div className="flex items-center gap-1 px-3 py-1.5 text-xs min-w-0" data-testid="balance-widget">
-      {content}
-      <button
-        type="button"
-        onClick={refresh}
-        className="ml-auto p-1 flex-shrink-0 text-text-secondary hover:text-text-primary transition-colors"
-        aria-label={intl.formatMessage(i18n.refresh)}
-        data-testid="balance-refresh"
-      >
-        <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-      </button>
+    <div
+      className="flex items-center gap-1 px-3 py-1.5 text-xs min-w-0"
+      data-testid="balance-widget"
+    >
+      <BalanceStatus state={state} />
+      <BalanceRefreshButton refreshing={refreshing} onRefresh={refresh} />
     </div>
   );
 }

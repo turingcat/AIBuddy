@@ -20,6 +20,7 @@ import BlockLogoBlack from './icons/block-lockup_black.png';
 import BlockLogoWhite from './icons/block-lockup_white.png';
 import { trackSettingToggled } from '../../../utils/analytics';
 import type { LanguageSetting } from '../../../utils/settings';
+import { logout } from '../../../utils/logout';
 
 const i18n = defineMessages({
   appearanceTitle: { id: 'settings.appearance.title', defaultMessage: 'Appearance' },
@@ -48,7 +49,10 @@ const i18n = defineMessages({
     defaultMessage: 'Show HeyBuddy in the menu bar',
   },
   dockIcon: { id: 'settings.dockIcon.title', defaultMessage: 'Dock icon' },
-  dockIconDesc: { id: 'settings.dockIcon.description', defaultMessage: 'Show HeyBuddy in the dock' },
+  dockIconDesc: {
+    id: 'settings.dockIcon.description',
+    defaultMessage: 'Show HeyBuddy in the dock',
+  },
   preventSleep: { id: 'settings.preventSleep.title', defaultMessage: 'Prevent Sleep' },
   preventSleepDesc: {
     id: 'settings.preventSleep.description',
@@ -281,14 +285,6 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
 
   const intl = useIntl();
 
-  // 退出登录：清本地凭证并重启应用，让旧凭证从 goose serve 环境变量中清除
-  // @author logic
-  // @date 2026-08-13
-  const handleLogout = async () => {
-    if (!window.confirm('确定退出登录吗？')) return;
-    await window.electron.clearLoginCredentials();
-    window.electron.restartApp();
-  };
   const selectedLanguage =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ?? LANGUAGE_OPTIONS[0];
 
@@ -406,7 +402,6 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
               />
             </div>
           </div>
-
         </CardContent>
       </Card>
 
@@ -522,7 +517,7 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
           <CardDescription>退出当前登录的 HeyBuddy 账号</CardDescription>
         </CardHeader>
         <CardContent className="pt-4 px-4">
-          <Button variant="secondary" size="sm" onClick={handleLogout}>
+          <Button variant="secondary" size="sm" onClick={() => logout(intl)}>
             退出登录
           </Button>
         </CardContent>

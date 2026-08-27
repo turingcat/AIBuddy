@@ -46,6 +46,10 @@ const i18n = defineMessages({
     id: 'modelsBottomBar.resolvedModel',
     defaultMessage: 'Resolved model',
   },
+  modelLabel: {
+    id: 'modelsBottomBar.modelLabel',
+    defaultMessage: 'Model',
+  },
 });
 
 interface ModelsBottomBarProps {
@@ -57,6 +61,7 @@ interface ModelsBottomBarProps {
   latestInference?: Message['metadata']['inference'] | null;
   onModelChanged: (override: { model: string; provider: string }) => void;
   sessionLoaded?: boolean;
+  isNarrow?: boolean;
 }
 
 export default function ModelsBottomBar({
@@ -68,6 +73,7 @@ export default function ModelsBottomBar({
   latestInference,
   onModelChanged,
   sessionLoaded,
+  isNarrow = false,
 }: ModelsBottomBarProps) {
   // ChatInput owns the override state and passes effective model/provider as sessionModel/sessionProvider.
   // Fall back to config defaults when no session-specific model is available.
@@ -145,9 +151,16 @@ export default function ModelsBottomBar({
   return (
     <div className="relative flex items-center" ref={dropdownRef}>
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center hover:cursor-pointer max-w-[180px] md:max-w-[200px] lg:max-w-[380px] min-w-0 text-text-primary/70 hover:text-text-primary transition-colors">
+        <DropdownMenuTrigger
+          className="flex items-center hover:cursor-pointer max-w-[180px] md:max-w-[200px] lg:max-w-[380px] min-w-0 text-text-primary/70 hover:text-text-primary transition-colors"
+          aria-label={intl.formatMessage(i18n.modelLabel)}
+          title={intl.formatMessage(i18n.modelLabel)}
+        >
           <div className="flex items-center truncate max-w-[130px] md:max-w-[200px] lg:max-w-[360px] min-w-0">
             <Bot className="mr-1 h-4 w-4 flex-shrink-0" />
+            {!isNarrow && (
+              <span className="mr-1 text-xs">{intl.formatMessage(i18n.modelLabel)}</span>
+            )}
             {isModelLoading ? (
               <span
                 data-testid="model-loading-state"

@@ -1,4 +1,16 @@
 {
+  "accountMenu.logout": {
+    "defaultMessage": "Log out"
+  },
+  "accountMenu.logoutConfirmation": {
+    "defaultMessage": "Are you sure you want to log out?"
+  },
+  "accountMenu.notLoggedIn": {
+    "defaultMessage": "Not signed in"
+  },
+  "accountMenu.settings": {
+    "defaultMessage": "Settings"
+  },
   "alertBox.autoCompactAt": {
     "defaultMessage": "Auto compact at"
   },
@@ -155,6 +167,9 @@
   "baseChat.reconnecting": {
     "defaultMessage": "Connection lost. Reconnecting…"
   },
+  "bottomMenuExtensionSelection.extensionLabel": {
+    "defaultMessage": "Extensions"
+  },
   "bottomMenuExtensionSelection.extensionUpdated": {
     "defaultMessage": "Extension Updated"
   },
@@ -194,11 +209,20 @@
   "chat.notification.taskComplete.title": {
     "defaultMessage": "HeyBuddy finished the task."
   },
+  "chatInput.attachFile": {
+    "defaultMessage": "Attach"
+  },
   "chatInput.contextWindow": {
     "defaultMessage": "Context window"
   },
+  "chatInput.diagnostics": {
+    "defaultMessage": "Diagnostics"
+  },
   "chatInput.dictationError": {
     "defaultMessage": "Dictation Error"
+  },
+  "chatInput.dictationNotConfigured": {
+    "defaultMessage": "Dictation not configured (Settings)"
   },
   "chatInput.failedToReadImage": {
     "defaultMessage": "Failed to read image file"
@@ -224,6 +248,12 @@
   "chatInput.send": {
     "defaultMessage": "Send"
   },
+  "chatInput.stop": {
+    "defaultMessage": "Stop"
+  },
+  "chatInput.stopRecording": {
+    "defaultMessage": "Stop recording"
+  },
   "chatInput.transcribing": {
     "defaultMessage": "Transcribing..."
   },
@@ -235,6 +265,15 @@
   },
   "chatInput.viewEditRecipe": {
     "defaultMessage": "View/Edit Recipe"
+  },
+  "chatInput.voice": {
+    "defaultMessage": "Voice"
+  },
+  "chatInput.voiceDictation": {
+    "defaultMessage": "Voice dictation"
+  },
+  "chatInput.voiceDictationHint": {
+    "defaultMessage": "Voice dictation · Say \"submit\" to send"
   },
   "chatInput.waitingForCancellation": {
     "defaultMessage": "Waiting for cancellation to finish"
@@ -337,6 +376,9 @@
   },
   "confirmationModal.processing": {
     "defaultMessage": "Processing..."
+  },
+  "contextWindowIndicator.contextLabel": {
+    "defaultMessage": "Context"
   },
   "conversationLimitsDropdown.conversationLimits": {
     "defaultMessage": "Conversation Limits"
@@ -923,6 +965,9 @@
   "dirSwitcher.currentDirectory": {
     "defaultMessage": "Current directory"
   },
+  "dirSwitcher.directoryLabel": {
+    "defaultMessage": "Directory"
+  },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
   },
@@ -1111,6 +1156,36 @@
   },
   "extensionList.builtInExtension": {
     "defaultMessage": "Built-in extension"
+  },
+  "extensionList.builtIns.autovisualiser.description": {
+    "defaultMessage": "Automatically visualize data and generate user interfaces."
+  },
+  "extensionList.builtIns.autovisualiser.title": {
+    "defaultMessage": "Auto Visualiser"
+  },
+  "extensionList.builtIns.computercontroller.description": {
+    "defaultMessage": "General computer control tools that don't require development experience."
+  },
+  "extensionList.builtIns.computercontroller.title": {
+    "defaultMessage": "Computer Controller"
+  },
+  "extensionList.builtIns.developer.description": {
+    "defaultMessage": "General development tools useful for software engineering."
+  },
+  "extensionList.builtIns.developer.title": {
+    "defaultMessage": "Developer"
+  },
+  "extensionList.builtIns.memory.description": {
+    "defaultMessage": "Teach HeyBuddy your preferences as you go."
+  },
+  "extensionList.builtIns.memory.title": {
+    "defaultMessage": "Memory"
+  },
+  "extensionList.builtIns.tutorial.description": {
+    "defaultMessage": "Access interactive tutorials and guides."
+  },
+  "extensionList.builtIns.tutorial.title": {
+    "defaultMessage": "Tutorial"
   },
   "extensionList.defaultExtensions": {
     "defaultMessage": "Default Extensions ({count})"
@@ -1354,6 +1429,9 @@
   },
   "headersSection.value": {
     "defaultMessage": "Value"
+  },
+  "hub.assistantIdentity": {
+    "defaultMessage": ", I'm Guanglin AI Assistant"
   },
   "hub.goodAfternoon": {
     "defaultMessage": "Good afternoon"
@@ -2282,6 +2360,9 @@
   "modelsBottomBar.localModelSettingsTitle": {
     "defaultMessage": "Local Model Settings — {modelName}"
   },
+  "modelsBottomBar.modelLabel": {
+    "defaultMessage": "Model"
+  },
   "modelsBottomBar.resolvedModel": {
     "defaultMessage": "Resolved model"
   },
@@ -2293,6 +2374,9 @@
   },
   "navigation.itemHome": {
     "defaultMessage": "New Chat"
+  },
+  "navigation.itemRecipes": {
+    "defaultMessage": "Recipes"
   },
   "navigation.itemScheduler": {
     "defaultMessage": "Scheduler"
@@ -3310,6 +3394,18 @@
   },
   "scheduleDetailView.viewingScheduleId": {
     "defaultMessage": "Viewing Schedule ID: {id}"
+  },
+  "scheduleDisplay.duration": {
+    "defaultMessage": "{minutes}m {seconds}s"
+  },
+  "scheduleDisplay.runningFor": {
+    "defaultMessage": "Running for: {duration}"
+  },
+  "scheduleDisplay.session": {
+    "defaultMessage": "Session: {sessionId}"
+  },
+  "scheduleDisplay.unknown": {
+    "defaultMessage": "Unknown"
   },
   "scheduleModal.browseYaml": {
     "defaultMessage": "Browse for YAML file..."

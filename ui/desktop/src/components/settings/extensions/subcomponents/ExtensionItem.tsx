@@ -3,7 +3,7 @@ import kebabCase from 'lodash/kebabCase';
 import { Switch } from '../../../ui/switch';
 import { Gear } from '../../../icons';
 import { FixedExtensionEntry } from '../../../ConfigContext';
-import { getSubtitle, getFriendlyTitle } from './ExtensionList';
+import { getLocalizedExtensionCopy, getSubtitle } from './ExtensionList';
 import { Card, CardHeader, CardTitle, CardContent, CardAction } from '../../../ui/card';
 import { defineMessages, useIntl } from '../../../../i18n';
 
@@ -32,6 +32,7 @@ export default function ExtensionItem({
   isStatic,
 }: ExtensionItemProps) {
   const intl = useIntl();
+  const copy = getLocalizedExtensionCopy(extension, intl);
   // Add local state to track the visual toggle state
   const [visuallyEnabled, setVisuallyEnabled] = useState(extension.enabled);
   // Track if we're in the process of toggling
@@ -67,11 +68,11 @@ export default function ExtensionItem({
   }, [extension.enabled, isToggling]);
 
   const renderSubtitle = () => {
-    const { description, command } = getSubtitle(extension);
+    const { command } = getSubtitle(extension);
     return (
       <>
-        {description && <span>{description}</span>}
-        {description && command && <br />}
+        {copy.description && <span>{copy.description}</span>}
+        {copy.description && command && <br />}
         {command && <span className="font-mono text-xs">{command}</span>}
       </>
     );
@@ -90,7 +91,7 @@ export default function ExtensionItem({
       className="transition-all duration-200 min-h-[120px] overflow-hidden"
     >
       <CardHeader>
-        <CardTitle>{getFriendlyTitle(extension)}</CardTitle>
+        <CardTitle>{copy.title}</CardTitle>
 
         <CardAction>
           <div className="flex items-center justify-end gap-2">
@@ -98,7 +99,7 @@ export default function ExtensionItem({
               <button
                 className="text-text-secondary hover:text-text-primary"
                 aria-label={intl.formatMessage(i18n.configureExtension, {
-                  name: getFriendlyTitle(extension),
+                  name: copy.title,
                 })}
                 onClick={() => onConfigure?.(extension)}
               >
@@ -111,7 +112,7 @@ export default function ExtensionItem({
               disabled={isToggling}
               variant="mono"
               aria-label={intl.formatMessage(i18n.toggleExtension, {
-                name: getFriendlyTitle(extension),
+                name: copy.title,
               })}
             />
           </div>

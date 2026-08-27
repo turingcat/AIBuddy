@@ -299,6 +299,8 @@ const i18n = defineMessages({
   },
 });
 
+export { i18n as recipeMessages };
+
 export default function RecipesView() {
   const intl = useIntl();
   const setView = useNavigation();

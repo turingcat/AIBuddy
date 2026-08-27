@@ -5,16 +5,11 @@ import { motion } from 'framer-motion';
 import { useNavigationContext } from './NavigationContext';
 import { useConfig } from '../ConfigContext';
 import { useNavigationSessions } from '../../hooks/useNavigationSessions';
-import {
-  NAV_ITEMS,
-  SETTINGS_NAV_ITEM,
-  getNavItemLabel,
-  type NavItem,
-} from '../../hooks/useNavigationItems';
+import { NAV_ITEMS, getNavItemLabel, type NavItem } from '../../hooks/useNavigationItems';
 import { AppEvents } from '../../constants/events';
 import { InlineEditText } from '../common/InlineEditText';
 import { SessionIndicators } from '../SessionIndicators';
-import { BalanceWidget } from './BalanceWidget';
+import { UserAccountMenu } from './UserAccountMenu';
 import { acpDeleteSession, acpRenameSession, type SessionListItem } from '../../acp/sessions';
 import { acpChatSessionActions } from '../../acp/chatSessionStore';
 import { cancelAcpPermissionRequestsForSession } from '../../acp/permissionRequests';
@@ -27,6 +22,7 @@ import { cn } from '../../utils';
 import type { ProjectGroup } from '../../utils/projectSessions';
 import { defineMessages, useIntl } from '../../i18n';
 import { toast } from 'react-toastify';
+import { logout } from '../../utils/logout';
 
 type StreamState = 'idle' | 'loading' | 'streaming' | 'error';
 
@@ -286,6 +282,8 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
 
   const [sessionStatuses, setSessionStatuses] = useState<Map<string, SessionStatus>>(new Map());
   const [sessionToDelete, setSessionToDelete] = useState<SessionListItem | null>(null);
+  const [isDeleteSubmitting, setIsDeleteSubmitting] = useState(false);
+  const deleteRequestRef = useRef<symbol | null>(null);
 
   useEffect(() => {
     const handleStatusUpdate = (event: Event) => {
@@ -319,9 +317,12 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
   }, []);
 
   const handleConfirmDelete = useCallback(async () => {
-    if (!sessionToDelete) return;
+    if (!sessionToDelete || deleteRequestRef.current) return;
 
     const { id, name } = sessionToDelete;
+    const requestToken = Symbol(id);
+    deleteRequestRef.current = requestToken;
+    setIsDeleteSubmitting(true);
 
     try {
       await acpDeleteSession(id);
@@ -342,9 +343,18 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
         })
       );
     } finally {
-      setSessionToDelete(null);
+      if (deleteRequestRef.current === requestToken) {
+        deleteRequestRef.current = null;
+        setIsDeleteSubmitting(false);
+        setSessionToDelete((pendingSession) => (pendingSession?.id === id ? null : pendingSession));
+      }
     }
   }, [fetchSessions, intl, sessionToDelete]);
+
+  const handleCancelDelete = useCallback(() => {
+    if (deleteRequestRef.current) return;
+    setSessionToDelete(null);
+  }, []);
 
   const navFocusRef = useRef<HTMLDivElement>(null);
 
@@ -470,11 +480,9 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
       </div>
 
       <div className="px-2 pt-2 pb-2 border-t border-border-secondary">
-        <BalanceWidget />
-        <NavRow
-          item={SETTINGS_NAV_ITEM}
-          active={isActive(SETTINGS_NAV_ITEM.path)}
-          onClick={() => handleNavClick(SETTINGS_NAV_ITEM.path)}
+        <UserAccountMenu
+          onOpenSettings={() => handleNavClick('/settings')}
+          onLogout={() => logout(intl)}
         />
       </div>
       <ConfirmationModal
@@ -484,8 +492,9 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
         confirmLabel={intl.formatMessage(i18n.deleteTitle)}
         cancelLabel={intl.formatMessage(i18n.cancel)}
         confirmVariant="destructive"
+        isSubmitting={isDeleteSubmitting}
         onConfirm={handleConfirmDelete}
-        onCancel={() => setSessionToDelete(null)}
+        onCancel={handleCancelDelete}
       />
     </motion.div>
   );

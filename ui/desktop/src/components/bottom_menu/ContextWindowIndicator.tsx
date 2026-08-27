@@ -1,5 +1,13 @@
 import BottomMenuAlertPopover from './BottomMenuAlertPopover';
 import { Alert } from '../alerts';
+import { defineMessages, useIntl } from '../../i18n';
+
+const i18n = defineMessages({
+  contextLabel: {
+    id: 'contextWindowIndicator.contextLabel',
+    defaultMessage: 'Context',
+  },
+});
 
 interface ContextWindowIndicatorProps {
   totalTokens: number;
@@ -24,6 +32,7 @@ export function ContextWindowIndicator({
   tokenLimit,
   alerts,
 }: ContextWindowIndicatorProps) {
+  const intl = useIntl();
   if (!tokenLimit) return null;
 
   const percentage = Math.round((totalTokens / tokenLimit) * 100);
@@ -33,6 +42,7 @@ export function ContextWindowIndicator({
     <div className="flex items-center h-full">
       <BottomMenuAlertPopover alerts={alerts}>
         <span className={`text-xs font-mono ${colorClass}`}>
+          <span className="mr-1 font-sans">{intl.formatMessage(i18n.contextLabel)}</span>
           {formatTokenCount(totalTokens)} / {formatTokenCount(tokenLimit)}
         </span>
       </BottomMenuAlertPopover>

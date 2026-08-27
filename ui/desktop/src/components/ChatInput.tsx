@@ -140,6 +140,38 @@ const i18n = defineMessages({
     id: 'chatInput.send',
     defaultMessage: 'Send',
   },
+  attachFile: {
+    id: 'chatInput.attachFile',
+    defaultMessage: 'Attach',
+  },
+  diagnostics: {
+    id: 'chatInput.diagnostics',
+    defaultMessage: 'Diagnostics',
+  },
+  voice: {
+    id: 'chatInput.voice',
+    defaultMessage: 'Voice',
+  },
+  voiceDictation: {
+    id: 'chatInput.voiceDictation',
+    defaultMessage: 'Voice dictation',
+  },
+  voiceDictationHint: {
+    id: 'chatInput.voiceDictationHint',
+    defaultMessage: 'Voice dictation · Say "submit" to send',
+  },
+  dictationNotConfigured: {
+    id: 'chatInput.dictationNotConfigured',
+    defaultMessage: 'Dictation not configured (Settings)',
+  },
+  stopRecording: {
+    id: 'chatInput.stopRecording',
+    defaultMessage: 'Stop recording',
+  },
+  stop: {
+    id: 'chatInput.stop',
+    defaultMessage: 'Stop',
+  },
   waitingForCancellation: {
     id: 'chatInput.waitingForCancellation',
     defaultMessage: 'Waiting for cancellation to finish',
@@ -656,7 +688,7 @@ export default function ChatInput({
       });
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalTokens, tokenLimit, isTokenLimitLoaded, isLoading, addAlert, clearAlerts]);
 
   // Cleanup effect for component unmount - prevent memory leaks
@@ -1333,6 +1365,18 @@ export default function ChatInput({
     return intl.formatMessage(i18n.send);
   };
 
+  const voiceControlLabel = !isEnabled
+    ? intl.formatMessage(i18n.dictationNotConfigured)
+    : isRecording
+      ? intl.formatMessage(i18n.stopRecording)
+      : isTranscribing
+        ? intl.formatMessage(i18n.transcribing)
+        : intl.formatMessage(i18n.voiceDictation);
+  const voiceControlTooltip =
+    isEnabled && !isRecording && !isTranscribing
+      ? intl.formatMessage(i18n.voiceDictationHint)
+      : voiceControlLabel;
+
   // Queue management functions - no storage persistence, only in-memory
   const handleRemoveQueuedMessage = (messageId: string) => {
     if (sendNowInFlightMessageIdsRef.current.has(messageId)) return;
@@ -1656,6 +1700,7 @@ export default function ChatInput({
               latestInference={latestInference}
               onModelChanged={setModelOverride}
               sessionLoaded={sessionLoaded}
+              isNarrow={isBottomBarNarrow}
             />
           </div>
         </Tooltip>
@@ -1704,13 +1749,15 @@ export default function ChatInput({
                     }}
                     variant="ghost"
                     size="sm"
-                    shape="round"
+                    shape="pill"
+                    aria-label={intl.formatMessage(i18n.diagnostics)}
                     className="text-text-primary/70 hover:text-text-primary cursor-pointer transition-colors"
                   >
                     <Bug className="w-4 h-4" />
+                    <span>{intl.formatMessage(i18n.diagnostics)}</span>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Generate diagnostics bundle</TooltipContent>
+                <TooltipContent>{intl.formatMessage(i18n.diagnostics)}</TooltipContent>
               </Tooltip>
             )}
 
@@ -1721,6 +1768,7 @@ export default function ChatInput({
                   type="button"
                   onClick={handleFileSelect}
                   disabled={isFilePickerOpen}
+                  aria-label={intl.formatMessage(i18n.attachFile)}
                   variant="ghost"
                   size="sm"
                   shape="round"
@@ -1730,9 +1778,10 @@ export default function ChatInput({
                   )}
                 >
                   <Attach className="w-4 h-4" />
+                  <span>{intl.formatMessage(i18n.attachFile)}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Attach file</TooltipContent>
+              <TooltipContent>{intl.formatMessage(i18n.attachFile)}</TooltipContent>
             </Tooltip>
           </>
         )}
@@ -1745,9 +1794,9 @@ export default function ChatInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                shape="round"
+                shape={isBottomBarNarrow ? 'round' : 'pill'}
                 onClick={() => {
-                  if (!isEnabled) return;
+                  if (!isEnabled || isTranscribing) return;
                   if (isRecording) {
                     trackVoiceDictation('stop');
                     stopRecording();
@@ -1756,46 +1805,44 @@ export default function ChatInput({
                     startRecording();
                   }
                 }}
-                // Keep the button hoverable when only !isEnabled so the
-                // "Dictation not configured" tooltip stays reachable.
-                // We still natively disable while transcribing.
-                disabled={isTranscribing}
-                aria-disabled={!isEnabled}
+                aria-disabled={!isEnabled || isTranscribing}
+                aria-label={voiceControlLabel}
                 className={cn(
                   'transition-colors',
                   isRecording
                     ? 'text-red-500 hover:text-red-600'
                     : 'text-text-primary/70 hover:text-text-primary',
-                  isTranscribing && 'animate-pulse',
+                  isTranscribing && 'animate-pulse opacity-50 cursor-not-allowed',
                   !isEnabled && 'opacity-50 cursor-not-allowed'
                 )}
               >
                 <Microphone size={16} />
+                {!isBottomBarNarrow && <span>{intl.formatMessage(i18n.voice)}</span>}
               </Button>
             </TooltipTrigger>
-            <TooltipContent>
-              {!isEnabled ? (
-                <p>Dictation not configured (Settings)</p>
-              ) : (
-                <p>Voice dictation{isRecording ? '' : ' • Say "submit" to send'}</p>
-              )}
-            </TooltipContent>
+            <TooltipContent>{voiceControlTooltip}</TooltipContent>
           </Tooltip>
         )}
 
         {/* Right: send / stop — soft gray circle with up-arrow */}
         {isLoading && !hasSubmittableContent ? (
-          <Button
-            type="button"
-            onClick={handleStop}
-            size="sm"
-            shape="round"
-            variant="ghost"
-            aria-label="Stop"
-            className="bg-background-tertiary text-text-primary hover:bg-background-tertiary/70"
-          >
-            <Stop />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                onClick={handleStop}
+                size="sm"
+                shape={isBottomBarNarrow ? 'round' : 'pill'}
+                variant="ghost"
+                aria-label={intl.formatMessage(i18n.stop)}
+                className="bg-background-tertiary text-text-primary hover:bg-background-tertiary/70"
+              >
+                <Stop />
+                {!isBottomBarNarrow && <span>{intl.formatMessage(i18n.stop)}</span>}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{intl.formatMessage(i18n.stop)}</TooltipContent>
+          </Tooltip>
         ) : (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -1803,7 +1850,7 @@ export default function ChatInput({
                 <Button
                   type="button"
                   size="sm"
-                  shape="round"
+                  shape={isBottomBarNarrow ? 'round' : 'pill'}
                   variant="ghost"
                   disabled={isSubmitButtonDisabled}
                   aria-label={intl.formatMessage(i18n.send)}
@@ -1816,6 +1863,7 @@ export default function ChatInput({
                   )}
                 >
                   <ArrowUp className="w-4 h-4" strokeWidth={2.25} />
+                  {!isBottomBarNarrow && <span>{intl.formatMessage(i18n.send)}</span>}
                 </Button>
               </span>
             </TooltipTrigger>

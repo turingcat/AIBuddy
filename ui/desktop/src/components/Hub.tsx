@@ -30,6 +30,7 @@ const i18n = defineMessages({
   goodMorning: { id: 'hub.goodMorning', defaultMessage: 'Good morning' },
   goodAfternoon: { id: 'hub.goodAfternoon', defaultMessage: 'Good afternoon' },
   goodEvening: { id: 'hub.goodEvening', defaultMessage: 'Good evening' },
+  assistantIdentity: { id: 'hub.assistantIdentity', defaultMessage: ", I'm Guanglin AI Assistant" },
 });
 
 function useClock(): { time: string; meridiem: string; hour: number } {
@@ -62,9 +63,13 @@ export default function Hub({
   const { time, meridiem, hour } = useClock();
 
   const greeting = useMemo(() => {
-    if (hour < 12) return intl.formatMessage(i18n.goodMorning);
-    if (hour < 18) return intl.formatMessage(i18n.goodAfternoon);
-    return intl.formatMessage(i18n.goodEvening);
+    const timeOfDay =
+      hour < 12
+        ? intl.formatMessage(i18n.goodMorning)
+        : hour < 18
+          ? intl.formatMessage(i18n.goodAfternoon)
+          : intl.formatMessage(i18n.goodEvening);
+    return `${timeOfDay}${intl.formatMessage(i18n.assistantIdentity)}`;
   }, [intl, hour]);
 
   const draftForMenu = useMemo(
@@ -122,7 +127,7 @@ export default function Hub({
 
   return (
     <div className="flex flex-col h-full min-h-0 items-center justify-center px-6 relative">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-3xl">
         <div className="flex items-baseline gap-2 mb-1">
           <span className="text-6xl font-light text-text-primary tracking-tight tabular-nums">
             {time}

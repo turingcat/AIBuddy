@@ -3,7 +3,7 @@ import type { RecipeExtension } from '../../../recipe';
 import { useConfig, type FixedExtensionEntry } from '../../ConfigContext';
 import { Input } from '../../ui/input';
 import { Switch } from '../../ui/switch';
-import { formatExtensionName } from '../../settings/extensions/subcomponents/ExtensionList';
+import { getLocalizedExtensionCopy } from '../../settings/extensions/subcomponents/ExtensionList';
 import { defineMessages, useIntl } from '../../../i18n';
 
 const i18n = defineMessages({
@@ -188,10 +188,15 @@ export const RecipeExtensionSelector = ({
 
   const filteredExtensions = displayExtensions.filter((ext) => {
     const query = searchQuery.toLowerCase();
-    return (
-      ext.name.toLowerCase().includes(query) ||
-      (ext.description && ext.description.toLowerCase().includes(query))
-    );
+    const copy = getLocalizedExtensionCopy(ext, intl);
+    const aliases = [
+      copy.title,
+      copy.description,
+      ext.name,
+      'display_name' in ext ? ext.display_name : undefined,
+      ext.description,
+    ];
+    return aliases.some((alias) => alias?.toLowerCase().includes(query));
   });
 
   const sortedExtensions = [...filteredExtensions].sort((a, b) => {
@@ -200,7 +205,9 @@ export const RecipeExtensionSelector = ({
 
     if (aSelected !== bSelected) return aSelected ? -1 : 1;
 
-    return a.name.localeCompare(b.name);
+    return getLocalizedExtensionCopy(a, intl).title.localeCompare(
+      getLocalizedExtensionCopy(b, intl).title
+    );
   });
 
   const activeCount = selectedExtensions.length;
@@ -236,6 +243,7 @@ export const RecipeExtensionSelector = ({
         ) : (
           sortedExtensions.map((ext) => {
             const isSelected = selectedExtensionNames.has(ext.name);
+            const copy = getLocalizedExtensionCopy(ext, intl);
             return (
               <div
                 key={ext.name}
@@ -250,14 +258,12 @@ export const RecipeExtensionSelector = ({
                     handleToggle(ext);
                   }
                 }}
-                title={ext.description || ext.name}
+                title={copy.description || copy.title}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium text-textStandard">
-                    {formatExtensionName(ext.name)}
-                  </div>
-                  {ext.description && (
-                    <div className="text-xs text-textSubtle truncate mt-1">{ext.description}</div>
+                  <div className="text-sm font-medium text-textStandard">{copy.title}</div>
+                  {copy.description && (
+                    <div className="text-xs text-textSubtle truncate mt-1">{copy.description}</div>
                   )}
                 </div>
                 <div onClick={(e) => e.stopPropagation()} className="ml-4">

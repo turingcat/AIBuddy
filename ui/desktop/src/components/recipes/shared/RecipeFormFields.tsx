@@ -88,6 +88,8 @@ const i18n = defineMessages({
   },
 });
 
+export { i18n as recipeFormFieldsMessages };
+
 import ParameterInput from '../../parameter/ParameterInput';
 import RecipeActivityEditor from '../RecipeActivityEditor';
 import JsonSchemaEditor from './JsonSchemaEditor';
