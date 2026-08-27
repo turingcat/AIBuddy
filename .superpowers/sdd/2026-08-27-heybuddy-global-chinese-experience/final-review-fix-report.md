@@ -4,7 +4,7 @@
 
 已在 `feat/heybuddy-chinese-ui` 上一次性修复 `final-review-findings.md` 的 1 项 Critical 与 5 项 Important finding。未修改 `Justfile` 或 `ui/desktop/src/api`，未合并、未推送。上游 `caf59517cc280dd3523a80131f388024eaaede9d` 不包含这些 fork-specific 中文体验修复。
 
-提交：`COMMIT_SHA_PENDING`
+实现提交：`56b5ef609d394293dc10c1079299e924927ae26b`。
 
 ## Critical 1：生产认证 URL 默认值
 
