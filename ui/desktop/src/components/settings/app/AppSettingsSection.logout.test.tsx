@@ -8,7 +8,6 @@ import AppSettingsSection from './AppSettingsSection';
 vi.mock('../../../updates', () => ({ UPDATES_ENABLED: false }));
 vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
 vi.mock('../../GooseSidebar/ThemeSelector', () => ({ default: () => null }));
-vi.mock('./TelemetrySettings', () => ({ default: () => null }));
 vi.mock('./UpdateSection', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();

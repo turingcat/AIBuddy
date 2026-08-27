@@ -147,7 +147,7 @@ check-acp-schema: generate-acp-types
 # Generate ACP JSON schema from Rust types
 generate-acp-schema:
     @echo "Generating ACP schema..."
-    cd crates/goose && cargo run --features code-mode,local-inference,aws-providers,telemetry,otel,rustls-tls,system-keyring --bin generate-acp-schema
+    cd crates/goose && cargo run --features code-mode,local-inference,aws-providers,otel,rustls-tls,system-keyring --bin generate-acp-schema
     @echo "ACP schema generated: crates/goose/acp-schema.json, crates/goose/acp-meta.json"
 
 # Generate ACP TypeScript types from JSON schema (requires generate-acp-schema first)

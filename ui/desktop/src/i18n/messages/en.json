@@ -2342,30 +2342,6 @@
   "navigationPanel.untitledSession": {
     "defaultMessage": "Untitled session"
   },
-  "onboardingSuccess.allSet": {
-    "defaultMessage": "You're all set to start using HeyBuddy."
-  },
-  "onboardingSuccess.connectedTo": {
-    "defaultMessage": "Connected to {providerName}"
-  },
-  "onboardingSuccess.getStarted": {
-    "defaultMessage": "Get Started"
-  },
-  "onboardingSuccess.learnMore": {
-    "defaultMessage": "Learn more"
-  },
-  "onboardingSuccess.localModelReady": {
-    "defaultMessage": "Local model ready"
-  },
-  "onboardingSuccess.privacyDescription": {
-    "defaultMessage": "Anonymous usage data helps improve HeyBuddy. We never collect your conversations, code, or personal data."
-  },
-  "onboardingSuccess.privacyTitle": {
-    "defaultMessage": "Privacy"
-  },
-  "onboardingSuccess.shareUsageData": {
-    "defaultMessage": "Share anonymous usage data"
-  },
   "parameterInput.defaultValue": {
     "defaultMessage": "Default Value"
   },
@@ -2509,36 +2485,6 @@
   },
   "permissionSetting.permissionRulesDescription": {
     "defaultMessage": "Hidden instructions that will be passed to the provider to help direct and add context to your responses."
-  },
-  "privacyInfoModal.collectErrors": {
-    "defaultMessage": "Error types (e.g., \"rate_limit\", \"auth\" - no details)"
-  },
-  "privacyInfoModal.collectExtensions": {
-    "defaultMessage": "Extensions and tool usage counts (names only)"
-  },
-  "privacyInfoModal.collectOs": {
-    "defaultMessage": "Operating system, version, and architecture"
-  },
-  "privacyInfoModal.collectProvider": {
-    "defaultMessage": "Provider and model used"
-  },
-  "privacyInfoModal.collectSession": {
-    "defaultMessage": "Session metrics (duration, interaction count, token usage)"
-  },
-  "privacyInfoModal.collectVersion": {
-    "defaultMessage": "HeyBuddy version and install method"
-  },
-  "privacyInfoModal.description": {
-    "defaultMessage": "Anonymous usage data helps us understand how HeyBuddy is used and identify areas for improvement."
-  },
-  "privacyInfoModal.neverCollect": {
-    "defaultMessage": "We never collect your conversations, code, tool arguments, error messages, or any personal data. You can change this setting anytime in Settings."
-  },
-  "privacyInfoModal.title": {
-    "defaultMessage": "Privacy details"
-  },
-  "privacyInfoModal.whatWeCollect": {
-    "defaultMessage": "What we collect:"
   },
   "progressiveMessageList.loadingMessages": {
     "defaultMessage": "Loading messages... ({renderedCount}/{totalCount})"
@@ -4210,45 +4156,6 @@
   },
   "switchModelModal.title": {
     "defaultMessage": "Switch models"
-  },
-  "telemetryConsentPrompt.description": {
-    "defaultMessage": "Would you like to share anonymous usage data to help improve HeyBuddy? We never collect your conversations, code, or personal data."
-  },
-  "telemetryConsentPrompt.heading": {
-    "defaultMessage": "Help improve HeyBuddy"
-  },
-  "telemetryConsentPrompt.learnMore": {
-    "defaultMessage": "Learn more"
-  },
-  "telemetryConsentPrompt.optIn": {
-    "defaultMessage": "Yes, share anonymous usage data"
-  },
-  "telemetryConsentPrompt.optOut": {
-    "defaultMessage": "No thanks"
-  },
-  "telemetrySettings.configErrorTitle": {
-    "defaultMessage": "Configuration Error"
-  },
-  "telemetrySettings.description": {
-    "defaultMessage": "Control how your data is used"
-  },
-  "telemetrySettings.learnMore": {
-    "defaultMessage": "Learn more"
-  },
-  "telemetrySettings.loadError": {
-    "defaultMessage": "Failed to load telemetry settings."
-  },
-  "telemetrySettings.title": {
-    "defaultMessage": "Privacy"
-  },
-  "telemetrySettings.toggleDescription": {
-    "defaultMessage": "Help improve HeyBuddy by sharing anonymous usage statistics."
-  },
-  "telemetrySettings.toggleLabel": {
-    "defaultMessage": "Anonymous usage data"
-  },
-  "telemetrySettings.updateError": {
-    "defaultMessage": "Failed to update telemetry settings."
   },
   "themeSelector.dark": {
     "defaultMessage": "Dark"

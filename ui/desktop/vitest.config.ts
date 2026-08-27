@@ -15,7 +15,7 @@ const cfg = {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: true,
-    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}'],
+    include: ['src/**/*.{test,spec}.{js,jsx,ts,tsx}', 'scripts/**/*.test.{js,ts}'],
   },
 } satisfies Record<string, any>;
 

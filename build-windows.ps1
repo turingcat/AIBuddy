@@ -16,7 +16,11 @@ param(
     # node 目录（默认本机 node 24.10.0，规避 node 24.16 与 electron-packager 的 packaging 静默退出 bug）
     [string]$NodePath = 'C:\soft\node-v24.10.0-win-x64',
     # 登录服务生产地址：烘焙进安装包主进程（开发模式 just run-ui 不经此脚本，仍默认 localhost:3001）
-    [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn'
+    [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn',
+    # 目标版本号：留空则自动 patch+1（如 1.45.0 -> 1.45.1）；指定后直接写入该版本（对齐 CI bundle-windows 的 version 输入）
+    [string]$Version = '',
+    # 跳过版本递增：构建失败重试时使用，避免版本跳号；与 -Version 互斥
+    [switch]$SkipVersionBump
 )
 
 $ErrorActionPreference = 'Stop'
@@ -125,6 +129,46 @@ function Assert-Toolchain {
     Write-Host "Inno Setup：$IsccPath"
 }
 
+# 构建前递增版本号：ui/desktop/package.json patch+1 并同步 Cargo.toml workspace 版本
+# 回写文件但不自动提交，构建成功后由用户手动提交（Cargo.lock 由后续 cargo build 自动刷新）
+# @author: logic
+# @date: 2026-08-27
+function Update-BuildVersion {
+    if ($SkipVersionBump) {
+        Write-Host "跳过版本递增（-SkipVersionBump），沿用当前版本构建"
+        return
+    }
+
+    # 检测版本相关文件是否有未提交变更（git 不可用时静默跳过检测）
+    try {
+        $dirtyFiles = & git -C $ProjectRoot status --porcelain -- Cargo.toml Cargo.lock ui/desktop/package.json 2>$null
+        if ($dirtyFiles) {
+            Write-Host "提醒：版本相关文件存在未提交变更（上次递增未提交？）。若为构建失败重试，请用 -SkipVersionBump 避免版本跳号" -ForegroundColor Yellow
+        }
+    } catch {}
+
+    Write-Step "递增构建版本"
+    $bumpScript = Join-Path $ProjectRoot 'ui\desktop\scripts\bump-build-version.js'
+    if ($Version) {
+        $bumpOutput = & node $bumpScript "--target=$Version"
+    } else {
+        $bumpOutput = & node $bumpScript --patch
+    }
+    if ($LASTEXITCODE -ne 0) { throw "版本递增失败" }
+
+    $bump = $bumpOutput | ConvertFrom-Json
+    if ($bump.prereleaseStripped) {
+        Write-Host "当前版本带预发布后缀，已剥离后缀后递增"
+    }
+    if ($bump.versionMismatch) {
+        Write-Host "提醒：package.json 与 Cargo.toml 版本不一致（cargo=$($bump.cargoOldVersion)），已以 package.json 为基准递增" -ForegroundColor Yellow
+    }
+    Write-Host "  ui/desktop/package.json : $($bump.oldVersion) -> $($bump.newVersion)"
+    Write-Host "  Cargo.toml [workspace.package] : $($bump.cargoOldVersion) -> $($bump.newVersion)"
+    Write-Host "  提示：版本变更未提交 git，请在构建成功后手动提交（Cargo.lock 会被本次构建一并刷新）："
+    Write-Host "    git add Cargo.toml Cargo.lock ui/desktop/package.json"
+}
+
 # 编译 goose.exe（release, x86_64-pc-windows-msvc）并复制到 ui/desktop/src/bin
 function Build-GooseBinary {
     Write-Step "编译 Rust 后端 goose.exe（release）"
@@ -135,7 +179,7 @@ function Build-GooseBinary {
 
     Write-Host "首次编译依赖较多，可能耗时较长，请耐心等待..."
     # 禁用 local-inference 以跳过 llama.cpp 的 C++ 编译（本地无需本地推理，且其构建依赖易缺失）
-    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,tui,aws-providers,telemetry,nostr,otel,rustls-tls,system-keyring,update
+    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,tui,aws-providers,nostr,otel,rustls-tls,system-keyring,update
     if ($LASTEXITCODE -ne 0) { throw "cargo build 失败" }
 
     $gooseExe = Join-Path $ProjectRoot 'target\x86_64-pc-windows-msvc\release\goose.exe'
@@ -221,7 +265,11 @@ function Package-Distribution {
 
 # 主流程
 try {
+    if ($Version -and $SkipVersionBump) {
+        throw "-Version 与 -SkipVersionBump 互斥，请只指定其一"
+    }
     Assert-Toolchain
+    Update-BuildVersion
     Build-GooseBinary
     Build-DesktopApp
     Package-Distribution

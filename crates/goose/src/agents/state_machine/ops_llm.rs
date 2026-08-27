@@ -183,8 +183,6 @@ impl<'a> InferenceRunner<'a> {
     }
 
     async fn error_outcome(&self, err: &ProviderError, emit: &Emitter) -> Vec<StateEffect> {
-        #[cfg(feature = "telemetry")]
-        crate::posthog::emit_error(err.telemetry_type(), &err.to_string());
         tracing::Span::current().record("error.type", err.telemetry_type());
         tracing::error!("LLM provider error: {err}");
         let message = Message::from_provider_error(err);

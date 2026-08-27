@@ -87,12 +87,6 @@ For detailed guidance on ASL v2 compliance, see the [Apache License FAQ](https:/
 
 While you're free to maintain private forks, contributing improvements upstream benefits everyone—including your distribution. Private forks that diverge significantly become expensive to maintain and miss out on security updates and new features. Consider upstreaming generic improvements while keeping only organization-specific customizations private.
 
-### Telemetry
-
-goose includes optional telemetry (via PostHog) to help improve the project. For custom distributions, you can:
-- **Disable telemetry**: Set `GOOSE_DISABLE_TELEMETRY=1`
-- **Use your own instance**: Modify `crates/goose/src/posthog.rs` to point to your PostHog instance
-
 ### Staying Current
 
 To benefit from upstream improvements:

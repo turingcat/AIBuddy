@@ -2288,17 +2288,11 @@
   "modelsBottomBar.selectModel": {
     "defaultMessage": "选择模型"
   },
-  "navigation.itemApps": {
-    "defaultMessage": "应用"
-  },
   "navigation.itemExtensions": {
     "defaultMessage": "扩展"
   },
   "navigation.itemHome": {
     "defaultMessage": "新对话"
-  },
-  "navigation.itemRecipes": {
-    "defaultMessage": "配方"
   },
   "navigation.itemScheduler": {
     "defaultMessage": "调度"
@@ -2347,30 +2341,6 @@
   },
   "navigationPanel.untitledSession": {
     "defaultMessage": "未命名会话"
-  },
-  "onboardingSuccess.allSet": {
-    "defaultMessage": "一切就绪，可以开始使用 HeyBuddy 了。"
-  },
-  "onboardingSuccess.connectedTo": {
-    "defaultMessage": "已连接到 {providerName}"
-  },
-  "onboardingSuccess.getStarted": {
-    "defaultMessage": "开始使用"
-  },
-  "onboardingSuccess.learnMore": {
-    "defaultMessage": "了解更多"
-  },
-  "onboardingSuccess.localModelReady": {
-    "defaultMessage": "本地模型就绪"
-  },
-  "onboardingSuccess.privacyDescription": {
-    "defaultMessage": "匿名使用数据有助于改善 HeyBuddy。我们绝不采集你的对话、代码或个人数据。"
-  },
-  "onboardingSuccess.privacyTitle": {
-    "defaultMessage": "隐私"
-  },
-  "onboardingSuccess.shareUsageData": {
-    "defaultMessage": "分享匿名使用数据"
   },
   "parameterInput.defaultValue": {
     "defaultMessage": "默认值"
@@ -2515,36 +2485,6 @@
   },
   "permissionSetting.permissionRulesDescription": {
     "defaultMessage": "传给提供商的隐藏指令，用于引导并为回复补充上下文。"
-  },
-  "privacyInfoModal.collectErrors": {
-    "defaultMessage": "错误类型（例如“rate_limit”“auth”——不含详情）"
-  },
-  "privacyInfoModal.collectExtensions": {
-    "defaultMessage": "扩展及工具使用次数（仅名称）"
-  },
-  "privacyInfoModal.collectOs": {
-    "defaultMessage": "操作系统、版本和架构"
-  },
-  "privacyInfoModal.collectProvider": {
-    "defaultMessage": "使用的提供商和模型"
-  },
-  "privacyInfoModal.collectSession": {
-    "defaultMessage": "会话指标（时长、交互次数、令牌用量）"
-  },
-  "privacyInfoModal.collectVersion": {
-    "defaultMessage": "HeyBuddy 版本和安装方式"
-  },
-  "privacyInfoModal.description": {
-    "defaultMessage": "匿名使用数据帮助我们理解 HeyBuddy 的使用情况并找出改进方向。"
-  },
-  "privacyInfoModal.neverCollect": {
-    "defaultMessage": "我们绝不采集你的对话、代码、工具参数、错误消息或任何个人数据。你随时可以在“设置”中更改此设置。"
-  },
-  "privacyInfoModal.title": {
-    "defaultMessage": "隐私详情"
-  },
-  "privacyInfoModal.whatWeCollect": {
-    "defaultMessage": "我们采集的内容："
   },
   "progressiveMessageList.loadingMessages": {
     "defaultMessage": "正在加载消息…（{renderedCount}/{totalCount}）"
@@ -4216,45 +4156,6 @@
   },
   "switchModelModal.title": {
     "defaultMessage": "切换模型"
-  },
-  "telemetryConsentPrompt.description": {
-    "defaultMessage": "是否愿意分享匿名使用数据帮助改进 HeyBuddy？我们绝不采集你的对话、代码或个人数据。"
-  },
-  "telemetryConsentPrompt.heading": {
-    "defaultMessage": "帮助改进 HeyBuddy"
-  },
-  "telemetryConsentPrompt.learnMore": {
-    "defaultMessage": "了解更多"
-  },
-  "telemetryConsentPrompt.optIn": {
-    "defaultMessage": "是的，分享匿名使用数据"
-  },
-  "telemetryConsentPrompt.optOut": {
-    "defaultMessage": "不用了"
-  },
-  "telemetrySettings.configErrorTitle": {
-    "defaultMessage": "配置错误"
-  },
-  "telemetrySettings.description": {
-    "defaultMessage": "控制你的数据如何被使用"
-  },
-  "telemetrySettings.learnMore": {
-    "defaultMessage": "了解更多"
-  },
-  "telemetrySettings.loadError": {
-    "defaultMessage": "加载遥测设置失败。"
-  },
-  "telemetrySettings.title": {
-    "defaultMessage": "隐私"
-  },
-  "telemetrySettings.toggleDescription": {
-    "defaultMessage": "通过分享匿名使用统计来帮助改进 HeyBuddy。"
-  },
-  "telemetrySettings.toggleLabel": {
-    "defaultMessage": "匿名使用数据"
-  },
-  "telemetrySettings.updateError": {
-    "defaultMessage": "更新遥测设置失败。"
   },
   "themeSelector.dark": {
     "defaultMessage": "深色"

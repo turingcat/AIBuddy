@@ -255,11 +255,6 @@ impl Operation for RetryOperation<'_> {
                     retry_config.max_retries
                 ),
             );
-            #[cfg(feature = "telemetry")]
-            crate::posthog::emit_error(
-                "retry_max_exceeded",
-                &format!("Max retries ({}) exceeded", retry_config.max_retries),
-            );
             let message = emit.message(message).await;
             return applied([message.into()]);
         }
