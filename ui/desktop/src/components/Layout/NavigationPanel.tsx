@@ -208,7 +208,7 @@ const SessionRow: React.FC<SessionRowProps> = ({
         <div
           onClick={() => !isEditing && onClick()}
           className={cn(
-            'flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer text-sm',
+            'group flex items-center gap-2 px-3 py-1.5 rounded-full cursor-pointer text-sm',
             'hover:bg-background-tertiary/60 transition-colors',
             active && 'bg-background-tertiary'
           )}
@@ -241,7 +241,13 @@ const SessionRow: React.FC<SessionRowProps> = ({
               event.stopPropagation();
               onDelete();
             }}
-            className="flex-shrink-0 rounded p-1 text-text-secondary hover:bg-background-secondary hover:text-text-primary"
+            className={cn(
+              'flex-shrink-0 rounded p-1 text-text-secondary transition-opacity',
+              'hover:bg-background-secondary hover:text-text-primary',
+              active
+                ? 'opacity-100 pointer-events-auto'
+                : 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto'
+            )}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>

@@ -17,6 +17,7 @@ const {
   mockToastError,
   session,
   secondSession,
+  activeSession,
 } = vi.hoisted(() => ({
   mockHandleSessionClick: vi.fn(),
   mockHandleNavClick: vi.fn(),
@@ -42,6 +43,7 @@ const {
     createdAt: '2026-08-27T01:00:00Z',
     messageCount: 1,
   } satisfies SessionListItem,
+  activeSession: { id: undefined as string | undefined },
 }));
 
 vi.mock('react-router', () => ({
@@ -68,7 +70,7 @@ vi.mock('../../hooks/useNavigationSessions', () => ({
   useNavigationSessions: () => ({
     recentSessions: [session, secondSession],
     recentSessionsByProject: [],
-    activeSessionId: undefined,
+    activeSessionId: activeSession.id,
     fetchSessions: mockFetchSessions,
     handleNavClick: mockHandleNavClick,
     handleSessionClick: mockHandleSessionClick,
@@ -186,6 +188,7 @@ describe('Navigation sidebar session deletion', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDeleteSession.mockResolvedValue(undefined);
+    activeSession.id = undefined;
   });
 
   it('shows an accessible delete button and truncates the visible session title', () => {
@@ -194,6 +197,28 @@ describe('Navigation sidebar session deletion', () => {
     expect(deleteButton()).toBeInTheDocument();
     expect(sessionTitle()).toHaveClass('truncate', 'min-w-0');
     expect(screen.getAllByRole('tooltip')[0]).toHaveTextContent(session.name);
+  });
+
+  it('hides inactive delete buttons until row hover or keyboard focus', () => {
+    renderNavigation();
+
+    expect(deleteButton()).toHaveClass(
+      'opacity-0',
+      'pointer-events-none',
+      'group-hover:opacity-100',
+      'group-hover:pointer-events-auto',
+      'group-focus-within:opacity-100',
+      'group-focus-within:pointer-events-auto'
+    );
+    expect(deleteButton().parentElement).toHaveClass('group');
+  });
+
+  it('keeps the active session delete button visible', () => {
+    activeSession.id = session.id;
+    renderNavigation();
+
+    expect(deleteButton()).toHaveClass('opacity-100', 'pointer-events-auto');
+    expect(deleteButton()).not.toHaveClass('opacity-0', 'pointer-events-none');
   });
 
   it('does not open the session when the delete button is clicked', async () => {
