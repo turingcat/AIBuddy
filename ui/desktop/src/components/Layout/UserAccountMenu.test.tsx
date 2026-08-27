@@ -130,6 +130,7 @@ describe('UserAccountMenu', () => {
     const menu = screen.getByRole('menu');
     expect(menu).toHaveAttribute('data-side', 'top');
     expect(menu).toHaveClass('w-[var(--radix-dropdown-menu-trigger-width)]');
+    expect(menu).toHaveClass('min-w-0');
     expect(menu).not.toHaveClass('w-64');
   });
 

@@ -48,7 +48,7 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
       <DropdownMenuContent
         side="top"
         align="start"
-        className="w-[var(--radix-dropdown-menu-trigger-width)]"
+        className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-0"
       >
         <div
           className="flex min-w-0 items-center gap-2 px-2 py-2"
