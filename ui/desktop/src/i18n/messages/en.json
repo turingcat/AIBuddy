@@ -2288,17 +2288,11 @@
   "modelsBottomBar.selectModel": {
     "defaultMessage": "Select Model"
   },
-  "navigation.itemApps": {
-    "defaultMessage": "Apps"
-  },
   "navigation.itemExtensions": {
     "defaultMessage": "Extensions"
   },
   "navigation.itemHome": {
     "defaultMessage": "New Chat"
-  },
-  "navigation.itemRecipes": {
-    "defaultMessage": "Recipes"
   },
   "navigation.itemScheduler": {
     "defaultMessage": "Scheduler"
