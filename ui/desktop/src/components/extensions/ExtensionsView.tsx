@@ -52,6 +52,8 @@ const i18n = defineMessages({
   },
 });
 
+export { i18n as extensionsViewMessages };
+
 export type ExtensionsViewOptions = {
   deepLinkConfig?: ExtensionConfig;
   showEnvVars?: boolean;

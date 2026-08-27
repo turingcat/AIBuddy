@@ -1112,6 +1112,36 @@
   "extensionList.builtInExtension": {
     "defaultMessage": "Built-in extension"
   },
+  "extensionList.builtIns.autovisualiser.description": {
+    "defaultMessage": "Automatically visualize data and generate user interfaces."
+  },
+  "extensionList.builtIns.autovisualiser.title": {
+    "defaultMessage": "Auto Visualiser"
+  },
+  "extensionList.builtIns.computercontroller.description": {
+    "defaultMessage": "General computer control tools that don't require development experience."
+  },
+  "extensionList.builtIns.computercontroller.title": {
+    "defaultMessage": "Computer Controller"
+  },
+  "extensionList.builtIns.developer.description": {
+    "defaultMessage": "General development tools useful for software engineering."
+  },
+  "extensionList.builtIns.developer.title": {
+    "defaultMessage": "Developer"
+  },
+  "extensionList.builtIns.memory.description": {
+    "defaultMessage": "Teach HeyBuddy your preferences as you go."
+  },
+  "extensionList.builtIns.memory.title": {
+    "defaultMessage": "Memory"
+  },
+  "extensionList.builtIns.tutorial.description": {
+    "defaultMessage": "Access interactive tutorials and guides."
+  },
+  "extensionList.builtIns.tutorial.title": {
+    "defaultMessage": "Tutorial"
+  },
   "extensionList.defaultExtensions": {
     "defaultMessage": "Default Extensions ({count})"
   },
@@ -2293,6 +2323,9 @@
   },
   "navigation.itemHome": {
     "defaultMessage": "New Chat"
+  },
+  "navigation.itemRecipes": {
+    "defaultMessage": "Recipes"
   },
   "navigation.itemScheduler": {
     "defaultMessage": "Scheduler"

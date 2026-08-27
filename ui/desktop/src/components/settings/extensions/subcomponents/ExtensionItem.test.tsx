@@ -7,6 +7,10 @@ import type { FixedExtensionEntry } from '../../../ConfigContext';
 vi.mock('./ExtensionList', () => ({
   getSubtitle: () => ({ description: '', command: '' }),
   getFriendlyTitle: (ext: { name: string }) => ext.name,
+  getLocalizedExtensionCopy: (ext: { name: string }) => ({
+    title: ext.name,
+    description: '',
+  }),
 }));
 
 const renderWithIntl = (ui: React.ReactElement, options?: RenderOptions) =>
