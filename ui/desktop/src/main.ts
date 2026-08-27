@@ -35,6 +35,7 @@ import {
   clearCredentials,
   type LoginCredentials,
 } from './credentials';
+import { getCredentialsCodec } from './credentialsCrypto';
 import {
   fetchCurrencyWithCache,
   fetchUserBalance,
@@ -1155,7 +1156,7 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE));
+    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
       gooseServeResult = await startGooseServe({
@@ -1993,10 +1994,10 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   }
 });
 
-ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE));
-ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE) !== null);
+ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
+ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null);
 ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
-  writeCredentials(CREDENTIALS_FILE, creds);
+  writeCredentials(CREDENTIALS_FILE, creds, getCredentialsCodec());
 });
 ipcMain.handle('clear-login-credentials', () => {
   clearCredentials(CREDENTIALS_FILE);
@@ -2019,7 +2020,7 @@ ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
 const currencyCache: CurrencyCacheState = { config: null, fetchedAt: 0 };
 
 ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
-  const creds = readCredentials(CREDENTIALS_FILE);
+  const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) {
     return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
   }
@@ -2042,7 +2043,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('list-models-via-api', async () => {
-  const creds = readCredentials(CREDENTIALS_FILE);
+  const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) return [];
   try {
     const res = await net.fetch(`${creds.baseUrl}/models`, {
