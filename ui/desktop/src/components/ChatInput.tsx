@@ -1751,7 +1751,7 @@ export default function ChatInput({
                     size="sm"
                     shape="pill"
                     aria-label={intl.formatMessage(i18n.diagnostics)}
-                    className="text-text-primary/70 hover:text-text-primary cursor-pointer transition-colors"
+                    className="text-xs text-text-primary/70 hover:text-text-primary cursor-pointer transition-colors"
                   >
                     <Bug className="w-4 h-4" />
                     <span>{intl.formatMessage(i18n.diagnostics)}</span>
@@ -1808,7 +1808,7 @@ export default function ChatInput({
                 aria-disabled={!isEnabled || isTranscribing}
                 aria-label={voiceControlLabel}
                 className={cn(
-                  'transition-colors',
+                  'text-xs transition-colors',
                   isRecording
                     ? 'text-red-500 hover:text-red-600'
                     : 'text-text-primary/70 hover:text-text-primary',

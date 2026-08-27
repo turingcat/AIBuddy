@@ -107,7 +107,10 @@ describe('ChatInput toolbar', () => {
     expect(attachButton).toHaveClass('text-xs', 'mr-1');
     expect(attachButton).not.toHaveClass('w-8', 'rounded-full');
     expect(screen.getByText('发送')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
+    const sendButton = screen.getByRole('button', { name: '发送' });
+    expect(sendButton).toBeInTheDocument();
+    expect(sendButton).toHaveClass('text-sm');
+    expect(sendButton).not.toHaveClass('text-xs');
   });
 
   it('keeps only accessible model and send controls in a narrow toolbar', () => {
@@ -154,8 +157,12 @@ describe('ChatInput toolbar', () => {
       </IntlProvider>
     );
 
-    expect(screen.getByRole('button', { name: '诊断' })).toHaveTextContent('诊断');
-    expect(screen.getByRole('button', { name: '语音输入' })).toHaveTextContent('语音');
+    const diagnosticsButton = screen.getByRole('button', { name: '诊断' });
+    const voiceButton = screen.getByRole('button', { name: '语音输入' });
+    expect(diagnosticsButton).toHaveTextContent('诊断');
+    expect(voiceButton).toHaveTextContent('语音');
+    expect(diagnosticsButton).toHaveClass('text-xs');
+    expect(voiceButton).toHaveClass('text-xs');
   });
 
   it('uses localized voice state labels and tooltips in a narrow toolbar', async () => {
@@ -267,7 +274,10 @@ describe('ChatInput toolbar', () => {
       </IntlProvider>
     );
 
-    expect(screen.getByRole('button', { name: '停止' })).toHaveTextContent('停止');
+    const stopButton = screen.getByRole('button', { name: '停止' });
+    expect(stopButton).toHaveTextContent('停止');
+    expect(stopButton).toHaveClass('text-sm');
+    expect(stopButton).not.toHaveClass('text-xs');
 
     act(() => {
       resizeObserverCallback?.(
