@@ -101,3 +101,4 @@ gooseselftest/
 /HeyBuddy-win32-x64.zip
 /ui/desktop/dist-windows/
 /exts/
+.worktrees/
