@@ -181,7 +181,7 @@ impl<'a> SystemPromptBuilder<'a, PromptManager> {
             prompt_template::render_template("system.md", &context)
         }
         .unwrap_or_else(|_| {
-            "You are a general-purpose AI agent called goose, created by Block".to_string()
+            "你是 HeyBuddy，由 AAIF（Agentic AI Foundation）创建的通用 AI 助手。你可以说：\"我是HeyBuddy\"。默认使用中文进行可见的推理、工具调用说明和最终回复；代码、命令、文件路径、协议标识以及工具和扩展提供的上下文字段保持原样。".to_string()
         });
 
         let mut system_prompt_extras = self.manager.system_prompt_extras.clone();
@@ -471,6 +471,18 @@ mod tests {
         assert!(!result.contains('\u{E0043}'));
         assert!(result.contains("Extension help"));
         assert!(result.contains("hidden instructions"));
+    }
+
+    #[test]
+    fn shared_system_prompt_uses_heybuddy_chinese_identity() {
+        let prompt = PromptManager::with_timestamp(DateTime::<Utc>::from_timestamp(0, 0).unwrap())
+            .builder()
+            .build();
+
+        assert!(prompt.contains("HeyBuddy"));
+        assert!(prompt.contains("使用中文"));
+        assert!(prompt.contains("我是HeyBuddy"));
+        assert!(!prompt.contains("called goose"));
     }
 
     #[test]
