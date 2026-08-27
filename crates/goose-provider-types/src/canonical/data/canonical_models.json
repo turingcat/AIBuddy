@@ -163978,6 +163978,36 @@
     }
   },
   {
+    "id": "zai-coding-plan/glm-5.3",
+    "name": "GLM-5.3",
+    "family": "glm",
+    "attachment": false,
+    "reasoning": true,
+    "tool_call": true,
+    "temperature": true,
+    "release_date": "2026-06-13",
+    "last_updated": "2026-06-13",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": true,
+    "cost": {
+      "input": 0.0,
+      "output": 0.0,
+      "cache_read": 0.0,
+      "cache_write": 0.0
+    },
+    "limit": {
+      "context": 1000000,
+      "output": 131072
+    }
+  },
+  {
     "id": "zai-coding-plan/glm-5v-turbo",
     "name": "GLM-5V-Turbo",
     "family": "glm",
@@ -164350,6 +164380,36 @@
     }
   },
   {
+    "id": "zai/glm-5.3",
+    "name": "GLM-5.3",
+    "family": "glm",
+    "attachment": false,
+    "reasoning": true,
+    "tool_call": true,
+    "temperature": true,
+    "release_date": "2026-06-13",
+    "last_updated": "2026-06-13",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": true,
+    "cost": {
+      "input": 0.6,
+      "output": 2.2,
+      "cache_read": 0.1,
+      "cache_write": 0.0
+    },
+    "limit": {
+      "context": 1048576,
+      "output": 16384
+    }
+  },
+  {
     "id": "zai/glm-5-turbo",
     "name": "GLM-5-Turbo",
     "family": "glm",
@@ -164412,6 +164472,36 @@
   {
     "id": "zai/glm-5.2",
     "name": "GLM-5.2",
+    "family": "glm",
+    "attachment": false,
+    "reasoning": true,
+    "tool_call": true,
+    "temperature": true,
+    "release_date": "2026-06-13",
+    "last_updated": "2026-06-13",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": true,
+    "cost": {
+      "input": 1.4,
+      "output": 4.4,
+      "cache_read": 0.26,
+      "cache_write": 0.0
+    },
+    "limit": {
+      "context": 1000000,
+      "output": 131072
+    }
+  },
+  {
+    "id": "zai/glm-5.3",
+    "name": "GLM-5.3",
     "family": "glm",
     "attachment": false,
     "reasoning": true,
@@ -168361,6 +168451,36 @@
     }
   },
   {
+    "id": "zhipuai-coding-plan/glm-5.3",
+    "name": "GLM-5.3",
+    "family": "glm",
+    "attachment": false,
+    "reasoning": true,
+    "tool_call": true,
+    "temperature": true,
+    "release_date": "2026-06-13",
+    "last_updated": "2026-06-13",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": true,
+    "cost": {
+      "input": 0.0,
+      "output": 0.0,
+      "cache_read": 0.0,
+      "cache_write": 0.0
+    },
+    "limit": {
+      "context": 1000000,
+      "output": 131072
+    }
+  },
+  {
     "id": "zhipuai-coding-plan/glm-5v-turbo",
     "name": "GLM-5V-Turbo",
     "family": "glm",
@@ -168735,6 +168855,36 @@
   {
     "id": "zhipuai/glm-5.2",
     "name": "GLM-5.2",
+    "family": "glm",
+    "attachment": false,
+    "reasoning": true,
+    "tool_call": true,
+    "temperature": true,
+    "release_date": "2026-06-13",
+    "last_updated": "2026-06-13",
+    "modalities": {
+      "input": [
+        "text"
+      ],
+      "output": [
+        "text"
+      ]
+    },
+    "open_weights": false,
+    "cost": {
+      "input": 1.4,
+      "output": 4.4,
+      "cache_read": 0.26,
+      "cache_write": 0.0
+    },
+    "limit": {
+      "context": 1000000,
+      "output": 131072
+    }
+  },
+  {
+    "id": "zhipuai/glm-5.3",
+    "name": "GLM-5.3",
     "family": "glm",
     "attachment": false,
     "reasoning": true,
