@@ -1,4 +1,13 @@
 {
+  "accountMenu.logout": {
+    "defaultMessage": "Log out"
+  },
+  "accountMenu.notLoggedIn": {
+    "defaultMessage": "Not signed in"
+  },
+  "accountMenu.settings": {
+    "defaultMessage": "Settings"
+  },
   "alertBox.autoCompactAt": {
     "defaultMessage": "Auto compact at"
   },

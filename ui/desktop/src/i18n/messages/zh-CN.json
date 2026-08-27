@@ -11,6 +11,15 @@
   "announcementModal.gotIt": {
     "defaultMessage": "知道了！"
   },
+  "accountMenu.logout": {
+    "defaultMessage": "退出登录"
+  },
+  "accountMenu.notLoggedIn": {
+    "defaultMessage": "未登录用户"
+  },
+  "accountMenu.settings": {
+    "defaultMessage": "设置"
+  },
   "appLayout.collapseNavigation": {
     "defaultMessage": "收起导航栏"
   },

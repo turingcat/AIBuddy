@@ -8,6 +8,7 @@ import type { SessionListItem } from '../../acp/sessions';
 
 const {
   mockHandleSessionClick,
+  mockHandleNavClick,
   mockFetchSessions,
   mockDeleteSession,
   mockDeleteSnapshot,
@@ -18,6 +19,7 @@ const {
   secondSession,
 } = vi.hoisted(() => ({
   mockHandleSessionClick: vi.fn(),
+  mockHandleNavClick: vi.fn(),
   mockFetchSessions: vi.fn(),
   mockDeleteSession: vi.fn(),
   mockDeleteSnapshot: vi.fn(),
@@ -68,7 +70,7 @@ vi.mock('../../hooks/useNavigationSessions', () => ({
     recentSessionsByProject: [],
     activeSessionId: undefined,
     fetchSessions: mockFetchSessions,
-    handleNavClick: vi.fn(),
+    handleNavClick: mockHandleNavClick,
     handleSessionClick: mockHandleSessionClick,
   }),
 }));
@@ -87,6 +89,11 @@ vi.mock('../common/InlineEditText', () => ({
 
 vi.mock('../SessionIndicators', () => ({ SessionIndicators: () => null }));
 vi.mock('./BalanceWidget', () => ({ BalanceWidget: () => null }));
+vi.mock('./UserAccountMenu', () => ({
+  UserAccountMenu: ({ onOpenSettings }: { onOpenSettings: () => void }) => (
+    <button onClick={onOpenSettings}>账户菜单</button>
+  ),
+}));
 vi.mock('../ui/Tooltip', () => ({
   Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -297,5 +304,21 @@ describe('Navigation sidebar session deletion', () => {
     expect(mockFetchSessions).toHaveBeenCalledTimes(1);
     expect(sessionDeleted).not.toHaveBeenCalled();
     window.removeEventListener('session-deleted', sessionDeleted);
+  });
+});
+
+describe('Navigation account menu', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('replaces the bottom Settings row and opens Settings from the account menu', async () => {
+    const user = userEvent.setup();
+    renderNavigation();
+
+    await user.click(screen.getByRole('button', { name: '账户菜单' }));
+
+    expect(mockHandleNavClick).toHaveBeenCalledWith('/settings');
+    expect(screen.queryByRole('button', { name: 'Settings' })).toBeNull();
   });
 });
