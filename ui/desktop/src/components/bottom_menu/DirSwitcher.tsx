@@ -41,6 +41,10 @@ const i18n = defineMessages({
     id: 'dirSwitcher.noWorktreesFound',
     defaultMessage: 'No worktrees found',
   },
+  directoryLabel: {
+    id: 'dirSwitcher.directoryLabel',
+    defaultMessage: 'Directory',
+  },
 });
 
 const splitDirPath = (dir: string): { name: string; parent: string } => {
@@ -79,6 +83,7 @@ export const DirSwitcher: React.FC<DirSwitcherProps> = ({
   onRestartEnd,
 }) => {
   const intl = useIntl();
+  const directoryLabel = intl.formatMessage(i18n.directoryLabel);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
   const [isDirectoryChooserOpen, setIsDirectoryChooserOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -200,8 +205,10 @@ export const DirSwitcher: React.FC<DirSwitcherProps> = ({
                 className={`z-[100] ${isDirectoryChooserOpen ? 'opacity-50' : 'hover:cursor-pointer hover:text-text-primary'} text-text-primary/70 text-xs flex items-center transition-colors pl-1 [&>svg]:size-4 ${className}`}
                 onClick={handleDirectoryClick}
                 disabled={isDirectoryChooserOpen}
+                aria-label={directoryLabel}
               >
                 <FolderDot className="mr-1" size={16} />
+                <span className="mr-1">{directoryLabel}</span>
                 <div className="max-w-[200px] truncate">
                   {workingDir.replace(/\/+$/, '').split('/').pop() || workingDir}
                 </div>
@@ -266,7 +273,7 @@ export const DirSwitcher: React.FC<DirSwitcherProps> = ({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <TooltipContent side="top">{workingDir}</TooltipContent>
+        <TooltipContent side="top">{directoryLabel}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

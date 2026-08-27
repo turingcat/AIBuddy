@@ -155,6 +155,9 @@
   "baseChat.reconnecting": {
     "defaultMessage": "Connection lost. Reconnecting…"
   },
+  "bottomMenuExtensionSelection.extensionLabel": {
+    "defaultMessage": "Extensions"
+  },
   "bottomMenuExtensionSelection.extensionUpdated": {
     "defaultMessage": "Extension Updated"
   },
@@ -193,6 +196,9 @@
   },
   "chat.notification.taskComplete.title": {
     "defaultMessage": "HeyBuddy finished the task."
+  },
+  "chatInput.attachFile": {
+    "defaultMessage": "Attach"
   },
   "chatInput.contextWindow": {
     "defaultMessage": "Context window"
@@ -337,6 +343,9 @@
   },
   "confirmationModal.processing": {
     "defaultMessage": "Processing..."
+  },
+  "contextWindowIndicator.contextLabel": {
+    "defaultMessage": "Context"
   },
   "conversationLimitsDropdown.conversationLimits": {
     "defaultMessage": "Conversation Limits"
@@ -923,6 +932,9 @@
   "dirSwitcher.currentDirectory": {
     "defaultMessage": "Current directory"
   },
+  "dirSwitcher.directoryLabel": {
+    "defaultMessage": "Directory"
+  },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
   },
@@ -1384,6 +1396,9 @@
   },
   "headersSection.value": {
     "defaultMessage": "Value"
+  },
+  "hub.assistantIdentity": {
+    "defaultMessage": ", I'm Guanglin AI Assistant"
   },
   "hub.goodAfternoon": {
     "defaultMessage": "Good afternoon"
@@ -2311,6 +2326,9 @@
   },
   "modelsBottomBar.localModelSettingsTitle": {
     "defaultMessage": "Local Model Settings — {modelName}"
+  },
+  "modelsBottomBar.modelLabel": {
+    "defaultMessage": "Model"
   },
   "modelsBottomBar.resolvedModel": {
     "defaultMessage": "Resolved model"

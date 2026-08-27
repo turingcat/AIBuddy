@@ -13,6 +13,7 @@ interface ExtensionMenuProps {
   description: string;
   emptyMessage: string;
   noResultsMessage: string;
+  triggerLabel?: string;
   hidden: boolean;
   isTransitioning: boolean;
   isSortPending: boolean;
@@ -28,6 +29,7 @@ export function ExtensionMenu({
   description,
   emptyMessage,
   noResultsMessage,
+  triggerLabel,
   hidden,
   isTransitioning,
   isSortPending,
@@ -73,9 +75,11 @@ export function ExtensionMenu({
       <DropdownMenuTrigger asChild>
         <button
           className={`flex items-center [&_svg]:size-4 text-text-primary/70 hover:text-text-primary hover:scale-100 hover:bg-transparent text-xs cursor-pointer ${hidden ? 'invisible' : ''}`}
-          title={title}
+          aria-label={triggerLabel ?? title}
+          title={triggerLabel ?? title}
         >
           <Puzzle className="mr-1 h-4 w-4" />
+          {triggerLabel && <span className="mr-1">{triggerLabel}</span>}
           <span>{activeCount}</span>
         </button>
       </DropdownMenuTrigger>

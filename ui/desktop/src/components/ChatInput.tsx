@@ -140,6 +140,10 @@ const i18n = defineMessages({
     id: 'chatInput.send',
     defaultMessage: 'Send',
   },
+  attachFile: {
+    id: 'chatInput.attachFile',
+    defaultMessage: 'Attach',
+  },
   waitingForCancellation: {
     id: 'chatInput.waitingForCancellation',
     defaultMessage: 'Waiting for cancellation to finish',
@@ -656,7 +660,7 @@ export default function ChatInput({
       });
     }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalTokens, tokenLimit, isTokenLimitLoaded, isLoading, addAlert, clearAlerts]);
 
   // Cleanup effect for component unmount - prevent memory leaks
@@ -1656,6 +1660,7 @@ export default function ChatInput({
               latestInference={latestInference}
               onModelChanged={setModelOverride}
               sessionLoaded={sessionLoaded}
+              isNarrow={isBottomBarNarrow}
             />
           </div>
         </Tooltip>
@@ -1721,6 +1726,7 @@ export default function ChatInput({
                   type="button"
                   onClick={handleFileSelect}
                   disabled={isFilePickerOpen}
+                  aria-label={intl.formatMessage(i18n.attachFile)}
                   variant="ghost"
                   size="sm"
                   shape="round"
@@ -1730,9 +1736,10 @@ export default function ChatInput({
                   )}
                 >
                   <Attach className="w-4 h-4" />
+                  <span>{intl.formatMessage(i18n.attachFile)}</span>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Attach file</TooltipContent>
+              <TooltipContent>{intl.formatMessage(i18n.attachFile)}</TooltipContent>
             </Tooltip>
           </>
         )}
@@ -1803,7 +1810,7 @@ export default function ChatInput({
                 <Button
                   type="button"
                   size="sm"
-                  shape="round"
+                  shape={isBottomBarNarrow ? 'round' : 'pill'}
                   variant="ghost"
                   disabled={isSubmitButtonDisabled}
                   aria-label={intl.formatMessage(i18n.send)}
@@ -1816,6 +1823,7 @@ export default function ChatInput({
                   )}
                 >
                   <ArrowUp className="w-4 h-4" strokeWidth={2.25} />
+                  {!isBottomBarNarrow && <span>{intl.formatMessage(i18n.send)}</span>}
                 </Button>
               </span>
             </TooltipTrigger>

@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, type RenderOptions, screen } from '@testing-library/react';
+import { IntlProvider } from 'react-intl';
 import ModelsBottomBar from './ModelsBottomBar';
 import { IntlTestWrapper } from '../../../../i18n/test-utils';
+import zhCatalog from '../../../../i18n/messages/zh-CN.json';
 
 const renderWithIntl = (ui: React.ReactElement, options?: RenderOptions) =>
   render(ui, { wrapper: IntlTestWrapper, ...options });
+
+const zhMessages = Object.fromEntries(
+  Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])
+);
 
 const createDropdownRef = (): React.RefObject<HTMLDivElement> =>
   ({ current: document.createElement('div') }) as React.RefObject<HTMLDivElement>;
@@ -41,7 +47,9 @@ vi.mock('../../../bottom_menu/BottomMenuAlertPopover', () => ({
 
 vi.mock('../../../ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuTrigger: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props}>{children}</button>
+  ),
   DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DropdownMenuItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
@@ -105,5 +113,21 @@ describe('ModelsBottomBar', () => {
 
     expect(screen.getByText('config-model')).toBeInTheDocument();
     expect(screen.queryByTestId('model-loading-state')).not.toBeInTheDocument();
+  });
+
+  it('shows an accessible Chinese model label next to the active model', () => {
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ModelsBottomBar
+          sessionId={null}
+          dropdownRef={createDropdownRef()}
+          setView={vi.fn()}
+          onModelChanged={mockOnModelChanged}
+        />
+      </IntlProvider>
+    );
+
+    expect(screen.getByText('模型')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '选择模型' })).toBeInTheDocument();
   });
 });

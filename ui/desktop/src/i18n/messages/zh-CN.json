@@ -158,6 +158,9 @@
   "bottomMenuExtensionSelection.extensionUpdated": {
     "defaultMessage": "扩展已更新"
   },
+  "bottomMenuExtensionSelection.extensionLabel": {
+    "defaultMessage": "扩展"
+  },
   "bottomMenuExtensionSelection.extensionWillBeDisabled": {
     "defaultMessage": "{name} 将在新聊天中被禁用"
   },
@@ -194,8 +197,14 @@
   "chat.notification.taskComplete.title": {
     "defaultMessage": "HeyBuddy 完成任务了。"
   },
+  "contextWindowIndicator.contextLabel": {
+    "defaultMessage": "上下文"
+  },
   "chatInput.contextWindow": {
     "defaultMessage": "上下文窗口"
+  },
+  "chatInput.attachFile": {
+    "defaultMessage": "附件"
   },
   "chatInput.dictationError": {
     "defaultMessage": "语音输入错误"
@@ -920,6 +929,9 @@
   "dirSwitcher.chooseDirectory": {
     "defaultMessage": "选择目录…"
   },
+  "dirSwitcher.directoryLabel": {
+    "defaultMessage": "目录"
+  },
   "dirSwitcher.currentDirectory": {
     "defaultMessage": "当前目录"
   },
@@ -1387,6 +1399,9 @@
   },
   "hub.goodAfternoon": {
     "defaultMessage": "下午好"
+  },
+  "hub.assistantIdentity": {
+    "defaultMessage": "，我是广林AI助手"
   },
   "hub.goodEvening": {
     "defaultMessage": "晚上好"
@@ -2299,6 +2314,9 @@
   },
   "modelsBottomBar.changeModel": {
     "defaultMessage": "切换模型"
+  },
+  "modelsBottomBar.modelLabel": {
+    "defaultMessage": "模型"
   },
   "modelsBottomBar.currentModel": {
     "defaultMessage": "当前模型"
