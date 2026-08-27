@@ -39,6 +39,7 @@ pub(crate) const SESSION_NAME_BEGIN_MARKER: &str = "---BEGIN USER MESSAGES---";
 pub(crate) const SESSION_NAME_END_MARKER: &str = "---END USER MESSAGES---";
 pub(crate) const SESSION_NAME_SUFFIX: &str = "Generate a short title for the above messages.";
 const CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 12;
+const CHINESE_TITLE_GROUP_SIZE: usize = 3;
 
 pub(crate) fn is_session_description_request(system: &str) -> bool {
     system.contains("four words or less")
@@ -47,19 +48,45 @@ pub(crate) fn is_session_description_request(system: &str) -> bool {
         || system.contains("只输出标题")
 }
 
+// Chinese without separators is grouped into four fixed three-character phrases.
 fn normalize_chinese_session_description(description: &str) -> String {
-    if !description
-        .chars()
-        .any(|character| character >= '\u{4e00}' && character <= '\u{9fff}')
-    {
-        return description.to_string();
+    let has_chinese = description.chars().any(is_chinese_character);
+    if !has_chinese {
+        return description
+            .split_whitespace()
+            .take(4)
+            .collect::<Vec<_>>()
+            .join(" ");
+    }
+
+    let phrases: Vec<String> = description
+        .split(|character: char| character.is_whitespace() || !character.is_alphanumeric())
+        .filter_map(|part| {
+            let phrase: String = part
+                .chars()
+                .filter(|&character| is_chinese_character(character))
+                .collect();
+            (!phrase.is_empty()).then_some(phrase)
+        })
+        .take(4)
+        .collect();
+    if phrases.len() > 1 {
+        return phrases.join(" ");
     }
 
     description
         .chars()
-        .filter(|character| *character >= '\u{4e00}' && *character <= '\u{9fff}')
+        .filter(|&character| is_chinese_character(character))
         .take(CHINESE_SESSION_TITLE_CHAR_LIMIT)
-        .collect()
+        .collect::<Vec<_>>()
+        .chunks(CHINESE_TITLE_GROUP_SIZE)
+        .map(String::from_iter)
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn is_chinese_character(character: char) -> bool {
+    character >= '\u{4e00}' && character <= '\u{9fff}'
 }
 
 pub(crate) fn generate_simple_session_description(
@@ -93,12 +120,7 @@ pub(crate) fn generate_simple_session_description(
                 .unwrap_or(stripped)
                 .trim();
 
-            let desc: String = stripped
-                .split_whitespace()
-                .take(4)
-                .collect::<Vec<_>>()
-                .join(" ");
-            let desc = normalize_chinese_session_description(&desc);
+            let desc = normalize_chinese_session_description(stripped);
             if desc.is_empty() {
                 "Simple task".to_string()
             } else {
@@ -151,8 +173,8 @@ mod tests {
             })
             .unwrap();
 
-        assert_eq!(title, "请帮我整理");
-        assert!(title.chars().all(|character| character.is_alphanumeric()));
+        assert_eq!(title, "请 帮我 整理 项目");
+        assert_eq!(title.split_whitespace().count(), 4);
     }
 
     #[test]
@@ -171,11 +193,11 @@ mod tests {
             })
             .unwrap();
 
-        assert_eq!(title, "请帮我制定下半年市场推广");
-        assert_eq!(title.chars().count(), CHINESE_SESSION_TITLE_CHAR_LIMIT);
+        assert_eq!(title, "请帮我 制定下 半年市 场推广");
+        assert_eq!(title.split_whitespace().count(), 4);
         assert!(title
-            .chars()
-            .all(|character| character >= '\u{4e00}' && character <= '\u{9fff}'));
+            .split_whitespace()
+            .all(|phrase| phrase.chars().all(is_chinese_character)));
     }
 
     #[test]
@@ -185,8 +207,20 @@ mod tests {
             "List files now"
         );
         assert_eq!(
-            normalize_chinese_session_description("请查看 project files"),
-            "请查看"
+            normalize_chinese_session_description("Please help me fix 登录 failure"),
+            "登录"
+        );
+    }
+
+    #[test]
+    fn local_session_description_keeps_four_chinese_phrases() {
+        assert_eq!(
+            normalize_chinese_session_description("配置，云服务；登录问题。多云平台"),
+            "配置 云服务 登录问题 多云平台"
+        );
+        assert_eq!(
+            normalize_chinese_session_description("一二三四五六七八九十一二三"),
+            "一二三 四五六 七八九 十一二"
         );
     }
 }
