@@ -121,7 +121,7 @@ fn render_session_name_prompt_for_test() -> Result<String> {
 }
 
 /// Generate a session name/description based on the conversation history
-/// Creates a prompt asking for a concise description in 4 words or less.
+/// Creates a prompt asking for a concise Chinese title of four meaningful words or short phrases or less.
 pub(crate) async fn generate_session_name(
     provider: &dyn Provider,
     model_config: &goose_providers::model::ModelConfig,
@@ -195,7 +195,10 @@ mod tests {
 
         assert!(prompt.contains("简洁的中文"));
         assert!(prompt.contains("只输出标题"));
-        assert!(!prompt.contains("Generate short title"));
+        assert!(!prompt.contains("Generate a short title"));
+        assert!(prompt.contains("不要展示思考过程"));
+        assert!(prompt.contains("不要输出任何其他内容"));
+        assert!(prompt.contains("不要展示思考过程、解释或标点符号"));
     }
 
     #[test]

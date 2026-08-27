@@ -40,7 +40,28 @@ pub(crate) const SESSION_NAME_END_MARKER: &str = "---END USER MESSAGES---";
 pub(crate) const SESSION_NAME_SUFFIX: &str = "Generate a short title for the above messages.";
 
 pub(crate) fn is_session_description_request(system: &str) -> bool {
-    system.contains("four words or less") || system.contains("4 words or less")
+    system.contains("four words or less")
+        || system.contains("4 words or less")
+        || system.contains("简洁的中文")
+        || system.contains("只输出标题")
+}
+
+fn normalize_chinese_session_description(description: &str) -> String {
+    if !description
+        .chars()
+        .any(|character| character >= '\u{4e00}' && character <= '\u{9fff}')
+    {
+        return description.to_string();
+    }
+
+    description
+        .chars()
+        .filter(|character| character.is_alphanumeric() || *character == ' ')
+        .collect::<String>()
+        .split_whitespace()
+        .take(4)
+        .collect::<Vec<_>>()
+        .join("")
 }
 
 pub(crate) fn generate_simple_session_description(
@@ -79,6 +100,7 @@ pub(crate) fn generate_simple_session_description(
                 .take(4)
                 .collect::<Vec<_>>()
                 .join(" ");
+            let desc = normalize_chinese_session_description(&desc);
             if desc.is_empty() {
                 "Simple task".to_string()
             } else {
@@ -102,4 +124,36 @@ pub(crate) fn generate_simple_session_description(
         message,
         ProviderUsage::new(model_name.to_string(), Usage::default()),
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recognizes_chinese_session_description_prompt() {
+        assert!(is_session_description_request(
+            "请生成简洁的中文标题，只输出标题。"
+        ));
+    }
+
+    #[test]
+    fn local_session_description_is_a_short_chinese_title() {
+        let message = Message::user().with_text(format!(
+            "{SESSION_NAME_BEGIN_MARKER}\n请 帮我 整理 项目 计划\n{SESSION_NAME_END_MARKER}\n\n{SESSION_NAME_SUFFIX}"
+        ));
+
+        let (result, _) = generate_simple_session_description("test", &[message]).unwrap();
+        let title = result
+            .content
+            .iter()
+            .find_map(|content| match content {
+                MessageContent::Text(text) => Some(text.text.as_str()),
+                _ => None,
+            })
+            .unwrap();
+
+        assert_eq!(title, "请帮我整理");
+        assert!(title.chars().all(|character| character.is_alphanumeric()));
+    }
 }
