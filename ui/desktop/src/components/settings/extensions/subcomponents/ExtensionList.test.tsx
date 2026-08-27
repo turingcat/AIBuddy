@@ -49,6 +49,40 @@ const builtIns = [
   },
 ] as FixedExtensionEntry[];
 
+const searchableExtensions = [
+  {
+    name: 'computercontroller',
+    display_name: 'Computer Controller',
+    description: 'General computer control tools.',
+    enabled: true,
+    type: 'builtin',
+  },
+  {
+    name: 'autovisualiser',
+    display_name: 'Auto Visualiser',
+    description: 'Visual data tools.',
+    enabled: true,
+    type: 'builtin',
+  },
+  {
+    name: 'legacy-build-helper',
+    display_name: 'Legacy Build Helper',
+    configKey: 'memory',
+    description: 'Legacy build support.',
+    enabled: true,
+    type: 'builtin',
+  },
+  {
+    name: 'custom-search-toolbox',
+    description: 'Fallback-only extension description.',
+    cmd: 'acme-search-command',
+    args: [],
+    env_keys: [],
+    enabled: true,
+    type: 'stdio',
+  },
+] as FixedExtensionEntry[];
+
 describe('ExtensionList', () => {
   it('localizes headings and built-in extension copy by stable ID', () => {
     render(
@@ -71,24 +105,29 @@ describe('ExtensionList', () => {
     expect(screen.getByText('提供交互式教程和使用指南。')).toBeInTheDocument();
   });
 
-  it('matches built-in extensions by their English friendly titles', () => {
-    const { rerender } = render(
+  it.each([
+    ['an English friendly title', 'Computer Controller', '电脑控制'],
+    ['an original English description', 'UI generation', '自动可视化'],
+    ['a config key', 'memory', '记忆'],
+    ['a stable name', 'legacy-build-helper', '记忆'],
+    ['a Chinese title', '电脑控制', '电脑控制'],
+    ['a Chinese description', '无需开发经验', '电脑控制'],
+    ['a custom command', 'acme-search-command', 'Custom Search Toolbox'],
+    ['a custom title', 'Custom Search Toolbox', 'Custom Search Toolbox'],
+    ['a custom description', 'Fallback-only extension description', 'Custom Search Toolbox'],
+  ])('matches an extension by %s', (_aliasType, searchTerm, expectedTitle) => {
+    render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
-        <ExtensionList extensions={builtIns} onToggle={vi.fn()} searchTerm="Computer Controller" />
+        <ExtensionList
+          extensions={searchableExtensions}
+          onToggle={vi.fn()}
+          searchTerm={searchTerm}
+        />
       </IntlProvider>
     );
 
-    expect(screen.getByText('电脑控制')).toBeInTheDocument();
-    expect(screen.queryByText('自动可视化')).not.toBeInTheDocument();
-
-    rerender(
-      <IntlProvider locale="zh-CN" messages={zhMessages}>
-        <ExtensionList extensions={builtIns} onToggle={vi.fn()} searchTerm="Auto Visualiser" />
-      </IntlProvider>
-    );
-
-    expect(screen.getByText('自动可视化')).toBeInTheDocument();
-    expect(screen.queryByText('电脑控制')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '默认扩展（1）' })).toBeInTheDocument();
+    expect(screen.getByText(expectedTitle)).toBeInTheDocument();
   });
 
   it('preserves custom extension copy when no stable built-in ID matches', () => {
