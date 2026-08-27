@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
@@ -18,10 +18,11 @@ const messages = {
   'accountMenu.notLoggedIn': '未登录用户',
   'accountMenu.settings': '设置',
   'accountMenu.logout': '退出登录',
+  'balanceWidget.refresh': '刷新余额',
 };
 
-function mockBalanceState(state: BalanceState) {
-  mockUseBalance.mockReturnValue({ state, refreshing: false, refresh: mockRefresh });
+function mockBalanceState(state: BalanceState, refreshing = false) {
+  mockUseBalance.mockReturnValue({ state, refreshing, refresh: mockRefresh });
 }
 
 function renderMenu() {
@@ -129,6 +130,43 @@ describe('UserAccountMenu', () => {
     expect(screen.getByRole('menu')).toHaveAttribute('data-side', 'top');
   });
 
+  it('places the account name, balance, and refresh button in one summary row', async () => {
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        displayName: '林也',
+        userName: 'linye',
+        quota: 5_000_000,
+        usedQuota: 0,
+        requestCount: 1,
+      },
+      currency: DEFAULT_CURRENCY_CONFIG,
+      updatedAt: Date.now(),
+    });
+    renderMenu();
+
+    await userEvent.click(screen.getByRole('button', { name: /林也/ }));
+
+    const summary = screen.getByTestId('account-menu-summary');
+    expect(within(summary).getByText('林也')).toBeInTheDocument();
+    expect(within(summary).getByTestId('balance-value')).toBeInTheDocument();
+    expect(within(summary).getByRole('button', { name: '刷新余额' })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: '刷新余额' })).toBeNull();
+  });
+
+  it('refreshes from the summary icon without closing the account menu', async () => {
+    mockBalanceState({ status: 'loading' }, true);
+    renderMenu();
+
+    await userEvent.click(screen.getByRole('button', { name: /未登录用户/ }));
+    const refreshButton = screen.getByRole('button', { name: '刷新余额' });
+    expect(refreshButton.querySelector('svg')).toHaveClass('animate-spin');
+    await userEvent.click(refreshButton);
+
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
   it('opens Settings from the account menu', async () => {
     mockBalanceState({ status: 'loading' });
     renderMenu();
@@ -137,17 +175,6 @@ describe('UserAccountMenu', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: '设置' }));
 
     expect(mockOpenSettings).toHaveBeenCalledTimes(1);
-  });
-
-  it('refreshes the balance when selected with the keyboard', async () => {
-    const user = userEvent.setup();
-    mockBalanceState({ status: 'loading' });
-    renderMenu();
-
-    await user.click(screen.getByRole('button', { name: /未登录用户/ }));
-    await user.keyboard('{ArrowDown}{Enter}');
-
-    expect(mockRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('invokes the shared logout action from the account menu', async () => {
