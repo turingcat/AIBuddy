@@ -127,7 +127,10 @@ describe('UserAccountMenu', () => {
     await userEvent.click(screen.getByRole('button', { name: /林也/ }));
 
     expect(screen.getAllByText('$10').length).toBeGreaterThan(0);
-    expect(screen.getByRole('menu')).toHaveAttribute('data-side', 'top');
+    const menu = screen.getByRole('menu');
+    expect(menu).toHaveAttribute('data-side', 'top');
+    expect(menu).toHaveClass('w-[var(--radix-dropdown-menu-trigger-width)]');
+    expect(menu).not.toHaveClass('w-64');
   });
 
   it('places the account name, balance, and refresh button in one summary row', async () => {

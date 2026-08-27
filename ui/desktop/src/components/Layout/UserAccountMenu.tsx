@@ -45,7 +45,11 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
         </span>
         <ChevronUp className="size-4 shrink-0 text-text-secondary" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="top" align="start" className="w-64">
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        className="w-[var(--radix-dropdown-menu-trigger-width)]"
+      >
         <div
           className="flex min-w-0 items-center gap-2 px-2 py-2"
           data-testid="account-menu-summary"
