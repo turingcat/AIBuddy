@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigationContext } from './NavigationContext';
 import { useConfig } from '../ConfigContext';
@@ -15,12 +15,18 @@ import { AppEvents } from '../../constants/events';
 import { InlineEditText } from '../common/InlineEditText';
 import { SessionIndicators } from '../SessionIndicators';
 import { BalanceWidget } from './BalanceWidget';
-import { acpRenameSession, type SessionListItem } from '../../acp/sessions';
+import { acpDeleteSession, acpRenameSession, type SessionListItem } from '../../acp/sessions';
+import { acpChatSessionActions } from '../../acp/chatSessionStore';
+import { cancelAcpPermissionRequestsForSession } from '../../acp/permissionRequests';
+import { cancelAcpElicitationRequestsForSession } from '../../acp/elicitationRequests';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
+import { ConfirmationModal } from '../ui/ConfirmationModal';
 import { formatMessageTimestamp } from '../../utils/timeUtils';
+import { errorMessage } from '../../utils/conversionUtils';
 import { cn } from '../../utils';
 import type { ProjectGroup } from '../../utils/projectSessions';
 import { defineMessages, useIntl } from '../../i18n';
+import { toast } from 'react-toastify';
 
 type StreamState = 'idle' | 'loading' | 'streaming' | 'error';
 
@@ -42,6 +48,18 @@ const i18n = defineMessages({
     id: 'navigationPanel.untitledSession',
     defaultMessage: 'Untitled session',
   },
+  deleteTitle: { id: 'sessions.delete.title', defaultMessage: 'Delete Session' },
+  deleteMessage: {
+    id: 'sessions.delete.message',
+    defaultMessage:
+      'Are you sure you want to delete the session "{name}"? This action cannot be undone.',
+  },
+  deleteSuccess: { id: 'sessions.toast.deleted', defaultMessage: 'Session deleted successfully' },
+  deleteFailed: {
+    id: 'sessions.toast.deleteFailed',
+    defaultMessage: 'Failed to delete session "{name}": {error}',
+  },
+  cancel: { id: 'sessions.cancel', defaultMessage: 'Cancel' },
   metaModel: {
     id: 'navigationPanel.metaModel',
     defaultMessage: 'Model',
@@ -115,6 +133,7 @@ interface SessionRowProps {
   status: SessionStatus | undefined;
   onClick: () => void;
   onRenamed: () => void;
+  onDelete: () => void;
 }
 
 const formatTimestamp = (value?: string): string | null => {
@@ -164,7 +183,14 @@ const SessionTooltipContent: React.FC<SessionTooltipContentProps> = ({ session, 
   );
 };
 
-const SessionRow: React.FC<SessionRowProps> = ({ session, active, status, onClick, onRenamed }) => {
+const SessionRow: React.FC<SessionRowProps> = ({
+  session,
+  active,
+  status,
+  onClick,
+  onRenamed,
+  onDelete,
+}) => {
   const intl = useIntl();
   const [isEditing, setIsEditing] = useState(false);
   const [tooltipOpen, setTooltipOpen] = useState(false);
@@ -205,12 +231,24 @@ const SessionRow: React.FC<SessionRowProps> = ({ session, active, status, onClic
             placeholder={intl.formatMessage(i18n.untitledSession)}
             disabled={isStreaming}
             singleClickEdit={false}
-            className="truncate text-text-primary flex-1 !px-0 !py-0 hover:bg-transparent"
+            className="truncate min-w-0 text-text-primary flex-1 !px-0 !py-0 hover:bg-transparent"
             editClassName="!text-sm"
             onEditStart={() => setIsEditing(true)}
             onEditEnd={() => setIsEditing(false)}
           />
           <SessionIndicators isStreaming={isStreaming} hasUnread={hasUnread} hasError={hasError} />
+          <button
+            type="button"
+            aria-label={intl.formatMessage(i18n.deleteTitle)}
+            title={intl.formatMessage(i18n.deleteTitle)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+            className="flex-shrink-0 rounded p-1 text-text-secondary hover:bg-background-secondary hover:text-text-primary"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
         </div>
       </TooltipTrigger>
       <TooltipContent side="right" align="start" className="max-w-xs text-left">
@@ -247,6 +285,7 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
   } = useNavigationSessions();
 
   const [sessionStatuses, setSessionStatuses] = useState<Map<string, SessionStatus>>(new Map());
+  const [sessionToDelete, setSessionToDelete] = useState<SessionListItem | null>(null);
 
   useEffect(() => {
     const handleStatusUpdate = (event: Event) => {
@@ -278,6 +317,34 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
       return prev;
     });
   }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!sessionToDelete) return;
+
+    const { id, name } = sessionToDelete;
+
+    try {
+      await acpDeleteSession(id);
+      toast.success(intl.formatMessage(i18n.deleteSuccess));
+      window.dispatchEvent(
+        new CustomEvent(AppEvents.SESSION_DELETED, { detail: { sessionId: id } })
+      );
+      cancelAcpPermissionRequestsForSession(id);
+      cancelAcpElicitationRequestsForSession(id);
+      acpChatSessionActions.deleteSnapshot(id);
+      await fetchSessions();
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast.error(
+        intl.formatMessage(i18n.deleteFailed, {
+          name,
+          error: errorMessage(error, 'Unknown error'),
+        })
+      );
+    } finally {
+      setSessionToDelete(null);
+    }
+  }, [fetchSessions, intl, sessionToDelete]);
 
   const navFocusRef = useRef<HTMLDivElement>(null);
 
@@ -376,6 +443,7 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
                             handleSessionClick(session.id);
                           }}
                           onRenamed={fetchSessions}
+                          onDelete={() => setSessionToDelete(session)}
                         />
                       ))}
                   </React.Fragment>
@@ -393,6 +461,7 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
                     handleSessionClick(session.id);
                   }}
                   onRenamed={fetchSessions}
+                  onDelete={() => setSessionToDelete(session)}
                 />
               ))
             )}
@@ -408,6 +477,16 @@ export const Navigation: React.FC<{ className?: string }> = ({ className }) => {
           onClick={() => handleNavClick(SETTINGS_NAV_ITEM.path)}
         />
       </div>
+      <ConfirmationModal
+        isOpen={sessionToDelete !== null}
+        title={intl.formatMessage(i18n.deleteTitle)}
+        message={intl.formatMessage(i18n.deleteMessage, { name: sessionToDelete?.name ?? '' })}
+        confirmLabel={intl.formatMessage(i18n.deleteTitle)}
+        cancelLabel={intl.formatMessage(i18n.cancel)}
+        confirmVariant="destructive"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setSessionToDelete(null)}
+      />
     </motion.div>
   );
 };
