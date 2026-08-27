@@ -71,6 +71,26 @@ describe('ExtensionList', () => {
     expect(screen.getByText('提供交互式教程和使用指南。')).toBeInTheDocument();
   });
 
+  it('matches built-in extensions by their English friendly titles', () => {
+    const { rerender } = render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ExtensionList extensions={builtIns} onToggle={vi.fn()} searchTerm="Computer Controller" />
+      </IntlProvider>
+    );
+
+    expect(screen.getByText('电脑控制')).toBeInTheDocument();
+    expect(screen.queryByText('自动可视化')).not.toBeInTheDocument();
+
+    rerender(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ExtensionList extensions={builtIns} onToggle={vi.fn()} searchTerm="Auto Visualiser" />
+      </IntlProvider>
+    );
+
+    expect(screen.getByText('自动可视化')).toBeInTheDocument();
+    expect(screen.queryByText('电脑控制')).not.toBeInTheDocument();
+  });
+
   it('preserves custom extension copy when no stable built-in ID matches', () => {
     const custom = {
       name: 'team_tools',

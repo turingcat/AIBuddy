@@ -234,7 +234,7 @@
     "defaultMessage": "未知类型"
   },
   "chatInput.viewEditRecipe": {
-    "defaultMessage": "查看/编辑配方"
+    "defaultMessage": "查看/编辑模板"
   },
   "chatInput.waitingForCancellation": {
     "defaultMessage": "正在等待取消完成"
@@ -363,13 +363,13 @@
     "defaultMessage": "复制此链接分享给好友，或直接粘贴到 Chrome 打开"
   },
   "createEditRecipe.createRecipeTitle": {
-    "defaultMessage": "创建配方"
+    "defaultMessage": "创建模板"
   },
   "createEditRecipe.createSubtitle": {
-    "defaultMessage": "创建新配方，为可复用的聊天会话定义 agent 行为和能力。"
+    "defaultMessage": "创建新模板，为可复用的聊天会话定义 agent 行为和能力。"
   },
   "createEditRecipe.editSubtitle": {
-    "defaultMessage": "你可以在下方编辑配方，以改变新会话中 agent 的行为。"
+    "defaultMessage": "你可以在下方编辑模板，以改变新会话中 agent 的行为。"
   },
   "createEditRecipe.generatingDeeplink": {
     "defaultMessage": "正在生成深层链接…"
@@ -378,28 +378,28 @@
     "defaultMessage": "了解更多"
   },
   "createEditRecipe.recipeSavedAndLaunchedMsg": {
-    "defaultMessage": "配方保存并启动成功"
+    "defaultMessage": "模板保存并启动成功"
   },
   "createEditRecipe.recipeSavedMsg": {
-    "defaultMessage": "配方保存成功"
+    "defaultMessage": "模板保存成功"
   },
   "createEditRecipe.saveAndRunFailed": {
     "defaultMessage": "保存并运行失败"
   },
   "createEditRecipe.saveAndRunFailedMsg": {
-    "defaultMessage": "保存并运行配方失败：{error}"
+    "defaultMessage": "保存并运行模板失败：{error}"
   },
   "createEditRecipe.saveAndRunRecipe": {
-    "defaultMessage": "保存并运行配方"
+    "defaultMessage": "保存并运行模板"
   },
   "createEditRecipe.saveFailed": {
     "defaultMessage": "保存失败"
   },
   "createEditRecipe.saveFailedMsg": {
-    "defaultMessage": "保存配方失败：{error}"
+    "defaultMessage": "保存模板失败：{error}"
   },
   "createEditRecipe.saveRecipe": {
-    "defaultMessage": "保存配方"
+    "defaultMessage": "保存模板"
   },
   "createEditRecipe.saving": {
     "defaultMessage": "保存中…"
@@ -411,19 +411,19 @@
     "defaultMessage": "请填写所有必填字段并确保 JSON Schema 合法。"
   },
   "createEditRecipe.viewEditRecipeTitle": {
-    "defaultMessage": "查看/编辑配方"
+    "defaultMessage": "查看/编辑模板"
   },
   "createSubRecipeInline.cancel": {
     "defaultMessage": "取消"
   },
   "createSubRecipeInline.closeModal": {
-    "defaultMessage": "关闭创建子配方弹窗"
+    "defaultMessage": "关闭创建子模板弹窗"
   },
   "createSubRecipeInline.createAndAdd": {
-    "defaultMessage": "创建并添加子配方"
+    "defaultMessage": "创建并添加子模板"
   },
   "createSubRecipeInline.createdSuccess": {
-    "defaultMessage": "子配方创建成功"
+    "defaultMessage": "子模板创建成功"
   },
   "createSubRecipeInline.creating": {
     "defaultMessage": "创建中…"
@@ -432,13 +432,13 @@
     "defaultMessage": "名称重复"
   },
   "createSubRecipeInline.duplicateNameMsg": {
-    "defaultMessage": "已存在名为“{name}”的子配方，请使用唯一名称。"
+    "defaultMessage": "已存在名为“{name}”的子模板，请使用唯一名称。"
   },
   "createSubRecipeInline.instructionsLabel": {
     "defaultMessage": "指令"
   },
   "createSubRecipeInline.instructionsPlaceholder": {
-    "defaultMessage": "当此子配方被调用时给 AI 的指令…"
+    "defaultMessage": "当此子模板被调用时给 AI 的指令…"
   },
   "createSubRecipeInline.nameHint": {
     "defaultMessage": "用于生成工具名的唯一标识符"
@@ -453,16 +453,16 @@
     "defaultMessage": "预设参数值"
   },
   "createSubRecipeInline.preconfiguredValuesHint": {
-    "defaultMessage": "始终传给子配方的可选参数值"
+    "defaultMessage": "始终传给子模板的可选参数值"
   },
   "createSubRecipeInline.recipeDescriptionLabel": {
-    "defaultMessage": "配方描述"
+    "defaultMessage": "模板描述"
   },
   "createSubRecipeInline.recipeDescriptionPlaceholder": {
-    "defaultMessage": "此配方执行时的作用"
+    "defaultMessage": "此模板执行时的作用"
   },
   "createSubRecipeInline.recipeTitleLabel": {
-    "defaultMessage": "配方标题"
+    "defaultMessage": "模板标题"
   },
   "createSubRecipeInline.recipeTitlePlaceholder": {
     "defaultMessage": "例如：Security Analysis Tool"
@@ -471,7 +471,7 @@
     "defaultMessage": "保存失败"
   },
   "createSubRecipeInline.saveFailedMsg": {
-    "defaultMessage": "保存子配方失败：{error}"
+    "defaultMessage": "保存子模板失败：{error}"
   },
   "createSubRecipeInline.sequentialHint": {
     "defaultMessage": "（强制多个实例按顺序执行）"
@@ -480,10 +480,10 @@
     "defaultMessage": "重复调用时按顺序执行"
   },
   "createSubRecipeInline.subtitle": {
-    "defaultMessage": "创建一个简单配方，作为主配方中可调用的工具"
+    "defaultMessage": "创建一个简单模板，作为主模板中可调用的工具"
   },
   "createSubRecipeInline.title": {
-    "defaultMessage": "创建新子配方"
+    "defaultMessage": "创建新子模板"
   },
   "createSubRecipeInline.toolDescriptionLabel": {
     "defaultMessage": "工具描述"
@@ -495,7 +495,7 @@
     "defaultMessage": "校验失败"
   },
   "createSubRecipeInline.validationMsg": {
-    "defaultMessage": "名称、标题、配方描述和指令均为必填项。"
+    "defaultMessage": "名称、标题、模板描述和指令均为必填项。"
   },
   "creditsExhaustedNotification.addCredits": {
     "defaultMessage": "充值额度"
@@ -1461,7 +1461,7 @@
     "defaultMessage": "取消"
   },
   "importRecipeForm.deeplinkHint": {
-    "defaultMessage": "粘贴以“goose://recipe?config=”开头的配方深层链接"
+    "defaultMessage": "粘贴以“goose://recipe?config=”开头的模板深层链接"
   },
   "importRecipeForm.deeplinkPlaceholder": {
     "defaultMessage": "在此粘贴你的 goose://recipe?config=... 深层链接"
@@ -1470,13 +1470,13 @@
     "defaultMessage": "示例"
   },
   "importRecipeForm.expectedRecipeStructure": {
-    "defaultMessage": "期望的配方结构"
+    "defaultMessage": "期望的模板结构"
   },
   "importRecipeForm.importRecipeButton": {
-    "defaultMessage": "导入配方"
+    "defaultMessage": "导入模板"
   },
   "importRecipeForm.importRecipeTitle": {
-    "defaultMessage": "导入配方"
+    "defaultMessage": "导入模板"
   },
   "importRecipeForm.importing": {
     "defaultMessage": "导入中…"
@@ -1485,16 +1485,16 @@
     "defaultMessage": "或"
   },
   "importRecipeForm.recipeDeeplinkLabel": {
-    "defaultMessage": "配方深层链接"
+    "defaultMessage": "模板深层链接"
   },
   "importRecipeForm.recipeFileHint": {
-    "defaultMessage": "上传包含配方结构的 YAML 或 JSON 文件"
+    "defaultMessage": "上传包含模板结构的 YAML 或 JSON 文件"
   },
   "importRecipeForm.recipeFileLabel": {
-    "defaultMessage": "配方文件"
+    "defaultMessage": "模板文件"
   },
   "importRecipeForm.reviewWarning": {
-    "defaultMessage": "在将配方文件添加到 HeyBuddy 之前，请务必先审查其内容。"
+    "defaultMessage": "在将模板文件添加到 HeyBuddy 之前，请务必先审查其内容。"
   },
   "importRecipeForm.schemaDescription": {
     "defaultMessage": "你的 YAML 或 JSON 文件应遵循此结构。必填字段：title、description，以及 instructions 或 prompt 之一。"
@@ -2466,7 +2466,7 @@
     "defaultMessage": "取消"
   },
   "parameterInputModal.cancelRecipeSetup": {
-    "defaultMessage": "取消配方设置"
+    "defaultMessage": "取消模板设置"
   },
   "parameterInputModal.enterValue": {
     "defaultMessage": "为 {key} 输入值…"
@@ -2475,7 +2475,7 @@
     "defaultMessage": "否"
   },
   "parameterInputModal.recipeParameters": {
-    "defaultMessage": "配方参数"
+    "defaultMessage": "模板参数"
   },
   "parameterInputModal.select": {
     "defaultMessage": "请选择…"
@@ -2484,10 +2484,10 @@
     "defaultMessage": "选择一个选项…"
   },
   "parameterInputModal.startNewChat": {
-    "defaultMessage": "开始新聊天（不使用配方）"
+    "defaultMessage": "开始新聊天（不使用模板）"
   },
   "parameterInputModal.startRecipe": {
-    "defaultMessage": "启动配方"
+    "defaultMessage": "启动模板"
   },
   "parameterInputModal.true": {
     "defaultMessage": "是"
@@ -2880,13 +2880,13 @@
     "defaultMessage": "提交"
   },
   "recipeActivityEditor.activitiesDescription": {
-    "defaultMessage": "将在配方聊天窗口中显示的顶部提示和活动按钮。"
+    "defaultMessage": "将在模板聊天窗口中显示的顶部提示和活动按钮。"
   },
   "recipeActivityEditor.activitiesLabel": {
     "defaultMessage": "活动"
   },
   "recipeActivityEditor.activityButtonsDescription": {
-    "defaultMessage": "将出现在消息下方、帮助用户与你的配方交互的可点击按钮。"
+    "defaultMessage": "将出现在消息下方、帮助用户与你的模板交互的可点击按钮。"
   },
   "recipeActivityEditor.activityButtonsLabel": {
     "defaultMessage": "活动按钮"
@@ -2898,16 +2898,16 @@
     "defaultMessage": "添加新活动…"
   },
   "recipeActivityEditor.messageDescription": {
-    "defaultMessage": "将出现在配方顶部的格式化消息。支持 markdown 格式。"
+    "defaultMessage": "将出现在模板顶部的格式化消息。支持 markdown 格式。"
   },
   "recipeActivityEditor.messageLabel": {
     "defaultMessage": "消息"
   },
   "recipeActivityEditor.messagePlaceholder": {
-    "defaultMessage": "为你的配方输入面向用户的介绍消息（支持 **加粗**、*斜体*、`代码` 等）"
+    "defaultMessage": "为你的模板输入面向用户的介绍消息（支持 **加粗**、*斜体*、`代码` 等）"
   },
   "recipeExtensionSelector.description": {
-    "defaultMessage": "选择运行此配方时可用的扩展。留空将使用默认扩展。"
+    "defaultMessage": "选择运行此模板时可用的扩展。留空将使用默认扩展。"
   },
   "recipeExtensionSelector.extensionsSelected": {
     "defaultMessage": "{count,plural,one{已选 # 个扩展} other{已选 # 个扩展}}"
@@ -2931,13 +2931,13 @@
     "defaultMessage": "高级选项"
   },
   "recipeFormFields.advancedOptionsHint": {
-    "defaultMessage": "活动、参数、模型、扩展、响应 schema、子配方"
+    "defaultMessage": "活动、参数、模型、扩展、响应 schema、子模板"
   },
   "recipeFormFields.descriptionLabel": {
     "defaultMessage": "描述"
   },
   "recipeFormFields.descriptionPlaceholder": {
-    "defaultMessage": "此配方功能的简要描述"
+    "defaultMessage": "此模板功能的简要描述"
   },
   "recipeFormFields.enterValueFor": {
     "defaultMessage": "为 {key} 输入值"
@@ -2967,7 +2967,7 @@
     "defaultMessage": "（可选 - instructions 或 prompt 至少填一项）"
   },
   "recipeFormFields.promptPlaceholder": {
-    "defaultMessage": "配方启动时预填的提示词"
+    "defaultMessage": "模板启动时预填的提示词"
   },
   "recipeFormFields.responseJsonSchema": {
     "defaultMessage": "响应 JSON Schema"
@@ -2976,16 +2976,16 @@
     "defaultMessage": "使用 JSON Schema 格式定义 AI 响应的期望结构"
   },
   "recipeFormFields.templateVarHint": {
-    "defaultMessage": "使用 '{{parameter_name}}' 定义运行配方时可填入的参数。"
+    "defaultMessage": "使用 '{{parameter_name}}' 定义运行模板时可填入的参数。"
   },
   "recipeFormFields.titleLabel": {
     "defaultMessage": "标题"
   },
   "recipeFormFields.titlePlaceholder": {
-    "defaultMessage": "配方标题"
+    "defaultMessage": "模板标题"
   },
   "recipeHeader.recipeLabel": {
-    "defaultMessage": "配方"
+    "defaultMessage": "模板"
   },
   "recipeModelSelector.backToModelList": {
     "defaultMessage": "返回模型列表"
@@ -3030,19 +3030,19 @@
     "defaultMessage": "描述："
   },
   "recipeWarningModal.firstTimeDescription": {
-    "defaultMessage": "你即将执行一个从未运行过的配方。"
+    "defaultMessage": "你即将执行一个从未运行过的模板。"
   },
   "recipeWarningModal.hiddenCharsWarning": {
-    "defaultMessage": "此配方包含隐藏字符，为了你的安全这些字符会被忽略，因为它们可能被用于恶意目的。"
+    "defaultMessage": "此模板包含隐藏字符，为了你的安全这些字符会被忽略，因为它们可能被用于恶意目的。"
   },
   "recipeWarningModal.instructionsLabel": {
     "defaultMessage": "指令："
   },
   "recipeWarningModal.newRecipeWarningTitle": {
-    "defaultMessage": "⚠️ 新配方警告"
+    "defaultMessage": "⚠️ 新模板警告"
   },
   "recipeWarningModal.recipePreview": {
-    "defaultMessage": "配方预览："
+    "defaultMessage": "模板预览："
   },
   "recipeWarningModal.securityWarningTitle": {
     "defaultMessage": "⚠️ 安全警告"
@@ -3054,7 +3054,7 @@
     "defaultMessage": "信任并执行"
   },
   "recipeWarningModal.trustSource": {
-    "defaultMessage": "只有在你信任此配方来源的情况下才应继续。"
+    "defaultMessage": "只有在你信任此模板来源的情况下才应继续。"
   },
   "recipesView.addSchedule": {
     "defaultMessage": "添加定时任务"

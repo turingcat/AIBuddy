@@ -107,6 +107,8 @@ const i18n = defineMessages({
   },
 });
 
+export { i18n as createEditRecipeMessages };
+
 interface CreateEditRecipeModalProps {
   isOpen: boolean;
   onClose: (wasSaved?: boolean) => void;

@@ -103,13 +103,19 @@ export default function ExtensionList({
 
     const searchLower = searchTerm.toLowerCase();
     const copy = getLocalizedExtensionCopy(extension, intl);
-    const title = copy.title.toLowerCase();
-    const name = extension.name.toLowerCase();
-    const description = copy.description?.toLowerCase() || '';
+    const originalSubtitle = getSubtitle(extension);
+    const aliases = [
+      copy.title,
+      copy.description,
+      getFriendlyTitle(extension),
+      originalSubtitle.description,
+      originalSubtitle.command,
+      extension.configKey,
+      extension.description,
+      extension.name,
+    ];
 
-    return (
-      title.includes(searchLower) || name.includes(searchLower) || description.includes(searchLower)
-    );
+    return aliases.some((alias) => alias?.toLowerCase().includes(searchLower));
   };
 
   // Separate enabled and disabled extensions, then filter by search term
