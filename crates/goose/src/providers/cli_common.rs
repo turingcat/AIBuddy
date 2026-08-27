@@ -40,6 +40,7 @@ pub(crate) const SESSION_NAME_END_MARKER: &str = "---END USER MESSAGES---";
 pub(crate) const SESSION_NAME_SUFFIX: &str = "Generate a short title for the above messages.";
 const CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 12;
 const CHINESE_TITLE_GROUP_SIZE: usize = 3;
+const SEPARATED_CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 24;
 
 pub(crate) fn is_session_description_request(system: &str) -> bool {
     system.contains("four words or less")
@@ -71,17 +72,22 @@ fn normalize_chinese_session_description(description: &str) -> String {
         .take(4)
         .collect();
     if phrases.len() > 1 {
-        return phrases
-            .into_iter()
-            .take(4)
-            .map(|phrase| {
-                phrase
-                    .chars()
-                    .take(CHINESE_TITLE_GROUP_SIZE)
-                    .collect::<String>()
-            })
-            .collect::<Vec<_>>()
-            .join(" ");
+        let mut remaining_characters = SEPARATED_CHINESE_SESSION_TITLE_CHAR_LIMIT;
+        let mut bounded_phrases = Vec::new();
+        for phrase in phrases {
+            let phrase_length = phrase.chars().count();
+            if phrase_length <= remaining_characters {
+                bounded_phrases.push(phrase);
+                remaining_characters -= phrase_length;
+                if remaining_characters == 0 {
+                    break;
+                }
+            } else {
+                bounded_phrases.push(phrase.chars().take(remaining_characters).collect());
+                break;
+            }
+        }
+        return bounded_phrases.join(" ");
     }
 
     description
@@ -223,11 +229,15 @@ mod tests {
     }
 
     #[test]
-    fn local_session_description_keeps_four_chinese_phrases() {
+    fn local_session_description_preserves_complete_separated_chinese_phrases() {
         assert_eq!(
             normalize_chinese_session_description("配置，云服务；登录问题。多云平台"),
-            "配置 云服务 登录问 多云平"
+            "配置 云服务 登录问题 多云平台"
         );
+    }
+
+    #[test]
+    fn local_session_description_keeps_unseparated_chinese_rule() {
         assert_eq!(
             normalize_chinese_session_description("一二三四五六七八九十一二三"),
             "一二三 四五六 七八九 十一二"
@@ -236,11 +246,24 @@ mod tests {
 
     #[test]
     fn local_session_description_truncates_long_punctuation_separated_chinese_phrases() {
+        let title = normalize_chinese_session_description(
+            "第一段包含很多内容用于测试，第二段也包含很多内容确保标题不会过长",
+        );
+
+        assert_eq!(title, "第一段包含很多内容用于测试 第二段也包含很多内容确");
+        assert_eq!(
+            title
+                .chars()
+                .filter(|&character| is_chinese_character(character))
+                .count(),
+            24
+        );
+        assert_eq!(title.split_whitespace().count(), 2);
         assert_eq!(
             normalize_chinese_session_description(
-                "第一段包含很多内容用于测试，第二段也包含很多内容确保标题不会过长"
+                "一二三四五六七八九十一二，甲乙丙丁戊己庚辛壬癸子丑，额外内容"
             ),
-            "第一段 第二段"
+            "一二三四五六七八九十一二 甲乙丙丁戊己庚辛壬癸子丑"
         );
     }
 
@@ -250,17 +273,17 @@ mod tests {
             normalize_chinese_session_description(
                 "第一段包含很多内容用于测试 第二段也包含很多内容确保标题不会过长"
             ),
-            "第一段 第二段"
+            "第一段包含很多内容用于测试 第二段也包含很多内容确"
         );
     }
 
     #[test]
-    fn local_session_description_bounds_mixed_language_chinese_phrases() {
+    fn local_session_description_preserves_chinese_after_english_tokens() {
         assert_eq!(
             normalize_chinese_session_description(
-                "Please 修复会话标题生成过程 with 长段落内容需要截断"
+                "Please help me review the design before 修复会话标题生成过程 with 长段落内容需要截断"
             ),
-            "修复会 长段落"
+            "修复会话标题生成过程 长段落内容需要截断"
         );
     }
 }
