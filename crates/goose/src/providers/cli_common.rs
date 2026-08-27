@@ -38,8 +38,6 @@ pub(crate) fn error_from_event(provider_name: &str, parsed: &Value) -> ProviderE
 pub(crate) const SESSION_NAME_BEGIN_MARKER: &str = "---BEGIN USER MESSAGES---";
 pub(crate) const SESSION_NAME_END_MARKER: &str = "---END USER MESSAGES---";
 pub(crate) const SESSION_NAME_SUFFIX: &str = "Generate a short title for the above messages.";
-const CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 12;
-const CHINESE_TITLE_GROUP_SIZE: usize = 3;
 const SEPARATED_CHINESE_SESSION_TITLE_CHAR_LIMIT: usize = 24;
 
 pub(crate) fn is_session_description_request(system: &str) -> bool {
@@ -49,7 +47,8 @@ pub(crate) fn is_session_description_request(system: &str) -> bool {
         || system.contains("只输出标题")
 }
 
-// Chinese without separators is grouped into four fixed three-character phrases.
+// Only punctuation and whitespace provide reliable phrase boundaries here.
+// Continuous Chinese is cleaned but not segmented.
 fn normalize_chinese_session_description(description: &str) -> String {
     let has_chinese = description.chars().any(is_chinese_character);
     if !has_chinese {
@@ -92,15 +91,7 @@ fn normalize_chinese_session_description(description: &str) -> String {
         return bounded_phrases.join(" ");
     }
 
-    description
-        .chars()
-        .filter(|&character| is_chinese_character(character))
-        .take(CHINESE_SESSION_TITLE_CHAR_LIMIT)
-        .collect::<Vec<_>>()
-        .chunks(CHINESE_TITLE_GROUP_SIZE)
-        .map(String::from_iter)
-        .collect::<Vec<_>>()
-        .join(" ")
+    phrases.into_iter().next().unwrap_or_default()
 }
 
 fn is_chinese_character(character: char) -> bool {
@@ -196,7 +187,7 @@ mod tests {
     }
 
     #[test]
-    fn local_session_description_handles_unspaced_punctuation_and_length() {
+    fn local_session_description_preserves_an_unspaced_chinese_phrase() {
         let message = Message::user().with_text(format!(
             "{SESSION_NAME_BEGIN_MARKER}\n请帮我制定下半年市场推广计划！\n{SESSION_NAME_END_MARKER}\n\n{SESSION_NAME_SUFFIX}"
         ));
@@ -211,11 +202,7 @@ mod tests {
             })
             .unwrap();
 
-        assert_eq!(title, "请帮我 制定下 半年市 场推广");
-        assert_eq!(title.split_whitespace().count(), 4);
-        assert!(title
-            .split_whitespace()
-            .all(|phrase| phrase.chars().all(is_chinese_character)));
+        assert_eq!(title, "请帮我制定下半年市场推广计划");
     }
 
     #[test]
@@ -237,6 +224,14 @@ mod tests {
     }
 
     #[test]
+    fn local_session_description_preserves_a_complete_chinese_phrase() {
+        assert_eq!(
+            normalize_chinese_session_description("登录问题"),
+            "登录问题"
+        );
+    }
+
+    #[test]
     fn local_session_description_preserves_complete_separated_chinese_phrases() {
         assert_eq!(
             normalize_chinese_session_description("配置，云服务；登录问题。多云平台！额外短语"),
@@ -245,10 +240,10 @@ mod tests {
     }
 
     #[test]
-    fn local_session_description_keeps_unseparated_chinese_rule() {
+    fn local_session_description_preserves_a_long_unseparated_chinese_phrase() {
         assert_eq!(
             normalize_chinese_session_description("一二三四五六七八九十一二三"),
-            "一二三 四五六 七八九 十一二"
+            "一二三四五六七八九十一二三"
         );
     }
 
