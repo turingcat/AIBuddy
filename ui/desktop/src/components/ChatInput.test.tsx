@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { describe, expect, it, vi } from 'vitest';
 import zhCatalog from '../i18n/messages/zh-CN.json';
@@ -42,18 +42,30 @@ vi.mock('./settings/models/predefinedModelsUtils', () => ({
 vi.mock('../utils/canonical', () => ({ fetchCanonicalModelInfo: vi.fn().mockResolvedValue(null) }));
 vi.mock('./MentionPopover', () => ({ default: () => null }));
 vi.mock('./MessageQueue', () => ({ MessageQueue: () => null }));
-vi.mock('./bottom_menu/DirSwitcher', () => ({ DirSwitcher: () => null }));
-vi.mock('./bottom_menu/ContextWindowIndicator', () => ({ ContextWindowIndicator: () => null }));
-vi.mock('./bottom_menu/BottomMenuExtensionSelection', () => ({
-  BottomMenuExtensionSelection: () => null,
+vi.mock('./bottom_menu/DirSwitcher', () => ({ DirSwitcher: () => <span>目录</span> }));
+vi.mock('./bottom_menu/ContextWindowIndicator', () => ({
+  ContextWindowIndicator: () => <span>上下文</span>,
 }));
-vi.mock('./settings/models/bottom_bar/ModelsBottomBar', () => ({ default: () => null }));
+vi.mock('./bottom_menu/BottomMenuExtensionSelection', () => ({
+  BottomMenuExtensionSelection: () => <span>扩展</span>,
+}));
+vi.mock('./settings/models/bottom_bar/ModelsBottomBar', () => ({
+  default: ({ isNarrow }: { isNarrow: boolean }) => (
+    <button aria-label="模型">{!isNarrow && '模型'}</button>
+  ),
+}));
 
 const zhMessages = Object.fromEntries(
   Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])
 );
 
+let resizeObserverCallback: ResizeObserverCallback | undefined;
+
 class ResizeObserverStub {
+  constructor(callback: ResizeObserverCallback) {
+    resizeObserverCallback = callback;
+  }
+
   observe() {}
   disconnect() {}
 }
@@ -76,6 +88,35 @@ describe('ChatInput toolbar', () => {
     expect(screen.getByText('附件')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '附件' })).toBeInTheDocument();
     expect(screen.getByText('发送')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
+  });
+
+  it('keeps only accessible model and send controls in a narrow toolbar', () => {
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ChatInput
+          sessionId={null}
+          handleSubmit={vi.fn()}
+          chatState={ChatState.Idle}
+          setView={vi.fn()}
+        />
+      </IntlProvider>
+    );
+
+    act(() => {
+      resizeObserverCallback?.(
+        [{ contentRect: { width: 479 } } as ResizeObserverEntry],
+        {} as ResizeObserver
+      );
+    });
+
+    expect(screen.queryByText('目录')).not.toBeInTheDocument();
+    expect(screen.queryByText('上下文')).not.toBeInTheDocument();
+    expect(screen.queryByText('扩展')).not.toBeInTheDocument();
+    expect(screen.queryByText('附件')).not.toBeInTheDocument();
+    expect(screen.queryByText('模型')).not.toBeInTheDocument();
+    expect(screen.queryByText('发送')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '模型' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '发送' })).toBeInTheDocument();
   });
 });

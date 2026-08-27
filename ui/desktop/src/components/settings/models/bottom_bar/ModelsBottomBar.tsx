@@ -153,8 +153,8 @@ export default function ModelsBottomBar({
       <DropdownMenu>
         <DropdownMenuTrigger
           className="flex items-center hover:cursor-pointer max-w-[180px] md:max-w-[200px] lg:max-w-[380px] min-w-0 text-text-primary/70 hover:text-text-primary transition-colors"
-          aria-label={intl.formatMessage(i18n.selectModel)}
-          title={intl.formatMessage(i18n.selectModel)}
+          aria-label={intl.formatMessage(i18n.modelLabel)}
+          title={intl.formatMessage(i18n.modelLabel)}
         >
           <div className="flex items-center truncate max-w-[130px] md:max-w-[200px] lg:max-w-[360px] min-w-0">
             <Bot className="mr-1 h-4 w-4 flex-shrink-0" />

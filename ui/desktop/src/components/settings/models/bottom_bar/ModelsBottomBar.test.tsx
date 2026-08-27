@@ -115,7 +115,7 @@ describe('ModelsBottomBar', () => {
     expect(screen.queryByTestId('model-loading-state')).not.toBeInTheDocument();
   });
 
-  it('shows an accessible Chinese model label next to the active model', () => {
+  it('uses the Chinese model label for visible, accessible, and tooltip text', () => {
     render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
         <ModelsBottomBar
@@ -128,6 +128,23 @@ describe('ModelsBottomBar', () => {
     );
 
     expect(screen.getByText('模型')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '选择模型' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '模型' })).toHaveAttribute('title', '模型');
+  });
+
+  it('hides the visible model label in narrow toolbars while preserving its accessible name', () => {
+    render(
+      <IntlProvider locale="zh-CN" messages={zhMessages}>
+        <ModelsBottomBar
+          sessionId={null}
+          dropdownRef={createDropdownRef()}
+          setView={vi.fn()}
+          onModelChanged={mockOnModelChanged}
+          isNarrow
+        />
+      </IntlProvider>
+    );
+
+    expect(screen.queryByText('模型')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '模型' })).toHaveAttribute('title', '模型');
   });
 });
