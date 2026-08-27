@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IntlTestWrapper } from '../i18n/test-utils';
 import { ModelAndProviderProvider, useModelAndProvider } from './ModelAndProviderContext';
 
@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   listModelsViaApi: vi.fn(),
   appConfigGet: vi.fn(),
 }));
+const originalAppConfig = window.appConfig;
+const originalElectron = window.electron;
 
 vi.mock('../acp/providers', () => ({
   acpReadDefaults: mocks.readDefaults,
@@ -75,6 +77,11 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     };
   });
 
+  afterEach(() => {
+    window.appConfig = originalAppConfig;
+    window.electron = originalElectron;
+  });
+
   it('keeps a complete persisted default without loading or saving another model', async () => {
     mocks.readDefaults.mockResolvedValue({ providerId: 'existing-provider', modelId: 'existing-model' });
 
@@ -102,6 +109,21 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     });
     expect(mocks.listModelsViaApi).toHaveBeenCalledTimes(1);
     expect(mocks.saveDefaults).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses HeyBuddy for the first loaded model when the configured provider is missing', async () => {
+    mocks.appConfigGet.mockReturnValue(undefined);
+    mocks.listModelsViaApi.mockResolvedValue([
+      { id: 'first-model', name: 'First model', contextLimit: 128000, reasoning: true },
+    ]);
+
+    renderContext();
+
+    await waitFor(() => {
+      expect(mocks.saveDefaults).toHaveBeenCalledWith('heybuddy', 'first-model');
+      expect(screen.getByTestId('current-provider')).toHaveTextContent('heybuddy');
+      expect(screen.getByTestId('current-model')).toHaveTextContent('first-model');
+    });
   });
 
   it('keeps the existing incomplete fallback when the model list is empty', async () => {

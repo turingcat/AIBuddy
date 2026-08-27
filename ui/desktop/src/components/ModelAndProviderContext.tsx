@@ -143,16 +143,18 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
   );
 
   const getFallbackModelAndProvider = useCallback(async () => {
-    const provider = window.appConfig.get('GOOSE_DEFAULT_PROVIDER') as string;
+    const configuredProvider = window.appConfig.get('GOOSE_DEFAULT_PROVIDER') as string;
     const model = window.appConfig.get('GOOSE_DEFAULT_MODEL') as string;
-    if (provider && model) {
+    if (configuredProvider && model) {
       try {
-        await acpSaveDefaults(provider, model);
+        await acpSaveDefaults(configuredProvider, model);
       } catch (error) {
         console.error('[getFallbackModelAndProvider] Failed to write to config', error);
       }
-      return { model, provider };
+      return { model, provider: configuredProvider };
     }
+
+    const provider = configuredProvider || 'heybuddy';
 
     try {
       const firstModel = (await window.electron.listModelsViaApi())[0];
