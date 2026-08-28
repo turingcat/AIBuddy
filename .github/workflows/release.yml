@@ -124,7 +124,7 @@ jobs:
             download_cli.sh
           allowUpdates: true
           omitBody: true
-          omitPrereleaseDuringUpdate: true
+          prerelease: false
 
       # Create/update the stable release
       - name: Release stable
@@ -142,7 +142,7 @@ jobs:
             download_cli.sh
           allowUpdates: true
           omitBody: true
-          omitPrereleaseDuringUpdate: true
+          prerelease: false
 
       - name: Upload macOS update manifest
         if: ${{ env.ENABLE_MAC_NATIVE_AUTO_UPDATE == 'true' }}
