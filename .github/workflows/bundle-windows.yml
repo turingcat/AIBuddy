@@ -322,10 +322,11 @@ jobs:
           Get-Item $installer
 
       - name: Create Windows zip package
+        working-directory: ui/desktop/dist-windows
         shell: bash
         env:
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" ui/desktop/dist-windows/*
+        run: 7z a -tzip "$GITHUB_WORKSPACE/HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" ./*
 
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
