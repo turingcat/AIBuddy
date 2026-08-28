@@ -8,11 +8,6 @@ on:
         required: false
         type: string
         default: ''
-      signing:
-        description: 'Whether to sign the Windows executable'
-        required: false
-        type: boolean
-        default: false
       package_cli:
         description: 'Whether to package and upload the CLI artifact'
         required: false
@@ -37,11 +32,6 @@ on:
         description: 'Version to build'
         required: false
         type: string
-      signing:
-        description: 'Whether to sign the Windows executable'
-        required: false
-        type: boolean
-        default: false
       package_cli:
         description: 'Whether to package and upload the CLI artifact'
         required: false
@@ -52,11 +42,6 @@ on:
         required: false
         type: boolean
         default: false
-      environment:
-        description: 'GitHub Environment containing signing secrets. Leave empty for unsigned builds.'
-        required: false
-        type: string
-        default: ''
       ref:
         description: 'Git ref to checkout'
         required: false
@@ -289,88 +274,65 @@ jobs:
           retention-days: 1
           overwrite: true
 
-  sign-desktop-windows:
-    name: Sign Desktop (Windows)
-    needs: build-desktop-windows
-    if: ${{ inputs.package_desktop && inputs.signing }}
-    runs-on: windows-latest
-    environment: ${{ inputs.environment || '' }}
-    permissions:
-      id-token: write
-    steps:
-      - name: Download unsigned distribution
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          name: internal-windows-unsigned${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: dist-windows
-
-      - name: Azure login
-        uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43  # v3.0.0
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Sign Windows executables with Azure Trusted Signing
-        uses: azure/trusted-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82  # v2.0.0
-        with:
-          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
-          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT_NAME }}
-          certificate-profile-name: ${{ secrets.AZURE_CERTIFICATE_PROFILE_NAME }}
-          files: |
-            ${{ github.workspace }}/dist-windows/HeyBuddy.exe
-            ${{ github.workspace }}/dist-windows/resources/bin/goose.exe
-
-      - name: Verify signed executables
-        shell: pwsh
-        run: |
-          $files = @(
-            "dist-windows/HeyBuddy.exe",
-            "dist-windows/resources/bin/goose.exe"
-          )
-          foreach ($file in $files) {
-            Write-Output "Verifying signature: $file"
-            $sig = Get-AuthenticodeSignature $file
-            if ($sig.Status -ne "Valid") { throw "Signature invalid for ${file}: $($sig.Status)" }
-            Write-Output "Signature valid: $file"
-          }
-
-      - name: Create Windows zip package
-        shell: bash
-        env:
-          VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
-
-      - name: Upload signed Windows build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
-        with:
-          name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
-          if-no-files-found: error
-          overwrite: true
-
   package-desktop-windows:
     name: Package Desktop (Windows)
     needs: build-desktop-windows
-    if: ${{ inputs.package_desktop && !inputs.signing }}
+    if: ${{ inputs.package_desktop }}
     runs-on: windows-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || '' }}
+
       - name: Download unsigned distribution
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: internal-windows-unsigned${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: dist-windows
+          path: ui/desktop/dist-windows
+
+      - name: Set up Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --no-progress -y
+          }
+          if (-not (Test-Path $iscc)) {
+            throw "Inno Setup compiler not found: $iscc"
+          }
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Create Windows installer
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = $env:INPUT_VERSION
+          if (-not $version) {
+            $package = Get-Content "ui/desktop/package.json" -Raw | ConvertFrom-Json
+            $version = $package.version
+          }
+          $outputDir = Join-Path $env:GITHUB_WORKSPACE "installer-output"
+          New-Item -ItemType Directory -Force $outputDir | Out-Null
+          & $env:ISCC_PATH "/DMyAppVersion=$version" "/O$outputDir" "ui/desktop/heybuddy-setup.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
+          $installer = Join-Path $outputDir "HeyBuddy-Setup.exe"
+          if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
+          Get-Item $installer
 
       - name: Create Windows zip package
         shell: bash
         env:
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" dist-windows/
+        run: 7z a -tzip "HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" ui/desktop/dist-windows/
 
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
+          path: |
+            HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
+            installer-output/HeyBuddy-Setup.exe
           if-no-files-found: error
           overwrite: true
