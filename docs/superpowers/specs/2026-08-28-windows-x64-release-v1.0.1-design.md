@@ -13,8 +13,10 @@ project manifests set to `1.0.1` and an unsigned Windows x64 installer named
   Setup installer from the packaged `HeyBuddy-win32-x64` application.
 - Upload both `HeyBuddy-win32-x64.zip` and `HeyBuddy-Setup.exe` as workflow
   artifacts and GitHub Release assets.
+- Remove Windows signing inputs and jobs so all current and future Windows
+  packages are unsigned by policy.
 - Allow the fork's tag-triggered release workflow to run without unavailable
-  macOS and Windows signing secrets.
+  macOS signing secrets.
 - Preserve the user's uncommitted `Justfile` change and `.pnpm-store/` directory.
 
 ## Release Flow
@@ -23,7 +25,7 @@ project manifests set to `1.0.1` and an unsigned Windows x64 installer named
 2. Commit and push the version and workflow changes directly to `main`, as
    explicitly requested.
 3. Dispatch the Windows bundle workflow against `main` with version `1.0.1`,
-   desktop packaging enabled, standard x64 variant, and signing disabled.
+   desktop packaging enabled, and the standard x64 variant.
 4. Confirm that the workflow produces both the portable ZIP and Inno Setup EXE.
 5. Create and push tag `v1.0.1` at the verified `main` commit.
 6. Let the tag-triggered Release workflow publish a normal GitHub Release and
@@ -39,10 +41,11 @@ publisher warning. This is an accepted release constraint.
 
 ## Signing
 
-Release signing is controlled by an `ENABLE_RELEASE_SIGNING` Actions variable.
-The default is disabled so this fork can publish without absent Azure and Apple
-credentials. Repositories with signing secrets can set the variable to `true`
-without changing workflow code.
+Windows bundles are always unsigned. The reusable Windows workflow has no
+signing input, Azure credentials, signing environment, or signing job. macOS
+release signing remains independent and is controlled by an
+`ENABLE_MAC_RELEASE_SIGNING` Actions variable that defaults to false so this
+fork can publish without absent Apple credentials.
 
 ## Error Handling
 
@@ -63,4 +66,3 @@ without changing workflow code.
   Electron x64 packaging.
 - Verify the final Release is non-draft and non-prerelease and contains
   `HeyBuddy-Setup.exe` plus `HeyBuddy-win32-x64.zip`.
-

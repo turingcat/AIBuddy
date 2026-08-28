@@ -4,7 +4,7 @@
 
 **Goal:** Publish a non-prerelease `v1.0.1` GitHub Release whose source manifests use version `1.0.1` and whose assets include an unsigned Windows x64 Inno Setup installer.
 
-**Architecture:** Keep the existing tag-triggered Release workflow as the publisher. Extend the reusable Windows workflow so both signed and unsigned packaging paths produce the portable ZIP and `HeyBuddy-Setup.exe`, and gate release signing behind a repository variable that defaults to false. Validate on a real Windows runner before creating the immutable release tag.
+**Architecture:** Keep the existing tag-triggered Release workflow as the publisher. Remove the unused Windows signing path and extend the single unsigned packaging job so it produces the portable ZIP and `HeyBuddy-Setup.exe`; gate macOS release signing independently behind a repository variable that defaults to false. Validate on a real Windows runner before creating the immutable release tag.
 
 **Tech Stack:** GitHub Actions, Electron Forge, PowerShell, Inno Setup 6, Cargo, pnpm, GitHub CLI.
 
@@ -14,6 +14,7 @@
 - Use `1.0.1` in Cargo and npm manifests; use `v1.0.1` only for the Git tag and GitHub Release.
 - Publish a normal Release, not a draft or prerelease.
 - The Windows installer is unsigned; an unknown-publisher warning is accepted.
+- All current and future Windows workflows omit signing inputs, credentials, environments, and signing jobs.
 - Preserve the user's uncommitted `Justfile` change and `.pnpm-store/` directory.
 - Do not force-move, delete, or recreate `v1.0.1` after publishing it.
 
@@ -72,10 +73,12 @@ git add Cargo.toml Cargo.lock ui/desktop/package.json
 git commit -m "chore(release): set version 1.0.1"
 ```
 
-### Task 2: Build the Inno Setup Installer in Windows CI
+### Task 2: Build the Unsigned Inno Setup Installer in Windows CI
 
 **Files:**
+- Modify: `.github/workflows/bundle-windows.yml:4-65`
 - Modify: `.github/workflows/bundle-windows.yml:292-376`
+- Modify: `.github/workflows/canary.yml:69-80`
 - Read: `ui/desktop/heybuddy-setup.iss`
 
 **Interfaces:**
@@ -87,17 +90,30 @@ git commit -m "chore(release): set version 1.0.1"
 ```bash
 ruby -e '
   workflow = File.read(".github/workflows/bundle-windows.yml")
+  abort "Windows signing is still configured" if workflow.include?("azure/trusted-signing-action")
   abort "missing Inno compiler invocation" unless workflow.include?("ISCC.exe")
   abort "missing installer output" unless workflow.include?("HeyBuddy-Setup.exe")
   abort "missing installer script" unless workflow.include?("heybuddy-setup.iss")
 '
 ```
 
-Expected: FAIL with `missing Inno compiler invocation`.
+Expected: FAIL with `Windows signing is still configured`.
 
-- [ ] **Step 2: Add source checkout and normalize distribution paths in both packaging jobs**
+- [ ] **Step 2: Remove the Windows signing surface**
 
-Add the pinned checkout action as the first step of both `sign-desktop-windows` and `package-desktop-windows`:
+Remove the `signing` and `environment` inputs from both `workflow_dispatch` and
+`workflow_call`. Delete the complete `sign-desktop-windows` job. Change the
+unsigned job condition to:
+
+```yaml
+if: ${{ inputs.package_desktop }}
+```
+
+Remove `signing: false` from the Windows call in `.github/workflows/canary.yml`.
+
+- [ ] **Step 3: Add source checkout and normalize the distribution path**
+
+Add the pinned checkout action as the first step of `package-desktop-windows`:
 
 ```yaml
 - name: Checkout repository
@@ -106,9 +122,9 @@ Add the pinned checkout action as the first step of both `sign-desktop-windows` 
     ref: ${{ inputs.ref != '' && inputs.ref || '' }}
 ```
 
-Download each distribution to `ui/desktop/dist-windows`, and update signing, signature verification, and ZIP paths to use that directory.
+Download the distribution to `ui/desktop/dist-windows`, and update the ZIP path to use that directory.
 
-- [ ] **Step 3: Add a fail-fast Inno Setup installation step to both packaging jobs**
+- [ ] **Step 4: Add a fail-fast Inno Setup installation step**
 
 ```yaml
 - name: Set up Inno Setup
@@ -124,7 +140,7 @@ Download each distribution to `ui/desktop/dist-windows`, and update signing, sig
     "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
 ```
 
-- [ ] **Step 4: Compile and verify `HeyBuddy-Setup.exe` in both packaging jobs**
+- [ ] **Step 5: Compile and verify `HeyBuddy-Setup.exe`**
 
 ```yaml
 - name: Create Windows installer
@@ -146,11 +162,9 @@ Download each distribution to `ui/desktop/dist-windows`, and update signing, sig
     Get-Item $installer
 ```
 
-For the signed path, add a second Azure Trusted Signing step after compilation for `installer-output/HeyBuddy-Setup.exe`; it remains skipped in this unsigned release.
+- [ ] **Step 6: Upload the ZIP and installer together**
 
-- [ ] **Step 5: Upload the ZIP and installer together**
-
-Use a multiline artifact path in both final upload steps:
+Use a multiline artifact path in the final upload step:
 
 ```yaml
 path: |
@@ -158,13 +172,15 @@ path: |
   installer-output/HeyBuddy-Setup.exe
 ```
 
-- [ ] **Step 6: Re-run the workflow contract check**
+- [ ] **Step 7: Re-run the workflow contract check**
 
 ```bash
 ruby -e '
   workflow = File.read(".github/workflows/bundle-windows.yml")
+  abort "Windows signing is still configured" if workflow.include?("azure/trusted-signing-action")
+  abort "Windows signing input remains" if workflow.match?(/^\s+signing:/)
   abort "missing Inno compiler invocation" unless workflow.include?("ISCC.exe")
-  abort "missing installer output" unless workflow.scan("HeyBuddy-Setup.exe").length >= 4
+  abort "missing installer output" unless workflow.scan("HeyBuddy-Setup.exe").length >= 2
   abort "missing installer script" unless workflow.include?("heybuddy-setup.iss")
   abort "missing x64 ZIP" unless workflow.include?("HeyBuddy-win32-x64")
 '
@@ -172,21 +188,21 @@ ruby -e '
 
 Expected: PASS.
 
-- [ ] **Step 7: Commit the Windows workflow**
+- [ ] **Step 8: Commit the Windows workflows**
 
 ```bash
-git add .github/workflows/bundle-windows.yml
-git commit -m "ci: build Windows Inno installer"
+git add .github/workflows/bundle-windows.yml .github/workflows/canary.yml
+git commit -m "ci: build unsigned Windows installer"
 ```
 
-### Task 3: Make Tag Releases Work Without Signing Secrets
+### Task 3: Make Tag Releases Work Without Apple Signing Secrets
 
 **Files:**
 - Modify: `.github/workflows/release.yml:42-65`
 - Modify: `.github/workflows/release.yml:106-146`
 
 **Interfaces:**
-- Consumes: optional Actions variable `ENABLE_RELEASE_SIGNING`; Windows artifacts from Task 2
+- Consumes: optional Actions variable `ENABLE_MAC_RELEASE_SIGNING`; Windows artifacts from Task 2
 - Produces: unsigned-by-default tag builds and Release uploads containing `HeyBuddy*.exe`
 
 - [ ] **Step 1: Run a Release workflow contract check and observe the expected failure**
@@ -194,23 +210,26 @@ git commit -m "ci: build Windows Inno installer"
 ```bash
 ruby -e '
   workflow = File.read(".github/workflows/release.yml")
-  abort "missing signing variable" unless workflow.include?("ENABLE_RELEASE_SIGNING")
+  abort "missing macOS signing variable" unless workflow.include?("ENABLE_MAC_RELEASE_SIGNING")
+  abort "Windows signing input remains" if workflow.match?(/bundle-windows:.*?signing:/m)
   abort "missing EXE release pattern" unless workflow.include?("HeyBuddy*.exe")
 '
 ```
 
-Expected: FAIL with `missing signing variable`.
+Expected: FAIL with `missing macOS signing variable`.
 
 - [ ] **Step 2: Gate reusable workflow signing inputs behind the repository variable**
 
-For both macOS and Windows reusable jobs, set:
+For the macOS reusable job, set:
 
 ```yaml
-signing: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_RELEASE_SIGNING == 'true' }}
-environment: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_RELEASE_SIGNING == 'true' && 'signing' || '' }}
+signing: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' }}
+environment: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' && 'signing' || '' }}
 ```
 
 Undefined variables evaluate to an empty string, so signing defaults to false.
+
+Remove the `signing` and `environment` arguments from the Windows reusable job call.
 
 - [ ] **Step 3: Include installer EXEs in provenance and both Release uploads**
 
@@ -225,7 +244,8 @@ HeyBuddy*.exe
 ```bash
 ruby -e '
   workflow = File.read(".github/workflows/release.yml")
-  abort "missing signing variable" unless workflow.scan("ENABLE_RELEASE_SIGNING").length >= 4
+  abort "missing macOS signing variable" unless workflow.scan("ENABLE_MAC_RELEASE_SIGNING").length >= 2
+  abort "Windows signing input remains" if workflow.match?(/bundle-windows:.*?signing:/m)
   abort "missing EXE artifact patterns" unless workflow.scan("HeyBuddy\*.exe").length == 3
   abort "tag trigger missing" unless workflow.include?(%q(- "v1.*"))
 '
@@ -312,7 +332,6 @@ gh workflow run bundle-windows.yml \
   --repo turingcat/HeyBuddy \
   --ref main \
   -f version=1.0.1 \
-  -f signing=false \
   -f package_cli=false \
   -f package_desktop=true \
   -f windows_variant=standard
