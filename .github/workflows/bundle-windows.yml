@@ -313,7 +313,7 @@ jobs:
             $package = Get-Content "ui/desktop/package.json" -Raw | ConvertFrom-Json
             $version = $package.version
           }
-          $outputDir = Join-Path $env:GITHUB_WORKSPACE "installer-output"
+          $outputDir = $env:GITHUB_WORKSPACE
           New-Item -ItemType Directory -Force $outputDir | Out-Null
           & $env:ISCC_PATH "/DMyAppVersion=$version" "/O$outputDir" "ui/desktop/heybuddy-setup.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
@@ -334,6 +334,6 @@ jobs:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
           path: |
             HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
-            installer-output/HeyBuddy-Setup.exe
+            HeyBuddy-Setup.exe
           if-no-files-found: error
           overwrite: true
