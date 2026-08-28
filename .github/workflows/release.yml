@@ -46,8 +46,8 @@ jobs:
     with:
       package_cli: true
       package_desktop: true
-      signing: ${{ startsWith(github.ref, 'refs/tags/') }}
-      environment: ${{ startsWith(github.ref, 'refs/tags/') && 'signing' || '' }}
+      signing: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' }}
+      environment: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' && 'signing' || '' }}
     secrets: inherit
 
   # ------------------------------------------------------------
@@ -56,14 +56,10 @@ jobs:
   bundle-windows:
     uses: ./.github/workflows/bundle-windows.yml
     permissions:
-      id-token: write
       contents: read
     with:
       package_cli: true
       package_desktop: true
-      signing: ${{ startsWith(github.ref, 'refs/tags/') }}
-      environment: ${{ startsWith(github.ref, 'refs/tags/') && 'signing' || '' }}
-    secrets: inherit
 
   # ------------------------------------
   # 4) Create/Update GitHub Release
@@ -111,6 +107,7 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
+            HeyBuddy*.exe
             download_cli.sh
 
       # Create/update the versioned release
@@ -123,6 +120,7 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
+            HeyBuddy*.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true
@@ -140,6 +138,7 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
+            HeyBuddy*.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true
