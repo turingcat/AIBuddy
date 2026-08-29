@@ -77,8 +77,6 @@ describe('SwitchModelModal 动态模型列表（new-api /v1/models）', () => {
       { id: 'glm-4.6', name: 'glm-4.6', contextLimit: null, reasoning: null },
     ]);
     renderModal();
-    await waitFor(() => expect(screen.getByText('glm-4.6')).toBeInTheDocument());
-    const checkedRadio = screen.getByRole('radio', { checked: true });
-    expect((checkedRadio as HTMLInputElement).value).toBe('glm-4.6');
+    await waitFor(() => expect(screen.getByDisplayValue('glm-4.6')).toBeChecked());
   });
 });
