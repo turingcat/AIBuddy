@@ -11,6 +11,27 @@
   "accountMenu.settings": {
     "defaultMessage": "Settings"
   },
+  "acpReadinessPanel.adapterFound": {
+    "defaultMessage": "ACP adapter found"
+  },
+  "acpReadinessPanel.adapterNotFound": {
+    "defaultMessage": "ACP adapter not found"
+  },
+  "acpReadinessPanel.authenticationHelp": {
+    "defaultMessage": "Sign in through the provider CLI, then check again."
+  },
+  "acpReadinessPanel.checkAgain": {
+    "defaultMessage": "Check again"
+  },
+  "acpReadinessPanel.checking": {
+    "defaultMessage": "Checking..."
+  },
+  "acpReadinessPanel.connected": {
+    "defaultMessage": "Connected successfully"
+  },
+  "acpReadinessPanel.connectionNotChecked": {
+    "defaultMessage": "Check your account connection before continuing."
+  },
   "alertBox.autoCompactAt": {
     "defaultMessage": "Auto compact at"
   },
@@ -166,6 +187,9 @@
   },
   "baseChat.reconnecting": {
     "defaultMessage": "Connection lost. Reconnecting…"
+  },
+  "baseChat.retry": {
+    "defaultMessage": "Retry"
   },
   "bottomMenuExtensionSelection.extensionLabel": {
     "defaultMessage": "Extensions"
@@ -968,6 +992,15 @@
   "dirSwitcher.directoryLabel": {
     "defaultMessage": "Directory"
   },
+  "dirSwitcher.enterPath": {
+    "defaultMessage": "Enter path"
+  },
+  "dirSwitcher.enterPathInvalid": {
+    "defaultMessage": "Working directory must be an absolute path"
+  },
+  "dirSwitcher.enterPathPlaceholder": {
+    "defaultMessage": "Enter an absolute path (e.g. /home/goose/workspace)"
+  },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
   },
@@ -1309,6 +1342,27 @@
   },
   "externalBackendSection.useExternalServerDescription": {
     "defaultMessage": "Connect to an ACP-compatible backend running elsewhere."
+  },
+  "externalBackendSection.workingDir": {
+    "defaultMessage": "Remote Working Directory (optional)"
+  },
+  "externalBackendSection.workingDirHelp": {
+    "defaultMessage": "Absolute path on the external backend. Leave blank to send the local working directory."
+  },
+  "externalBackendSection.workingDirPlaceholder": {
+    "defaultMessage": "/home/goose/workspace"
+  },
+  "gitBranchIndicator.failedToSwitch": {
+    "defaultMessage": "Failed to switch to {branch}"
+  },
+  "gitBranchIndicator.noBranchesFound": {
+    "defaultMessage": "No branches found"
+  },
+  "gitBranchIndicator.searchBranches": {
+    "defaultMessage": "Search branches…"
+  },
+  "gitBranchIndicator.uncommittedChanges": {
+    "defaultMessage": "You may have uncommitted changes."
   },
   "goosehintsModal.close": {
     "defaultMessage": "Close"
@@ -2363,6 +2417,9 @@
   "modelsBottomBar.modelLabel": {
     "defaultMessage": "Model"
   },
+  "modelsBottomBar.recentModels": {
+    "defaultMessage": "Recent"
+  },
   "modelsBottomBar.resolvedModel": {
     "defaultMessage": "Resolved model"
   },
@@ -2657,6 +2714,9 @@
   "promptsSettings.unsavedChanges": {
     "defaultMessage": "You have unsaved changes"
   },
+  "providerCard.deprecatedReplacement": {
+    "defaultMessage": "Deprecated — use {replacement} instead."
+  },
   "providerCard.noMetadata": {
     "defaultMessage": "ProviderCard error: No metadata provided"
   },
@@ -2711,8 +2771,17 @@
   "providerConfigForm.continue": {
     "defaultMessage": "Continue"
   },
+  "providerConfigForm.deviceCodeAndEnter": {
+    "defaultMessage": "and enter:"
+  },
+  "providerConfigForm.deviceCodeCopy": {
+    "defaultMessage": "Copy"
+  },
   "providerConfigForm.deviceCodeFlowHint": {
-    "defaultMessage": "A browser window will open and the verification code will be copied to your clipboard. Paste it in the browser to complete sign-in."
+    "defaultMessage": "A browser window will open. The verification code will appear here so you can enter it to complete sign-in."
+  },
+  "providerConfigForm.deviceCodeVisit": {
+    "defaultMessage": "Visit"
   },
   "providerConfigForm.noApiKey": {
     "defaultMessage": "Don't have an API key?"
@@ -2738,6 +2807,9 @@
   "providerConfigurationModal.checkConfigAgain": {
     "defaultMessage": "Check your configuration again to use this provider."
   },
+  "providerConfigurationModal.chooseModel": {
+    "defaultMessage": "Choose model"
+  },
   "providerConfigurationModal.close": {
     "defaultMessage": "Close"
   },
@@ -2750,8 +2822,17 @@
   "providerConfigurationModal.deleteConfirmation": {
     "defaultMessage": "This will permanently delete the current provider configuration."
   },
+  "providerConfigurationModal.deviceCodeAndEnter": {
+    "defaultMessage": "and enter:"
+  },
+  "providerConfigurationModal.deviceCodeCopy": {
+    "defaultMessage": "Copy"
+  },
   "providerConfigurationModal.deviceCodeFlowHint": {
-    "defaultMessage": "A browser window will open and the verification code will be copied to your clipboard. Paste it in the browser to complete sign-in."
+    "defaultMessage": "A browser window will open. The verification code will appear here so you can enter it to complete sign-in."
+  },
+  "providerConfigurationModal.deviceCodeVisit": {
+    "defaultMessage": "Visit"
   },
   "providerConfigurationModal.errorCheckingConfig": {
     "defaultMessage": "There was an error checking this provider configuration."
@@ -3407,6 +3488,9 @@
   "scheduleDisplay.unknown": {
     "defaultMessage": "Unknown"
   },
+  "scheduleModal.alreadyScheduledOption": {
+    "defaultMessage": "{title} (already scheduled)"
+  },
   "scheduleModal.browseYaml": {
     "defaultMessage": "Browse for YAML file..."
   },
@@ -3431,6 +3515,9 @@
   "scheduleModal.editSchedule": {
     "defaultMessage": "Edit Schedule"
   },
+  "scheduleModal.failedLoadRecipes": {
+    "defaultMessage": "Failed to load recipes."
+  },
   "scheduleModal.failedParseRecipe": {
     "defaultMessage": "Failed to parse recipe from file."
   },
@@ -3443,14 +3530,23 @@
   "scheduleModal.invalidFileType": {
     "defaultMessage": "Invalid file type: Please select a YAML file (.yaml or .yml)"
   },
+  "scheduleModal.loadingRecipes": {
+    "defaultMessage": "Loading recipes..."
+  },
   "scheduleModal.nameLabel": {
     "defaultMessage": "Name:"
   },
   "scheduleModal.namePlaceholder": {
     "defaultMessage": "e.g., daily-summary-job"
   },
+  "scheduleModal.noSavedRecipes": {
+    "defaultMessage": "No saved recipes found."
+  },
   "scheduleModal.provideValidRecipe": {
     "defaultMessage": "Please provide a valid recipe source."
+  },
+  "scheduleModal.recipeAlreadyScheduled": {
+    "defaultMessage": "This recipe already has a schedule. Edit it from the Recipes list."
   },
   "scheduleModal.recipeDescription": {
     "defaultMessage": "Description: {description}"
@@ -3461,11 +3557,17 @@
   "scheduleModal.recipeTitle": {
     "defaultMessage": "Title: {title}"
   },
+  "scheduleModal.savedRecipes": {
+    "defaultMessage": "Saved recipes"
+  },
   "scheduleModal.scheduleIdRequired": {
     "defaultMessage": "Schedule ID is required."
   },
   "scheduleModal.scheduleLabel": {
     "defaultMessage": "Schedule:"
+  },
+  "scheduleModal.selectRecipePlaceholder": {
+    "defaultMessage": "Select a saved recipe"
   },
   "scheduleModal.selected": {
     "defaultMessage": "Selected: {path}"
@@ -3820,6 +3922,12 @@
   },
   "sessions.saving": {
     "defaultMessage": "Saving..."
+  },
+  "sessions.scheduledJobs": {
+    "defaultMessage": "Scheduled Jobs"
+  },
+  "sessions.scheduledJobsCount": {
+    "defaultMessage": "{count,plural,one{{count} job} other{{count} jobs}}"
   },
   "sessions.search.noResults": {
     "defaultMessage": "No matching sessions found"
@@ -4252,6 +4360,9 @@
   },
   "switchModelModal.title": {
     "defaultMessage": "Switch models"
+  },
+  "themeSelector.aura": {
+    "defaultMessage": "Aura"
   },
   "themeSelector.dark": {
     "defaultMessage": "Dark"

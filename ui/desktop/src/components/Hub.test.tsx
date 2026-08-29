@@ -13,7 +13,10 @@ vi.mock('./ChatInputCard', () => ({
 vi.mock('./ConfigContext', () => ({ useConfig: () => ({ extensionsList: [] }) }));
 vi.mock('./LoadingGoose', () => ({ default: () => null }));
 vi.mock('../sessions', () => ({ createSession: vi.fn() }));
-vi.mock('../utils/workingDir', () => ({ getInitialWorkingDir: () => '/workspace' }));
+vi.mock('../utils/workingDir', () => ({
+  getInitialWorkingDir: () => '/workspace',
+  getEffectiveWorkingDir: () => Promise.resolve('/workspace'),
+}));
 
 const zhMessages = Object.fromEntries(
   Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])

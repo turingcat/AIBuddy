@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import { formatMessageTimestamp } from '../utils/timeUtils';
@@ -38,7 +38,7 @@ interface GooseMessageProps {
   ) => Promise<boolean>;
 }
 
-export default function GooseMessage({
+function GooseMessage({
   sessionId,
   message,
   messages,
@@ -238,3 +238,5 @@ export default function GooseMessage({
     </div>
   );
 }
+
+export default memo(GooseMessage);
