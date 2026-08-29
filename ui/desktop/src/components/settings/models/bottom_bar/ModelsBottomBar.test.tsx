@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, type RenderOptions, screen } from '@testing-library/react';
+import { fireEvent, render, type RenderOptions, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import ModelsBottomBar from './ModelsBottomBar';
 import { IntlTestWrapper } from '../../../../i18n/test-utils';
@@ -19,6 +19,7 @@ let mockCurrentModel: string | null = 'config-model';
 let mockCurrentProvider: string | null = 'config-provider';
 const mockGetProviders = vi.fn();
 const mockOnModelChanged = vi.fn();
+const mockPreventCloseAutoFocus = vi.fn();
 
 vi.mock('../../../ModelAndProviderContext', () => ({
   useModelAndProvider: () => ({
@@ -35,6 +36,7 @@ vi.mock('../../../ConfigContext', () => ({
 
 vi.mock('../modelInterface', () => ({
   getProviderMetadata: vi.fn().mockResolvedValue({ display_name: 'Config Provider' }),
+  fetchModelReasoning: vi.fn().mockResolvedValue(null),
 }));
 
 vi.mock('../predefinedModelsUtils', () => ({
@@ -46,12 +48,49 @@ vi.mock('../../../bottom_menu/BottomMenuAlertPopover', () => ({
 }));
 
 vi.mock('../../../ui/dropdown-menu', () => ({
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenu: ({
+    children,
+    open,
+    onOpenChange,
+  }: {
+    children: React.ReactNode;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+  }) => (
+    <div data-testid="model-menu" data-open={open}>
+      <button onClick={() => onOpenChange(true)}>Open model menu</button>
+      {children}
+    </div>
+  ),
   DropdownMenuTrigger: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  DropdownMenuContent: ({
+    children,
+    onCloseAutoFocus,
+  }: {
+    children: React.ReactNode;
+    onCloseAutoFocus?: (event: Pick<Event, 'preventDefault'>) => void;
+  }) => (
+    <div>
+      <button onClick={() => onCloseAutoFocus?.({ preventDefault: mockPreventCloseAutoFocus })}>
+        Complete model menu close
+      </button>
+      {children}
+    </div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    onSelect,
+  }: {
+    children: React.ReactNode;
+    onSelect?: () => void;
+  }) => <button onClick={onSelect}>{children}</button>,
+  DropdownMenuSeparator: () => null,
+}));
+
+vi.mock('../subcomponents/SwitchModelModal', () => ({
+  SwitchModelModal: () => <div data-testid="switch-model-modal" />,
 }));
 
 vi.mock('../../localInference/ModelSettingsPanel', () => ({
@@ -146,5 +185,44 @@ describe('ModelsBottomBar', () => {
 
     expect(screen.queryByText('模型')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '模型' })).toHaveAttribute('title', '模型');
+  });
+
+  it('opens model overlays after the menu closes with the appropriate focus behavior', () => {
+    renderWithIntl(
+      <ModelsBottomBar
+        sessionId="session-123"
+        dropdownRef={createDropdownRef()}
+        setView={vi.fn()}
+        sessionModel="local-model"
+        sessionProvider="local"
+        onModelChanged={mockOnModelChanged}
+        sessionLoaded={true}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open model menu' }));
+    expect(screen.getByTestId('model-menu')).toHaveAttribute('data-open', 'true');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Local Model Settings' }));
+    expect(screen.getByTestId('model-menu')).toHaveAttribute('data-open', 'false');
+    expect(
+      screen.queryByRole('heading', { name: 'Local Model Settings — Display local-model' })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete model menu close' }));
+    expect(
+      screen.getByRole('heading', { name: 'Local Model Settings — Display local-model' })
+    ).toBeInTheDocument();
+    expect(mockPreventCloseAutoFocus).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: '×' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open model menu' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Change Model' }));
+    expect(screen.getByTestId('model-menu')).toHaveAttribute('data-open', 'false');
+    expect(screen.queryByTestId('switch-model-modal')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Complete model menu close' }));
+    expect(screen.getByTestId('switch-model-modal')).toBeInTheDocument();
+    expect(mockPreventCloseAutoFocus).toHaveBeenCalledOnce();
   });
 });

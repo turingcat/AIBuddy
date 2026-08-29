@@ -1,11 +1,17 @@
 const { FusesPlugin } = require('@electron-forge/plugin-fuses');
 const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 const { resolve } = require('path');
+const { resolveBrand } = require('./scripts/brand');
+
+const brand = resolveBrand(process.env.APP_EDITION || 'heybuddy');
 
 const isLinuxVulkanBuild = process.env.GOOSE_DESKTOP_LINUX_VARIANT === 'vulkan';
 
 let cfg = {
   asar: true,
+  name: brand.productName,
+  executableName: brand.executableName,
+  appBundleId: brand.bundleId,
   extraResource: ['src/bin', 'src/images', 'src/app-update.yml'],
   icon: 'src/images/icon',
   // Windows specific configuration
@@ -19,8 +25,8 @@ let cfg = {
   // Protocol registration
   protocols: [
     {
-      name: 'GooseProtocol',
-      schemes: ['goose'],
+      name: brand.protocolName,
+      schemes: [brand.protocol],
     },
   ],
   // macOS Info.plist extensions for drag-and-drop support
@@ -35,10 +41,8 @@ let cfg = {
       },
     ],
     // Usage descriptions for macOS TCC (Transparency, Consent, and Control)
-    NSMicrophoneUsageDescription:
-      'HeyBuddy needs access to your microphone for voice dictation.',
-    NSAppleEventsUsageDescription:
-      'HeyBuddy needs access to send Apple Events to control other apps on your behalf.',
+    NSMicrophoneUsageDescription: `${brand.productName} needs access to your microphone for voice dictation.`,
+    NSAppleEventsUsageDescription: `${brand.productName} needs access to send Apple Events to control other apps on your behalf.`,
   },
 };
 

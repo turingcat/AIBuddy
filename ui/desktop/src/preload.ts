@@ -6,6 +6,7 @@ import type { BalanceResult } from './balance';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
+import type { OpenExternalUrlResult } from './utils/urlSecurity';
 
 // Mapping from settings keys to their old localStorage keys for lazy migration
 const localStorageKeyMap: Partial<Record<SettingKey, string>> = {
@@ -118,7 +119,9 @@ export type ElectronAPI = {
     error?: string;
   } | null>;
   getBinaryPath: (binaryName: string) => Promise<string>;
-  readFile: (directory: string) => Promise<FileResponse>;
+  selectRecipeFile: () => Promise<FileResponse | null>;
+  readGoosehints: () => Promise<FileResponse>;
+  writeGoosehints: (content: string) => Promise<boolean>;
   writeFile: (directory: string, content: string) => Promise<boolean>;
   ensureDirectory: (dirPath: string) => Promise<boolean>;
   listFiles: (dirPath: string, extension?: string) => Promise<string[]>;
@@ -156,7 +159,7 @@ export type ElectronAPI = {
     theme: string;
     tokensUpdated?: boolean;
   }) => void;
-  openExternal: (url: string) => Promise<void>;
+  openExternal: (url: string) => Promise<OpenExternalUrlResult>;
   // Update-related functions
   getVersion: () => string;
   checkForUpdates: () => Promise<{ updateInfo: unknown; error: string | null }>;
@@ -185,6 +188,9 @@ export type ElectronAPI = {
   loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
   getUserBalance: () => Promise<BalanceResult>;
   listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
+  getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
+  listGitBranches: (dir: string) => Promise<string[]>;
+  switchGitBranch: (dir: string, branch: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 type AppConfigAPI = {
@@ -220,7 +226,9 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke('select-file-or-directory', defaultPath),
   selectImportSessionFile: () => ipcRenderer.invoke('select-import-session-file'),
   getBinaryPath: (binaryName: string) => ipcRenderer.invoke('get-binary-path', binaryName),
-  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
+  selectRecipeFile: () => ipcRenderer.invoke('select-recipe-file'),
+  readGoosehints: () => ipcRenderer.invoke('read-goosehints'),
+  writeGoosehints: (content: string) => ipcRenderer.invoke('write-goosehints', content),
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
   ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
@@ -300,7 +308,7 @@ const electronAPI: ElectronAPI = {
   }) => {
     ipcRenderer.send('broadcast-theme-change', themeData);
   },
-  openExternal: (url: string): Promise<void> => {
+  openExternal: (url: string): Promise<OpenExternalUrlResult> => {
     return ipcRenderer.invoke('open-external', url);
   },
   getVersion: (): string => {
@@ -351,6 +359,10 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke('login-via-oa', loginName, password),
   getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
   listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
+  getGitBranchInfo: (dir: string) => ipcRenderer.invoke('get-git-branch-info', dir),
+  listGitBranches: (dir: string) => ipcRenderer.invoke('list-git-branches', dir),
+  switchGitBranch: (dir: string, branch: string) =>
+    ipcRenderer.invoke('switch-git-branch', dir, branch),
 };
 
 function getAppLocale(): unknown {
