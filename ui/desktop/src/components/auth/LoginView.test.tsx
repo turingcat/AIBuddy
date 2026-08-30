@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 
@@ -29,6 +29,8 @@ describe('LoginView', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    delete window.initAliyunCaptcha;
+    delete window.AliyunCaptchaConfig;
   });
 
   it('keeps the HeyBuddy OA login flow, original copy, and persisted credentials', async () => {
@@ -86,5 +88,54 @@ describe('LoginView', () => {
     expect(screen.queryByText('登录 HeyBuddy')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('login-name')).not.toBeInTheDocument();
     expect(login).not.toHaveBeenCalled();
+  });
+
+  it('keeps programmatic captcha verification pending across AIBuddy form renders', async () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    let captchaOptions: Parameters<NonNullable<Window['initAliyunCaptcha']>>[0] | undefined;
+    window.initAliyunCaptcha = vi.fn((options) => {
+      captchaOptions = options;
+    });
+    const loginViaAIBuddy = vi.fn().mockResolvedValue({
+      ok: true,
+      step: 'authenticated',
+      creds: {
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+      },
+    });
+    window.electron.getAIBuddyAuthSettings = vi.fn().mockResolvedValue({
+      ok: true,
+      settings: {
+        aliyunCaptchaEnabled: true,
+        aliyunCaptchaSceneId: 'scene-1',
+        aliyunCaptchaPrefix: 'prefix-1',
+        aliyunCaptchaRegion: 'cn',
+        apiBaseUrl: 'https://tflow.online/v1',
+      },
+    });
+    window.electron.loginViaAIBuddy = loginViaAIBuddy;
+
+    render(<LoginView />);
+
+    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'password');
+    await waitFor(() => expect(captchaOptions).toBeDefined());
+    await userEvent.click(screen.getByRole('button', { name: /^login$/i }));
+
+    expect(loginViaAIBuddy).not.toHaveBeenCalled();
+    act(() => {
+      captchaOptions?.captchaVerifyCallback('proof-after-submit');
+    });
+
+    await waitFor(() => {
+      expect(loginViaAIBuddy).toHaveBeenCalledWith(
+        'person@example.com',
+        'password',
+        'proof-after-submit'
+      );
+    });
   });
 });

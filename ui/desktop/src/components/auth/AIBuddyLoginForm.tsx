@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AIBuddyAuthResult, Sub2apiPublicSettings } from '../../sub2apiAuth';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -106,16 +106,16 @@ export default function AIBuddyLoginForm() {
     window.electron.restartApp();
   };
 
-  const handleCaptchaError = () => {
+  const handleCaptchaError = useCallback(() => {
     const message = 'Unable to load captcha. Please try again.';
     captchaErrorRef.current = message;
     setError(message);
-  };
+  }, []);
 
-  const handleCaptchaVerify = () => {
+  const handleCaptchaVerify = useCallback(() => {
     captchaErrorRef.current = null;
     setError(null);
-  };
+  }, []);
 
   const handleAccountSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
