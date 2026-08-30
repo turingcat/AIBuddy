@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AIBuddyAuthResult, AIBuddySettingsResult } from '../../sub2apiAuth';
 import type { AliyunCaptchaHandle } from './AliyunCaptcha';
 
+vi.mock('../../login', () => ({ login: vi.fn() }));
+
 const verifyCaptcha = vi.fn<() => Promise<string | null>>();
 const resetCaptcha = vi.fn();
 const setLoginCredentials = vi.fn();
@@ -27,6 +29,7 @@ vi.mock('./AliyunCaptcha', () => ({
 }));
 
 import AIBuddyLoginForm from './AIBuddyLoginForm';
+import { login } from '../../login';
 
 const settings: AIBuddySettingsResult = {
   ok: true,
@@ -62,6 +65,7 @@ describe('AIBuddyLoginForm', () => {
     completeAIBuddy2FA.mockReset();
     setLoginCredentials.mockReset();
     restartApp.mockReset();
+    vi.mocked(login).mockReset();
     window.electron.getAIBuddyAuthSettings = getAIBuddyAuthSettings;
     window.electron.loginViaAIBuddy = loginViaAIBuddy;
     window.electron.completeAIBuddy2FA = completeAIBuddy2FA;
@@ -69,7 +73,7 @@ describe('AIBuddyLoginForm', () => {
     window.electron.restartApp = restartApp;
   });
 
-  it('loads AIBuddy settings and submits an email login with captcha proof', async () => {
+  it('loads AIBuddy settings and submits an email login with captcha proof without OA login', async () => {
     loginViaAIBuddy.mockResolvedValue(authenticatedResult());
     render(<AIBuddyLoginForm />);
 
@@ -88,6 +92,7 @@ describe('AIBuddyLoginForm', () => {
       expect(setLoginCredentials).toHaveBeenCalledWith(authenticatedResult().creds);
       expect(restartApp).toHaveBeenCalledOnce();
       expect(resetCaptcha).toHaveBeenCalledOnce();
+      expect(login).not.toHaveBeenCalled();
     });
   });
 
@@ -138,7 +143,7 @@ describe('AIBuddyLoginForm', () => {
     expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
   });
 
-  it('keeps the TOTP step after an invalid code and completes it with six digits', async () => {
+  it('keeps the TOTP step after an invalid code and completes it without OA login', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'totp-required',
@@ -168,6 +173,7 @@ describe('AIBuddyLoginForm', () => {
       expect(completeAIBuddy2FA).toHaveBeenLastCalledWith('temporary-token', '654321');
       expect(setLoginCredentials).toHaveBeenCalledWith(authenticatedResult().creds);
       expect(restartApp).toHaveBeenCalledOnce();
+      expect(login).not.toHaveBeenCalled();
     });
   });
 

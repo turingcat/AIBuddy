@@ -16,10 +16,6 @@ vi.mock('../../login', () => ({
   }),
 }));
 
-vi.mock('./AIBuddyLoginForm', () => ({
-  default: () => <div>AIBuddy login</div>,
-}));
-
 import LoginView from './LoginView';
 import { login } from '../../login';
 
@@ -35,7 +31,7 @@ describe('LoginView', () => {
     vi.clearAllMocks();
   });
 
-  it('keeps the HeyBuddy OA login flow and persists credentials', async () => {
+  it('keeps the HeyBuddy OA login flow, original copy, and persisted credentials', async () => {
     render(
       <MemoryRouter initialEntries={['/login']}>
         <Routes>
@@ -45,6 +41,11 @@ describe('LoginView', () => {
       </MemoryRouter>
     );
 
+    expect(screen.getByRole('heading', { name: '登录 HeyBuddy' })).toBeInTheDocument();
+    expect(screen.getByText('请使用公司OA账号登录')).toBeInTheDocument();
+    expect(screen.getByText('登录名')).toBeInTheDocument();
+    expect(screen.getByText('密码')).toBeInTheDocument();
+    expect(screen.getByText('登录')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText(/login-name/i), 'seeyon6');
     await userEvent.type(screen.getByLabelText(/password/i), 'test@1234');
     await userEvent.click(screen.getByRole('button', { name: /login/i }));
@@ -60,11 +61,11 @@ describe('LoginView', () => {
     });
   });
 
-  it('selects the AIBuddy login flow without calling the OA login API', () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
+  it('keeps the HeyBuddy fallback error text', async () => {
+    vi.mocked(login).mockRejectedValueOnce('failed');
     render(<LoginView />);
 
-    expect(screen.getByText('AIBuddy login')).toBeInTheDocument();
-    expect(login).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: /login/i }));
+    expect(await screen.findByText('登录失败')).toBeInTheDocument();
   });
 });
