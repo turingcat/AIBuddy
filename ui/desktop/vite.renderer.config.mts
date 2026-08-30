@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { resolveBrand } = require('./scripts/brand.js');
-const brand = resolveBrand(process.env.APP_EDITION || 'heybuddy');
+const brand = resolveBrand();
 
 // https://vitejs.dev/config
 export default defineConfig({

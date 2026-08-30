@@ -20,12 +20,12 @@ const i18n = defineMessages({
   dialogDescription: {
     id: 'goosehintsModal.dialogDescription',
     defaultMessage:
-      'Provide additional context about your project to improve communication with HeyBuddy',
+      'Provide additional context about your project to improve communication with {appName}',
   },
   helpText1: {
     id: 'goosehintsModal.helpText1',
     defaultMessage:
-      '.goosehints is a text file used to provide additional context about your project and improve the communication with HeyBuddy.',
+      '.goosehints is a text file used to provide additional context about your project and improve the communication with {appName}.',
   },
   helpText2: {
     id: 'goosehintsModal.helpText2',
@@ -104,10 +104,7 @@ const HelpText = () => {
               variant="link"
               className="text-blue-500 hover:text-blue-600 p-0 h-auto"
               onClick={() =>
-                window.open(
-                  'https://goose-docs.ai/docs/guides/using-goosehints/',
-                  '_blank'
-                )
+                window.open('https://goose-docs.ai/docs/guides/using-goosehints/', '_blank')
               }
             >
               {intl.formatMessage(i18n.helpTextLink)}

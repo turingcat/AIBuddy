@@ -9,3 +9,15 @@ export function getAppEdition(): AppEdition {
   }
   return edition as AppEdition;
 }
+
+export function getAppDisplayName(): string {
+  return brands[getAppEdition()].productName;
+}
+
+export function getAppProtocol(): string {
+  return brands[getAppEdition()].protocol;
+}
+
+export function getAppProtocolPrefix(): string {
+  return `${getAppProtocol()}://`;
+}

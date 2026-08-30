@@ -52,6 +52,7 @@ import { trackErrorWithContext } from './utils/analytics';
 import { AppEvents } from './constants/events';
 import { registerPlatformEventHandlers } from './utils/platform_events';
 import { reconnectAcpAfterSystemResume } from './acp/acpConnection';
+import { getAppProtocolPrefix } from './brand';
 
 function PageViewTracker() {
   usePageViewTracking();
@@ -419,7 +420,7 @@ export function AppInner() {
       const link = args[0] as string;
       window.electron.logInfo('Opening session share link');
 
-      if (!link.startsWith('goose://sessions/nostr')) {
+      if (!link.startsWith(`${getAppProtocolPrefix()}sessions/nostr`)) {
         toast.error('Unsupported session share link');
         navigate('/sessions');
         return;

@@ -82,11 +82,6 @@ interface FileResponse {
 
 const config = JSON.parse(process.argv.find((arg) => arg.startsWith('{')) || '{}');
 
-interface UpdaterEvent {
-  event: string;
-  data?: unknown;
-}
-
 export interface CreateChatWindowOptions {
   query?: string;
   dir?: string;
@@ -160,16 +155,8 @@ export type ElectronAPI = {
     tokensUpdated?: boolean;
   }) => void;
   openExternal: (url: string) => Promise<OpenExternalUrlResult>;
-  // Update-related functions
   getVersion: () => string;
-  checkForUpdates: () => Promise<{ updateInfo: unknown; error: string | null }>;
-  downloadUpdate: () => Promise<{ success: boolean; error: string | null }>;
-  installUpdate: () => void;
   restartApp: () => void;
-  onUpdaterEvent: (callback: (event: UpdaterEvent) => void) => void;
-  getUpdateState: () => Promise<{ updateAvailable: boolean; latestVersion?: string } | null>;
-  isUsingGitHubFallback: () => Promise<boolean>;
-  getAutoDownloadDisabled: () => Promise<boolean>;
   // Recipe warning functions
   closeWindow: () => void;
   hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
@@ -187,7 +174,9 @@ export type ElectronAPI = {
   clearLoginCredentials: () => Promise<void>;
   loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
   getUserBalance: () => Promise<BalanceResult>;
-  listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
+  listModelsViaApi: () => Promise<
+    { id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]
+  >;
   getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
   listGitBranches: (dir: string) => Promise<string[]>;
   switchGitBranch: (dir: string, branch: string) => Promise<{ success: boolean; error?: string }>;
@@ -314,29 +303,8 @@ const electronAPI: ElectronAPI = {
   getVersion: (): string => {
     return config.GOOSE_VERSION || ipcRenderer.sendSync('get-app-version') || '';
   },
-  checkForUpdates: (): Promise<{ updateInfo: unknown; error: string | null }> => {
-    return ipcRenderer.invoke('check-for-updates');
-  },
-  downloadUpdate: (): Promise<{ success: boolean; error: string | null }> => {
-    return ipcRenderer.invoke('download-update');
-  },
-  installUpdate: (): void => {
-    ipcRenderer.invoke('install-update');
-  },
   restartApp: (): void => {
     ipcRenderer.send('restart-app');
-  },
-  onUpdaterEvent: (callback: (event: UpdaterEvent) => void): void => {
-    ipcRenderer.on('updater-event', (_event, data) => callback(data));
-  },
-  getUpdateState: (): Promise<{ updateAvailable: boolean; latestVersion?: string } | null> => {
-    return ipcRenderer.invoke('get-update-state');
-  },
-  isUsingGitHubFallback: (): Promise<boolean> => {
-    return ipcRenderer.invoke('is-using-github-fallback');
-  },
-  getAutoDownloadDisabled: (): Promise<boolean> => {
-    return ipcRenderer.invoke('get-auto-download-disabled');
   },
   closeWindow: () => ipcRenderer.send('close-window'),
   hasAcceptedRecipeBefore: (recipe: Recipe) =>

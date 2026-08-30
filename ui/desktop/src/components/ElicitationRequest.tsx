@@ -20,7 +20,7 @@ const i18n = defineMessages({
   },
   defaultMessage: {
     id: 'elicitationRequest.defaultMessage',
-    defaultMessage: 'HeyBuddy needs some information from you.',
+    defaultMessage: '{appName} needs some information from you.',
   },
   submit: {
     id: 'elicitationRequest.submit',

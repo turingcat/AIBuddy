@@ -46,11 +46,11 @@ function isSlashCommand(message: string): boolean {
 const i18n = defineMessages({
   notificationTitle: {
     id: 'chat.notification.taskComplete.title',
-    defaultMessage: 'HeyBuddy finished the task.',
+    defaultMessage: '{appName} finished the task.',
   },
   notificationBody: {
     id: 'chat.notification.taskComplete.body',
-    defaultMessage: 'Click here to bring HeyBuddy back into focus.',
+    defaultMessage: 'Click here to bring {appName} back into focus.',
   },
 });
 

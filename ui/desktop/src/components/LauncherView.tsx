@@ -5,7 +5,7 @@ import { getInitialWorkingDir } from '../utils/workingDir';
 const messages = defineMessages({
   placeholder: {
     id: 'launcher.placeholder',
-    defaultMessage: 'Ask HeyBuddy anything...',
+    defaultMessage: 'Ask {appName} anything...',
   },
 });
 

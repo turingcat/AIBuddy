@@ -53,7 +53,7 @@ const i18n = defineMessages({
   },
   memoryDescription: {
     id: 'extensionList.builtIns.memory.description',
-    defaultMessage: 'Teach HeyBuddy your preferences as you go.',
+    defaultMessage: 'Teach {appName} your preferences as you go.',
   },
   tutorialTitle: {
     id: 'extensionList.builtIns.tutorial.title',

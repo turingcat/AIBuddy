@@ -61,15 +61,9 @@ import { defaultSettings, getKeyboardShortcuts } from './utils/settings';
 import * as crypto from 'crypto';
 import * as yaml from 'yaml';
 import windowStateKeeper from 'electron-window-state';
-import {
-  getUpdateAvailable,
-  registerUpdateIpcHandlers,
-  setAutoDownloadDisabled,
-  setTrayRef,
-  setupAutoUpdater,
-  updateTrayMenu,
-} from './utils/autoUpdater';
-import { UPDATES_ENABLED } from './updates';
+import { setTrayRef } from './utils/tray';
+import { translateMenuLabel } from './menuLabels';
+import { getAppDisplayName, getAppProtocol, getAppProtocolPrefix } from './brand';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
@@ -84,94 +78,15 @@ import {
   readSelectedRecipe,
 } from './desktopFileAccess';
 
-function shouldSetupUpdater(): boolean {
-  // Setup updater if either the flag is enabled OR dev updates are enabled
-  return UPDATES_ENABLED || process.env.ENABLE_DEV_UPDATES === 'true';
-}
-
 // =======================================================================
 // Native menu localization
 // -----------------------------------------------------------------------
-// Electron's main process can't use react-intl (which runs in the renderer),
-// so the native menu bar is translated here with a small hand-maintained
-// dictionary. Only Simplified Chinese is filled in right now; other locales
-// fall through to the original English labels. Keep the keys in sync with
-// the raw label strings used below.
-// =======================================================================
-
-const MENU_TRANSLATIONS_ZH_CN: Record<string, string> = {
-  // Top-level
-  File: '文件',
-  Edit: '编辑',
-  View: '视图',
-  Window: '窗口',
-  Help: '帮助',
-  // Context menu
-  'Add to dictionary': '添加到词典',
-  Cut: '剪切',
-  Copy: '复制',
-  Paste: '粘贴',
-  // HeyBuddy-added items
-  'New Window': '新建窗口',
-  Settings: '设置',
-  'Find…': '查找…',
-  'Find Next': '查找下一个',
-  'Find Previous': '查找上一个',
-  'Use Selection for Find': '用所选内容查找',
-  Find: '查找',
-  'New Chat': '新建聊天',
-  'New Chat Window': '新建聊天窗口',
-  'Open Directory...': '打开目录…',
-  'Recent Directories': '最近的目录',
-  'Focus HeyBuddy Window': '聚焦 HeyBuddy 窗口',
-  'Quick Launcher': '快速启动器',
-  'Always on Top': '窗口置顶',
-  'Toggle Navigation': '切换导航',
-  'About HeyBuddy': '关于 HeyBuddy',
-  // Electron's default role-based labels we want to translate as well.
-  // (The menu role itself still provides the correct behaviour; only the
-  // display string is overridden.)
-  Undo: '撤销',
-  Redo: '重做',
-  'Select All': '全选',
-  Delete: '删除',
-  Speech: '语音',
-  Reload: '重新加载',
-  'Force Reload': '强制重新加载',
-  'Toggle Developer Tools': '切换开发者工具',
-  'Actual Size': '实际大小',
-  'Reset Zoom': '重置缩放',
-  'Zoom In': '放大',
-  'Zoom Out': '缩小',
-  'Toggle Full Screen': '切换全屏',
-  'Toggle Fullscreen': '切换全屏',
-  Minimize: '最小化',
-  Close: '关闭',
-  'Close Window': '关闭窗口',
-  Quit: '退出',
-  Exit: '退出',
-  'Bring All to Front': '全部置于最前',
-  'Emoji & Symbols': '表情符号',
-  'Start Dictation…': '开始听写…',
-  'Hide HeyBuddy': '隐藏 HeyBuddy',
-  'Hide Others': '隐藏其他',
-  'Show All': '全部显示',
-  Services: '服务',
-};
-
 function detectMenuLocale(): string {
   return getConfiguredGooseLocale() ?? 'en';
 }
 
 function menuT(label: string): string {
-  // Normalize underscores to hyphens so POSIX-style tags like "zh_CN" work.
-  const lower = detectMenuLocale().replace(/_/g, '-').toLowerCase();
-  const isTraditional = /^zh-(hant|tw|hk|mo)\b/.test(lower);
-  const isSimplifiedChinese = !isTraditional && (lower === 'zh' || lower.startsWith('zh-'));
-  if (isSimplifiedChinese) {
-    return MENU_TRANSLATIONS_ZH_CN[label] ?? label;
-  }
-  return label;
+  return translateMenuLabel(label, detectMenuLocale(), getAppDisplayName());
 }
 
 /**
@@ -428,23 +343,29 @@ if (process.env.ENABLE_PLAYWRIGHT) {
 // In production, register normally
 if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
   // Development mode - force registration
-  console.log('[Main] Development mode: Forcing protocol registration for goose://');
-  app.setAsDefaultProtocolClient('goose');
+  console.log(
+    `[Main] Development mode: Forcing protocol registration for ${getAppProtocolPrefix()}`
+  );
+  app.setAsDefaultProtocolClient(getAppProtocol());
 
   if (process.platform === 'darwin') {
     try {
       // Reset the default handler to ensure dev version takes precedence
-      spawn('open', ['-a', process.execPath, '--args', '--reset-protocol-handler', 'goose'], {
-        detached: true,
-        stdio: 'ignore',
-      });
+      spawn(
+        'open',
+        ['-a', process.execPath, '--args', '--reset-protocol-handler', getAppProtocol()],
+        {
+          detached: true,
+          stdio: 'ignore',
+        }
+      );
     } catch {
       console.warn('[Main] Could not reset protocol handler');
     }
   }
 } else {
   // Production mode - normal registration
-  app.setAsDefaultProtocolClient('goose');
+  app.setAsDefaultProtocolClient(getAppProtocol());
 }
 
 // Apply single instance lock on Windows and Linux where it's needed for deep links
@@ -458,7 +379,7 @@ if (process.platform !== 'darwin') {
     app.quit();
   } else {
     app.on('second-instance', (_event, commandLine) => {
-      const protocolUrl = commandLine.find((arg) => arg.startsWith('goose://'));
+      const protocolUrl = commandLine.find((arg) => arg.startsWith(getAppProtocolPrefix()));
       if (protocolUrl) {
         const parsedUrl = new URL(protocolUrl);
         // If it's a bot/recipe URL, handle it directly by creating a new window
@@ -527,7 +448,7 @@ if (process.platform !== 'darwin') {
   }
 
   // Handle protocol URLs on Windows and Linux startup
-  const protocolUrl = process.argv.find((arg) => arg.startsWith('goose://'));
+  const protocolUrl = process.argv.find((arg) => arg.startsWith(getAppProtocolPrefix()));
   if (protocolUrl) {
     app.whenReady().then(async () => {
       let parsedUrl: URL;
@@ -625,7 +546,7 @@ function getResumeSessionId(parsedUrl: URL): string | null {
 async function createResumeChatWindow(parsedUrl: URL, dir?: string): Promise<boolean> {
   const resumeSessionId = getResumeSessionId(parsedUrl);
   if (!resumeSessionId) {
-    log.warn('[Main] Ignoring goose://resume URL without a session id');
+    log.warn(`[Main] Ignoring ${getAppProtocolPrefix()}resume URL without a session id`);
     return false;
   }
 
@@ -779,7 +700,7 @@ app.on('open-url', async (_event, url) => {
 app.on('will-finish-launching', () => {
   if (process.platform === 'darwin') {
     app.setAboutPanelOptions({
-      applicationName: 'HeyBuddy',
+      applicationName: getAppDisplayName(),
       applicationVersion: app.getVersion(),
     });
   }
@@ -834,7 +755,7 @@ async function handleFileOpen(filePath: string) {
 
     // Show user-friendly error notification
     new Notification({
-      title: 'HeyBuddy',
+      title: getAppDisplayName(),
       body: `Could not open directory: ${path.basename(filePath)}`,
     }).show();
   }
@@ -1243,7 +1164,7 @@ const createChat = async (
       log.error('goose serve failed to start', error);
       dialog.showMessageBoxSync({
         type: 'error',
-        title: 'HeyBuddy Failed to Start',
+        title: `${getAppDisplayName()} Failed to Start`,
         message: 'The backend server failed to start.',
         detail: [
           'Backend: goose serve',
@@ -1696,7 +1617,6 @@ const createTray = () => {
   try {
     tray = new Tray(iconPath);
     setTrayRef(tray);
-    updateTrayMenu(getUpdateAvailable());
 
     if (process.platform === 'win32') {
       tray.on('click', showWindow);
@@ -2000,7 +1920,6 @@ const validSettingKeys: Set<string> = new Set([
   'language',
   'responseStyle',
   'seenAnnouncementIds',
-  'disableAutoDownload',
   'recentModels',
 ]);
 
@@ -2029,14 +1948,15 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   if (key === 'keyboardShortcuts') {
     registerGlobalShortcuts();
   }
-
-  if (key === 'disableAutoDownload') {
-    setAutoDownloadDisabled(value as boolean);
-  }
 });
 
-ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
-ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null);
+ipcMain.handle('get-login-credentials', () =>
+  readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+);
+ipcMain.handle(
+  'is-logged-in',
+  () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null
+);
 ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
   writeCredentials(CREDENTIALS_FILE, creds, getCredentialsCodec());
 });
@@ -2050,7 +1970,7 @@ ipcMain.handle('clear-login-credentials', () => {
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch)),
+  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
 );
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
@@ -2073,7 +1993,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
     const [balance, currency] = await Promise.all([
       fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
       fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
-        () => DEFAULT_CURRENCY_CONFIG,
+        () => DEFAULT_CURRENCY_CONFIG
       ),
     ]);
     return { balance, currency };
@@ -2560,8 +2480,6 @@ async function appMain() {
   // Ensure Windows shims are available before any MCP processes are spawned
   await ensureWinShims();
 
-  registerUpdateIpcHandlers();
-
   // Handle microphone permission requests
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     console.log('Permission requested:', permission);
@@ -2619,22 +2537,6 @@ async function appMain() {
     log.info('[Main] Skipping window creation in appMain - open-url already handled launch');
   }
 
-  // Setup auto-updater AFTER window is created and displayed (with delay to avoid blocking)
-  setTimeout(() => {
-    if (shouldSetupUpdater()) {
-      log.info('Setting up auto-updater after window creation...');
-      try {
-        const settings = getSettings();
-        if (settings.disableAutoDownload) {
-          setAutoDownloadDisabled(true);
-        }
-        setupAutoUpdater();
-      } catch (error) {
-        log.error('Error setting up auto-updater:', error);
-      }
-    }
-  }, 2000);
-
   if (process.platform === 'darwin') {
     const dockMenu = Menu.buildFromTemplate([
       {
@@ -2651,7 +2553,7 @@ async function appMain() {
 
   const shortcuts = getKeyboardShortcuts(settings);
 
-  const appMenu = menu?.items.find((item) => item.label === 'HeyBuddy');
+  const appMenu = menu?.items.find((item) => item.label === getAppDisplayName());
   if (appMenu?.submenu) {
     appMenu.submenu.insert(1, new MenuItem({ type: 'separator' }));
     if (shortcuts.settings) {
@@ -2779,7 +2681,7 @@ async function appMain() {
     if (shortcuts.focusWindow) {
       fileMenu.submenu.append(
         new MenuItem({
-          label: menuT('Focus HeyBuddy Window'),
+          label: menuT('Focus {app} Window'),
           accelerator: shortcuts.focusWindow,
           click() {
             focusWindow();
@@ -2886,13 +2788,13 @@ async function appMain() {
         helpMenu.submenu.append(new MenuItem({ type: 'separator' }));
       }
 
-      // Create the About HeyBuddy menu item with a submenu
+      // Create the About menu item with a submenu
       const aboutGooseMenuItem = new MenuItem({
-        label: menuT('About HeyBuddy'),
+        label: menuT('About {app}'),
         submenu: Menu.buildFromTemplate([]), // Start with an empty submenu for About
       });
 
-      // Add the Version menu item (display only) to the About HeyBuddy submenu
+      // Add the Version menu item (display only) to the About submenu
       if (aboutGooseMenuItem.submenu) {
         aboutGooseMenuItem.submenu.append(
           new MenuItem({
@@ -3232,7 +3134,7 @@ app.whenReady().then(async () => {
   try {
     await appMain();
   } catch (error) {
-    dialog.showErrorBox('HeyBuddy Error', `Failed to create main window: ${error}`);
+    dialog.showErrorBox(`${getAppDisplayName()} Error`, `Failed to create main window: ${error}`);
     app.quit();
   }
 });

@@ -40,9 +40,9 @@ export async function performOaLogin(
   } catch (e) {
     // AbortSignal.timeout 超时时 reject 的异常 name 为 TimeoutError
     if (e instanceof Error && e.name === 'TimeoutError') {
-      throw new Error('登录服务响应超时，请稍后重试');
+      throw new Error('登录服务响应超时，请稍后重试', { cause: e });
     }
-    throw new Error('无法连接登录服务，请检查网络或服务地址');
+    throw new Error('无法连接登录服务，请检查网络或服务地址', { cause: e });
   }
   if (!res.ok) {
     throw new Error(`登录服务不可用（HTTP ${res.status}）`);

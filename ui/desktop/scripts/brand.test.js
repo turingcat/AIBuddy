@@ -36,8 +36,11 @@ describe('resolveBrand', () => {
 
   it('rejects a missing edition', () => {
     const { resolveBrand } = require('./brand');
+    vi.stubEnv('APP_EDITION', undefined);
 
     expect(() => resolveBrand()).toThrow(/APP_EDITION.*heybuddy, aibuddy/);
+
+    vi.unstubAllEnvs();
   });
 
   it('rejects an unsupported edition', () => {

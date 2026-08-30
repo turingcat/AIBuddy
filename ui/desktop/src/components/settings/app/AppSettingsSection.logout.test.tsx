@@ -5,10 +5,8 @@ import { MemoryRouter, Routes, Route } from 'react-router';
 import { IntlProvider } from 'react-intl';
 import AppSettingsSection from './AppSettingsSection';
 
-vi.mock('../../../updates', () => ({ UPDATES_ENABLED: false }));
 vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
 vi.mock('../../GooseSidebar/ThemeSelector', () => ({ default: () => null }));
-vi.mock('./UpdateSection', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();
 const restartApp = vi.fn();
@@ -33,7 +31,7 @@ function renderWith(ui: React.ReactElement) {
           <Route path="/login" element={<div>login page</div>} />
         </Routes>
       </MemoryRouter>
-    </IntlProvider>,
+    </IntlProvider>
   );
 }
 
@@ -52,6 +50,15 @@ describe('AppSettingsSection 退出登录', () => {
       expect(clearLoginCredentials).toHaveBeenCalled();
       expect(restartApp).toHaveBeenCalled();
     });
+  });
+
+  // 应用不再自带更新通道，设置页必须只剩版本展示，不能留下形同虚设的更新入口
+  it('只展示版本信息，不再渲染更新区块', () => {
+    renderWith(<AppSettingsSection />);
+
+    expect(screen.getByText('Version')).toBeInTheDocument();
+    expect(screen.getByText('Development')).toBeInTheDocument();
+    expect(screen.queryByText('Updates')).not.toBeInTheDocument();
   });
 
   it('取消确认则不清凭证、不重启', async () => {

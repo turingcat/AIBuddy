@@ -3,16 +3,14 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 const { resolve } = require('path');
 const { resolveBrand } = require('./scripts/brand');
 
-const brand = resolveBrand(process.env.APP_EDITION || 'heybuddy');
-
-const isLinuxVulkanBuild = process.env.GOOSE_DESKTOP_LINUX_VARIANT === 'vulkan';
+const brand = resolveBrand();
 
 let cfg = {
   asar: true,
   name: brand.productName,
   executableName: brand.executableName,
   appBundleId: brand.bundleId,
-  extraResource: ['src/bin', 'src/images', 'src/app-update.yml'],
+  extraResource: ['src/bin', 'src/images'],
   icon: 'src/images/icon',
   // Windows specific configuration
   win32: {
@@ -46,21 +44,6 @@ let cfg = {
   },
 };
 
-// macOS code signing and notarization via Electron Forge
-// Activated when APPLE_TEAM_ID is set (CI signing builds)
-if (process.env.APPLE_TEAM_ID) {
-  cfg.osxSign = {
-    keychain: process.env.KEYCHAIN_PATH || undefined,
-    entitlements: 'entitlements.plist',
-    'entitlements-inherit': 'entitlements.plist',
-  };
-  cfg.osxNotarize = {
-    appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD,
-    teamId: process.env.APPLE_TEAM_ID,
-  };
-}
-
 module.exports = {
   packagerConfig: cfg,
   rebuildConfig: {},
@@ -80,103 +63,7 @@ module.exports = {
   makers: [
     {
       name: '@electron-forge/maker-zip',
-      platforms: ['darwin', 'win32', 'linux'],
-      config: {
-        options: {
-          icon: 'src/images/icon.ico',
-        },
-      },
-    },
-    // maker-squirrel 已移除：其 Update.exe 安装收尾会连 GitHub 下载卸载图标，网络受限时
-    // 安装窗口滞留约 85 秒；Windows 安装包改由 Inno Setup 生成（ui/desktop/heybuddy-setup.iss，
-    // 由根目录 build-windows.ps1 调用）。需要时可从 git 历史恢复本段。
-    // @author logic
-    // @date 2026-08-15
-    {
-      name: '@electron-forge/maker-deb',
-      config: {
-        name: 'HeyBuddy',
-        bin: 'HeyBuddy',
-        maintainer: 'AAIF (Agentic AI Foundation)',
-        homepage: 'https://github.com/turingcat/HeyBuddy',
-        categories: ['Development'],
-        desktopTemplate: './forge.deb.desktop',
-        options: {
-          icon: 'src/images/icon.png',
-          prefix: '/opt',
-          ...(isLinuxVulkanBuild ? { depends: ['libvulkan1'] } : {}),
-        },
-      },
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {
-        name: 'HeyBuddy',
-        bin: 'HeyBuddy',
-        maintainer: 'AAIF (Agentic AI Foundation)',
-        homepage: 'https://github.com/turingcat/HeyBuddy',
-        categories: ['Development'],
-        desktopTemplate: './forge.rpm.desktop',
-        options: {
-          icon: 'src/images/icon.png',
-          prefix: '/opt',
-          ...(isLinuxVulkanBuild ? { requires: ['vulkan-loader'] } : {}),
-        },
-      },
-    },
-    {
-      name: '@electron-forge/maker-flatpak',
-      config: {
-        options: {
-          id: 'io.github.block.Goose', // NOTE: kept for backwards compat with existing installs
-          categories: ['Development'],
-          mimeType: ['x-scheme-handler/goose'],
-          icon: {
-            scalable: 'src/images/icon.svg',
-            '512x512': 'src/images/icon-512.png',
-          },
-          homepage: 'https://github.com/turingcat/HeyBuddy',
-          runtimeVersion: '25.08',
-          baseVersion: '25.08',
-          bin: 'HeyBuddy',
-          modules: [
-            {
-              name: 'libbz2-shim',
-              buildsystem: 'simple',
-              'build-commands': [
-                // Create the lib directory in the app bundle
-                'mkdir -p /app/lib',
-                // Point to the actual library in the 25.08 runtime
-                // We use a wildcard to handle multi-arch paths (x86_64-linux-gnu, etc)
-                'ln -s $(find /usr/lib -name "libbz2.so.1" | head -n 1) /app/lib/libbz2.so.1.0',
-              ],
-            },
-            {
-              name: 'git',
-              buildsystem: 'simple',
-              'build-commands': [
-                'mkdir -p /app/bin /app/libexec/git-core',
-                'cp /usr/bin/git /app/bin/git',
-                'cp /usr/libexec/git-core/git-remote-https /app/libexec/git-core/git-remote-https 2>/dev/null || true',
-              ],
-            },
-          ],
-          finishArgs: [
-            '--share=ipc',
-            '--socket=x11',
-            '--socket=wayland',
-            '--device=dri',
-            '--share=network',
-            '--filesystem=home',
-            '--talk-name=org.freedesktop.Notifications',
-            '--socket=session-bus',
-            '--socket=system-bus',
-            // This ensures the app looks in our shim folder first
-            '--env=LD_LIBRARY_PATH=/app/lib',
-            '--env=GIT_EXEC_PATH=/app/libexec/git-core',
-          ],
-        },
-      },
+      platforms: ['darwin'],
     },
   ],
   plugins: [
