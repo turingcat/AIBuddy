@@ -37,7 +37,7 @@ describe('Forge brand identity', () => {
       appBundleId: 'com.electron.heybuddy',
       protocolName: 'GooseProtocol',
       protocol: 'goose',
-      icon: 'src/images/icon',
+      icon: 'src/images/icon.icns',
       windowsIcon: 'src/images/icon.ico',
     });
   });
@@ -49,7 +49,7 @@ describe('Forge brand identity', () => {
       appBundleId: 'com.electron.aibuddy',
       protocolName: 'AIBuddyProtocol',
       protocol: 'aibuddy',
-      icon: 'src/images/aibuddy/icon',
+      icon: 'src/images/aibuddy/icon.icns',
       windowsIcon: 'src/images/aibuddy/icon.ico',
     });
   });
