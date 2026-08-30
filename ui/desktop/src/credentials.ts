@@ -17,6 +17,7 @@ export interface LoginCredentials {
   token: string;
   baseUrl: string;
   apiKey: string;
+  authKind?: 'oa' | 'sub2api';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
 }
@@ -109,7 +110,8 @@ function validateFields(data: unknown): LoginCredentials | null {
   if (
     typeof creds?.token === 'string' &&
     typeof creds?.baseUrl === 'string' &&
-    typeof creds?.apiKey === 'string'
+    typeof creds?.apiKey === 'string' &&
+    (creds.authKind === undefined || creds.authKind === 'oa' || creds.authKind === 'sub2api')
   ) {
     return creds;
   }

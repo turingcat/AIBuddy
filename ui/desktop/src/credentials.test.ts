@@ -97,6 +97,29 @@ describe('credentials 读写', () => {
     expect(typeof envelope.blob).toBe('string');
   });
 
+  it('sub2api authKind 加密往返后保留', () => {
+    const creds = {
+      token: 'access-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api' as const,
+    };
+
+    writeCredentials(tmpFile, creds, base64Codec);
+
+    expect(readCredentials(tmpFile, base64Codec)).toEqual(creds);
+  });
+
+  it('旧版凭证没有 authKind 时仍然有效', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k' }));
+
+    expect(readCredentials(tmpFile, identityCodec)).toEqual({
+      token: 'legacy',
+      baseUrl: 'u',
+      apiKey: 'k',
+    });
+  });
+
   it('v:1 信封 blob 解密失败时返回 null', () => {
     const blob = Buffer.from('{"token":"t","baseUrl":"u","apiKey":"k"}', 'utf8').toString('base64');
     fs.writeFileSync(tmpFile, JSON.stringify({ v: 1, blob }));
