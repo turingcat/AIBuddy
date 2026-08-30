@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
@@ -48,13 +48,27 @@ function renderWidget() {
   return render(
     <IntlProvider locale="en" onError={() => {}}>
       <BalanceWidget />
-    </IntlProvider>,
+    </IntlProvider>
   );
 }
 
 describe('BalanceWidget（侧边栏余额组件）', () => {
   beforeEach(() => {
+    vi.stubEnv('APP_EDITION', 'heybuddy');
     electronMock.getUserBalance = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('AIBuddy 不渲染余额组件且不请求 new-api 余额', () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+
+    renderWidget();
+
+    expect(screen.queryByTestId('balance-widget')).not.toBeInTheDocument();
+    expect(electronMock.getUserBalance).not.toHaveBeenCalled();
   });
 
   it('W1: ready 时显示格式化余额，悬浮展示已用/请求数/更新时间', async () => {
@@ -89,9 +103,7 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     } as BalanceResult);
     renderWidget();
 
-    expect(await screen.findByTestId('balance-hint')).toHaveTextContent(
-      'Re-login to view balance',
-    );
+    expect(await screen.findByTestId('balance-hint')).toHaveTextContent('Re-login to view balance');
   });
 
   it('W4: unauthorized 时显示登录失效提示', async () => {
@@ -103,7 +115,7 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     renderWidget();
 
     expect(await screen.findByTestId('balance-hint')).toHaveTextContent(
-      'Login expired, please re-login',
+      'Login expired, please re-login'
     );
   });
 

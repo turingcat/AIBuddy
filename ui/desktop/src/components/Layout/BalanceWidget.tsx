@@ -5,6 +5,7 @@ import { useBalance, type BalanceState } from '../../hooks/useBalance';
 import { formatQuotaWithCurrency } from '../../quotaFormat';
 import { formatMessageTimestamp } from '../../utils/timeUtils';
 import { defineMessages, useIntl } from '../../i18n';
+import { getAppEdition } from '../../brand';
 
 /**
  * @author logic
@@ -133,6 +134,14 @@ export function BalanceRefreshButton({
 }
 
 export function BalanceWidget() {
+  if (getAppEdition() === 'aibuddy') {
+    return null;
+  }
+
+  return <HeyBuddyBalanceWidget />;
+}
+
+function HeyBuddyBalanceWidget() {
   const { state, refreshing, refresh } = useBalance();
 
   if (state.status === 'not-logged-in') {
