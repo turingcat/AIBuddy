@@ -1,68 +1,71 @@
 import { useState } from 'react';
+import { getAppEdition } from '../../brand';
 import { login } from '../../login';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Card } from '../ui/card';
 import { Goose } from '../icons/Goose';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Input } from '../ui/input';
+import AIBuddyLoginForm from './AIBuddyLoginForm';
 
-/**
- * @author logic
- * @date 2026-08-11
- * 登录页：表单提交后调用真实 OA 登录，写入凭证并重启应用让新凭证生效
- */
 export default function LoginView() {
+  if (getAppEdition() === 'aibuddy') {
+    return <AIBuddyLoginForm />;
+  }
+
+  return <HeyBuddyLoginForm />;
+}
+
+function HeyBuddyLoginForm() {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     setSubmitting(true);
     setError(null);
+
     try {
       const creds = await login(account, password);
       await window.electron.setLoginCredentials(creds);
-      // 重启整个应用，让新凭证随全新 goose serve 子进程生效（凭证是 spawn 时固定的环境变量）
-      // @author logic
-      // @date 2026-08-13
       window.electron.restartApp();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败');
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="h-screen w-full bg-background-primary flex flex-col items-center justify-center px-4">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-background-primary px-4">
       <Card className="w-full max-w-sm p-6">
-        <Goose className="size-10 mx-auto mb-4" />
-        <h1 className="text-xl font-light text-text-primary text-center mb-1">登录 HeyBuddy</h1>
-        <p className="text-text-secondary text-sm text-center mb-6">请使用公司OA账号登录</p>
+        <Goose className="mx-auto mb-4 size-10" />
+        <h1 className="mb-1 text-center text-xl font-light text-text-primary">Login HeyBuddy</h1>
+        <p className="mb-6 text-center text-sm text-text-secondary">Use your company OA account</p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <label className="block">
-            <span className="text-text-secondary text-xs">登录名</span>
+            <span className="text-xs text-text-secondary">Login name</span>
             <Input
               className="mt-1"
               value={account}
-              onChange={(e) => setAccount(e.target.value)}
+              onChange={(event) => setAccount(event.target.value)}
               aria-label="login-name"
             />
           </label>
           <label className="block">
-            <span className="text-text-secondary text-xs">密码</span>
+            <span className="text-xs text-text-secondary">Password</span>
             <Input
               className="mt-1"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(event) => setPassword(event.target.value)}
               aria-label="password"
             />
           </label>
-          {error && <p className="text-background-danger text-sm">{error}</p>}
+          {error && <p className="break-words text-sm text-background-danger">{error}</p>}
           <Button type="submit" className="w-full" disabled={submitting} aria-label="login">
-            {submitting ? '登录中…' : '登录'}
+            {submitting ? 'Logging in...' : 'Login'}
           </Button>
         </form>
       </Card>
