@@ -68,4 +68,23 @@ describe('LoginView', () => {
     await userEvent.click(screen.getByRole('button', { name: /login/i }));
     expect(await screen.findByText('登录失败')).toBeInTheDocument();
   });
+
+  it('routes the AIBuddy edition to the real AIBuddy form without OA login', async () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    window.electron.getAIBuddyAuthSettings = vi.fn().mockResolvedValue({
+      ok: false,
+      message: 'Settings unavailable',
+    });
+
+    render(<LoginView />);
+
+    expect(await screen.findByRole('heading', { name: 'AIBuddy' })).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(await screen.findByText('Settings unavailable')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
+    expect(screen.queryByText('登录 HeyBuddy')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('login-name')).not.toBeInTheDocument();
+    expect(login).not.toHaveBeenCalled();
+  });
 });
