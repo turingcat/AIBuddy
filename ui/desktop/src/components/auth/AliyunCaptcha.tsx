@@ -163,6 +163,17 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
     pending?.resolve(proof);
   }, []);
 
+  const handleInitializationFailure = useCallback(() => {
+    if (!mountedRef.current) {
+      return;
+    }
+
+    stopPopupWatch();
+    settlePending(null);
+    updateState('idle');
+    onError?.();
+  }, [onError, settlePending, stopPopupWatch, updateState]);
+
   const startPopupWatch = useCallback(() => {
     stopPopupWatch();
     popupSeenRef.current = false;
@@ -270,10 +281,18 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
       }
     };
 
-    initialization = runInitialization();
+    initialization = runInitialization().catch(handleInitializationFailure);
     initializationPromiseRef.current = initialization;
     return initialization;
-  }, [buttonId, completeVerification, elementId, prefix, region, sceneId]);
+  }, [
+    buttonId,
+    completeVerification,
+    elementId,
+    handleInitializationFailure,
+    prefix,
+    region,
+    sceneId,
+  ]);
 
   const beginVerification = useCallback(() => {
     if (cachedProofRef.current || stateRef.current === 'verifying') {
@@ -290,7 +309,7 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
       return;
     }
 
-    void initialize().catch(() => onError?.());
+    void initialize();
     beginVerification();
   }, [acquireOwnership, beginVerification, initialize, onError]);
 
@@ -325,7 +344,7 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
         initializedRef.current = false;
         updateState('idle');
         if (ownsCaptchaRef.current) {
-          void initialize().catch(() => onError?.());
+          void initialize();
         }
       },
     }),
@@ -343,7 +362,7 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
   useEffect(() => {
     mountedRef.current = true;
     if (acquireOwnership()) {
-      void initialize().catch(() => onError?.());
+      void initialize();
     }
 
     return () => {

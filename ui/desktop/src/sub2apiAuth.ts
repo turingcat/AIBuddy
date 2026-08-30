@@ -108,18 +108,20 @@ async function requestEnvelope(
     throw new Sub2apiProtocolError('无法连接认证服务，请检查网络或服务地址');
   }
 
-  if (!response.ok) {
-    throw new Sub2apiProtocolError(`认证服务不可用（HTTP ${response.status}）`);
-  }
-
   let envelope: Envelope;
   try {
     envelope = (await response.json()) as Envelope;
   } catch {
+    if (!response.ok) {
+      throw new Sub2apiProtocolError(`认证服务不可用（HTTP ${response.status}）`);
+    }
     throw new Sub2apiProtocolError('认证服务响应格式异常');
   }
 
   if (typeof envelope?.code !== 'number') {
+    if (!response.ok) {
+      throw new Sub2apiProtocolError(`认证服务不可用（HTTP ${response.status}）`);
+    }
     throw new Sub2apiProtocolError('认证服务响应格式异常');
   }
   if (envelope.code !== 0) {
@@ -129,6 +131,9 @@ async function requestEnvelope(
         : '认证服务请求失败',
       typeof envelope.reason === 'string' ? envelope.reason : undefined
     );
+  }
+  if (!response.ok) {
+    throw new Sub2apiProtocolError(`认证服务不可用（HTTP ${response.status}）`);
   }
   return envelope.data;
 }

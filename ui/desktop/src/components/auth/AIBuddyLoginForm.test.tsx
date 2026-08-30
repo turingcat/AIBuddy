@@ -16,16 +16,22 @@ const loginViaAIBuddy = vi.fn();
 const completeAIBuddy2FA = vi.fn();
 
 vi.mock('./AliyunCaptcha', () => ({
-  default: forwardRef<AliyunCaptchaHandle, { onStateChange?: (state: string) => void }>(
-    ({ onStateChange }, ref) => {
-      useImperativeHandle(ref, () => ({ verify: verifyCaptcha, reset: resetCaptcha }));
-      return (
+  default: forwardRef<
+    AliyunCaptchaHandle,
+    { onError?: () => void; onStateChange?: (state: string) => void }
+  >(({ onError, onStateChange }, ref) => {
+    useImperativeHandle(ref, () => ({ verify: verifyCaptcha, reset: resetCaptcha }));
+    return (
+      <>
         <button type="button" onClick={() => onStateChange?.('verified')}>
           Captcha
         </button>
-      );
-    }
-  ),
+        <button type="button" onClick={onError}>
+          Fail captcha
+        </button>
+      </>
+    );
+  }),
 }));
 
 import AIBuddyLoginForm from './AIBuddyLoginForm';
@@ -107,6 +113,36 @@ describe('AIBuddyLoginForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/captcha/i);
     expect(loginViaAIBuddy).not.toHaveBeenCalled();
     expect(resetCaptcha).toHaveBeenCalledOnce();
+  });
+
+  it('keeps an actionable captcha load error when verification has no proof and allows retry', async () => {
+    verifyCaptcha.mockResolvedValueOnce(null).mockResolvedValueOnce('retry-proof');
+    loginViaAIBuddy.mockResolvedValue(authenticatedResult());
+    render(<AIBuddyLoginForm />);
+
+    await screen.findByLabelText(/email/i);
+    await userEvent.click(screen.getByRole('button', { name: /fail captcha/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load captcha. Please try again.'
+    );
+
+    await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'password');
+    const submit = screen.getByRole('button', { name: /login/i });
+    expect(submit).toBeEnabled();
+    await userEvent.click(submit);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Unable to load captcha. Please try again.'
+    );
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/complete the captcha/i);
+    expect(submit).toBeEnabled();
+
+    await userEvent.click(submit);
+    await waitFor(() => {
+      expect(loginViaAIBuddy).toHaveBeenCalledWith('person@example.com', 'password', 'retry-proof');
+      expect(restartApp).toHaveBeenCalledOnce();
+    });
   });
 
   it('does not start a second login while the first one is pending', async () => {

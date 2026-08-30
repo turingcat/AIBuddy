@@ -41,6 +41,31 @@ describe('AliyunCaptcha', () => {
     return { ...result, ref };
   }
 
+  it('rolls back a failed SDK config reservation before a later mount retries', async () => {
+    delete window.initAliyunCaptcha;
+    const first = render(
+      <AliyunCaptcha sceneId="scene-failed" prefix="prefix-failed" region="sgp" />
+    );
+    const failedScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"]'
+    );
+    expect(failedScript).not.toBeNull();
+    await act(async () => {
+      fireEvent.error(failedScript!);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    first.unmount();
+
+    window.initAliyunCaptcha = vi.fn((options: CaptchaOptions) => {
+      initOptions = options;
+    });
+    await renderCaptcha();
+
+    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(1);
+    expect(window.AliyunCaptchaConfig).toEqual({ region: 'cn', prefix: 'prefix-1' });
+  });
+
   it('configures the SDK before popup initialization and accepts a proof', async () => {
     await renderCaptcha();
 
@@ -120,6 +145,34 @@ describe('AliyunCaptcha', () => {
 
     await expect(verification).resolves.toBeNull();
     expect(screen.getByRole('button')).toHaveAttribute('data-state', 'idle');
+  });
+
+  it('settles programmatic verification immediately when SDK loading fails', async () => {
+    delete window.initAliyunCaptcha;
+    const ref = createRef<AliyunCaptchaHandle>();
+    const onError = vi.fn();
+    render(
+      <AliyunCaptcha ref={ref} sceneId="scene-1" prefix="prefix-1" region="cn" onError={onError} />
+    );
+    const failedScript = document.querySelector<HTMLScriptElement>(
+      'script[src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"]'
+    );
+    expect(failedScript).not.toBeNull();
+
+    let verification: Promise<string | null> | undefined;
+    act(() => {
+      verification = ref.current?.verify();
+    });
+    await act(async () => {
+      fireEvent.error(failedScript!);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    await expect(verification).resolves.toBeNull();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(screen.getByRole('button')).toHaveAttribute('data-state', 'idle');
+    expect(onError).toHaveBeenCalledOnce();
   });
 
   it('ignores a proof delivered by the SDK callback that reset invalidated', async () => {
@@ -252,24 +305,6 @@ describe('AliyunCaptcha', () => {
     expect(window.AliyunCaptchaConfig).toEqual({ region: 'cn', prefix: 'prefix-1' });
     replacement.unmount();
     rejected.unmount();
-  });
-
-  it('allows a later mount to retry after the SDK script fails to load', async () => {
-    delete window.initAliyunCaptcha;
-    const first = render(<AliyunCaptcha sceneId="scene-1" prefix="prefix-1" />);
-    const failedScript = document.querySelector<HTMLScriptElement>(
-      'script[src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"]'
-    );
-    expect(failedScript).not.toBeNull();
-    fireEvent.error(failedScript!);
-    first.unmount();
-
-    window.initAliyunCaptcha = vi.fn((options: CaptchaOptions) => {
-      initOptions = options;
-    });
-    await renderCaptcha();
-
-    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(1);
   });
 
   it('cleans popup timers and residual SDK DOM on unmount', async () => {

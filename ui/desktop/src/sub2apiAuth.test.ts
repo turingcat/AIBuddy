@@ -91,6 +91,35 @@ describe('fetchSub2apiPublicSettings', () => {
     });
   });
 
+  it.each([
+    ['non-JSON response', new Response('<html>bad gateway</html>', { status: 502 }), 502],
+    [
+      'malformed JSON envelope',
+      new Response(JSON.stringify({ message: 'bad gateway' }), { status: 503 }),
+      503,
+    ],
+  ])('falls back to HTTP status for a non-2xx %s', async (_description, response, status) => {
+    const fetchMock = vi.fn().mockResolvedValue(response);
+
+    await expect(fetchSub2apiPublicSettings(panelUrl, asFetch(fetchMock))).resolves.toEqual({
+      ok: false,
+      message: `认证服务不可用（HTTP ${status}）`,
+    });
+  });
+
+  it('classifies a malformed 2xx JSON envelope as a format error', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ message: 'missing code' }), { status: 200 })
+      );
+
+    await expect(fetchSub2apiPublicSettings(panelUrl, asFetch(fetchMock))).resolves.toEqual({
+      ok: false,
+      message: '认证服务响应格式异常',
+    });
+  });
+
   it('classifies timeout failures', async () => {
     const fetchMock = vi.fn(
       (_input: string, init?: RequestInit) =>
@@ -398,16 +427,21 @@ describe('AIBuddy authentication wrappers', () => {
     });
   });
 
-  it('converts protocol failures to an IPC-safe error result', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          code: 4012,
-          message: '验证失败',
-          reason: 'ALIYUN_CAPTCHA_VERIFICATION_FAILED',
-        })
-      )
-    );
+  it('preserves the captcha message and reason from an HTTP 400 envelope', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(envelope(publicSettings()))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            code: 4012,
+            status: 400,
+            message: '验证失败',
+            reason: 'ALIYUN_CAPTCHA_VERIFICATION_FAILED',
+          }),
+          { status: 400 }
+        )
+      );
 
     await expect(
       authenticateAIBuddy(
@@ -422,6 +456,34 @@ describe('AIBuddy authentication wrappers', () => {
       ok: false,
       message: '验证失败',
       reason: 'ALIYUN_CAPTCHA_VERIFICATION_FAILED',
+    });
+  });
+
+  it('preserves the auth message and reason from an HTTP 401 TOTP envelope', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: 4010,
+          status: 401,
+          message: '验证码无效',
+          reason: 'INVALID_TOTP_CODE',
+        }),
+        { status: 401 }
+      )
+    );
+
+    await expect(
+      completeAIBuddyAuthentication(
+        panelUrl,
+        'temp-token',
+        '123456',
+        asFetch(fetchMock),
+        () => 'idem'
+      )
+    ).resolves.toEqual({
+      ok: false,
+      message: '验证码无效',
+      reason: 'INVALID_TOTP_CODE',
     });
   });
 });

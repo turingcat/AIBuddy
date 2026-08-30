@@ -42,6 +42,7 @@ function settingsError(settings: Sub2apiPublicSettings): string | null {
 
 export default function AIBuddyLoginForm() {
   const captchaRef = useRef<AliyunCaptchaHandle>(null);
+  const captchaErrorRef = useRef<string | null>(null);
   const submittingRef = useRef(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -105,6 +106,17 @@ export default function AIBuddyLoginForm() {
     window.electron.restartApp();
   };
 
+  const handleCaptchaError = () => {
+    const message = 'Unable to load captcha. Please try again.';
+    captchaErrorRef.current = message;
+    setError(message);
+  };
+
+  const handleCaptchaVerify = () => {
+    captchaErrorRef.current = null;
+    setError(null);
+  };
+
   const handleAccountSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (submittingRef.current || !settings || settingsMessage) {
@@ -118,9 +130,10 @@ export default function AIBuddyLoginForm() {
     try {
       const proof = await captchaRef.current?.verify();
       if (!proof) {
-        setError('Complete the captcha before signing in.');
+        setError(captchaErrorRef.current ?? 'Complete the captcha before signing in.');
         return;
       }
+      captchaErrorRef.current = null;
 
       const result = await window.electron.loginViaAIBuddy(email, password, proof);
       await finishAuthentication(result);
@@ -197,6 +210,8 @@ export default function AIBuddyLoginForm() {
                 sceneId={settings.aliyunCaptchaSceneId}
                 prefix={settings.aliyunCaptchaPrefix}
                 region={region}
+                onError={handleCaptchaError}
+                onVerify={handleCaptchaVerify}
               />
             )}
             {settingsMessage && (
