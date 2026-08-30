@@ -29,23 +29,20 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
             api_key: 'sk-abc',
           },
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     );
 
-    const result = await performOaLogin(
-      'http://localhost:3001',
-      'seeyon6',
-      'test@1234',
-      mockFetch,
-    );
+    const result = await performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch);
 
     const expected: LoginCredentials = {
       token: 'access-token',
       baseUrl: 'http://localhost:3001/v1',
       apiKey: 'sk-abc',
+      authKind: 'oa',
     };
     expect(result).toEqual(expected);
+    expect(result.authKind).toBe('oa');
     expect(mockFetch).toHaveBeenCalledWith('http://localhost:3001/api/user/login/oa', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -67,16 +64,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
             pat: 'pat-token',
           },
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     );
 
-    const result = await performOaLogin(
-      'http://localhost:3001',
-      'seeyon6',
-      'test@1234',
-      mockFetch,
-    );
+    const result = await performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch);
 
     expect(result.pat).toBe('pat-token');
   });
@@ -92,16 +84,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
             api_key: 'sk-abc',
           },
         }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } },
-      ),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     );
 
-    const result = await performOaLogin(
-      'http://localhost:3001',
-      'seeyon6',
-      'test@1234',
-      mockFetch,
-    );
+    const result = await performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch);
 
     expect(result.pat).toBeUndefined();
   });
@@ -111,11 +98,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       new Response(JSON.stringify({ success: false, message: '账号或密码错误' }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }),
+      })
     );
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'wrong', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'wrong', mockFetch)
     ).rejects.toThrow('账号或密码错误');
   });
 
@@ -124,11 +111,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       new Response(JSON.stringify({ success: false }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }),
+      })
     );
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'wrong', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'wrong', mockFetch)
     ).rejects.toThrow('登录失败');
   });
 
@@ -137,11 +124,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       new Response('default backend - 404', {
         status: 404,
         headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-      }),
+      })
     );
 
     await expect(
-      performOaLogin('https://ai.linyeyun.cn', 'seeyon6', 'test@1234', mockFetch),
+      performOaLogin('https://ai.linyeyun.cn', 'seeyon6', 'test@1234', mockFetch)
     ).rejects.toThrow('登录服务不可用（HTTP 404）');
   });
 
@@ -150,11 +137,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       new Response('<html>bad gateway</html>', {
         status: 200,
         headers: { 'Content-Type': 'text/html' },
-      }),
+      })
     );
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch)
     ).rejects.toThrow('登录服务响应格式异常');
   });
 
@@ -162,7 +149,7 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
     mockFetch.mockRejectedValue(new TypeError('fetch failed'));
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch)
     ).rejects.toThrow('无法连接登录服务，请检查网络或服务地址');
   });
 
@@ -172,11 +159,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       (_input: string, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
-        }),
+        })
     );
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', hangFetch, 20),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', hangFetch, 20)
     ).rejects.toThrow('登录服务响应超时，请稍后重试');
   });
 
@@ -185,11 +172,11 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
       new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      }),
+      })
     );
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch)
     ).rejects.toThrow('登录服务响应数据异常');
   });
 
@@ -198,7 +185,7 @@ describe('performOaLogin（主进程 OA 登录请求）', () => {
     mockFetch.mockRejectedValue('boom');
 
     await expect(
-      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch),
+      performOaLogin('http://localhost:3001', 'seeyon6', 'test@1234', mockFetch)
     ).rejects.toThrow('无法连接登录服务，请检查网络或服务地址');
   });
 });

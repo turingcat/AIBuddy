@@ -8,7 +8,10 @@ import type { LoginCredentials } from './credentials';
  * 避免把网关纯文本响应（如 "default backend - 404"）的 SyntaxError 直接抛给渲染进程。
  */
 type OaLoginResponse =
-  | { success: true; data: { access_token: string; base_url: string; api_key: string; pat?: string } }
+  | {
+      success: true;
+      data: { access_token: string; base_url: string; api_key: string; pat?: string };
+    }
   | { success: false; message?: string };
 
 // 结构化最小 fetch 类型：同时兼容全局 fetch 与 Electron 的 net.fetch
@@ -16,9 +19,7 @@ type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 // IPC result 模式返回值：主进程不抛异常，避免 Electron 给 IPC 错误加
 // "Error invoking remote method 'login-via-oa': " 技术前缀
-export type OaLoginResult =
-  | { ok: true; creds: LoginCredentials }
-  | { ok: false; message: string };
+export type OaLoginResult = { ok: true; creds: LoginCredentials } | { ok: false; message: string };
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -27,7 +28,7 @@ export async function performOaLogin(
   loginName: string,
   password: string,
   fetchImpl: FetchLike,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<LoginCredentials> {
   let res: Response;
   try {
@@ -64,6 +65,7 @@ export async function performOaLogin(
     token: body.data.access_token,
     baseUrl: body.data.base_url,
     apiKey: body.data.api_key,
+    authKind: 'oa',
     pat: body.data.pat,
   };
 }

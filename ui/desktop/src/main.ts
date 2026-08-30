@@ -30,6 +30,11 @@ import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
 import { performOaLogin, runOaLogin } from './oaLogin';
 import {
+  authenticateAIBuddy,
+  completeAIBuddyAuthentication,
+  fetchSub2apiPublicSettings,
+} from './sub2apiAuth';
+import {
   readCredentials,
   writeCredentials,
   clearCredentials,
@@ -2035,8 +2040,13 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   }
 });
 
-ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
-ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null);
+ipcMain.handle('get-login-credentials', () =>
+  readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+);
+ipcMain.handle(
+  'is-logged-in',
+  () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null
+);
 ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
   writeCredentials(CREDENTIALS_FILE, creds, getCredentialsCodec());
 });
@@ -2050,7 +2060,25 @@ ipcMain.handle('clear-login-credentials', () => {
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch)),
+  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
+);
+
+ipcMain.handle('get-aibuddy-auth-settings', () =>
+  fetchSub2apiPublicSettings(authConfig.apiBaseUrl, net.fetch)
+);
+
+ipcMain.handle(
+  'login-via-aibuddy',
+  (_event, email: string, password: string, captchaProof: string) =>
+    authenticateAIBuddy(authConfig.apiBaseUrl, email, password, captchaProof, net.fetch, () =>
+      crypto.randomUUID()
+    )
+);
+
+ipcMain.handle('complete-aibuddy-2fa', (_event, tempToken: string, totpCode: string) =>
+  completeAIBuddyAuthentication(authConfig.apiBaseUrl, tempToken, totpCode, net.fetch, () =>
+    crypto.randomUUID()
+  )
 );
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
@@ -2073,7 +2101,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
     const [balance, currency] = await Promise.all([
       fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
       fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
-        () => DEFAULT_CURRENCY_CONFIG,
+        () => DEFAULT_CURRENCY_CONFIG
       ),
     ]);
     return { balance, currency };

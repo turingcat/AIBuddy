@@ -2,6 +2,7 @@ import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
 import type { OaLoginResult } from './oaLogin';
+import type { AIBuddyAuthResult, AIBuddySettingsResult } from './sub2apiAuth';
 import type { BalanceResult } from './balance';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
@@ -186,8 +187,17 @@ export type ElectronAPI = {
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
   loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
+  getAIBuddyAuthSettings: () => Promise<AIBuddySettingsResult>;
+  loginViaAIBuddy: (
+    email: string,
+    password: string,
+    captchaProof: string
+  ) => Promise<AIBuddyAuthResult>;
+  completeAIBuddy2FA: (tempToken: string, totpCode: string) => Promise<AIBuddyAuthResult>;
   getUserBalance: () => Promise<BalanceResult>;
-  listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
+  listModelsViaApi: () => Promise<
+    { id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]
+  >;
   getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
   listGitBranches: (dir: string) => Promise<string[]>;
   switchGitBranch: (dir: string, branch: string) => Promise<{ success: boolean; error?: string }>;
@@ -357,6 +367,11 @@ const electronAPI: ElectronAPI = {
   clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
   loginViaOA: (loginName: string, password: string) =>
     ipcRenderer.invoke('login-via-oa', loginName, password),
+  getAIBuddyAuthSettings: () => ipcRenderer.invoke('get-aibuddy-auth-settings'),
+  loginViaAIBuddy: (email: string, password: string, captchaProof: string) =>
+    ipcRenderer.invoke('login-via-aibuddy', email, password, captchaProof),
+  completeAIBuddy2FA: (tempToken: string, totpCode: string) =>
+    ipcRenderer.invoke('complete-aibuddy-2fa', tempToken, totpCode),
   getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
   listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
   getGitBranchInfo: (dir: string) => ipcRenderer.invoke('get-git-branch-info', dir),
