@@ -121,6 +121,15 @@ def generate(source: Path) -> None:
     print('生成 icon.svg（512 位图内嵌包装）')
 
 
+def generate_packager_icons(source: Path, output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    master = build_master(source)
+    master.save(output_dir / 'icon.png', optimize=True)
+    master.save(output_dir / 'icon.ico', sizes=ICO_SIZES)
+    master.save(output_dir / 'icon.icns')
+    print(f'生成打包图标到 {output_dir}')
+
+
 def verify() -> bool:
     ok = True
     for name, size in PNG_OUTPUTS.items():
@@ -187,6 +196,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description='从 logo.png 生成全平台图标产物')
     parser.add_argument('--source', default=str(SCRIPT_DIR / LOGO_SOURCE), help='品牌源图路径')
     parser.add_argument('--verify', action='store_true', help='只校验产物，不重新生成')
+    parser.add_argument('--packager-icons-dir', help='生成 icon.png、icon.ico 和 icon.icns 到指定目录')
     args = parser.parse_args()
 
     if args.verify:
@@ -196,6 +206,10 @@ def main() -> int:
     if not source.exists():
         print(f'源图不存在: {source}')
         return 1
+    if args.packager_icons_dir:
+        generate_packager_icons(source, Path(args.packager_icons_dir))
+        return 0
+
     generate(source)
     print('--- 校验 ---')
     return 0 if verify() else 1

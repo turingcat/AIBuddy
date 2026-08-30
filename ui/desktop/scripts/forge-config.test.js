@@ -15,7 +15,9 @@ function loadForgeIdentity(edition) {
          executableName: config.packagerConfig.executableName,
          appBundleId: config.packagerConfig.appBundleId,
          protocolName: protocol.name,
-         protocol: protocol.schemes[0]
+          protocol: protocol.schemes[0],
+          icon: config.packagerConfig.icon,
+          windowsIcon: config.packagerConfig.win32.icon
        }));`,
     ],
     {
@@ -35,6 +37,8 @@ describe('Forge brand identity', () => {
       appBundleId: 'com.electron.heybuddy',
       protocolName: 'GooseProtocol',
       protocol: 'goose',
+      icon: 'src/images/icon',
+      windowsIcon: 'src/images/icon.ico',
     });
   });
 
@@ -45,6 +49,8 @@ describe('Forge brand identity', () => {
       appBundleId: 'com.electron.aibuddy',
       protocolName: 'AIBuddyProtocol',
       protocol: 'aibuddy',
+      icon: 'src/images/aibuddy/icon',
+      windowsIcon: 'src/images/aibuddy/icon.ico',
     });
   });
 });

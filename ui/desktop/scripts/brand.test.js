@@ -36,6 +36,7 @@ describe('resolveBrand', () => {
       windowsAppId: '{FDA43817-EFCC-42D0-AB69-D414B629E300}',
       executableName: 'HeyBuddy',
       artifactStem: 'HeyBuddy',
+      iconStem: 'icon',
       authMode: 'oa',
       authApiBaseUrl: 'https://ai.linyeyun.cn',
     });
@@ -53,6 +54,7 @@ describe('resolveBrand', () => {
       windowsAppId: '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}',
       executableName: 'AIBuddy',
       artifactStem: 'AIBuddy',
+      iconStem: 'aibuddy/icon',
       authMode: 'sub2api',
       authApiBaseUrl: 'https://tflow.online',
     });

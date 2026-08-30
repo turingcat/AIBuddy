@@ -64,7 +64,7 @@ import * as yaml from 'yaml';
 import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
-import { getAppDisplayName, getAppProtocol, getAppProtocolPrefix } from './brand';
+import { getAppDisplayName, getAppIconStem, getAppProtocol, getAppProtocolPrefix } from './brand';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
@@ -1213,12 +1213,13 @@ const createChat = async (
     // 也落不到 extraResource 的实际位置，只会静默回退默认图标。
     // @author logic
     // @date 2026-08-14
+    const windowIconStem = getAppIconStem();
     const windowIconName =
       process.platform === 'win32'
-        ? 'icon.ico'
+        ? `${windowIconStem}.ico`
         : process.platform === 'darwin'
-          ? 'icon.icns'
-          : 'icon.png';
+          ? `${windowIconStem}.icns`
+          : `${windowIconStem}.png`;
     const windowIcon = [
       path.join(process.resourcesPath, 'images', windowIconName),
       path.join(process.cwd(), 'src', 'images', windowIconName),

@@ -14,6 +14,10 @@ export function getAppDisplayName(): string {
   return brands[getAppEdition()].productName;
 }
 
+export function getAppIconStem(): string {
+  return brands[getAppEdition()].iconStem;
+}
+
 export function getAppProtocol(): string {
   return brands[getAppEdition()].protocol;
 }
