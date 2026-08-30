@@ -2,7 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { readCredentials, writeCredentials, clearCredentials, type CredentialsCodec } from './credentials';
+import {
+  readCredentials,
+  writeCredentials,
+  clearCredentials,
+  type CredentialsCodec,
+} from './credentials';
 
 /**
  * @author: logic
@@ -62,7 +67,11 @@ describe('credentials 读写', () => {
   });
 
   it('加密写入后文件不含明文凭证', () => {
-    writeCredentials(tmpFile, { token: 'secret-token', baseUrl: 'https://gw', apiKey: 'secret-key', pat: 'secret-pat' }, base64Codec);
+    writeCredentials(
+      tmpFile,
+      { token: 'secret-token', baseUrl: 'https://gw', apiKey: 'secret-key', pat: 'secret-pat' },
+      base64Codec
+    );
     const raw = fs.readFileSync(tmpFile, 'utf8');
     expect(raw).not.toContain('secret-token');
     expect(raw).not.toContain('secret-key');
@@ -138,7 +147,10 @@ describe('credentials 读写', () => {
   });
 
   it('v:1 信封解密后字段类型不匹配时返回 null', () => {
-    const blob = Buffer.from(JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }), 'utf8').toString('base64');
+    const blob = Buffer.from(
+      JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }),
+      'utf8'
+    ).toString('base64');
     fs.writeFileSync(tmpFile, JSON.stringify({ v: 1, blob }));
     expect(readCredentials(tmpFile, base64Codec)).toBeNull();
   });
@@ -155,7 +167,11 @@ describe('credentials 读写', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     fs.chmodSync(tmpFile, 0o400);
     try {
-      expect(readCredentials(tmpFile, identityCodec)).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+      expect(readCredentials(tmpFile, identityCodec)).toEqual({
+        token: 't',
+        baseUrl: 'u',
+        apiKey: 'k',
+      });
     } finally {
       fs.chmodSync(tmpFile, 0o600);
     }
