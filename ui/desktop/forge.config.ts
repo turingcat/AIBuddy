@@ -11,7 +11,7 @@ let cfg = {
   executableName: brand.executableName,
   appBundleId: brand.bundleId,
   extraResource: ['src/bin', 'src/images'],
-  icon: `src/images/${brand.iconStem}`,
+  icon: `src/images/${brand.iconStem}.icns`,
   // Windows specific configuration
   win32: {
     icon: `src/images/${brand.iconStem}.ico`,
