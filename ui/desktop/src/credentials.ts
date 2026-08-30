@@ -17,6 +17,7 @@ export interface LoginCredentials {
   token: string;
   baseUrl: string;
   apiKey: string;
+  authKind?: 'oa' | 'sub2api';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
 }
@@ -31,7 +32,11 @@ interface CredentialsEnvelope {
  * @date: 2026-08-27
  * 写入加密信封文件，权限 0o600（Windows 上该参数无害，Unix 上生效）
  */
-export function writeCredentials(filePath: string, creds: LoginCredentials, codec: CredentialsCodec): void {
+export function writeCredentials(
+  filePath: string,
+  creds: LoginCredentials,
+  codec: CredentialsCodec
+): void {
   const envelope: CredentialsEnvelope = {
     v: 1,
     blob: codec.encrypt(JSON.stringify(creds)),
@@ -46,7 +51,10 @@ export function writeCredentials(filePath: string, creds: LoginCredentials, code
  * 读取凭证文件：v:1 信封经 codec 解密；旧版明文读取成功后自动迁移为加密信封。
  * 文件不存在、内容损坏、解密失败或字段非法时返回 null
  */
-export function readCredentials(filePath: string, codec: CredentialsCodec): LoginCredentials | null {
+export function readCredentials(
+  filePath: string,
+  codec: CredentialsCodec
+): LoginCredentials | null {
   if (!fs.existsSync(filePath)) return null;
   let data: unknown;
   try {
@@ -109,7 +117,8 @@ function validateFields(data: unknown): LoginCredentials | null {
   if (
     typeof creds?.token === 'string' &&
     typeof creds?.baseUrl === 'string' &&
-    typeof creds?.apiKey === 'string'
+    typeof creds?.apiKey === 'string' &&
+    (creds.authKind === undefined || creds.authKind === 'oa' || creds.authKind === 'sub2api')
   ) {
     return creds;
   }

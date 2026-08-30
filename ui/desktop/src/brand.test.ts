@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getAppDisplayName, getAppEdition, getAppProtocol, getAppProtocolPrefix } from './brand';
+import {
+  getAppDisplayName,
+  getAppEdition,
+  getAppIconStem,
+  getAppProtocol,
+  getAppProtocolPrefix,
+} from './brand';
 
 describe('brand', () => {
   afterEach(() => {
@@ -11,6 +17,7 @@ describe('brand', () => {
 
     expect(getAppEdition()).toBe('heybuddy');
     expect(getAppDisplayName()).toBe('HeyBuddy');
+    expect(getAppIconStem()).toBe('icon');
     expect(getAppProtocol()).toBe('goose');
     expect(getAppProtocolPrefix()).toBe('goose://');
   });
@@ -20,6 +27,7 @@ describe('brand', () => {
 
     expect(getAppEdition()).toBe('aibuddy');
     expect(getAppDisplayName()).toBe('AIBuddy');
+    expect(getAppIconStem()).toBe('aibuddy/icon');
     expect(getAppProtocol()).toBe('aibuddy');
     expect(getAppProtocolPrefix()).toBe('aibuddy://');
   });

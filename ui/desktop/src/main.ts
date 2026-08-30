@@ -28,6 +28,7 @@ import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
+import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
 import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
@@ -63,7 +64,7 @@ import * as yaml from 'yaml';
 import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
-import { getAppDisplayName, getAppProtocol, getAppProtocolPrefix } from './brand';
+import { getAppDisplayName, getAppIconStem, getAppProtocol, getAppProtocolPrefix } from './brand';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
@@ -1212,12 +1213,13 @@ const createChat = async (
     // 也落不到 extraResource 的实际位置，只会静默回退默认图标。
     // @author logic
     // @date 2026-08-14
+    const windowIconStem = getAppIconStem();
     const windowIconName =
       process.platform === 'win32'
-        ? 'icon.ico'
+        ? `${windowIconStem}.ico`
         : process.platform === 'darwin'
-          ? 'icon.icns'
-          : 'icon.png';
+          ? `${windowIconStem}.icns`
+          : `${windowIconStem}.png`;
     const windowIcon = [
       path.join(process.resourcesPath, 'images', windowIconName),
       path.join(process.cwd(), 'src', 'images', windowIconName),
@@ -1972,6 +1974,12 @@ ipcMain.handle('clear-login-credentials', () => {
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
   runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
 );
+
+registerAIBuddyAuthIpc(ipcMain, {
+  apiBaseUrl: authConfig.apiBaseUrl,
+  fetchImpl: net.fetch,
+  idempotencyKeyFactory: () => crypto.randomUUID(),
+});
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
 // /api/status 的货币显示配置带 1 小时模块级缓存；currency 拉取失败且无缓存时

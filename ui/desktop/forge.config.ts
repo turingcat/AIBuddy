@@ -11,10 +11,10 @@ let cfg = {
   executableName: brand.executableName,
   appBundleId: brand.bundleId,
   extraResource: ['src/bin', 'src/images'],
-  icon: 'src/images/icon',
+  icon: `src/images/${brand.iconStem}`,
   // Windows specific configuration
   win32: {
-    icon: 'src/images/icon.ico',
+    icon: `src/images/${brand.iconStem}.ico`,
     certificateFile: process.env.WINDOWS_CERTIFICATE_FILE,
     signingRole: process.env.WINDOW_SIGNING_ROLE,
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
