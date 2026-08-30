@@ -64,8 +64,8 @@ export function buildCSP(externalBackend?: ExternalBackendConfig): string {
 
   return (
     "default-src 'self';" +
-    "style-src 'self' 'unsafe-inline';" +
-    "script-src 'self' 'unsafe-inline';" +
+    "style-src 'self' 'unsafe-inline' https://*.alicdn.com;" +
+    "script-src 'self' 'unsafe-inline' https://*.alicdn.com;" +
     "img-src 'self' data: https:;" +
     `connect-src ${connectSrc};` +
     "object-src 'none';" +

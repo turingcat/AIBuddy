@@ -48,6 +48,8 @@ declare module '*.md?raw' {
 declare global {
   interface Window {
     isCreatingRecipe?: boolean;
+    initAliyunCaptcha?: (options: AliyunCaptchaInitOptions) => void;
+    AliyunCaptchaConfig?: { region: 'cn' | 'sgp'; prefix: string };
   }
 
   interface WindowEventMap {
@@ -67,6 +69,19 @@ declare global {
       userInitiated?: boolean;
     }>;
   }
+}
+
+interface AliyunCaptchaInitOptions {
+  SceneId: string;
+  prefix: string;
+  mode: 'popup' | 'embed';
+  element: string;
+  button: string;
+  captchaVerifyCallback: (proof: string) => { captchaResult: boolean; bizResult?: boolean };
+  onBizResultCallback: (bizResult: boolean) => void;
+  getInstance: (instance: unknown) => void;
+  slideStyle?: { width: number; height: number };
+  language?: string;
 }
 
 export {};

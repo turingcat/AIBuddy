@@ -106,6 +106,15 @@ describe('shouldUpgradeInsecureRequests', () => {
 });
 
 describe('buildCSP', () => {
+  it('allows the Aliyun captcha CDN for scripts and styles without changing connection or frame policies', () => {
+    const csp = buildCSP();
+
+    expect(csp).toContain("script-src 'self' 'unsafe-inline' https://*.alicdn.com");
+    expect(csp).toContain("style-src 'self' 'unsafe-inline' https://*.alicdn.com");
+    expect(csp).toContain('connect-src');
+    expect(csp).toContain("frame-src 'self' https: http:");
+  });
+
   it('includes upgrade-insecure-requests with no external backend', () => {
     const csp = buildCSP(undefined);
     expect(csp).toContain('upgrade-insecure-requests');
