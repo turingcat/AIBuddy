@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { createIntl, IntlProvider } from 'react-intl';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import zhCatalog from '../../../../i18n/messages/zh-CN.json';
 import type { FixedExtensionEntry } from '../../../ConfigContext';
 import { extensionsViewMessages } from '../../../extensions/ExtensionsView';
@@ -84,6 +84,16 @@ const searchableExtensions = [
 ] as FixedExtensionEntry[];
 
 describe('ExtensionList', () => {
+  // This suite asserts exact Chinese copy, some of which embeds the product
+  // name, so pin the edition instead of tracking whichever one runs the suite.
+  beforeEach(() => {
+    vi.stubEnv('APP_EDITION', 'heybuddy');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('localizes headings and built-in extension copy by stable ID', () => {
     render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
@@ -101,7 +111,7 @@ describe('ExtensionList', () => {
     expect(screen.getByText('提供软件开发和工程相关的通用工具。')).toBeInTheDocument();
     expect(screen.getByText('提供无需开发经验的通用电脑操作工具。')).toBeInTheDocument();
     expect(screen.getByText('自动将数据呈现为可视化界面。')).toBeInTheDocument();
-    expect(screen.getByText('在使用过程中记住你的偏好。')).toBeInTheDocument();
+    expect(screen.getByText('让 HeyBuddy 在使用过程中记住你的偏好。')).toBeInTheDocument();
     expect(screen.getByText('提供交互式教程和使用指南。')).toBeInTheDocument();
   });
 
@@ -169,7 +179,10 @@ describe('ExtensionList', () => {
     );
 
     expect(
-      intl.formatMessage(extensionsViewMessages.description, { searchShortcut: 'Cmd+K' })
+      intl.formatMessage(extensionsViewMessages.description, {
+        appName: 'HeyBuddy',
+        searchShortcut: 'Cmd+K',
+      })
     ).toBe(
       '这些扩展使用模型上下文协议（MCP）。它们可以通过三大组件扩展 HeyBuddy 的能力：提示词、资源和工具。按 Cmd+K 搜索。'
     );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { defineMessages, useIntl } from '../../../i18n';
 import { Switch } from '../../ui/switch';
 import { Button } from '../../ui/button';
@@ -11,9 +11,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu';
-import UpdateSection from './UpdateSection';
 
-import { UPDATES_ENABLED } from '../../../updates';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
 import ThemeSelector from '../../GooseSidebar/ThemeSelector';
 import BlockLogoBlack from './icons/block-lockup_black.png';
@@ -26,7 +24,7 @@ const i18n = defineMessages({
   appearanceTitle: { id: 'settings.appearance.title', defaultMessage: 'Appearance' },
   appearanceDesc: {
     id: 'settings.appearance.description',
-    defaultMessage: 'Configure how HeyBuddy appears on your system',
+    defaultMessage: 'Configure how {appName} appears on your system',
   },
   notifications: { id: 'settings.notifications.title', defaultMessage: 'Notifications' },
   notificationsDesc: {
@@ -41,33 +39,33 @@ const i18n = defineMessages({
   },
   taskNotificationsDesc: {
     id: 'settings.notifications.task.description',
-    defaultMessage: 'Notify when HeyBuddy finishes a task while the window is in the background',
+    defaultMessage: 'Notify when {appName} finishes a task while the window is in the background',
   },
   menuBarIcon: { id: 'settings.menuBarIcon.title', defaultMessage: 'Menu bar icon' },
   menuBarIconDesc: {
     id: 'settings.menuBarIcon.description',
-    defaultMessage: 'Show HeyBuddy in the menu bar',
+    defaultMessage: 'Show {appName} in the menu bar',
   },
   dockIcon: { id: 'settings.dockIcon.title', defaultMessage: 'Dock icon' },
   dockIconDesc: {
     id: 'settings.dockIcon.description',
-    defaultMessage: 'Show HeyBuddy in the dock',
+    defaultMessage: 'Show {appName} in the dock',
   },
   preventSleep: { id: 'settings.preventSleep.title', defaultMessage: 'Prevent Sleep' },
   preventSleepDesc: {
     id: 'settings.preventSleep.description',
     defaultMessage:
-      'Keep your computer awake while HeyBuddy is running a task (screen can still lock)',
+      'Keep your computer awake while {appName} is running a task (screen can still lock)',
   },
   themeTitle: { id: 'settings.theme.title', defaultMessage: 'Theme' },
   themeDesc: {
     id: 'settings.theme.description',
-    defaultMessage: 'Customize the look and feel of HeyBuddy',
+    defaultMessage: 'Customize the look and feel of {appName}',
   },
   languageTitle: { id: 'settings.language.title', defaultMessage: 'Language' },
   languageDesc: {
     id: 'settings.language.description',
-    defaultMessage: 'Choose the display language for HeyBuddy',
+    defaultMessage: 'Choose the display language for {appName}',
   },
   languageSystem: { id: 'settings.language.systemDefault', defaultMessage: 'System Default' },
   languageEnglish: { id: 'settings.language.english', defaultMessage: 'English' },
@@ -78,16 +76,11 @@ const i18n = defineMessages({
   helpTitle: { id: 'settings.help.title', defaultMessage: 'Help & feedback' },
   helpDesc: {
     id: 'settings.help.description',
-    defaultMessage: 'Help us improve HeyBuddy by reporting issues or requesting new features',
+    defaultMessage: 'Help us improve {appName} by reporting issues or requesting new features',
   },
   reportBug: { id: 'settings.help.reportBug', defaultMessage: 'Report a Bug' },
   requestFeature: { id: 'settings.help.requestFeature', defaultMessage: 'Request a Feature' },
   versionTitle: { id: 'settings.version.title', defaultMessage: 'Version' },
-  updatesTitle: { id: 'settings.updates.title', defaultMessage: 'Updates' },
-  updatesDesc: {
-    id: 'settings.updates.description',
-    defaultMessage: 'Check for and install updates to keep HeyBuddy running at its best',
-  },
   notificationsModalTitle: {
     id: 'settings.notifications.modal.title',
     defaultMessage: 'How to Enable Notifications',
@@ -106,7 +99,7 @@ const i18n = defineMessages({
   },
   notificationsMacStep3: {
     id: 'settings.notifications.modal.macStep3',
-    defaultMessage: 'Find and select HeyBuddy in the application list',
+    defaultMessage: 'Find and select {appName} in the application list',
   },
   notificationsMacStep4: {
     id: 'settings.notifications.modal.macStep4',
@@ -126,7 +119,7 @@ const i18n = defineMessages({
   },
   notificationsWinStep3: {
     id: 'settings.notifications.modal.winStep3',
-    defaultMessage: 'Find and select HeyBuddy in the application list',
+    defaultMessage: 'Find and select {appName} in the application list',
   },
   notificationsWinStep4: {
     id: 'settings.notifications.modal.winStep4',
@@ -141,11 +134,7 @@ const LANGUAGE_OPTIONS: Array<{ value: LanguageSetting; message: keyof typeof i1
   { value: 'zh-CN', message: 'languageChineseSimplified' },
 ];
 
-interface AppSettingsSectionProps {
-  scrollToSection?: string;
-}
-
-export default function AppSettingsSection({ scrollToSection }: AppSettingsSectionProps) {
+export default function AppSettingsSection() {
   const [menuBarIconEnabled, setMenuBarIconEnabled] = useState(true);
   const [dockIconEnabled, setDockIconEnabled] = useState(true);
   const [wakelockEnabled, setWakelockEnabled] = useState(true);
@@ -155,8 +144,6 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [language, setLanguage] = useState<LanguageSetting>('system');
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const updateSectionRef = useRef<HTMLDivElement>(null);
-  const shouldShowUpdates = !window.appConfig.get('GOOSE_VERSION');
 
   useEffect(() => {
     setIsMacOS(window.electron.platform === 'darwin');
@@ -181,14 +168,6 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
   useEffect(() => {
     window.electron.getSetting('language').then((value) => setLanguage(value ?? 'system'));
   }, []);
-
-  useEffect(() => {
-    if (scrollToSection === 'update' && updateSectionRef.current) {
-      setTimeout(() => {
-        updateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
-  }, [scrollToSection]);
 
   useEffect(() => {
     window.electron.getMenuBarIconState().then((enabled) => {
@@ -474,41 +453,23 @@ export default function AppSettingsSection({ scrollToSection }: AppSettingsSecti
         </CardContent>
       </Card>
 
-      {/* Version Section - only show if GOOSE_VERSION is set */}
-      {!shouldShowUpdates && (
-        <Card className="rounded-lg">
-          <CardHeader className="pb-0">
-            <CardTitle className="mb-1">{intl.formatMessage(i18n.versionTitle)}</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 px-4">
-            <div className="flex items-center gap-3">
-              <img
-                src={isDarkMode ? BlockLogoWhite : BlockLogoBlack}
-                alt="Block Logo" // TODO: replace with AAIF logo asset
-                className="h-8 w-auto"
-              />
-              <span className="text-2xl font-mono text-black dark:text-white">
-                {String(window.appConfig.get('GOOSE_VERSION') || 'Development')}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Update Section - only show if GOOSE_VERSION is NOT set */}
-      {UPDATES_ENABLED && shouldShowUpdates && (
-        <div ref={updateSectionRef}>
-          <Card className="rounded-lg">
-            <CardHeader className="pb-0">
-              <CardTitle className="mb-1">{intl.formatMessage(i18n.updatesTitle)}</CardTitle>
-              <CardDescription>{intl.formatMessage(i18n.updatesDesc)}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-4">
-              <UpdateSection />
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Card className="rounded-lg">
+        <CardHeader className="pb-0">
+          <CardTitle className="mb-1">{intl.formatMessage(i18n.versionTitle)}</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4 px-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={isDarkMode ? BlockLogoWhite : BlockLogoBlack}
+              alt="Block Logo" // TODO: replace with AAIF logo asset
+              className="h-8 w-auto"
+            />
+            <span className="text-2xl font-mono text-black dark:text-white">
+              {String(window.appConfig.get('GOOSE_VERSION') || 'Development')}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* 账户：退出登录 @author logic @date 2026-08-12 */}
       <Card className="rounded-lg">

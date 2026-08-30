@@ -12,7 +12,7 @@ const i18n = defineMessages({
   },
   errorWithVersion: {
     id: 'errorBoundary.errorWithVersion',
-    defaultMessage: 'An error occurred in HeyBuddy v{version}.',
+    defaultMessage: 'An error occurred in {appName} v{version}.',
   },
   errorGeneric: {
     id: 'errorBoundary.errorGeneric',
@@ -72,7 +72,9 @@ export function ErrorUI({ error }: { error: string }) {
           <AlertTriangle className="w-8 h-8 text-destructive" />
         </div>
 
-        <h1 className="text-2xl font-semibold text-foreground dark:text-white">{intl.formatMessage(i18n.heading)}</h1>
+        <h1 className="text-2xl font-semibold text-foreground dark:text-white">
+          {intl.formatMessage(i18n.heading)}
+        </h1>
 
         <p className="text-base text-text-secondary dark:text-muted-foreground mb-2">
           {version !== undefined

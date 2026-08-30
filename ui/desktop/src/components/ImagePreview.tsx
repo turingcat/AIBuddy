@@ -8,7 +8,7 @@ const i18n = defineMessages({
   },
   altText: {
     id: 'imagePreview.altText',
-    defaultMessage: 'HeyBuddy image',
+    defaultMessage: '{appName} image',
   },
   clickToCollapse: {
     id: 'imagePreview.clickToCollapse',

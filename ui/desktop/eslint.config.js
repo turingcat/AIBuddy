@@ -105,6 +105,8 @@ module.exports = [
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
         ResizeObserver: 'readonly',
+        ResizeObserverCallback: 'readonly', // @author logic @date 2026-08-30
+        ResizeObserverEntry: 'readonly', // @author logic @date 2026-08-30
         MutationObserver: 'readonly',
         NodeFilter: 'readonly',
         Text: 'readonly',

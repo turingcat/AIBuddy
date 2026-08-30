@@ -54,7 +54,7 @@ const i18n = defineMessages({
   },
   addApiKeyDescription: {
     id: 'providerConfigurationModal.addApiKeyDescription',
-    defaultMessage: 'Add your API key(s) for this provider to integrate into HeyBuddy',
+    defaultMessage: 'Add your API key(s) for this provider to integrate into {appName}',
   },
   oauthLoginFailed: {
     id: 'providerConfigurationModal.oauthLoginFailed',
@@ -99,7 +99,7 @@ const i18n = defineMessages({
   },
   externalSetupIntro: {
     id: 'providerConfigurationModal.externalSetupIntro',
-    defaultMessage: 'This provider is configured outside of HeyBuddy. Follow these steps:',
+    defaultMessage: 'This provider is configured outside of {appName}. Follow these steps:',
   },
   chooseModel: {
     id: 'providerConfigurationModal.chooseModel',

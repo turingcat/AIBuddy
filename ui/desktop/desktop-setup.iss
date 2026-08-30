@@ -1,23 +1,37 @@
-; HeyBuddy Windows 安装包脚本（Inno Setup）
+; 桌面版 Windows 安装包脚本（Inno Setup），HeyBuddy / AIBuddy 共用
 ; 取代 electron-forge 的 maker-squirrel：Squirrel 的 Update.exe 在安装收尾阶段
 ; 会从 GitHub 下载卸载图标，网络受限环境下安装窗口会滞留约 85 秒；
 ; Inno Setup 全程零网络请求，且安装图标/快捷方式/卸载项完全可控。
-; 由 build-windows.ps1 调用 ISCC 编译：ISCC /DMyAppVersion=x.y.z /O<输出目录> 本文件
-; 也可在 ui/desktop 目录下手动运行：ISCC heybuddy-setup.iss
+; 全部产品标识由 build-windows.ps1 经 scripts/windows-package.js 生成的 /D 参数注入，
+; 本文件不保留任何版本默认值，避免误用某一版本的标识打出另一版本的安装包。
 ; @author logic
 ; @date 2026-08-15
 
-; 版本号由命令行 /DMyAppVersion 注入（取自 package.json），手动运行时可用默认值
+#ifndef MyAppName
+  #error MyAppName must be passed on the ISCC command line
+#endif
 #ifndef MyAppVersion
-#define MyAppVersion "0.0.0"
+  #error MyAppVersion must be passed on the ISCC command line
+#endif
+#ifndef MyAppId
+  #error MyAppId must be passed on the ISCC command line
+#endif
+#ifndef MyAppExeName
+  #error MyAppExeName must be passed on the ISCC command line
+#endif
+#ifndef SourceDir
+  #error SourceDir must be passed on the ISCC command line
+#endif
+#ifndef OutputDir
+  #error OutputDir must be passed on the ISCC command line
+#endif
+#ifndef OutputBaseFilename
+  #error OutputBaseFilename must be passed on the ISCC command line
 #endif
 
-#define MyAppName "HeyBuddy"
-#define MyAppExeName "HeyBuddy.exe"
-
 [Setup]
-; AppId 一经发布不可更改（Inno 依据它识别同一应用做升级安装）
-AppId={{FDA43817-EFCC-42D0-AB69-D414B629E300}
+; AppId 一经发布不可更改（Inno 依据它识别同一应用做升级安装），每个版本各用一个
+AppId={{#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
@@ -28,15 +42,14 @@ UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 ; 安装器自身图标（资源管理器中看到的 Setup.exe 图标）
 SetupIconFile=src\images\icon.ico
-; 输出到项目根目录（build-windows.ps1 会用 /O 覆盖为绝对路径）
-OutputDir=..\..
-OutputBaseFilename=HeyBuddy-Setup
+OutputDir={#OutputDir}
+OutputBaseFilename={#OutputBaseFilename}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
-; 升级/卸载时自动关闭正在运行的 HeyBuddy（含其 goose serve 子进程）
+; 升级/卸载时自动关闭正在运行的应用（含其 goose serve 子进程）
 CloseApplications=yes
 
 [Languages]
@@ -48,8 +61,8 @@ Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; dist-windows 为 build-windows.ps1 整理好的完整应用目录（electron + resources + goose.exe）
-Source: "dist-windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; SourceDir 为 build-windows.ps1 整理好的完整应用目录（electron + resources + goose.exe）
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"

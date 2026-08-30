@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { addExtensionFromDeepLink } from './deeplink';
 import { toastService } from '../../../toasts';
 
@@ -9,18 +9,40 @@ vi.mock('../../../toasts', () => ({
   },
 }));
 
-describe('addExtensionFromDeepLink', () => {
+describe.each([
+  { edition: 'heybuddy', scheme: 'goose', foreign: 'aibuddy' },
+  { edition: 'aibuddy', scheme: 'aibuddy', foreign: 'goose' },
+])('addExtensionFromDeepLink on $edition', ({ edition, scheme, foreign }) => {
   const mockAddExtension = vi.fn().mockResolvedValue(undefined);
   const mockSetView = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('APP_EDITION', edition);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // An extension deeplink runs a command on the user's machine, so a link
+  // addressed to the other edition must never be installed by this one.
+  it('rejects a deeplink on the other edition scheme', async () => {
+    vi.mocked(toastService.handleError).mockImplementationOnce(() => {
+      throw new Error('Invalid protocol');
+    });
+
+    const url = `${foreign}://extension?cmd=goose&arg=mcp&name=Memory&description=Memory`;
+
+    await expect(addExtensionFromDeepLink(url, mockAddExtension, mockSetView)).rejects.toThrow(
+      'Invalid protocol'
+    );
+    expect(mockAddExtension).not.toHaveBeenCalled();
   });
 
   describe('header parsing', () => {
     it('should preserve = characters in header values', async () => {
-      const url =
-        'goose://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=Authorization%3DBasic%20abc%3D%3D';
+      const url = `${scheme}://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=Authorization%3DBasic%20abc%3D%3D`;
 
       await addExtensionFromDeepLink(url, mockAddExtension, mockSetView);
 
@@ -36,8 +58,7 @@ describe('addExtensionFromDeepLink', () => {
     });
 
     it('should handle header values without = characters', async () => {
-      const url =
-        'goose://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=X-Token%3Dabc123';
+      const url = `${scheme}://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=X-Token%3Dabc123`;
 
       await addExtensionFromDeepLink(url, mockAddExtension, mockSetView);
 
@@ -52,8 +73,7 @@ describe('addExtensionFromDeepLink', () => {
     });
 
     it('should handle multiple headers', async () => {
-      const url =
-        'goose://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=Authorization%3DBearer%20tok%3D%3D&header=X-Key%3Dval';
+      const url = `${scheme}://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=Authorization%3DBearer%20tok%3D%3D&header=X-Key%3Dval`;
 
       await addExtensionFromDeepLink(url, mockAddExtension, mockSetView);
 
@@ -71,8 +91,7 @@ describe('addExtensionFromDeepLink', () => {
     });
 
     it('should handle header with empty value', async () => {
-      const url =
-        'goose://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=X-Empty%3D';
+      const url = `${scheme}://extension?name=Remote&url=https%3A%2F%2Fexample.com%2Fmcp&header=X-Empty%3D`;
 
       await addExtensionFromDeepLink(url, mockAddExtension, mockSetView);
 
@@ -89,8 +108,7 @@ describe('addExtensionFromDeepLink', () => {
 
   describe('stdio command validation', () => {
     it('should allow goose for bundled MCP deeplinks', async () => {
-      const url =
-        'goose://extension?cmd=goose&arg=mcp&arg=memory&name=Memory&description=Memory';
+      const url = `${scheme}://extension?cmd=goose&arg=mcp&arg=memory&name=Memory&description=Memory`;
 
       await addExtensionFromDeepLink(url, mockAddExtension, mockSetView);
 
@@ -110,8 +128,7 @@ describe('addExtensionFromDeepLink', () => {
         throw new Error('Invalid command');
       });
 
-      const url =
-        'goose://extension?cmd=goosed&arg=mcp&arg=memory&name=Memory&description=Memory';
+      const url = `${scheme}://extension?cmd=goosed&arg=mcp&arg=memory&name=Memory&description=Memory`;
 
       await expect(addExtensionFromDeepLink(url, mockAddExtension, mockSetView)).rejects.toThrow(
         'Invalid command'

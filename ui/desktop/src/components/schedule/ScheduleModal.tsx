@@ -30,7 +30,7 @@ const i18n = defineMessages({
   selected: { id: 'scheduleModal.selected', defaultMessage: 'Selected: {path}' },
   deepLinkPlaceholder: {
     id: 'scheduleModal.deepLinkPlaceholder',
-    defaultMessage: 'Paste goose://recipe link here...',
+    defaultMessage: 'Paste {protocol}://recipe link here...',
   },
   selectRecipePlaceholder: {
     id: 'scheduleModal.selectRecipePlaceholder',
@@ -64,7 +64,7 @@ const i18n = defineMessages({
   createSchedule: { id: 'scheduleModal.createSchedule', defaultMessage: 'Create Schedule' },
   invalidDeepLink: {
     id: 'scheduleModal.invalidDeepLink',
-    defaultMessage: 'Invalid deep link. Please use a goose://recipe link.',
+    defaultMessage: 'Invalid deep link. Please use a {protocol}://recipe link.',
   },
   failedReadFile: {
     id: 'scheduleModal.failedReadFile',

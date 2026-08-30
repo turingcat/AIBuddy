@@ -17,7 +17,7 @@ const i18n = defineMessages({
   },
   getStarted: {
     id: 'defaultCardButtons.getStarted',
-    defaultMessage: 'Get started with HeyBuddy!',
+    defaultMessage: 'Get started with {appName}!',
   },
 });
 

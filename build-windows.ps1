@@ -3,12 +3,15 @@
     @date: 2026-08-13
     Windows 桌面一键构建脚本
     复刻 .github/workflows/bundle-windows.yml 的 standard 变体（不含代码签名）
-    产物：ui/desktop/dist-windows/、项目根 HeyBuddy-win32-x64.zip 与 HeyBuddy-Setup.exe（安装包）
-    运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1
+    产物：ui/desktop/dist-windows/、项目根 <版本>-windows-x64-portable.zip 与 <版本>-windows-x64-setup.exe
+    运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1 -Edition heybuddy
 #>
 
 [CmdletBinding()]
 param(
+    # 构建版本（品牌标识取自 ui/desktop/branding/brands.json）
+    [ValidateSet('heybuddy', 'aibuddy')]
+    [string]$Edition = 'heybuddy',
     # HTTP 代理（默认本机代理，cargo/pnpm 下载走代理；其他环境用 -Proxy 覆盖，传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（@electron/get 不读 HTTPS_PROXY，直连 GitHub 拉校验文件会卡死）
@@ -57,6 +60,10 @@ if ($NodePath) {
     if ($LASTEXITCODE -ne 0) { Write-Host "corepack 准备 pnpm 未成功，将在工具链检测阶段处理" }
 }
 
+# 版本标识：forge / vite / 安装包脚本均按此解析品牌，子进程继承
+$env:APP_EDITION = $Edition
+Write-Host "构建版本：$Edition"
+
 # 切换到项目根目录（脚本所在目录）
 $ProjectRoot = $PSScriptRoot
 Set-Location $ProjectRoot
@@ -74,14 +81,6 @@ function Test-CommandAvailable {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
-# 比较 node 版本是否 >= 最低要求，忽略预发布后缀
-function Compare-NodeVersion {
-    param([string]$Current, [string]$Minimum)
-    $cur = [version](($Current -split '-')[0])
-    $min = [version]$Minimum
-    return $cur -ge $min
-}
-
 # 检查并补齐构建工具链：cargo/node 仅提示，pnpm 自动安装
 function Assert-Toolchain {
     Write-Step "检查构建工具链"
@@ -93,10 +92,8 @@ function Assert-Toolchain {
     if (-not (Test-CommandAvailable 'node')) {
         throw "未找到 node。请安装 Node.js 24.x 后重试。"
     }
-    $nodeVer = (& node --version) -replace '^v', ''
-    if (-not (Compare-NodeVersion -Current $nodeVer -Minimum '24.10.0')) {
-        throw "node 版本过低：$nodeVer，需要 >= 24.10.0。"
-    }
+    & node (Join-Path $PSScriptRoot 'ui\desktop\scripts\check-node-version.js')
+    if ($LASTEXITCODE -ne 0) { throw "node 版本不满足打包要求" }
 
     if (-not (Test-CommandAvailable 'pnpm')) {
         Write-Step "未找到 pnpm，自动安装 pnpm@10.30.3"
@@ -189,8 +186,16 @@ function Build-GooseBinary {
 
     $srcBin = Join-Path $ProjectRoot 'ui\desktop\src\bin'
     if (-not (Test-Path $srcBin)) { New-Item -ItemType Directory -Force $srcBin | Out-Null }
-    # 仅覆盖构建产物 goose.exe，不删除 git 跟踪的源文件（jbang/node/npx/uvx 等）
-    Copy-Item -Path $gooseExe -Destination $srcBin -Force
+    # 仅覆盖构建产物 goose.exe，不删除 git 跟踪的源文件（jbang/node/npx/uvx 等）。
+    # 正在运行的 exe 无法被删除但可以改名，先移开再写入，避免覆写活动二进制
+    $destExe = Join-Path $srcBin 'goose.exe'
+    if (Test-Path $destExe) {
+        $stale = "$destExe.old"
+        if (Test-Path $stale) { Remove-Item -Path $stale -Force -ErrorAction SilentlyContinue }
+        Move-Item -Path $destExe -Destination $stale -Force
+        Remove-Item -Path $stale -Force -ErrorAction SilentlyContinue
+    }
+    Copy-Item -Path $gooseExe -Destination $destExe
     Write-Host "已复制 goose.exe 到 ui\desktop\src\bin"
 }
 
@@ -214,13 +219,20 @@ function Build-DesktopApp {
     if ($LASTEXITCODE -ne 0) { throw "electron-forge make 失败" }
 }
 
-# 整理 dist-windows 目录并打包 zip 到项目根
+# 整理 dist-windows 目录，打包便携版 zip 与 Inno 安装包到项目根
 function Package-Distribution {
-    Write-Step "整理 dist-windows 并打包 zip"
+    Write-Step "整理 dist-windows 并打包发布产物"
     $desktopDir = Join-Path $ProjectRoot 'ui\desktop'
     Set-Location $desktopDir
 
-    $outDir = Join-Path $desktopDir 'out\HeyBuddy-win32-x64'
+    # 版本产物名与 Inno 定义统一由 windows-package.js 生成，避免脚本内硬编码品牌
+    $version = (Get-Content (Join-Path $desktopDir 'package.json') -Raw | ConvertFrom-Json).version
+    $distDir = Join-Path $desktopDir 'dist-windows'
+    $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $Edition $version $distDir $ProjectRoot
+    if ($LASTEXITCODE -ne 0) { throw "解析 Windows 打包参数失败" }
+    $pkg = $pkgJson | ConvertFrom-Json
+
+    $outDir = Join-Path $desktopDir "out\$($pkg.packagedDirName)"
     if (-not (Test-Path $outDir)) {
         throw "未找到构建输出目录：$outDir（请确认 electron-forge make 成功）"
     }
@@ -231,13 +243,12 @@ function Package-Distribution {
     Copy-Item -Path "$desktopDir\src\bin\*" -Destination $resBin -Recurse -Force
 
     # 汇总为 dist-windows 扁平目录（dist-windows 为脚本生成的产物，构建前清理）
-    $distDir = Join-Path $desktopDir 'dist-windows'
     if (Test-Path $distDir) { Remove-Item -Path $distDir -Recurse -Force }
     New-Item -ItemType Directory -Force $distDir | Out-Null
     Copy-Item -Path "$outDir\*" -Destination $distDir -Recurse -Force
 
-    # 打包 zip：优先 7z，回退 Compress-Archive
-    $zipPath = Join-Path $ProjectRoot 'HeyBuddy-win32-x64.zip'
+    # 便携版：解包目录原样压缩，不写注册表也不留卸载项
+    $zipPath = Join-Path $ProjectRoot $pkg.portableFileName
     if (Test-Path $zipPath) { Remove-Item -Path $zipPath -Force }
 
     if (Test-CommandAvailable '7z') {
@@ -251,16 +262,14 @@ function Package-Distribution {
     # 网络受限时安装窗口滞留约 85 秒；Inno 全程零网络请求）
     # @author logic
     # @date 2026-08-15
-    $version = (Get-Content (Join-Path $desktopDir 'package.json') -Raw | ConvertFrom-Json).version
-    & $IsccPath "/DMyAppVersion=$version" "/O$ProjectRoot" (Join-Path $desktopDir 'heybuddy-setup.iss')
+    & $IsccPath @($pkg.isccArgs) (Join-Path $desktopDir 'desktop-setup.iss')
     if ($LASTEXITCODE -ne 0) { throw "Inno Setup 编译失败" }
-    $setupDest = Join-Path $ProjectRoot 'HeyBuddy-Setup.exe'
-    Write-Host "  安装包：$setupDest"
 
     Write-Host ""
     Write-Host "构建完成：" -ForegroundColor Green
     Write-Host "  目录：$distDir"
-    Write-Host "  压缩包：$zipPath"
+    Write-Host "  便携版：$zipPath"
+    Write-Host "  安装包：$(Join-Path $ProjectRoot $pkg.setupFileName)"
 }
 
 # 主流程
