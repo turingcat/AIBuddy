@@ -28,6 +28,7 @@ import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
+import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
 import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
@@ -1972,6 +1973,12 @@ ipcMain.handle('clear-login-credentials', () => {
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
   runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
 );
+
+registerAIBuddyAuthIpc(ipcMain, {
+  apiBaseUrl: authConfig.apiBaseUrl,
+  fetchImpl: net.fetch,
+  idempotencyKeyFactory: () => crypto.randomUUID(),
+});
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
 // /api/status 的货币显示配置带 1 小时模块级缓存；currency 拉取失败且无缓存时
