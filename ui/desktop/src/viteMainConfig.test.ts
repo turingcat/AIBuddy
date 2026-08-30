@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createMainViteConfig } from '../vite.main.config.mts';
+import { createMainViteConfig } from './viteMainConfig';
 
 describe('createMainViteConfig', () => {
   it('injects HeyBuddy authentication defines without using an AIBuddy override', () => {
