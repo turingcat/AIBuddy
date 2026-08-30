@@ -107,12 +107,39 @@ describe('AliyunCaptcha', () => {
     expect(screen.getByRole('button')).toHaveAttribute('data-state', 'idle');
   });
 
-  it('invalidates a cached proof when reset is called', async () => {
+  it('resolves a programmatic verification with null when the popup does not open', async () => {
     const { ref } = await renderCaptcha();
+    let verification: Promise<string | null> | undefined;
     act(() => {
-      initOptions?.captchaVerifyCallback('expired-proof');
+      verification = ref.current?.verify();
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(8_100);
+    });
+
+    await expect(verification).resolves.toBeNull();
+    expect(screen.getByRole('button')).toHaveAttribute('data-state', 'idle');
+  });
+
+  it('ignores a proof delivered by the SDK callback that reset invalidated', async () => {
+    const { ref } = await renderCaptcha();
+    const previousOptions = initOptions!;
+    let pendingVerification: Promise<string | null> | undefined;
+    act(() => {
+      pendingVerification = ref.current?.verify();
     });
     act(() => ref.current?.reset());
+    await expect(pendingVerification).resolves.toBeNull();
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(initOptions).not.toBe(previousOptions);
+    act(() => {
+      previousOptions.captchaVerifyCallback('stale-proof');
+    });
+    expect(screen.getByRole('button')).toHaveAttribute('data-state', 'idle');
 
     let verification: Promise<string | null> | undefined;
     act(() => {
@@ -121,6 +148,46 @@ describe('AliyunCaptcha', () => {
     });
 
     await expect(verification).resolves.toBe('fresh-proof');
+  });
+
+  it('allows only the first mounted instance to own SDK initialization and global popup cleanup', async () => {
+    const owner = await renderCaptcha();
+    const nonOwnerRef = createRef<AliyunCaptchaHandle>();
+    const onError = vi.fn();
+    const nonOwner = render(
+      <AliyunCaptcha
+        ref={nonOwnerRef}
+        sceneId="scene-2"
+        prefix="prefix-2"
+        region="sgp"
+        onError={onError}
+      />
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(1);
+    expect(window.AliyunCaptchaConfig).toEqual({ region: 'cn', prefix: 'prefix-1' });
+    await expect(nonOwnerRef.current?.verify()).resolves.toBeNull();
+    fireEvent.click(nonOwner.container.querySelector('button')!);
+    expect(onError).toHaveBeenCalledTimes(1);
+
+    const popup = document.createElement('div');
+    popup.id = 'aliyunCaptcha-window-popup';
+    document.body.appendChild(popup);
+    const mask = document.createElement('div');
+    mask.id = 'aliyunCaptcha-mask';
+    document.body.appendChild(mask);
+
+    nonOwner.unmount();
+    expect(document.getElementById('aliyunCaptcha-window-popup')).toBe(popup);
+    expect(document.getElementById('aliyunCaptcha-mask')).toBe(mask);
+
+    owner.unmount();
+    expect(document.getElementById('aliyunCaptcha-window-popup')).toBeNull();
+    expect(document.getElementById('aliyunCaptcha-mask')).toBeNull();
   });
 
   it('allows a later mount to retry after the SDK script fails to load', async () => {

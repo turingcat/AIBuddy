@@ -16,6 +16,7 @@ const POPUP_OPEN_TIMEOUT_MS = 8_000;
 const POPUP_WATCH_INTERVAL_MS = 300;
 
 let scriptPromise: Promise<void> | null = null;
+let activeOwnerId: string | null = null;
 
 export type AliyunCaptchaState = 'idle' | 'verifying' | 'verified';
 
@@ -91,8 +92,10 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
   const buttonId = `aliyun-captcha-button-${generatedId}`;
   const elementId = `aliyun-captcha-element-${generatedId}`;
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const ownsCaptchaRef = useRef(false);
   const initializedRef = useRef(false);
   const mountedRef = useRef(true);
+  const callbackGenerationRef = useRef(0);
   const cachedProofRef = useRef<string | null>(null);
   const pendingRef = useRef<{
     promise: Promise<string | null>;
@@ -112,6 +115,31 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
     },
     [onStateChange]
   );
+
+  const acquireOwnership = useCallback(() => {
+    if (ownsCaptchaRef.current) {
+      return true;
+    }
+    if (activeOwnerId !== null) {
+      return false;
+    }
+
+    activeOwnerId = generatedId;
+    ownsCaptchaRef.current = true;
+    return true;
+  }, [generatedId]);
+
+  const releaseOwnership = useCallback(() => {
+    if (!ownsCaptchaRef.current) {
+      return false;
+    }
+
+    ownsCaptchaRef.current = false;
+    if (activeOwnerId === generatedId) {
+      activeOwnerId = null;
+    }
+    return true;
+  }, [generatedId]);
 
   const stopPopupWatch = useCallback(() => {
     if (popupWatchTimerRef.current !== null) {
@@ -166,16 +194,23 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
   );
 
   const initialize = useCallback(async () => {
-    if (initializedRef.current || !sceneId || !prefix) {
+    if (!ownsCaptchaRef.current || initializedRef.current || !sceneId || !prefix) {
       return;
     }
 
     window.AliyunCaptchaConfig = { region, prefix };
     await loadScript();
 
-    if (!mountedRef.current || initializedRef.current || !window.initAliyunCaptcha) {
+    if (
+      !mountedRef.current ||
+      !ownsCaptchaRef.current ||
+      initializedRef.current ||
+      !window.initAliyunCaptcha
+    ) {
       return;
     }
+
+    const callbackGeneration = callbackGenerationRef.current;
 
     window.initAliyunCaptcha({
       SceneId: sceneId,
@@ -184,7 +219,9 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
       element: `#${elementId}`,
       button: `#${buttonId}`,
       captchaVerifyCallback: (proof) => {
-        completeVerification(proof);
+        if (callbackGeneration === callbackGenerationRef.current) {
+          completeVerification(proof);
+        }
         return { captchaResult: true };
       },
       onBizResultCallback: () => {},
@@ -204,14 +241,22 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
   }, [startPopupWatch, updateState]);
 
   const handleTriggerClick = useCallback(() => {
+    if (!acquireOwnership()) {
+      onError?.();
+      return;
+    }
+
     void initialize().catch(() => onError?.());
     beginVerification();
-  }, [beginVerification, initialize, onError]);
+  }, [acquireOwnership, beginVerification, initialize, onError]);
 
   useImperativeHandle(
     ref,
     () => ({
       verify: () => {
+        if (!acquireOwnership()) {
+          return Promise.resolve(null);
+        }
         if (cachedProofRef.current) {
           return Promise.resolve(cachedProofRef.current);
         }
@@ -232,24 +277,41 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
         stopPopupWatch();
         settlePending(null);
         cachedProofRef.current = null;
+        callbackGenerationRef.current += 1;
+        initializedRef.current = false;
         updateState('idle');
+        if (ownsCaptchaRef.current) {
+          void initialize().catch(() => onError?.());
+        }
       },
     }),
-    [beginVerification, settlePending, stopPopupWatch, updateState]
+    [
+      acquireOwnership,
+      beginVerification,
+      initialize,
+      onError,
+      settlePending,
+      stopPopupWatch,
+      updateState,
+    ]
   );
 
   useEffect(() => {
     mountedRef.current = true;
-    void initialize().catch(() => onError?.());
+    if (acquireOwnership()) {
+      void initialize().catch(() => onError?.());
+    }
 
     return () => {
       mountedRef.current = false;
       stopPopupWatch();
       settlePending(null);
-      document.getElementById(MASK_ID)?.remove();
-      document.getElementById(POPUP_ID)?.remove();
+      if (releaseOwnership()) {
+        document.getElementById(MASK_ID)?.remove();
+        document.getElementById(POPUP_ID)?.remove();
+      }
     };
-  }, [initialize, onError, settlePending, stopPopupWatch]);
+  }, [acquireOwnership, initialize, onError, releaseOwnership, settlePending, stopPopupWatch]);
 
   const stateContent = {
     idle: (
