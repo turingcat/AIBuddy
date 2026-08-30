@@ -150,6 +150,40 @@ describe('AliyunCaptcha', () => {
     await expect(verification).resolves.toBe('fresh-proof');
   });
 
+  it('initializes once when verify immediately follows reset', async () => {
+    const ref = createRef<AliyunCaptchaHandle>();
+    const onVerify = vi.fn();
+    const component = render(
+      <AliyunCaptcha ref={ref} sceneId="scene-1" prefix="prefix-1" onVerify={onVerify} />
+    );
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    const previousOptions = initOptions!;
+    let verification: Promise<string | null> | undefined;
+
+    act(() => {
+      ref.current?.reset();
+      verification = ref.current?.verify();
+    });
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(2);
+    expect(initOptions).not.toBe(previousOptions);
+    act(() => {
+      previousOptions.captchaVerifyCallback('stale-proof');
+      initOptions?.captchaVerifyCallback('fresh-proof');
+    });
+
+    await expect(verification).resolves.toBe('fresh-proof');
+    expect(onVerify).toHaveBeenCalledTimes(1);
+    component.unmount();
+  });
+
   it('allows only the first mounted instance to own SDK initialization and global popup cleanup', async () => {
     const owner = await renderCaptcha();
     const nonOwnerRef = createRef<AliyunCaptchaHandle>();
@@ -185,9 +219,39 @@ describe('AliyunCaptcha', () => {
     expect(document.getElementById('aliyunCaptcha-window-popup')).toBe(popup);
     expect(document.getElementById('aliyunCaptcha-mask')).toBe(mask);
 
+    const rejectedRef = createRef<AliyunCaptchaHandle>();
+    const rejectedOnError = vi.fn();
+    const rejected = render(
+      <AliyunCaptcha
+        ref={rejectedRef}
+        sceneId="scene-2"
+        prefix="prefix-2"
+        region="sgp"
+        onError={rejectedOnError}
+      />
+    );
     owner.unmount();
     expect(document.getElementById('aliyunCaptcha-window-popup')).toBeNull();
     expect(document.getElementById('aliyunCaptcha-mask')).toBeNull();
+
+    fireEvent.click(rejected.container.querySelector('button')!);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(1);
+    expect(window.AliyunCaptchaConfig).toEqual({ region: 'cn', prefix: 'prefix-1' });
+    expect(rejectedOnError).toHaveBeenCalledTimes(1);
+
+    const replacement = render(<AliyunCaptcha sceneId="scene-3" prefix="prefix-1" region="cn" />);
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(window.initAliyunCaptcha).toHaveBeenCalledTimes(2);
+    expect(window.AliyunCaptchaConfig).toEqual({ region: 'cn', prefix: 'prefix-1' });
+    replacement.unmount();
+    rejected.unmount();
   });
 
   it('allows a later mount to retry after the SDK script fails to load', async () => {

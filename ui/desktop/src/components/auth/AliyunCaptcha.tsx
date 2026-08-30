@@ -17,6 +17,7 @@ const POPUP_WATCH_INTERVAL_MS = 300;
 
 let scriptPromise: Promise<void> | null = null;
 let activeOwnerId: string | null = null;
+let sdkConfig: { region: 'cn' | 'sgp'; prefix: string } | null = null;
 
 export type AliyunCaptchaState = 'idle' | 'verifying' | 'verified';
 
@@ -32,6 +33,10 @@ interface AliyunCaptchaProps {
   onVerify?: (proof: string) => void;
   onError?: () => void;
   onStateChange?: (state: AliyunCaptchaState) => void;
+}
+
+function isCompatibleConfig(region: 'cn' | 'sgp', prefix: string): boolean {
+  return sdkConfig === null || (sdkConfig.region === region && sdkConfig.prefix === prefix);
 }
 
 function loadScript(): Promise<void> {
@@ -94,6 +99,7 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
   const buttonRef = useRef<HTMLButtonElement>(null);
   const ownsCaptchaRef = useRef(false);
   const initializedRef = useRef(false);
+  const initializationPromiseRef = useRef<Promise<void> | null>(null);
   const mountedRef = useRef(true);
   const callbackGenerationRef = useRef(0);
   const cachedProofRef = useRef<string | null>(null);
@@ -123,11 +129,14 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
     if (activeOwnerId !== null) {
       return false;
     }
+    if (!isCompatibleConfig(region, prefix)) {
+      return false;
+    }
 
     activeOwnerId = generatedId;
     ownsCaptchaRef.current = true;
     return true;
-  }, [generatedId]);
+  }, [generatedId, prefix, region]);
 
   const releaseOwnership = useCallback(() => {
     if (!ownsCaptchaRef.current) {
@@ -193,42 +202,77 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
     [onVerify, settlePending, stopPopupWatch, updateState]
   );
 
-  const initialize = useCallback(async () => {
-    if (!ownsCaptchaRef.current || initializedRef.current || !sceneId || !prefix) {
-      return;
+  const initialize = useCallback((): Promise<void> => {
+    if (initializationPromiseRef.current) {
+      return initializationPromiseRef.current;
     }
-
-    window.AliyunCaptchaConfig = { region, prefix };
-    await loadScript();
 
     if (
-      !mountedRef.current ||
       !ownsCaptchaRef.current ||
       initializedRef.current ||
-      !window.initAliyunCaptcha
+      !sceneId ||
+      !prefix ||
+      !isCompatibleConfig(region, prefix)
     ) {
-      return;
+      return Promise.resolve();
     }
 
-    const callbackGeneration = callbackGenerationRef.current;
+    const reservesConfig = sdkConfig === null;
+    if (reservesConfig) {
+      sdkConfig = { region, prefix };
+    }
+    window.AliyunCaptchaConfig = { region, prefix };
 
-    window.initAliyunCaptcha({
-      SceneId: sceneId,
-      prefix,
-      mode: 'popup',
-      element: `#${elementId}`,
-      button: `#${buttonId}`,
-      captchaVerifyCallback: (proof) => {
-        if (callbackGeneration === callbackGenerationRef.current) {
-          completeVerification(proof);
+    let initialization!: Promise<void>;
+    const runInitialization = async () => {
+      try {
+        try {
+          await loadScript();
+        } catch (error) {
+          if (reservesConfig && isCompatibleConfig(region, prefix)) {
+            sdkConfig = null;
+          }
+          throw error;
         }
-        return { captchaResult: true };
-      },
-      onBizResultCallback: () => {},
-      getInstance: () => {},
-      slideStyle: { width: 360, height: 40 },
-    });
-    initializedRef.current = true;
+
+        if (
+          !mountedRef.current ||
+          !ownsCaptchaRef.current ||
+          initializedRef.current ||
+          !window.initAliyunCaptcha
+        ) {
+          return;
+        }
+
+        const callbackGeneration = callbackGenerationRef.current;
+
+        window.initAliyunCaptcha({
+          SceneId: sceneId,
+          prefix,
+          mode: 'popup',
+          element: `#${elementId}`,
+          button: `#${buttonId}`,
+          captchaVerifyCallback: (proof) => {
+            if (callbackGeneration === callbackGenerationRef.current) {
+              completeVerification(proof);
+            }
+            return { captchaResult: true };
+          },
+          onBizResultCallback: () => {},
+          getInstance: () => {},
+          slideStyle: { width: 360, height: 40 },
+        });
+        initializedRef.current = true;
+      } finally {
+        if (initializationPromiseRef.current === initialization) {
+          initializationPromiseRef.current = null;
+        }
+      }
+    };
+
+    initialization = runInitialization();
+    initializationPromiseRef.current = initialization;
+    return initialization;
   }, [buttonId, completeVerification, elementId, prefix, region, sceneId]);
 
   const beginVerification = useCallback(() => {
