@@ -193,6 +193,33 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.existsSync(path.join(targetUserDataDir, 'settings.json'))).toBe(false);
   });
 
+  it('does not overwrite credentials that appear during exclusive publication', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    writeLegacySettings();
+    const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
+    const linkSync = fs.linkSync;
+    const linkSpy = vi.spyOn(fs, 'linkSync').mockImplementation((sourceFile, targetFile) => {
+      if (targetFile === targetCredentialsFile) {
+        fs.writeFileSync(targetCredentialsFile, 'other process credentials');
+      }
+      return linkSync(sourceFile, targetFile);
+    });
+
+    try {
+      expect(migrate()).toMatchObject({ credentialsMigrated: false, settingsMigrated: false });
+    } finally {
+      linkSpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('other process credentials');
+    expect(fs.existsSync(path.join(targetUserDataDir, 'settings.json'))).toBe(false);
+  });
+
   it('does not overwrite existing AIBuddy settings file credential migration', () => {
     writeLegacyCredentials({
       token: 'legacy-token',
@@ -226,6 +253,65 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.existsSync(targetUserDataDir)).toBe(false);
   });
 
+  it('does not remove credentials published by another process during rollback', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
+    const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
+    const replacementCredentialsFile = path.join(rootDir, 'replacement-credentials.json');
+    fs.mkdirSync(legacySettingsFile);
+    const copyFileSync = fs.copyFileSync;
+    const copySpy = vi
+      .spyOn(fs, 'copyFileSync')
+      .mockImplementation((sourceFile, targetFile, mode) => {
+        if (sourceFile === legacySettingsFile) {
+          fs.writeFileSync(replacementCredentialsFile, 'other process credentials');
+          fs.renameSync(replacementCredentialsFile, targetCredentialsFile);
+        }
+        return copyFileSync(sourceFile, targetFile, mode);
+      });
+
+    try {
+      expect(migrate).toThrow();
+    } finally {
+      copySpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('other process credentials');
+  });
+
+  it('rolls back credentials when settings publication fails', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    writeLegacySettings();
+    const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
+    const linkSync = fs.linkSync;
+    const linkSpy = vi.spyOn(fs, 'linkSync').mockImplementation((sourceFile, targetFile) => {
+      if (targetFile === targetSettingsFile) {
+        const error = new Error('settings publication denied') as NodeJS.ErrnoException;
+        error.code = 'EACCES';
+        throw error;
+      }
+      return linkSync(sourceFile, targetFile);
+    });
+
+    try {
+      expect(migrate).toThrow('settings publication denied');
+    } finally {
+      linkSpy.mockRestore();
+    }
+
+    expect(fs.existsSync(targetUserDataDir)).toBe(false);
+  });
+
   it('reports settings as not migrated when another process creates the destination', () => {
     writeLegacyCredentials({
       token: 'legacy-token',
@@ -235,23 +321,26 @@ describe('migrateLegacyAIBuddyData', () => {
     });
     writeLegacySettings();
     const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
-    const existsSync = fs.existsSync;
-    let targetSettingsChecks = 0;
-    const existsSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
-      if (filePath === targetSettingsFile) {
-        targetSettingsChecks += 1;
-        if (targetSettingsChecks === 2) {
-          fs.writeFileSync(targetSettingsFile, '{"theme":"other"}\n');
-          return true;
-        }
+    const renameSync = fs.renameSync;
+    const linkSync = fs.linkSync;
+    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation((sourceFile, targetFile) => {
+      if (targetFile === targetSettingsFile) {
+        fs.writeFileSync(targetSettingsFile, '{"theme":"other"}\n');
       }
-      return existsSync(filePath);
+      return renameSync(sourceFile, targetFile);
+    });
+    const linkSpy = vi.spyOn(fs, 'linkSync').mockImplementation((sourceFile, targetFile) => {
+      if (targetFile === targetSettingsFile) {
+        fs.writeFileSync(targetSettingsFile, '{"theme":"other"}\n');
+      }
+      return linkSync(sourceFile, targetFile);
     });
 
     try {
       expect(migrate()).toMatchObject({ credentialsMigrated: true, settingsMigrated: false });
     } finally {
-      existsSpy.mockRestore();
+      renameSpy.mockRestore();
+      linkSpy.mockRestore();
     }
 
     expect(fs.readFileSync(targetSettingsFile, 'utf8')).toBe('{"theme":"other"}\n');

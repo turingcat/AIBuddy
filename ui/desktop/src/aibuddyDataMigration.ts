@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { AppEdition } from './brand';
-import { decodeCredentialsFile, writeCredentials, type CredentialsCodec } from './credentials';
+import {
+  decodeCredentialsFile,
+  writeCredentials,
+  type CredentialsCodec,
+  type LoginCredentials,
+} from './credentials';
 
 export interface MigrationOptions {
   edition: AppEdition;
@@ -13,6 +18,10 @@ export interface MigrationOptions {
 export interface MigrationResult {
   credentialsMigrated: boolean;
   settingsMigrated: boolean;
+}
+
+interface PublishedCredentials {
+  temporaryFile: string;
 }
 
 export function migrateLegacyAIBuddyData({
@@ -38,9 +47,18 @@ export function migrateLegacyAIBuddyData({
     return result;
   }
 
-  writeCredentials(targetCredentialsFile, legacyCredentials, codec);
+  const publishedCredentials = publishCredentialsAtomically(
+    targetCredentialsFile,
+    legacyCredentials,
+    codec
+  );
+  if (!publishedCredentials) {
+    if (!targetDirectoryExisted) removeEmptyDirectory(targetUserDataDir);
+    return result;
+  }
   result.credentialsMigrated = true;
 
+  let rollbackCredentials = false;
   try {
     const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
     const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
@@ -48,15 +66,16 @@ export function migrateLegacyAIBuddyData({
       result.settingsMigrated = copySettingsAtomically(legacySettingsFile, targetSettingsFile);
     }
   } catch (error) {
-    fs.unlinkSync(targetCredentialsFile);
-    if (!targetDirectoryExisted) {
-      try {
-        fs.rmdirSync(targetUserDataDir);
-      } catch {
-        // A concurrent process created data in the directory.
-      }
+    rollbackCredentials = true;
+    if (isSameFile(publishedCredentials.temporaryFile, targetCredentialsFile)) {
+      fs.unlinkSync(targetCredentialsFile);
     }
     throw error;
+  } finally {
+    removeFile(publishedCredentials.temporaryFile);
+    if (rollbackCredentials && !targetDirectoryExisted) {
+      removeEmptyDirectory(targetUserDataDir);
+    }
   }
 
   return result;
@@ -71,18 +90,70 @@ function isSub2apiCredentials(credentials: {
     : credentials.authKind === 'sub2api';
 }
 
+function publishCredentialsAtomically(
+  targetFile: string,
+  credentials: LoginCredentials,
+  codec: CredentialsCodec
+): PublishedCredentials | null {
+  const temporaryFile = temporaryFilePath(targetFile);
+  writeCredentials(temporaryFile, credentials, codec);
+
+  try {
+    fs.linkSync(temporaryFile, targetFile);
+    return { temporaryFile };
+  } catch (error) {
+    removeFile(temporaryFile);
+    if (isAlreadyExistsError(error)) return null;
+    throw error;
+  }
+}
+
 function copySettingsAtomically(sourceFile: string, targetFile: string): boolean {
-  const temporaryFile = path.join(
-    path.dirname(targetFile),
-    `.${path.basename(targetFile)}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`
-  );
+  const temporaryFile = temporaryFilePath(targetFile);
 
   try {
     fs.copyFileSync(sourceFile, temporaryFile, fs.constants.COPYFILE_EXCL);
-    if (fs.existsSync(targetFile)) return false;
-    fs.renameSync(temporaryFile, targetFile);
-    return true;
+    try {
+      fs.linkSync(temporaryFile, targetFile);
+      return true;
+    } catch (error) {
+      if (isAlreadyExistsError(error)) return false;
+      throw error;
+    }
   } finally {
-    if (fs.existsSync(temporaryFile)) fs.unlinkSync(temporaryFile);
+    removeFile(temporaryFile);
+  }
+}
+
+function temporaryFilePath(targetFile: string): string {
+  return path.join(
+    path.dirname(targetFile),
+    `.${path.basename(targetFile)}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`
+  );
+}
+
+function isAlreadyExistsError(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException).code === 'EEXIST';
+}
+
+function isSameFile(firstFile: string, secondFile: string): boolean {
+  try {
+    const first = fs.statSync(firstFile);
+    const second = fs.statSync(secondFile);
+    return first.dev === second.dev && first.ino === second.ino;
+  } catch {
+    return false;
+  }
+}
+
+function removeFile(filePath: string): void {
+  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+}
+
+function removeEmptyDirectory(directoryPath: string): void {
+  try {
+    fs.rmdirSync(directoryPath);
+  } catch {
+    // A concurrent process created data in the directory.
   }
 }
