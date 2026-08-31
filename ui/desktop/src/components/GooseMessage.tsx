@@ -181,6 +181,7 @@ function GooseMessage({
               <div className="flex flex-col gap-3">
                 {toolRequests.map((toolRequest) => {
                   const hasResponse = toolResponsesMap.has(toolRequest.id);
+                  const isCancelledMessage = messageIndex < messages.length - 1 && !hasResponse;
                   const isPending = pendingConfirmationIds.has(toolRequest.id);
                   const confirmationContent = findConfirmationForToolAcrossMessages(toolRequest.id);
                   const isApprovalClicked = confirmationContent && !isPending && hasResponse;
@@ -188,7 +189,7 @@ function GooseMessage({
                     <div className="goose-message-tool" key={toolRequest.id}>
                       <ToolCallWithResponse
                         sessionId={sessionId}
-                        isCancelledMessage={false}
+                        isCancelledMessage={isCancelledMessage}
                         toolRequest={toolRequest}
                         toolResponse={toolResponsesMap.get(toolRequest.id)}
                         notifications={toolCallNotifications.get(toolRequest.id)}
