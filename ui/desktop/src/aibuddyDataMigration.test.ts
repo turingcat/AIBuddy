@@ -284,6 +284,47 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('other process credentials');
   });
 
+  it('does not remove credentials replaced between rollback ownership and cleanup', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
+    const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
+    const replacementCredentialsFile = path.join(rootDir, 'replacement-after-claim.json');
+    fs.mkdirSync(legacySettingsFile);
+    const unlinkSync = fs.unlinkSync;
+    const renameSync = fs.renameSync;
+    const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation((filePath) => {
+      if (filePath === targetCredentialsFile) {
+        fs.writeFileSync(replacementCredentialsFile, 'replacement after ownership check');
+        renameSync(replacementCredentialsFile, targetCredentialsFile);
+      }
+      return unlinkSync(filePath);
+    });
+    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation((sourceFile, targetFile) => {
+      const result = renameSync(sourceFile, targetFile);
+      if (sourceFile === targetCredentialsFile) {
+        fs.writeFileSync(replacementCredentialsFile, 'replacement after ownership check');
+        renameSync(replacementCredentialsFile, targetCredentialsFile);
+      }
+      return result;
+    });
+
+    try {
+      expect(migrate).toThrow();
+    } finally {
+      unlinkSpy.mockRestore();
+      renameSpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe(
+      'replacement after ownership check'
+    );
+  });
+
   it('rolls back credentials when settings publication fails', () => {
     writeLegacyCredentials({
       token: 'legacy-token',

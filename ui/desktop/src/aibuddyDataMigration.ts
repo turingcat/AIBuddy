@@ -67,9 +67,7 @@ export function migrateLegacyAIBuddyData({
     }
   } catch (error) {
     rollbackCredentials = true;
-    if (isSameFile(publishedCredentials.temporaryFile, targetCredentialsFile)) {
-      fs.unlinkSync(targetCredentialsFile);
-    }
+    rollbackPublishedCredentials(publishedCredentials.temporaryFile, targetCredentialsFile);
     throw error;
   } finally {
     removeFile(publishedCredentials.temporaryFile);
@@ -144,6 +142,40 @@ function isSameFile(firstFile: string, secondFile: string): boolean {
   } catch {
     return false;
   }
+}
+
+function rollbackPublishedCredentials(temporaryFile: string, targetFile: string): void {
+  const claimDirectory = fs.mkdtempSync(
+    path.join(path.dirname(targetFile), `.${path.basename(targetFile)}.rollback-`)
+  );
+  const claimedFile = path.join(claimDirectory, path.basename(targetFile));
+
+  try {
+    try {
+      fs.renameSync(targetFile, claimedFile);
+    } catch (error) {
+      if (isNotFoundError(error)) return;
+      throw error;
+    }
+
+    if (isSameFile(claimedFile, temporaryFile)) {
+      removeFile(claimedFile);
+      return;
+    }
+
+    try {
+      fs.linkSync(claimedFile, targetFile);
+      removeFile(claimedFile);
+    } catch (error) {
+      if (!isAlreadyExistsError(error)) throw error;
+    }
+  } finally {
+    removeEmptyDirectory(claimDirectory);
+  }
+}
+
+function isNotFoundError(error: unknown): boolean {
+  return (error as NodeJS.ErrnoException).code === 'ENOENT';
 }
 
 function removeFile(filePath: string): void {
