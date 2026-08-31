@@ -40,4 +40,42 @@ describe('initializeAppIdentity', () => {
     );
     expect(calls.slice(0, 2)).toEqual(['setName:HeyBuddy', 'getPath:userData']);
   });
+
+  it('does not resolve userData while bootstrap dependencies load', async () => {
+    vi.resetModules();
+    const calls: string[] = [];
+    vi.doMock('electron', () => ({
+      app: {
+        setName: (name: string) => calls.push(`setName:${name}`),
+        getPath: (name: 'userData') => {
+          calls.push(`getPath:${name}`);
+          return '/tmp/Application Support/AIBuddy';
+        },
+      },
+      ipcMain: {
+        handle: () => undefined,
+        on: () => undefined,
+      },
+      BrowserWindow: {
+        getFocusedWindow: () => null,
+      },
+    }));
+
+    await import('./utils/recentDirs');
+    await import('./utils/logger');
+    await import('./utils/recipeHash');
+    expect(calls).toEqual([]);
+
+    const { initializeAppIdentity: initialize } = await import('./appIdentity');
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    initialize({
+      setName: (name: string) => calls.push(`setName:${name}`),
+      getPath: (name: 'userData') => {
+        calls.push(`getPath:${name}`);
+        return '/tmp/Application Support/AIBuddy';
+      },
+    });
+    expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
+    vi.doUnmock('electron');
+  });
 });
