@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { CredentialsCodec } from './credentialsCrypto';
+import type {
+  GatewayCredentials,
+  SiteAccountIdentity,
+  SiteKind,
+  SiteTarget,
+} from './siteRuntime/types';
 
 /**
  * @author: logic
@@ -14,6 +20,12 @@ import type { CredentialsCodec } from './credentialsCrypto';
 export type { CredentialsCodec };
 
 export interface LoginCredentials {
+  schemaVersion?: 2;
+  siteKind?: SiteKind;
+  session?: { accessToken: string; pat?: string };
+  account?: SiteAccountIdentity;
+  target?: SiteTarget;
+  gateway?: GatewayCredentials;
   token: string;
   baseUrl: string;
   apiKey: string;
@@ -67,18 +79,20 @@ export function readCredentials(
   if (isEnvelope(data)) {
     const plain = codec.decrypt(data.blob);
     if (plain === null) return null;
-    return parseAndValidate(plain);
+    const credentials = parseAndValidate(plain);
+    return credentials ? normalizeCredentials(credentials) : null;
   }
 
   // 旧版明文：校验通过后迁移为加密信封（失败不阻断读取）
   const legacy = validateFields(data);
   if (legacy) {
+    const normalized = normalizeCredentials(legacy);
     try {
-      writeCredentials(filePath, legacy, codec);
+      writeCredentials(filePath, normalized, codec);
     } catch (err) {
       console.warn('登录凭证明文迁移加密失败，将继续以明文文件运行：', err);
     }
-    return legacy;
+    return normalized;
   }
   return null;
 }
@@ -123,4 +137,32 @@ function validateFields(data: unknown): LoginCredentials | null {
     return creds;
   }
   return null;
+}
+
+function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
+  if (
+    credentials.schemaVersion === 2 &&
+    credentials.siteKind &&
+    credentials.session &&
+    credentials.gateway
+  ) {
+    return credentials;
+  }
+
+  const siteKind: SiteKind = credentials.authKind === 'sub2api' ? 'sub2api' : 'oa';
+  return {
+    ...credentials,
+    schemaVersion: 2,
+    siteKind,
+    session: {
+      accessToken: credentials.token,
+      ...(credentials.pat ? { pat: credentials.pat } : {}),
+    },
+    account: {},
+    gateway: {
+      providerId: siteKind === 'sub2api' ? 'aibuddy' : 'heybuddy',
+      baseUrl: credentials.baseUrl,
+      apiKey: credentials.apiKey,
+    },
+  };
 }

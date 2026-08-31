@@ -57,13 +57,13 @@ describe('credentials 读写', () => {
   it('write 后 read 能读回（identity 回退）', () => {
     const creds = { token: 't', baseUrl: 'https://gw', apiKey: 'k' };
     writeCredentials(tmpFile, creds, identityCodec);
-    expect(readCredentials(tmpFile, identityCodec)).toEqual(creds);
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject(creds);
   });
 
   it('含 pat 时 write/read 往返保留（加密 codec）', () => {
     const creds = { token: 't', baseUrl: 'u', apiKey: 'k', pat: 'pat-x' };
     writeCredentials(tmpFile, creds, base64Codec);
-    expect(readCredentials(tmpFile, base64Codec)).toEqual(creds);
+    expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
   });
 
   it('加密写入后文件不含明文凭证', () => {
@@ -82,14 +82,14 @@ describe('credentials 读写', () => {
   it('旧登录文件（明文）无 pat 字段时仍可读', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, identityCodec);
-    expect(creds).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     expect(creds?.pat).toBeUndefined();
   });
 
   it('旧明文文件用加密 codec 读取时自动迁移为 v:1 信封', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, base64Codec);
-    expect(creds).toEqual({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' });
     const raw = fs.readFileSync(tmpFile, 'utf8');
     expect(raw).not.toContain('plain-token');
     expect(JSON.parse(raw)).toMatchObject({ v: 1 });
@@ -100,7 +100,7 @@ describe('credentials 读写', () => {
   it('旧明文文件用 identity codec 读取时重写为信封结构', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, identityCodec);
-    expect(creds).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     const envelope = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
     expect(envelope).toMatchObject({ v: 1 });
     expect(typeof envelope.blob).toBe('string');
@@ -116,13 +116,37 @@ describe('credentials 读写', () => {
 
     writeCredentials(tmpFile, creds, base64Codec);
 
-    expect(readCredentials(tmpFile, base64Codec)).toEqual(creds);
+    expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
+  });
+
+  it('migrates a legacy TFlow credential into a normalized site record', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+      })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+      schemaVersion: 2,
+      siteKind: 'sub2api',
+      session: { accessToken: 'access-token' },
+      account: {},
+      gateway: {
+        providerId: 'aibuddy',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+      },
+    });
   });
 
   it('旧版凭证没有 authKind 时仍然有效', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k' }));
 
-    expect(readCredentials(tmpFile, identityCodec)).toEqual({
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
       token: 'legacy',
       baseUrl: 'u',
       apiKey: 'k',
@@ -167,7 +191,7 @@ describe('credentials 读写', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     fs.chmodSync(tmpFile, 0o400);
     try {
-      expect(readCredentials(tmpFile, identityCodec)).toEqual({
+      expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
         token: 't',
         baseUrl: 'u',
         apiKey: 'k',
