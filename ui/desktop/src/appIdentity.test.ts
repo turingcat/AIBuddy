@@ -78,4 +78,49 @@ describe('initializeAppIdentity', () => {
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
     vi.doUnmock('electron');
   });
+
+  it('initializes identity before evaluating the main-process entry point', async () => {
+    vi.resetModules();
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
+    vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
+    const calls: string[] = [];
+    const app = new Proxy(
+      {
+        setName: (name: string) => calls.push(`setName:${name}`),
+        getPath: (name: 'userData') => {
+          calls.push(`getPath:${name}`);
+          return '/tmp/Application Support/AIBuddy';
+        },
+        isPackaged: false,
+        whenReady: () => Promise.resolve(),
+        on: () => undefined,
+        isReady: () => false,
+      },
+      { get: (target, property: string) => target[property as keyof typeof target] ?? vi.fn() },
+    );
+    vi.doMock('electron', () => ({
+      app,
+      ipcMain: { handle: () => undefined, on: () => undefined },
+      BrowserWindow: { getAllWindows: () => [], getFocusedWindow: () => null },
+      dialog: {},
+      globalShortcut: {},
+      Menu: {},
+      MenuItem: class {},
+      net: {},
+      Notification: class {},
+      powerMonitor: {},
+      powerSaveBlocker: {},
+      screen: {},
+      session: { defaultSession: {} },
+      shell: {},
+      Tray: class {},
+    }));
+
+    await import('./main');
+
+    expect(calls.filter((call) => call.startsWith('getPath:'))[0]).toBe('getPath:userData');
+    expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
+    vi.doUnmock('electron');
+  });
 });
