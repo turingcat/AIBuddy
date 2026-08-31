@@ -47,7 +47,7 @@ import {
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
-import { buildHeyBuddyEnv } from './gooseServeEnv';
+import { buildSiteRuntimeEnv } from './gooseServeEnv';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -1126,7 +1126,9 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
+    const siteRuntimeEnv = buildSiteRuntimeEnv(
+      readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+    );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
       gooseServeResult = await startGooseServe({
@@ -1135,7 +1137,7 @@ const createChat = async (
         tls: true,
         env: {
           GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...heyBuddyEnv,
+          ...siteRuntimeEnv,
         },
         loginShellPath,
         isPackaged: app.isPackaged,
