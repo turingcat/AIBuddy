@@ -48,6 +48,7 @@ import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
 import { buildSiteRuntimeEnv } from './gooseServeEnv';
+import { fetchSub2apiAccount, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -1995,6 +1996,31 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
   if (!creds) {
     return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
   }
+  if (creds.siteKind === 'sub2api') {
+    return runBalanceFetch(async () => {
+      const account = await fetchSub2apiAccount(
+        authConfig.apiBaseUrl,
+        creds.session?.accessToken ?? creds.token,
+        net.fetch
+      );
+      return {
+        balance: {
+          quota: account.balance,
+          usedQuota: 0,
+          requestCount: 0,
+          userName: account.displayName,
+          displayName: account.displayName,
+        },
+        currency: {
+          quotaPerUnit: 1,
+          quotaDisplayType: 'USD',
+          usdExchangeRate: 1,
+          customCurrencySymbol: '$',
+          customCurrencyExchangeRate: 1,
+        },
+      };
+    });
+  }
   const pat = creds.pat;
   if (!pat) {
     return { ok: false, kind: 'no-pat', message: '请重新登录后查看余额' };
@@ -2017,6 +2043,21 @@ ipcMain.handle('list-models-via-api', async () => {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) return [];
   try {
+    if (creds.siteKind === 'sub2api') {
+      return (
+        await fetchSub2apiModels(
+          creds.gateway?.baseUrl ?? creds.baseUrl,
+          creds.gateway?.apiKey ?? creds.apiKey,
+          net.fetch
+        )
+      ).map((model) => ({
+        id: model.id,
+        name: model.id,
+        contextLimit: null,
+        reasoning: null,
+        providerId: model.providerId,
+      }));
+    }
     const res = await net.fetch(`${creds.baseUrl}/models`, {
       headers: { Authorization: `Bearer ${creds.apiKey}` },
     });

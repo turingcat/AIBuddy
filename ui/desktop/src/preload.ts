@@ -183,7 +183,13 @@ export type ElectronAPI = {
   completeAIBuddy2FA: (tempToken: string, totpCode: string) => Promise<AIBuddyAuthResult>;
   getUserBalance: () => Promise<BalanceResult>;
   listModelsViaApi: () => Promise<
-    { id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]
+    {
+      id: string;
+      name: string;
+      contextLimit: number | null;
+      reasoning: boolean | null;
+      providerId?: string;
+    }[]
   >;
   getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
   listGitBranches: (dir: string) => Promise<string[]>;
