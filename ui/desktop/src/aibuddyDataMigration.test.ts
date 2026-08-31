@@ -284,7 +284,7 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('other process credentials');
   });
 
-  it('does not remove credentials replaced between rollback ownership and cleanup', () => {
+  it('does not remove live credentials replaced after rollback ownership check', () => {
     writeLegacyCredentials({
       token: 'legacy-token',
       baseUrl: 'https://tflow.online/v1',
@@ -293,33 +293,30 @@ describe('migrateLegacyAIBuddyData', () => {
     });
     const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
     const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
-    const replacementCredentialsFile = path.join(rootDir, 'replacement-after-claim.json');
     fs.mkdirSync(legacySettingsFile);
     const unlinkSync = fs.unlinkSync;
-    const renameSync = fs.renameSync;
+    let claimedFileCleanupObserved = false;
     const unlinkSpy = vi.spyOn(fs, 'unlinkSync').mockImplementation((filePath) => {
-      if (filePath === targetCredentialsFile) {
-        fs.writeFileSync(replacementCredentialsFile, 'replacement after ownership check');
-        renameSync(replacementCredentialsFile, targetCredentialsFile);
+      const cleanupPath = filePath.toString();
+      if (
+        path.basename(cleanupPath) === 'credentials.json' &&
+        path
+          .dirname(cleanupPath)
+          .startsWith(path.join(targetUserDataDir, '.credentials.json.rollback-'))
+      ) {
+        claimedFileCleanupObserved = true;
+        fs.writeFileSync(targetCredentialsFile, 'replacement after ownership check');
       }
       return unlinkSync(filePath);
-    });
-    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation((sourceFile, targetFile) => {
-      const result = renameSync(sourceFile, targetFile);
-      if (sourceFile === targetCredentialsFile) {
-        fs.writeFileSync(replacementCredentialsFile, 'replacement after ownership check');
-        renameSync(replacementCredentialsFile, targetCredentialsFile);
-      }
-      return result;
     });
 
     try {
       expect(migrate).toThrow();
     } finally {
       unlinkSpy.mockRestore();
-      renameSpy.mockRestore();
     }
 
+    expect(claimedFileCleanupObserved).toBe(true);
     expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe(
       'replacement after ownership check'
     );
