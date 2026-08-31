@@ -253,6 +253,82 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.existsSync(targetUserDataDir)).toBe(false);
   });
 
+  it('preserves credentials refreshed in place before settings migration fails', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
+    const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
+    fs.mkdirSync(legacySettingsFile);
+
+    const copyFileSync = fs.copyFileSync;
+    const copySpy = vi
+      .spyOn(fs, 'copyFileSync')
+      .mockImplementation((sourceFile, targetFile, mode) => {
+        if (sourceFile === legacySettingsFile) {
+          fs.writeFileSync(targetCredentialsFile, 'refreshed credentials');
+        }
+        return copyFileSync(sourceFile, targetFile, mode);
+      });
+
+    try {
+      expect(migrate).toThrow();
+    } finally {
+      copySpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('refreshed credentials');
+  });
+
+  it('removes claimed credentials when a newer target appears during rollback restoration', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
+    const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
+    fs.mkdirSync(legacySettingsFile);
+
+    const copyFileSync = fs.copyFileSync;
+    const copySpy = vi
+      .spyOn(fs, 'copyFileSync')
+      .mockImplementation((sourceFile, targetFile, mode) => {
+        if (sourceFile === legacySettingsFile) {
+          fs.writeFileSync(targetCredentialsFile, 'credentials awaiting restoration');
+        }
+        return copyFileSync(sourceFile, targetFile, mode);
+      });
+    const linkSync = fs.linkSync;
+    const linkSpy = vi.spyOn(fs, 'linkSync').mockImplementation((sourceFile, targetFile) => {
+      if (
+        targetFile === targetCredentialsFile &&
+        sourceFile.toString().includes('.credentials.json.rollback-')
+      ) {
+        fs.writeFileSync(targetCredentialsFile, 'newer credentials');
+      }
+      return linkSync(sourceFile, targetFile);
+    });
+
+    try {
+      expect(migrate).toThrow();
+    } finally {
+      copySpy.mockRestore();
+      linkSpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetCredentialsFile, 'utf8')).toBe('newer credentials');
+    expect(
+      fs
+        .readdirSync(targetUserDataDir)
+        .filter((entry) => entry.startsWith('.credentials.json.rollback-'))
+    ).toEqual([]);
+  });
+
   it('does not remove credentials published by another process during rollback', () => {
     writeLegacyCredentials({
       token: 'legacy-token',

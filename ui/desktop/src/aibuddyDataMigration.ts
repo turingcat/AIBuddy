@@ -22,6 +22,7 @@ export interface MigrationResult {
 
 interface PublishedCredentials {
   temporaryFile: string;
+  contents: Buffer;
 }
 
 export function migrateLegacyAIBuddyData({
@@ -67,7 +68,7 @@ export function migrateLegacyAIBuddyData({
     }
   } catch (error) {
     rollbackCredentials = true;
-    rollbackPublishedCredentials(publishedCredentials.temporaryFile, targetCredentialsFile);
+    rollbackPublishedCredentials(publishedCredentials, targetCredentialsFile);
     throw error;
   } finally {
     removeFile(publishedCredentials.temporaryFile);
@@ -95,10 +96,11 @@ function publishCredentialsAtomically(
 ): PublishedCredentials | null {
   const temporaryFile = temporaryFilePath(targetFile);
   writeCredentials(temporaryFile, credentials, codec);
+  const contents = fs.readFileSync(temporaryFile);
 
   try {
     fs.linkSync(temporaryFile, targetFile);
-    return { temporaryFile };
+    return { temporaryFile, contents };
   } catch (error) {
     removeFile(temporaryFile);
     if (isAlreadyExistsError(error)) return null;
@@ -144,7 +146,10 @@ function isSameFile(firstFile: string, secondFile: string): boolean {
   }
 }
 
-function rollbackPublishedCredentials(temporaryFile: string, targetFile: string): void {
+function rollbackPublishedCredentials(
+  { temporaryFile, contents }: PublishedCredentials,
+  targetFile: string
+): void {
   const claimDirectory = fs.mkdtempSync(
     path.join(path.dirname(targetFile), `.${path.basename(targetFile)}.rollback-`)
   );
@@ -158,17 +163,17 @@ function rollbackPublishedCredentials(temporaryFile: string, targetFile: string)
       throw error;
     }
 
-    if (isSameFile(claimedFile, temporaryFile)) {
+    if (isSameFile(claimedFile, temporaryFile) && fs.readFileSync(claimedFile).equals(contents)) {
       removeFile(claimedFile);
       return;
     }
 
     try {
       fs.linkSync(claimedFile, targetFile);
-      removeFile(claimedFile);
     } catch (error) {
       if (!isAlreadyExistsError(error)) throw error;
     }
+    removeFile(claimedFile);
   } finally {
     removeEmptyDirectory(claimDirectory);
   }

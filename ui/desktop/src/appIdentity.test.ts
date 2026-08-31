@@ -21,6 +21,7 @@ describe('initializeAppIdentity', () => {
     expect(initializeAppIdentity(app)).toMatchObject({
       settingsFile: '/tmp/Application Support/AIBuddy/settings.json',
       credentialsFile: '/tmp/Application Support/AIBuddy/credentials.json',
+      startupLogsDir: '/tmp/Application Support/AIBuddy/logs/startup',
     });
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
@@ -36,7 +37,10 @@ describe('initializeAppIdentity', () => {
       },
     };
 
-    expect(initializeAppIdentity(app).userDataDir).toBe('/tmp/Application Support/HeyBuddy');
+    expect(initializeAppIdentity(app)).toMatchObject({
+      userDataDir: '/tmp/Application Support/HeyBuddy',
+      startupLogsDir: '/tmp/Application Support/HeyBuddy/logs/startup',
+    });
     expect(calls.slice(0, 2)).toEqual(['setName:HeyBuddy', 'getPath:userData']);
   });
 

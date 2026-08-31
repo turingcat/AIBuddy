@@ -20,6 +20,6 @@ export function initializeAppIdentity(app: AppIdentityTarget): AppDataPaths {
     userDataDir,
     settingsFile: path.join(userDataDir, 'settings.json'),
     credentialsFile: path.join(userDataDir, 'credentials.json'),
-    startupLogsDir: path.join(userDataDir, 'startup-logs'),
+    startupLogsDir: path.join(userDataDir, 'logs', 'startup'),
   };
 }

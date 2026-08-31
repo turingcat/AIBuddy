@@ -73,12 +73,12 @@ progress.weekly.remaining_usd
 progress.monthly.remaining_usd
 ```
 
-The adapter matches the saved API-key group ID to `subscription.group_id`. A matching active subscription becomes a subscription entitlement containing an ordered list of configured periods:
+The adapter matches the saved API-key group ID to `subscription.group_id`. A matching active subscription becomes a subscription entitlement containing the configured server-provided values:
 
 ```text
-period: day | week | month
-remainingUSD: number
-resetsAt: string
+remainingUSD.daily?: number
+remainingUSD.weekly?: number
+remainingUSD.monthly?: number
 ```
 
 The adapter copies `remaining_usd` without calculating `limit - used`. Missing progress windows are omitted. When no active subscription matches the key group, the adapter returns the account's metered balance.

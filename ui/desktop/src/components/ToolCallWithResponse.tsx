@@ -892,7 +892,7 @@ function ToolCallView({
           );
         })()}
       </ToolCallExpandable>
-      {toolResultImages.length > 0 && (
+      {!isCancelledMessage && toolResultImages.length > 0 && (
         <div className="mt-2 space-y-2" data-testid="tool-result-images">
           {toolResultImages.map((image, index) => (
             <ImagePreview

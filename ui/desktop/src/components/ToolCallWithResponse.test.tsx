@@ -191,4 +191,37 @@ describe('ToolCallWithResponse live output', () => {
     expect(screen.queryByAltText('Tool result')).not.toBeInTheDocument();
     expect(screen.getByTestId('tool-result-images').querySelectorAll('img')).toHaveLength(1);
   });
+
+  it('hides tool result images for cancelled tool calls', () => {
+    const imageResponse: ToolResponseMessageContent = {
+      ...toolResponse,
+      toolResult: {
+        status: 'success',
+        value: {
+          content: [
+            {
+              type: 'image',
+              mimeType: 'image/png',
+              data: 'cancelled-image-payload',
+            },
+          ],
+          isError: false,
+        },
+      },
+    };
+
+    render(
+      <ToolCallWithResponse
+        isCancelledMessage
+        toolRequest={toolRequest}
+        toolResponse={imageResponse}
+        notifications={[]}
+        isStreamingMessage={false}
+        isPendingApproval={false}
+      />,
+      { wrapper: IntlTestWrapper }
+    );
+
+    expect(screen.queryByTestId('tool-result-images')).not.toBeInTheDocument();
+  });
 });
