@@ -334,8 +334,9 @@ describe('migrateLegacyAIBuddyData', () => {
     const linkSync = fs.linkSync;
     const linkSpy = vi.spyOn(fs, 'linkSync').mockImplementation((sourceFile, targetFile) => {
       if (targetFile === targetSettingsFile) {
-        const error = new Error('settings publication denied') as NodeJS.ErrnoException;
-        error.code = 'EACCES';
+        const error = Object.assign(new Error('settings publication denied'), {
+          code: 'EACCES',
+        });
         throw error;
       }
       return linkSync(sourceFile, targetFile);

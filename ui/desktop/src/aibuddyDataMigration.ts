@@ -131,7 +131,7 @@ function temporaryFilePath(targetFile: string): string {
 }
 
 function isAlreadyExistsError(error: unknown): boolean {
-  return (error as NodeJS.ErrnoException).code === 'EEXIST';
+  return (error as { code?: string }).code === 'EEXIST';
 }
 
 function isSameFile(firstFile: string, secondFile: string): boolean {
@@ -175,7 +175,7 @@ function rollbackPublishedCredentials(temporaryFile: string, targetFile: string)
 }
 
 function isNotFoundError(error: unknown): boolean {
-  return (error as NodeJS.ErrnoException).code === 'ENOENT';
+  return (error as { code?: string }).code === 'ENOENT';
 }
 
 function removeFile(filePath: string): void {
