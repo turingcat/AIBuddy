@@ -158,6 +158,15 @@
   "backButton.back": {
     "defaultMessage": "Back"
   },
+  "balanceWidget.dailyLimit": {
+    "defaultMessage": "Daily limit: {value}"
+  },
+  "balanceWidget.dailyRemaining": {
+    "defaultMessage": "{value} left today"
+  },
+  "balanceWidget.dailyUsed": {
+    "defaultMessage": "Used today: {value}"
+  },
   "balanceWidget.loadFailed": {
     "defaultMessage": "Balance load failed"
   },

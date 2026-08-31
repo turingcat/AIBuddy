@@ -14,12 +14,19 @@ import { parseCurrencyConfig } from './quotaFormat';
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
 export interface BalanceData {
+  /**
+   * 额度语义：计量计费账户为账户余额，订阅计费账户为当日剩余额度。
+   * 侧栏据此选择文案，两者不可混为一谈
+   */
+  kind: 'balance' | 'daily-quota';
   /** 剩余额度（原始 token 额度，需按 currency 换算显示） */
   quota: number;
   usedQuota: number;
   requestCount: number;
   userName: string;
   displayName: string;
+  /** 订阅分组名，仅 daily-quota 有 */
+  groupName?: string;
 }
 
 export type BalanceErrorKind = 'unauthorized' | 'http' | 'timeout' | 'network' | 'bad-response';
@@ -120,6 +127,7 @@ export async function fetchUserBalance(
     throw new BalanceFetchError('bad-response', '余额服务响应数据异常');
   }
   return {
+    kind: 'balance',
     quota,
     usedQuota,
     requestCount,

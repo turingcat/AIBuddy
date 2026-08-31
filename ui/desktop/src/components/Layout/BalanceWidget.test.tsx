@@ -14,7 +14,7 @@ import { DEFAULT_CURRENCY_CONFIG } from '../../quotaFormat';
  * IntlProvider locale=en 直接展示 defaultMessage。
  *
  * 路径分析（BalanceWidget，V(G)=6）：
- *   W1 ready（余额 + Tooltip 明细）/ W2 loading / W3 no-pat / W4 unauthorized /
+ *   W1 ready（余额 + Tooltip 明细）/ W1b ready（订阅日额度）/ W2 loading / W3 no-pat / W4 unauthorized /
  *   W5 error（提示 + message 详情）/ W6 not-logged-in 不渲染 / W7 点击刷新按钮再次拉取。
  */
 
@@ -34,6 +34,7 @@ function okResult(): BalanceResult {
   return {
     ok: true,
     balance: {
+      kind: 'balance',
       quota: 5000000,
       usedQuota: 100000,
       requestCount: 42,
@@ -85,6 +86,34 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
       expect(screen.getAllByText(/Used: \$0\.2/).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Requests: 42/).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/Updated /).length).toBeGreaterThan(0);
+    });
+  });
+
+  // 订阅计费账号余额恒为 0，侧栏必须显示当日剩余额度，且文案要能和账户余额区分开
+  it('W1b: 订阅计费时显示当日剩余额度，悬浮展示分组与日限额', async () => {
+    electronMock.getUserBalance.mockResolvedValue({
+      ok: true,
+      balance: {
+        kind: 'daily-quota',
+        quota: 37.5,
+        usedQuota: 12.5,
+        requestCount: 0,
+        userName: 'alice',
+        displayName: 'alice',
+        groupName: 'Codex Max',
+      },
+      currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+    } as BalanceResult);
+    renderWidget();
+
+    const value = await screen.findByTestId('balance-value');
+    expect(value).toHaveTextContent('$37.5 left today');
+
+    await userEvent.hover(value);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Codex Max/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Used today: \$12\.5/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Daily limit: \$50/).length).toBeGreaterThan(0);
     });
   });
 

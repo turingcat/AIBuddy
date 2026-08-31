@@ -29,10 +29,12 @@ import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
 import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
+import { withSub2apiSession } from './sub2apiAuth';
 import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
   writeCredentials,
+  withRefreshedSession,
   clearCredentials,
   type LoginCredentials,
 } from './credentials';
@@ -41,6 +43,7 @@ import {
   fetchCurrencyWithCache,
   fetchUserBalance,
   runBalanceFetch,
+  BalanceFetchError,
   type BalanceResult,
   type CurrencyCacheState,
 } from './balance';
@@ -48,7 +51,11 @@ import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
 import { buildSiteRuntimeEnv } from './gooseServeEnv';
-import { fetchSub2apiAccount, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
+import {
+  fetchSub2apiEntitlement,
+  fetchSub2apiModels,
+  Sub2apiUnauthorizedError,
+} from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -2006,20 +2013,54 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
     return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
   }
   if (creds.siteKind === 'sub2api') {
+    const refreshToken = creds.session?.refreshToken ?? creds.refreshToken;
     return runBalanceFetch(async () => {
-      const account = await fetchSub2apiAccount(
+      const entitlement = await withSub2apiSession(
         authConfig.apiBaseUrl,
-        creds.session?.accessToken ?? creds.token,
-        net.fetch
-      );
-      return {
-        balance: {
-          quota: account.balance,
-          usedQuota: 0,
-          requestCount: 0,
-          userName: account.displayName,
-          displayName: account.displayName,
+        {
+          accessToken: creds.session?.accessToken ?? creds.token,
+          ...(refreshToken ? { refreshToken } : {}),
         },
+        net.fetch,
+        (refreshed) =>
+          writeCredentials(
+            CREDENTIALS_FILE,
+            withRefreshedSession(creds, refreshed),
+            getCredentialsCodec()
+          ),
+        (accessToken) =>
+          fetchSub2apiEntitlement(
+            authConfig.apiBaseUrl,
+            accessToken,
+            creds.gateway?.groupId ?? creds.groupId,
+            net.fetch
+          )
+      ).catch((error) => {
+        if (error instanceof Sub2apiUnauthorizedError) {
+          throw new BalanceFetchError('unauthorized', error.message);
+        }
+        throw error;
+      });
+      return {
+        balance:
+          entitlement.kind === 'balance'
+            ? {
+                kind: 'balance' as const,
+                quota: entitlement.balance,
+                usedQuota: 0,
+                requestCount: 0,
+                userName: entitlement.displayName,
+                displayName: entitlement.displayName,
+              }
+            : {
+                kind: 'daily-quota' as const,
+                quota: entitlement.dailyLimitUSD - entitlement.dailyUsedUSD,
+                usedQuota: entitlement.dailyUsedUSD,
+                requestCount: 0,
+                userName: entitlement.displayName,
+                displayName: entitlement.displayName,
+                groupName: entitlement.groupName,
+              },
         currency: {
           quotaPerUnit: 1,
           quotaDisplayType: 'USD',

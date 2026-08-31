@@ -22,7 +22,7 @@ export type { CredentialsCodec };
 export interface LoginCredentials {
   schemaVersion?: 2;
   siteKind?: SiteKind;
-  session?: { accessToken: string; pat?: string };
+  session?: { accessToken: string; refreshToken?: string; pat?: string };
   account?: SiteAccountIdentity;
   target?: SiteTarget;
   gateway?: GatewayCredentials;
@@ -32,6 +32,10 @@ export interface LoginCredentials {
   authKind?: 'oa' | 'sub2api';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
+  /** 面板刷新令牌：access token 过期时换新，缺失则只能重新登录 */
+  refreshToken?: string;
+  /** API Key 所属分组：订阅型分组据此匹配日限额；旧登录数据可能没有 */
+  groupId?: string;
 }
 
 interface CredentialsEnvelope {
@@ -98,6 +102,23 @@ export function readCredentials(
 }
 
 /**
+ * 令牌轮换后的回写：flat token 与 session 两处必须同步，
+ * 只改一处会让 normalizeCredentials 的 schemaVersion 2 早退分支继续吐旧令牌
+ */
+export function withRefreshedSession(
+  credentials: LoginCredentials,
+  session: { accessToken: string; refreshToken?: string }
+): LoginCredentials {
+  const refreshToken = session.refreshToken ? { refreshToken: session.refreshToken } : {};
+  return {
+    ...credentials,
+    token: session.accessToken,
+    ...refreshToken,
+    session: { ...credentials.session, accessToken: session.accessToken, ...refreshToken },
+  };
+}
+
+/**
  * @author: logic
  * @date: 2026-08-11
  * 删除凭证文件，文件不存在时安全返回
@@ -156,6 +177,7 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
     siteKind,
     session: {
       accessToken: credentials.token,
+      ...(credentials.refreshToken ? { refreshToken: credentials.refreshToken } : {}),
       ...(credentials.pat ? { pat: credentials.pat } : {}),
     },
     account: {},
@@ -163,6 +185,7 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
       providerId: siteKind === 'sub2api' ? 'aibuddy' : 'heybuddy',
       baseUrl: credentials.baseUrl,
       apiKey: credentials.apiKey,
+      ...(credentials.groupId ? { groupId: credentials.groupId } : {}),
     },
   };
 }

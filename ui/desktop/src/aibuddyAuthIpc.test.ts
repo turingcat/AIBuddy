@@ -61,7 +61,7 @@ describe('registerAIBuddyAuthIpc', () => {
     vi.mocked(fetchSub2apiPublicSettings).mockResolvedValue({ ok: true, settings });
     vi.mocked(startSub2apiLogin).mockResolvedValue({
       kind: 'authenticated',
-      accessToken: 'panel-jwt',
+      session: { accessToken: 'panel-jwt', refreshToken: 'panel-refresh' },
     });
     vi.mocked(prepareAIBuddyProvisioning).mockResolvedValue({
       step: 'select-group',
@@ -90,7 +90,7 @@ describe('registerAIBuddyAuthIpc', () => {
     vi.mocked(fetchSub2apiPublicSettings).mockResolvedValue({ ok: true, settings });
     vi.mocked(startSub2apiLogin).mockResolvedValue({
       kind: 'authenticated',
-      accessToken: 'panel-jwt',
+      session: { accessToken: 'panel-jwt', refreshToken: 'panel-refresh' },
     });
     vi.mocked(prepareAIBuddyProvisioning).mockResolvedValue({
       step: 'authenticated',
@@ -125,7 +125,7 @@ describe('registerAIBuddyAuthIpc', () => {
       apiKey: 'sk-secret',
       authKind: 'sub2api' as const,
     };
-    vi.mocked(completeSub2apiTotp).mockResolvedValue('totp-jwt');
+    vi.mocked(completeSub2apiTotp).mockResolvedValue({ accessToken: 'totp-jwt' });
     vi.mocked(fetchSub2apiPublicSettings).mockResolvedValue({ ok: true, settings });
     vi.mocked(prepareAIBuddyProvisioning).mockResolvedValue({
       step: 'authenticated',
@@ -153,7 +153,7 @@ describe('registerAIBuddyAuthIpc', () => {
     vi.mocked(fetchSub2apiPublicSettings).mockResolvedValue({ ok: true, settings });
     vi.mocked(startSub2apiLogin).mockResolvedValue({
       kind: 'authenticated',
-      accessToken: 'panel-jwt',
+      session: { accessToken: 'panel-jwt', refreshToken: 'panel-refresh' },
     });
     vi.mocked(prepareAIBuddyProvisioning).mockResolvedValue({
       step: 'select-group',

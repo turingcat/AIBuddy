@@ -10,6 +10,7 @@ import {
   type AIBuddyGroup,
   type FetchLike,
   type Sub2apiPublicSettings,
+  type Sub2apiSession,
 } from './sub2apiAuth';
 
 export type AIBuddyAuthResult =
@@ -41,16 +42,11 @@ export function registerAIBuddyAuthIpc(
   }: AIBuddyAuthIpcDependencies
 ): void {
   const completeProvisioning = async (
-    accessToken: string,
+    session: Sub2apiSession,
     settings: Sub2apiPublicSettings
   ): Promise<AIBuddyAuthResult> => {
     try {
-      const prepared = await prepareAIBuddyProvisioning(
-        apiBaseUrl,
-        accessToken,
-        settings,
-        fetchImpl
-      );
+      const prepared = await prepareAIBuddyProvisioning(apiBaseUrl, session, settings, fetchImpl);
       if (prepared.step === 'authenticated') {
         writeCredentials(prepared.credentials);
         return { ok: true, step: 'authenticated', firstModelId: prepared.firstModelId };
@@ -58,7 +54,7 @@ export function registerAIBuddyAuthIpc(
       return {
         ok: true,
         step: 'select-group',
-        pendingLoginId: pendingLogins.create({ accessToken, settings, groups: prepared.groups }),
+        pendingLoginId: pendingLogins.create({ session, settings, groups: prepared.groups }),
         groups: prepared.groups,
       };
     } catch (error) {
@@ -90,7 +86,7 @@ export function registerAIBuddyAuthIpc(
             maskedEmail: login.maskedEmail,
           };
         }
-        return completeProvisioning(login.accessToken, settingsResult.settings);
+        return completeProvisioning(login.session, settingsResult.settings);
       } catch (error) {
         return errorResult(error);
       }
@@ -98,7 +94,7 @@ export function registerAIBuddyAuthIpc(
   );
   ipcMain.handle('complete-aibuddy-2fa', async (_event, tempToken: string, totpCode: string) => {
     try {
-      const accessToken = await completeSub2apiTotp(apiBaseUrl, tempToken, totpCode, fetchImpl);
+      const session = await completeSub2apiTotp(apiBaseUrl, tempToken, totpCode, fetchImpl);
       const settingsResult = await fetchSub2apiPublicSettings(apiBaseUrl, fetchImpl);
       if (!settingsResult.ok) {
         return {
@@ -107,7 +103,7 @@ export function registerAIBuddyAuthIpc(
           ...(settingsResult.reason ? { reason: settingsResult.reason } : {}),
         };
       }
-      return completeProvisioning(accessToken, settingsResult.settings);
+      return completeProvisioning(session, settingsResult.settings);
     } catch (error) {
       return errorResult(error);
     }
@@ -125,7 +121,7 @@ export function registerAIBuddyAuthIpc(
       try {
         const provisioned = await provisionAIBuddyGroup(
           apiBaseUrl,
-          pending.accessToken,
+          pending.session,
           pending.settings,
           groupId,
           fetchImpl,

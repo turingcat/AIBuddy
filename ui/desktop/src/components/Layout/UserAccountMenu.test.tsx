@@ -49,6 +49,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 1_000,
@@ -69,6 +70,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '',
         userName: 'linye',
         quota: 1_000,
@@ -91,6 +93,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '',
         userName: '',
         quota: 1_000,
@@ -119,6 +122,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 5_000_000,
@@ -145,6 +149,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 5_000_000,

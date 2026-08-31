@@ -5,6 +5,7 @@ import path from 'node:path';
 import {
   readCredentials,
   writeCredentials,
+  withRefreshedSession,
   clearCredentials,
   type CredentialsCodec,
 } from './credentials';
@@ -143,6 +144,24 @@ describe('credentials 读写', () => {
     });
   });
 
+  // 余额取数按 gateway.groupId 判断该账号走计量余额还是订阅日限额，归一化不能把它丢掉
+  it('surfaces the key group on the normalized gateway record', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+        groupId: '42',
+      })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+      gateway: { groupId: '42' },
+    });
+  });
+
   it('旧版凭证没有 authKind 时仍然有效', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k' }));
 
@@ -219,5 +238,54 @@ describe('credentials 读写', () => {
   it('read 字段类型不匹配返回 null', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }));
     expect(readCredentials(tmpFile, identityCodec)).toBeNull();
+  });
+});
+
+// 令牌轮换后如果只更新 flat token，schemaVersion 2 的记录读回来仍是旧 session，
+// 下一次取数又是 401，刷新形同虚设
+describe('withRefreshedSession', () => {
+  it('更新 flat 与 session 两处令牌并保留其余凭证', () => {
+    const refreshed = withRefreshedSession(
+      {
+        schemaVersion: 2,
+        siteKind: 'sub2api',
+        token: 'old-access',
+        refreshToken: 'old-refresh',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-secret',
+        authKind: 'sub2api',
+        groupId: 'team-a',
+        session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+      },
+      { accessToken: 'new-access', refreshToken: 'new-refresh' }
+    );
+
+    expect(refreshed).toMatchObject({
+      token: 'new-access',
+      refreshToken: 'new-refresh',
+      session: { accessToken: 'new-access', refreshToken: 'new-refresh' },
+      apiKey: 'sk-secret',
+      groupId: 'team-a',
+    });
+  });
+
+  it('面板未下发新 refresh token 时沿用原有的', () => {
+    const refreshed = withRefreshedSession(
+      {
+        token: 'old-access',
+        refreshToken: 'old-refresh',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-secret',
+        session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+      },
+      { accessToken: 'new-access' }
+    );
+
+    expect(refreshed.token).toBe('new-access');
+    expect(refreshed.refreshToken).toBe('old-refresh');
+    expect(refreshed.session).toEqual({
+      accessToken: 'new-access',
+      refreshToken: 'old-refresh',
+    });
   });
 });

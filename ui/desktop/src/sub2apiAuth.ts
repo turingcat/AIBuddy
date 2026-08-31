@@ -1,4 +1,5 @@
 import type { LoginCredentials } from './credentials';
+import { Sub2apiUnauthorizedError } from './siteRuntime/sub2apiAdapter';
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
@@ -10,8 +11,14 @@ export interface Sub2apiPublicSettings {
   apiBaseUrl: string;
 }
 
+/** 面板登录下发的令牌对；refresh_token 在后端降级路径下可能缺失 */
+export interface Sub2apiSession {
+  accessToken: string;
+  refreshToken?: string;
+}
+
 export type Sub2apiLoginStep =
-  | { kind: 'authenticated'; accessToken: string }
+  | { kind: 'authenticated'; session: Sub2apiSession }
   | { kind: 'totp-required'; tempToken: string; maskedEmail?: string };
 
 export type AIBuddySettingsResult =
@@ -58,6 +65,7 @@ interface PublicSettingsData {
 
 interface LoginData {
   access_token?: unknown;
+  refresh_token?: unknown;
   requires_2fa?: unknown;
   temp_token?: unknown;
   user_email_masked?: unknown;
@@ -96,15 +104,30 @@ function normalizeGatewayUrl(url: string): string {
 }
 
 function credentialsFor(
-  accessToken: string,
+  session: Sub2apiSession,
   settings: Sub2apiPublicSettings,
-  apiKey: string
+  apiKey: string,
+  keyGroupId: string | null
 ): LoginCredentials {
   return {
-    token: accessToken,
+    token: session.accessToken,
     baseUrl: normalizeGatewayUrl(settings.apiBaseUrl),
     apiKey,
     authKind: 'sub2api',
+    ...(session.refreshToken ? { refreshToken: session.refreshToken } : {}),
+    ...(keyGroupId ? { groupId: keyGroupId } : {}),
+  };
+}
+
+function sessionFrom(data: LoginData | null): Sub2apiSession {
+  if (typeof data?.access_token !== 'string' || !data.access_token) {
+    throw new Sub2apiProtocolError('认证服务登录响应数据异常');
+  }
+  return {
+    accessToken: data.access_token,
+    ...(typeof data.refresh_token === 'string' && data.refresh_token
+      ? { refreshToken: data.refresh_token }
+      : {}),
   };
 }
 
@@ -255,10 +278,7 @@ export async function startSub2apiLogin(
     };
   }
 
-  if (typeof data?.access_token !== 'string' || !data.access_token) {
-    throw new Sub2apiProtocolError('认证服务登录响应数据异常');
-  }
-  return { kind: 'authenticated', accessToken: data.access_token };
+  return { kind: 'authenticated', session: sessionFrom(data) };
 }
 
 export async function completeSub2apiTotp(
@@ -267,7 +287,7 @@ export async function completeSub2apiTotp(
   totpCode: string,
   fetchImpl: FetchLike,
   timeoutMs = DEFAULT_TIMEOUT_MS
-): Promise<string> {
+): Promise<Sub2apiSession> {
   if (!/^\d{6}$/.test(totpCode)) {
     throw new Sub2apiProtocolError('请输入 6 位数字验证码');
   }
@@ -282,10 +302,65 @@ export async function completeSub2apiTotp(
     timeoutMs
   )) as LoginData | null;
 
-  if (typeof data?.access_token !== 'string' || !data.access_token) {
-    throw new Sub2apiProtocolError('认证服务登录响应数据异常');
+  return sessionFrom(data);
+}
+
+/**
+ * 用 refresh token 换新的令牌对。后端会轮换 refresh token（auth_handler.RefreshToken），
+ * 旧的一换即废，返回值必须整体回写，否则下一次刷新就会失败。
+ */
+export async function refreshSub2apiSession(
+  panelBaseUrl: string,
+  refreshToken: string,
+  fetchImpl: FetchLike,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<Sub2apiSession> {
+  const data = (await requestEnvelope(
+    `${normalizePanelUrl(panelBaseUrl)}/api/v1/auth/refresh`,
+    {
+      method: 'POST',
+      headers: CONTENT_TYPE_JSON,
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    },
+    fetchImpl,
+    timeoutMs
+  )) as LoginData | null;
+
+  return sessionFrom(data);
+}
+
+/**
+ * 面板接口调用包装：access token 过期时用 refresh token 换一次新令牌后重试，
+ * 让用户不必因 token 到期重新登录。刷新本身失败时抛原始 401，交由调用方提示重新登录。
+ */
+export async function withSub2apiSession<T>(
+  panelBaseUrl: string,
+  session: Sub2apiSession,
+  fetchImpl: FetchLike,
+  onRefreshed: (session: Sub2apiSession) => void,
+  run: (accessToken: string) => Promise<T>,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<T> {
+  try {
+    return await run(session.accessToken);
+  } catch (error) {
+    if (!(error instanceof Sub2apiUnauthorizedError) || !session.refreshToken) {
+      throw error;
+    }
+    let refreshed: Sub2apiSession;
+    try {
+      refreshed = await refreshSub2apiSession(
+        panelBaseUrl,
+        session.refreshToken,
+        fetchImpl,
+        timeoutMs
+      );
+    } catch {
+      throw error;
+    }
+    onRefreshed(refreshed);
+    return run(refreshed.accessToken);
   }
-  return data.access_token;
 }
 
 export async function provisionAIBuddyCredentials(
@@ -430,9 +505,10 @@ async function validateAIBuddyCatalog(
 }
 
 async function provisionWithKey(
-  accessToken: string,
+  session: Sub2apiSession,
   settings: Sub2apiPublicSettings,
   apiKey: unknown,
+  keyGroupId: string | null,
   fetchImpl: FetchLike,
   timeoutMs: number
 ): Promise<AIBuddyGroupProvisioning> {
@@ -443,25 +519,26 @@ async function provisionWithKey(
     throw new Sub2apiProtocolError('API Key 响应数据异常');
   }
   return {
-    credentials: credentialsFor(accessToken, settings, apiKey),
+    credentials: credentialsFor(session, settings, apiKey, keyGroupId),
     firstModelId: await validateAIBuddyCatalog(settings, apiKey, fetchImpl, timeoutMs),
   };
 }
 
 export async function prepareAIBuddyProvisioning(
   panelBaseUrl: string,
-  accessToken: string,
+  session: Sub2apiSession,
   settings: Sub2apiPublicSettings,
   fetchImpl: FetchLike,
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<AIBuddyProvisioningPreparation> {
-  const keys = await listActiveAIBuddyKeys(panelBaseUrl, accessToken, fetchImpl, timeoutMs);
+  const keys = await listActiveAIBuddyKeys(panelBaseUrl, session.accessToken, fetchImpl, timeoutMs);
   const groupedKey = keys.find((key) => groupId(key.group_id) !== null);
   if (groupedKey) {
     const provisioned = await provisionWithKey(
-      accessToken,
+      session,
       settings,
       groupedKey.key,
+      groupId(groupedKey.group_id),
       fetchImpl,
       timeoutMs
     );
@@ -469,13 +546,18 @@ export async function prepareAIBuddyProvisioning(
   }
   return {
     step: 'select-group',
-    groups: await listAvailableAIBuddyGroups(panelBaseUrl, accessToken, fetchImpl, timeoutMs),
+    groups: await listAvailableAIBuddyGroups(
+      panelBaseUrl,
+      session.accessToken,
+      fetchImpl,
+      timeoutMs
+    ),
   };
 }
 
 export async function provisionAIBuddyGroup(
   panelBaseUrl: string,
-  accessToken: string,
+  session: Sub2apiSession,
   settings: Sub2apiPublicSettings,
   selectedGroupId: string,
   fetchImpl: FetchLike,
@@ -486,7 +568,7 @@ export async function provisionAIBuddyGroup(
     throw new Sub2apiProtocolError('请选择可用分组');
   }
   const existing = (
-    await listActiveAIBuddyKeys(panelBaseUrl, accessToken, fetchImpl, timeoutMs)
+    await listActiveAIBuddyKeys(panelBaseUrl, session.accessToken, fetchImpl, timeoutMs)
   ).find((key) => groupId(key.group_id) === selectedGroupId);
   let apiKey = existing?.key;
   if (!existing) {
@@ -496,7 +578,7 @@ export async function provisionAIBuddyGroup(
         method: 'POST',
         headers: {
           ...CONTENT_TYPE_JSON,
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${session.accessToken}`,
           'Idempotency-Key': idempotencyKeyFactory(),
         },
         body: JSON.stringify({ name: 'AIBuddy', group_id: selectedGroupId }),
@@ -506,7 +588,7 @@ export async function provisionAIBuddyGroup(
     )) as KeyData | null;
     apiKey = created?.key;
   }
-  return provisionWithKey(accessToken, settings, apiKey, fetchImpl, timeoutMs);
+  return provisionWithKey(session, settings, apiKey, selectedGroupId, fetchImpl, timeoutMs);
 }
 
 export async function authenticateAIBuddy(
@@ -538,7 +620,7 @@ export async function authenticateAIBuddy(
     }
     const creds = await provisionAIBuddyCredentials(
       panelBaseUrl,
-      login.accessToken,
+      login.session.accessToken,
       settings,
       fetchImpl,
       idempotencyKeyFactory,
@@ -559,7 +641,7 @@ export async function completeAIBuddyAuthentication(
   timeoutMs = DEFAULT_TIMEOUT_MS
 ): Promise<AIBuddyAuthResult> {
   try {
-    const accessToken = await completeSub2apiTotp(
+    const session = await completeSub2apiTotp(
       panelBaseUrl,
       tempToken,
       totpCode,
@@ -569,7 +651,7 @@ export async function completeAIBuddyAuthentication(
     const settings = await loadPublicSettings(panelBaseUrl, fetchImpl, timeoutMs);
     const creds = await provisionAIBuddyCredentials(
       panelBaseUrl,
-      accessToken,
+      session.accessToken,
       settings,
       fetchImpl,
       idempotencyKeyFactory,

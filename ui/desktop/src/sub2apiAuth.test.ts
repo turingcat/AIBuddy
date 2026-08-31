@@ -10,7 +10,9 @@ import {
   startSub2apiLogin,
   type FetchLike,
   type Sub2apiPublicSettings,
+  withSub2apiSession,
 } from './sub2apiAuth';
+import { Sub2apiUnauthorizedError } from './siteRuntime/sub2apiAdapter';
 
 const panelUrl = 'https://tflow.online/';
 const settings: Sub2apiPublicSettings = {
@@ -20,6 +22,7 @@ const settings: Sub2apiPublicSettings = {
   aliyunCaptchaRegion: 'cn',
   apiBaseUrl: 'https://tflow.online/',
 };
+const session = { accessToken: 'access-token', refreshToken: 'refresh-token' };
 
 function envelope(data: unknown): Response {
   return new Response(JSON.stringify({ code: 0, message: 'success', data }), {
@@ -137,6 +140,8 @@ describe('fetchSub2apiPublicSettings', () => {
   });
 });
 
+// 凭证必须记下 key 所属分组：订阅计费分组的额度在订阅日限额里，账户余额恒为 0，
+// 侧栏余额取数靠这个分组才能选对展示口径
 describe('group-aware AIBuddy provisioning', () => {
   it('automatically reuses an active exact-name key with a group and validates its catalog', async () => {
     const fetchMock = vi
@@ -149,7 +154,7 @@ describe('group-aware AIBuddy provisioning', () => {
       .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 'tflow-first-model' }] })));
 
     await expect(
-      prepareAIBuddyProvisioning(panelUrl, 'access-token', settings, asFetch(fetchMock))
+      prepareAIBuddyProvisioning(panelUrl, session, settings, asFetch(fetchMock))
     ).resolves.toEqual({
       step: 'authenticated',
       credentials: {
@@ -157,6 +162,8 @@ describe('group-aware AIBuddy provisioning', () => {
         baseUrl: 'https://tflow.online/v1',
         apiKey: 'sk-team-a',
         authKind: 'sub2api',
+        refreshToken: 'refresh-token',
+        groupId: 'team-a',
       },
       firstModelId: 'tflow-first-model',
     });
@@ -178,7 +185,7 @@ describe('group-aware AIBuddy provisioning', () => {
       .mockResolvedValueOnce(envelope([{ id: 'team-a', name: 'Team A' }]));
 
     await expect(
-      prepareAIBuddyProvisioning(panelUrl, 'access-token', settings, asFetch(fetchMock))
+      prepareAIBuddyProvisioning(panelUrl, session, settings, asFetch(fetchMock))
     ).resolves.toEqual({ step: 'select-group', groups: [{ id: 'team-a', name: 'Team A' }] });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
@@ -193,7 +200,7 @@ describe('group-aware AIBuddy provisioning', () => {
     await expect(
       provisionAIBuddyGroup(
         panelUrl,
-        'access-token',
+        session,
         settings,
         'team-a',
         asFetch(fetchMock),
@@ -205,6 +212,8 @@ describe('group-aware AIBuddy provisioning', () => {
         baseUrl: 'https://tflow.online/v1',
         apiKey: 'sk-team-a',
         authKind: 'sub2api',
+        refreshToken: 'refresh-token',
+        groupId: 'team-a',
       },
       firstModelId: 'team-model',
     });
@@ -217,11 +226,18 @@ describe('group-aware AIBuddy provisioning', () => {
 
 describe('sub2api login steps', () => {
   it('posts the password and captcha proof for a normal login', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(envelope({ access_token: 'access-token' }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        envelope({ access_token: 'access-token', refresh_token: 'refresh-token' })
+      );
 
     await expect(
       startSub2apiLogin(panelUrl, 'user@example.com', 'secret', 'captcha-param', asFetch(fetchMock))
-    ).resolves.toEqual({ kind: 'authenticated', accessToken: 'access-token' });
+    ).resolves.toEqual({
+      kind: 'authenticated',
+      session: { accessToken: 'access-token', refreshToken: 'refresh-token' },
+    });
     expect(fetchMock).toHaveBeenCalledWith(
       'https://tflow.online/api/v1/auth/login',
       expect.objectContaining({
@@ -254,11 +270,15 @@ describe('sub2api login steps', () => {
   });
 
   it('posts a six-digit TOTP code without captcha fields', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(envelope({ access_token: 'access-token' }));
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        envelope({ access_token: 'access-token', refresh_token: 'refresh-token' })
+      );
 
     await expect(
       completeSub2apiTotp(panelUrl, 'temp-token', '123456', asFetch(fetchMock))
-    ).resolves.toBe('access-token');
+    ).resolves.toEqual({ accessToken: 'access-token', refreshToken: 'refresh-token' });
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect(fetchMock.mock.calls[0][0]).toBe('https://tflow.online/api/v1/auth/login/2fa');
     expect(init.body).toBe(JSON.stringify({ temp_token: 'temp-token', totp_code: '123456' }));
@@ -565,5 +585,77 @@ describe('AIBuddy authentication wrappers', () => {
       message: '验证码无效',
       reason: 'INVALID_TOTP_CODE',
     });
+  });
+});
+
+// access token 过期不该把用户踢回登录页：面板刷新接口会轮换 refresh token，
+// 换回的新令牌对必须交给调用方整体回写，否则下一次刷新就失效
+describe('withSub2apiSession', () => {
+  it('遇到 401 刷新一次后重试，并交出轮换后的令牌对', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(envelope({ access_token: 'new-access', refresh_token: 'new-refresh' }));
+    const run = vi
+      .fn()
+      .mockRejectedValueOnce(new Sub2apiUnauthorizedError())
+      .mockResolvedValueOnce('entitlement');
+    const onRefreshed = vi.fn();
+
+    await expect(
+      withSub2apiSession(panelUrl, session, asFetch(fetchMock), onRefreshed, run)
+    ).resolves.toBe('entitlement');
+
+    expect(run.mock.calls).toEqual([['access-token'], ['new-access']]);
+    expect(onRefreshed).toHaveBeenCalledWith({
+      accessToken: 'new-access',
+      refreshToken: 'new-refresh',
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe('https://tflow.online/api/v1/auth/refresh');
+    expect(JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string)).toEqual({
+      refresh_token: 'refresh-token',
+    });
+  });
+
+  it('没有 refresh token 时直接抛回 401，交由界面提示重新登录', async () => {
+    const fetchMock = vi.fn();
+    const run = vi.fn().mockRejectedValue(new Sub2apiUnauthorizedError());
+
+    await expect(
+      withSub2apiSession(
+        panelUrl,
+        { accessToken: 'access-token' },
+        asFetch(fetchMock),
+        vi.fn(),
+        run
+      )
+    ).rejects.toBeInstanceOf(Sub2apiUnauthorizedError);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('refresh token 也失效时保留原始 401，不落盘半截凭证', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ code: 1, message: 'refresh token 已失效' }), { status: 401 })
+      );
+    const run = vi.fn().mockRejectedValue(new Sub2apiUnauthorizedError());
+    const onRefreshed = vi.fn();
+
+    await expect(
+      withSub2apiSession(panelUrl, session, asFetch(fetchMock), onRefreshed, run)
+    ).rejects.toBeInstanceOf(Sub2apiUnauthorizedError);
+    expect(onRefreshed).not.toHaveBeenCalled();
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('非 401 失败不触发刷新', async () => {
+    const fetchMock = vi.fn();
+    const run = vi.fn().mockRejectedValue(new Error('订阅服务响应数据异常'));
+
+    await expect(
+      withSub2apiSession(panelUrl, session, asFetch(fetchMock), vi.fn(), run)
+    ).rejects.toThrow('订阅服务响应数据异常');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

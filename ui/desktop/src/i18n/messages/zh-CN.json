@@ -74,6 +74,15 @@
   "appsView.title": {
     "defaultMessage": "应用"
   },
+  "balanceWidget.dailyLimit": {
+    "defaultMessage": "日限额：{value}"
+  },
+  "balanceWidget.dailyRemaining": {
+    "defaultMessage": "今日剩余 {value}"
+  },
+  "balanceWidget.dailyUsed": {
+    "defaultMessage": "今日已用：{value}"
+  },
   "balanceWidget.loadFailed": {
     "defaultMessage": "余额加载失败"
   },

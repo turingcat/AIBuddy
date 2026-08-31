@@ -9,14 +9,27 @@ import { defineMessages, useIntl } from '../../i18n';
 /**
  * @author logic
  * @date 2026-08-24
- * 侧边栏底部余额组件：显示当前登录用户在网关的账户余额（new-api 余额语义），
- * 悬浮显示已用额度/请求数/更新时间，右侧按钮手动刷新；数据由 useBalance 轮询。
+ * 侧边栏底部余额组件：计量计费账户显示网关账户余额（new-api 余额语义），
+ * 订阅计费账户显示当日剩余额度；悬浮显示已用额度/请求数或日限额/更新时间，
+ * 右侧按钮手动刷新；数据由 useBalance 轮询。
  */
 
 const i18n = defineMessages({
   used: {
     id: 'balanceWidget.used',
     defaultMessage: 'Used: {value}',
+  },
+  dailyRemaining: {
+    id: 'balanceWidget.dailyRemaining',
+    defaultMessage: '{value} left today',
+  },
+  dailyUsed: {
+    id: 'balanceWidget.dailyUsed',
+    defaultMessage: 'Used today: {value}',
+  },
+  dailyLimit: {
+    id: 'balanceWidget.dailyLimit',
+    defaultMessage: 'Daily limit: {value}',
   },
   requests: {
     id: 'balanceWidget.requests',
@@ -52,12 +65,22 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
   }
 
   if (state.status === 'ready') {
+    const dailyQuota = state.balance.kind === 'daily-quota';
+    const amount = formatQuotaWithCurrency(state.balance.quota, state.currency);
     const tooltip = [
-      state.balance.displayName,
-      intl.formatMessage(i18n.used, {
+      (dailyQuota ? state.balance.groupName : '') || state.balance.displayName,
+      intl.formatMessage(dailyQuota ? i18n.dailyUsed : i18n.used, {
         value: formatQuotaWithCurrency(state.balance.usedQuota, state.currency),
       }),
-      intl.formatMessage(i18n.requests, { count: state.balance.requestCount }),
+      dailyQuota
+        ? intl.formatMessage(i18n.dailyLimit, {
+            // quota 是当日剩余，加回已用即分组日限额
+            value: formatQuotaWithCurrency(
+              state.balance.quota + state.balance.usedQuota,
+              state.currency
+            ),
+          })
+        : intl.formatMessage(i18n.requests, { count: state.balance.requestCount }),
       intl.formatMessage(i18n.updatedAt, { time: formatMessageTimestamp(state.updatedAt / 1000) }),
     ]
       .filter(Boolean)
@@ -71,7 +94,7 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
           >
             <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="truncate">
-              {formatQuotaWithCurrency(state.balance.quota, state.currency)}
+              {dailyQuota ? intl.formatMessage(i18n.dailyRemaining, { value: amount }) : amount}
             </span>
           </span>
         </TooltipTrigger>

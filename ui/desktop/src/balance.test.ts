@@ -56,6 +56,7 @@ describe('fetchUserBalance（主进程余额查询）', () => {
     const balance = await fetchUserBalance('http://localhost:3001', 'pat-token', mockFetch);
 
     expect(balance).toEqual({
+      kind: 'balance',
       quota: 5000000,
       usedQuota: 100000,
       requestCount: 42,
@@ -311,6 +312,7 @@ describe('runBalanceFetch（IPC result 模式包装）', () => {
     requestCount: 42,
     userName: 'oa_1',
     displayName: '张三',
+    kind: 'balance' as const,
   };
 
   it('P17: 成功时返回 {ok:true, balance, currency}', async () => {

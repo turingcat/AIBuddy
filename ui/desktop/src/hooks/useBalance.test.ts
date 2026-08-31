@@ -45,6 +45,7 @@ function okResult(): BalanceResult {
   return {
     ok: true,
     balance: {
+      kind: 'balance',
       quota: 5000000,
       usedQuota: 100000,
       requestCount: 42,
@@ -58,6 +59,7 @@ function okResult(): BalanceResult {
 const okResult2: BalanceResult = {
   ok: true,
   balance: {
+    kind: 'balance',
     quota: 2500000,
     usedQuota: 200000,
     requestCount: 60,

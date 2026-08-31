@@ -1,7 +1,7 @@
-import type { AIBuddyGroup, Sub2apiPublicSettings } from './sub2apiAuth';
+import type { AIBuddyGroup, Sub2apiPublicSettings, Sub2apiSession } from './sub2apiAuth';
 
 export interface PendingAIBuddyLogin {
-  accessToken: string;
+  session: Sub2apiSession;
   settings: Sub2apiPublicSettings;
   groups: AIBuddyGroup[];
 }
@@ -31,7 +31,7 @@ export class AIBuddyPendingLoginStore {
     if (!login || Date.now() - login.createdAt > this.ttlMs) {
       return null;
     }
-    return { accessToken: login.accessToken, settings: login.settings, groups: login.groups };
+    return { session: login.session, settings: login.settings, groups: login.groups };
   }
 
   private clearExpired(): void {
