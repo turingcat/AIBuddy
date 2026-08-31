@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildHeyBuddyEnv } from './gooseServeEnv';
+import { buildHeyBuddyEnv, buildSiteRuntimeEnv } from './gooseServeEnv';
 
 /**
  * @author logic
@@ -8,9 +8,7 @@ import { buildHeyBuddyEnv } from './gooseServeEnv';
  */
 describe('buildHeyBuddyEnv', () => {
   it('凭证存在时返回 HEYBUDDY_* 与 GOOSE_PROVIDER', () => {
-    expect(
-      buildHeyBuddyEnv({ token: 't', baseUrl: 'https://gw', apiKey: 'k' })
-    ).toEqual({
+    expect(buildHeyBuddyEnv({ token: 't', baseUrl: 'https://gw', apiKey: 'k' })).toEqual({
       HEYBUDDY_BASE_URL: 'https://gw',
       HEYBUDDY_API_KEY: 'k',
       GOOSE_PROVIDER: 'heybuddy',
@@ -19,6 +17,21 @@ describe('buildHeyBuddyEnv', () => {
 
   it('无凭证时返回空对象', () => {
     expect(buildHeyBuddyEnv(null)).toEqual({});
+  });
+
+  it('maps TFlow credentials to the isolated AIBuddy provider', () => {
+    expect(
+      buildSiteRuntimeEnv({
+        token: 'tflow-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+      })
+    ).toEqual({
+      AIBUDDY_BASE_URL: 'https://tflow.online/v1',
+      AIBUDDY_API_KEY: 'sk-aibuddy',
+      GOOSE_PROVIDER: 'aibuddy',
+    });
   });
 
   it('注入 GOOSE_PROVIDER 强制用 heybuddy，且不泄漏 token', () => {

@@ -27,6 +27,20 @@ export type AIBuddyAuthResult =
     }
   | { ok: false; message: string; reason?: string };
 
+export interface AIBuddyGroup {
+  id: string;
+  name: string;
+}
+
+export type AIBuddyProvisioningPreparation =
+  | { step: 'authenticated'; credentials: LoginCredentials; firstModelId: string }
+  | { step: 'select-group'; groups: AIBuddyGroup[] };
+
+export interface AIBuddyGroupProvisioning {
+  credentials: LoginCredentials;
+  firstModelId: string;
+}
+
 interface Envelope {
   code: number;
   message?: string;
@@ -53,6 +67,7 @@ interface KeyData {
   name?: unknown;
   status?: unknown;
   key?: unknown;
+  group_id?: unknown;
 }
 
 interface KeyListData {
@@ -78,6 +93,29 @@ function normalizePanelUrl(url: string): string {
 
 function normalizeGatewayUrl(url: string): string {
   return `${url.replace(/\/+$/, '').replace(/\/v1$/, '')}/v1`;
+}
+
+function credentialsFor(
+  accessToken: string,
+  settings: Sub2apiPublicSettings,
+  apiKey: string
+): LoginCredentials {
+  return {
+    token: accessToken,
+    baseUrl: normalizeGatewayUrl(settings.apiBaseUrl),
+    apiKey,
+    authKind: 'sub2api',
+  };
+}
+
+function groupId(value: unknown): string | null {
+  if (typeof value === 'string' && value) {
+    return value;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
 }
 
 function errorResult(error: unknown): { ok: false; message: string; reason?: string } {
@@ -308,6 +346,167 @@ export async function provisionAIBuddyCredentials(
     apiKey,
     authKind: 'sub2api',
   };
+}
+
+async function listActiveAIBuddyKeys(
+  panelBaseUrl: string,
+  accessToken: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number
+): Promise<KeyData[]> {
+  const list = (await requestEnvelope(
+    `${normalizePanelUrl(panelBaseUrl)}/api/v1/keys?page=1&page_size=100&search=AIBuddy&status=active`,
+    { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } },
+    fetchImpl,
+    timeoutMs
+  )) as KeyListData | null;
+  if (!Array.isArray(list?.items)) {
+    throw new Sub2apiProtocolError('API Key 查询响应数据异常');
+  }
+  return (list.items as KeyData[]).filter(
+    (item) => item?.name === 'AIBuddy' && item.status === 'active'
+  );
+}
+
+async function listAvailableAIBuddyGroups(
+  panelBaseUrl: string,
+  accessToken: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number
+): Promise<AIBuddyGroup[]> {
+  const data = await requestEnvelope(
+    `${normalizePanelUrl(panelBaseUrl)}/api/v1/groups/available`,
+    { method: 'GET', headers: { Authorization: `Bearer ${accessToken}` } },
+    fetchImpl,
+    timeoutMs
+  );
+  const items = Array.isArray(data) ? data : (data as { items?: unknown } | null)?.items;
+  if (!Array.isArray(items)) {
+    throw new Sub2apiProtocolError('分组查询响应数据异常');
+  }
+  const groups = items.flatMap((item) => {
+    const value = item as { id?: unknown; name?: unknown } | null;
+    const id = groupId(value?.id);
+    return id && typeof value?.name === 'string' && value.name ? [{ id, name: value.name }] : [];
+  });
+  if (groups.length === 0) {
+    throw new Sub2apiProtocolError('当前账号没有可用分组');
+  }
+  return groups;
+}
+
+async function validateAIBuddyCatalog(
+  settings: Sub2apiPublicSettings,
+  apiKey: string,
+  fetchImpl: FetchLike,
+  timeoutMs: number
+): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetchImpl(`${normalizeGatewayUrl(settings.apiBaseUrl)}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch {
+    throw new Sub2apiProtocolError('无法连接模型服务，请检查网络或服务地址');
+  }
+  if (!response.ok) {
+    throw new Sub2apiProtocolError(`模型服务不可用（HTTP ${response.status}）`);
+  }
+  let body: { data?: unknown };
+  try {
+    body = (await response.json()) as { data?: unknown };
+  } catch {
+    throw new Sub2apiProtocolError('模型服务响应格式异常');
+  }
+  const first = Array.isArray(body.data)
+    ? body.data.find((model) => typeof (model as { id?: unknown })?.id === 'string')
+    : null;
+  const firstModelId = (first as { id?: unknown } | null)?.id;
+  if (typeof firstModelId !== 'string' || !firstModelId) {
+    throw new Sub2apiProtocolError('模型服务未返回可用模型');
+  }
+  return firstModelId;
+}
+
+async function provisionWithKey(
+  accessToken: string,
+  settings: Sub2apiPublicSettings,
+  apiKey: unknown,
+  fetchImpl: FetchLike,
+  timeoutMs: number
+): Promise<AIBuddyGroupProvisioning> {
+  if (!settings.apiBaseUrl) {
+    throw new Sub2apiProtocolError('认证服务未配置 API 地址');
+  }
+  if (typeof apiKey !== 'string' || !apiKey) {
+    throw new Sub2apiProtocolError('API Key 响应数据异常');
+  }
+  return {
+    credentials: credentialsFor(accessToken, settings, apiKey),
+    firstModelId: await validateAIBuddyCatalog(settings, apiKey, fetchImpl, timeoutMs),
+  };
+}
+
+export async function prepareAIBuddyProvisioning(
+  panelBaseUrl: string,
+  accessToken: string,
+  settings: Sub2apiPublicSettings,
+  fetchImpl: FetchLike,
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<AIBuddyProvisioningPreparation> {
+  const keys = await listActiveAIBuddyKeys(panelBaseUrl, accessToken, fetchImpl, timeoutMs);
+  const groupedKey = keys.find((key) => groupId(key.group_id) !== null);
+  if (groupedKey) {
+    const provisioned = await provisionWithKey(
+      accessToken,
+      settings,
+      groupedKey.key,
+      fetchImpl,
+      timeoutMs
+    );
+    return { step: 'authenticated', ...provisioned };
+  }
+  return {
+    step: 'select-group',
+    groups: await listAvailableAIBuddyGroups(panelBaseUrl, accessToken, fetchImpl, timeoutMs),
+  };
+}
+
+export async function provisionAIBuddyGroup(
+  panelBaseUrl: string,
+  accessToken: string,
+  settings: Sub2apiPublicSettings,
+  selectedGroupId: string,
+  fetchImpl: FetchLike,
+  idempotencyKeyFactory: () => string = () => globalThis.crypto.randomUUID(),
+  timeoutMs = DEFAULT_TIMEOUT_MS
+): Promise<AIBuddyGroupProvisioning> {
+  if (!selectedGroupId) {
+    throw new Sub2apiProtocolError('请选择可用分组');
+  }
+  const existing = (
+    await listActiveAIBuddyKeys(panelBaseUrl, accessToken, fetchImpl, timeoutMs)
+  ).find((key) => groupId(key.group_id) === selectedGroupId);
+  let apiKey = existing?.key;
+  if (!existing) {
+    const created = (await requestEnvelope(
+      `${normalizePanelUrl(panelBaseUrl)}/api/v1/keys`,
+      {
+        method: 'POST',
+        headers: {
+          ...CONTENT_TYPE_JSON,
+          Authorization: `Bearer ${accessToken}`,
+          'Idempotency-Key': idempotencyKeyFactory(),
+        },
+        body: JSON.stringify({ name: 'AIBuddy', group_id: selectedGroupId }),
+      },
+      fetchImpl,
+      timeoutMs
+    )) as KeyData | null;
+    apiKey = created?.key;
+  }
+  return provisionWithKey(accessToken, settings, apiKey, fetchImpl, timeoutMs);
 }
 
 export async function authenticateAIBuddy(

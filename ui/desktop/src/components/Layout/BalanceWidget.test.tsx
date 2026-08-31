@@ -62,13 +62,13 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     vi.unstubAllEnvs();
   });
 
-  it('AIBuddy 不渲染余额组件且不请求 new-api 余额', () => {
+  it('AIBuddy renders the shared account balance widget', async () => {
     vi.stubEnv('APP_EDITION', 'aibuddy');
 
     renderWidget();
 
-    expect(screen.queryByTestId('balance-widget')).not.toBeInTheDocument();
-    expect(electronMock.getUserBalance).not.toHaveBeenCalled();
+    expect(await screen.findByTestId('balance-widget')).toBeInTheDocument();
+    expect(electronMock.getUserBalance).toHaveBeenCalled();
   });
 
   it('W1: ready 时显示格式化余额，悬浮展示已用/请求数/更新时间', async () => {

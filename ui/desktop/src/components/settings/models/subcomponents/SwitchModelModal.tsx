@@ -285,7 +285,7 @@ export const SwitchModelModal = ({
       if (cancelled) return;
       const mapped = raw.map((m) => ({
         name: m.id,
-        provider: currentProvider ?? 'heybuddy',
+        provider: m.providerId ?? currentProvider ?? 'heybuddy',
         context_limit: m.contextLimit ?? undefined,
         reasoning: m.reasoning ?? undefined,
       }));

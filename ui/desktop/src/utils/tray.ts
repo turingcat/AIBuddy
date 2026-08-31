@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, nativeImage, Tray } from 'electron';
 import * as path from 'path';
 import log from './logger';
 import { loadRecentDirs } from './recentDirs';
-import { getAppDisplayName } from '../brand';
+import { getAppDisplayName, getAppIconStem } from '../brand';
 
 function showAllWindows() {
   const windows = BrowserWindow.getAllWindows();
@@ -42,7 +42,9 @@ export function setTrayRef(tray: Tray) {
   // macOS 的 template 渲染会把彩色位图强制压成单色剪影
   // @author logic
   // @date 2026-08-14
-  tray.setImage(nativeImage.createFromPath(path.join(imagesDir, 'iconTemplate.png')));
+  const image = nativeImage.createFromPath(path.join(imagesDir, `${getAppIconStem()}.png`));
+  if (process.platform === 'darwin') image.setTemplateImage(true);
+  tray.setImage(image);
   tray.setToolTip(getAppDisplayName());
   tray.setContextMenu(
     Menu.buildFromTemplate([

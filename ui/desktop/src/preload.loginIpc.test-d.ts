@@ -10,7 +10,8 @@ import { expectTypeOf } from 'vitest';
 import type { ElectronAPI } from './preload';
 import type { OaLoginResult } from './oaLogin';
 import type { BalanceResult } from './balance';
-import type { AIBuddyAuthResult, AIBuddySettingsResult } from './sub2apiAuth';
+import type { AIBuddyAuthResult } from './aibuddyAuthIpc';
+import type { AIBuddySettingsResult } from './sub2apiAuth';
 
 expectTypeOf<ElectronAPI>().toHaveProperty('getLoginCredentials').toBeFunction();
 expectTypeOf<ElectronAPI>().toHaveProperty('isLoggedIn').toBeFunction();
@@ -26,6 +27,10 @@ expectTypeOf<ElectronAPI>().toHaveProperty('loginViaAIBuddy').toBeFunction();
 expectTypeOf<ElectronAPI['loginViaAIBuddy']>().returns.toEqualTypeOf<Promise<AIBuddyAuthResult>>();
 expectTypeOf<ElectronAPI>().toHaveProperty('completeAIBuddy2FA').toBeFunction();
 expectTypeOf<ElectronAPI['completeAIBuddy2FA']>().returns.toEqualTypeOf<
+  Promise<AIBuddyAuthResult>
+>();
+expectTypeOf<ElectronAPI>().toHaveProperty('provisionAIBuddyGroup').toBeFunction();
+expectTypeOf<ElectronAPI['provisionAIBuddyGroup']>().returns.toEqualTypeOf<
   Promise<AIBuddyAuthResult>
 >();
 expectTypeOf<ElectronAPI>().toHaveProperty('getUserBalance').toBeFunction();

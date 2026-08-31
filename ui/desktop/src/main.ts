@@ -47,7 +47,8 @@ import {
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
-import { buildHeyBuddyEnv } from './gooseServeEnv';
+import { buildSiteRuntimeEnv } from './gooseServeEnv';
+import { fetchSub2apiAccount, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -1126,7 +1127,9 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
+    const siteRuntimeEnv = buildSiteRuntimeEnv(
+      readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+    );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
       gooseServeResult = await startGooseServe({
@@ -1135,7 +1138,7 @@ const createChat = async (
         tls: true,
         env: {
           GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...heyBuddyEnv,
+          ...siteRuntimeEnv,
         },
         loginShellPath,
         isPackaged: app.isPackaged,
@@ -1601,11 +1604,11 @@ const createTray = () => {
   destroyTray();
 
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'src', 'images', 'iconTemplate.png'),
-    path.join(__dirname, '..', 'images', 'iconTemplate.png'),
-    path.join(__dirname, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'images', 'iconTemplate.png'),
+    path.join(process.resourcesPath, 'images', `${getAppIconStem()}.png`),
+    path.join(process.cwd(), 'src', 'images', `${getAppIconStem()}.png`),
+    path.join(__dirname, '..', 'images', `${getAppIconStem()}.png`),
+    path.join(__dirname, 'images', `${getAppIconStem()}.png`),
+    path.join(process.cwd(), 'images', `${getAppIconStem()}.png`),
   ];
 
   const iconPath = possiblePaths.find((p) => fsSync.existsSync(p));
@@ -1979,6 +1982,8 @@ registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
   fetchImpl: net.fetch,
   idempotencyKeyFactory: () => crypto.randomUUID(),
+  writeCredentials: (credentials) =>
+    writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
 });
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
@@ -1992,6 +1997,31 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) {
     return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
+  }
+  if (creds.siteKind === 'sub2api') {
+    return runBalanceFetch(async () => {
+      const account = await fetchSub2apiAccount(
+        authConfig.apiBaseUrl,
+        creds.session?.accessToken ?? creds.token,
+        net.fetch
+      );
+      return {
+        balance: {
+          quota: account.balance,
+          usedQuota: 0,
+          requestCount: 0,
+          userName: account.displayName,
+          displayName: account.displayName,
+        },
+        currency: {
+          quotaPerUnit: 1,
+          quotaDisplayType: 'USD',
+          usdExchangeRate: 1,
+          customCurrencySymbol: '$',
+          customCurrencyExchangeRate: 1,
+        },
+      };
+    });
   }
   const pat = creds.pat;
   if (!pat) {
@@ -2015,6 +2045,21 @@ ipcMain.handle('list-models-via-api', async () => {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) return [];
   try {
+    if (creds.siteKind === 'sub2api') {
+      return (
+        await fetchSub2apiModels(
+          creds.gateway?.baseUrl ?? creds.baseUrl,
+          creds.gateway?.apiKey ?? creds.apiKey,
+          net.fetch
+        )
+      ).map((model) => ({
+        id: model.id,
+        name: model.id,
+        contextLimit: null,
+        reasoning: null,
+        providerId: model.providerId,
+      }));
+    }
     const res = await net.fetch(`${creds.baseUrl}/models`, {
       headers: { Authorization: `Bearer ${creds.apiKey}` },
     });
