@@ -264,16 +264,17 @@ def verify() -> bool:
             print(f'缺失 {name}')
             ok = False
             continue
-        im = Image.open(path)
-        if im.size != size or im.mode != 'RGBA':
-            print(f'异常 {name}: {im.size} {im.mode}，期望 {size} RGBA')
-            ok = False
-        else:
-            print(f'通过 {name} {size[0]}x{size[1]}')
+        with Image.open(path) as image:
+            if image.size != size or image.mode != 'RGBA':
+                print(f'异常 {name}: {image.size} {image.mode}，期望 {size} RGBA')
+                ok = False
+            else:
+                print(f'通过 {name} {size[0]}x{size[1]}')
 
     ico_path = SCRIPT_DIR / 'icon.ico'
     if ico_path.exists():
-        sizes = set(Image.open(ico_path).ico.sizes())
+        with Image.open(ico_path) as icon:
+            sizes = set(icon.ico.sizes())
         if sizes != set(ICO_SIZES):
             print(f'异常 icon.ico 尺寸集: {sorted(sizes)}')
             ok = False
@@ -285,12 +286,12 @@ def verify() -> bool:
 
     icns_path = SCRIPT_DIR / 'icon.icns'
     if icns_path.exists():
-        im = Image.open(icns_path)
-        if im.size != (MASTER_SIZE, MASTER_SIZE):
-            print(f'异常 icon.icns 最大尺寸: {im.size}')
-            ok = False
-        else:
-            print(f'通过 icon.icns 最大尺寸 {im.size[0]}')
+        with Image.open(icns_path) as image:
+            if image.size != (MASTER_SIZE, MASTER_SIZE):
+                print(f'异常 icon.icns 最大尺寸: {image.size}')
+                ok = False
+            else:
+                print(f'通过 icon.icns 最大尺寸 {image.size[0]}')
     else:
         print('缺失 icon.icns')
         ok = False
@@ -320,7 +321,8 @@ def verify() -> bool:
             ok = False
             continue
 
-        errors = verify_aibuddy_tray_glyph(Image.open(path).convert('RGBA'), size)
+        with Image.open(path) as image:
+            errors = verify_aibuddy_tray_glyph(image, size)
         if errors:
             print(f'异常 aibuddy/{name}: {"；".join(errors)}')
             ok = False
