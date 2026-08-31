@@ -1604,11 +1604,11 @@ const createTray = () => {
   destroyTray();
 
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'src', 'images', 'iconTemplate.png'),
-    path.join(__dirname, '..', 'images', 'iconTemplate.png'),
-    path.join(__dirname, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'images', 'iconTemplate.png'),
+    path.join(process.resourcesPath, 'images', `${getAppIconStem()}.png`),
+    path.join(process.cwd(), 'src', 'images', `${getAppIconStem()}.png`),
+    path.join(__dirname, '..', 'images', `${getAppIconStem()}.png`),
+    path.join(__dirname, 'images', `${getAppIconStem()}.png`),
+    path.join(process.cwd(), 'images', `${getAppIconStem()}.png`),
   ];
 
   const iconPath = possiblePaths.find((p) => fsSync.existsSync(p));
