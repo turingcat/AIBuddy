@@ -136,18 +136,6 @@ const {
   startupLogsDir: STARTUP_LOGS_DIR,
 } = initializeAppIdentity(app);
 
-if (getAppEdition() === 'aibuddy') {
-  try {
-    migrateLegacyAIBuddyData({
-      edition: 'aibuddy',
-      legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
-      targetUserDataDir: USER_DATA_DIR,
-      codec: getCredentialsCodec(),
-    });
-  } catch (error) {
-    log.error(`AIBuddy legacy data migration failed: ${error}`);
-  }
-}
 const validLanguageSettings = new Set<Settings['language']>(['system', 'en', 'zh-CN']);
 
 function isValidLanguageSetting(value: unknown): value is Settings['language'] {
@@ -351,6 +339,21 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
   event.preventDefault();
   callback(verifyBackendCertificate(parsed.hostname, certificate.fingerprint));
 });
+
+if (getAppEdition() === 'aibuddy') {
+  app.whenReady().then(() => {
+    try {
+      migrateLegacyAIBuddyData({
+        edition: 'aibuddy',
+        legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
+        targetUserDataDir: USER_DATA_DIR,
+        codec: getCredentialsCodec(),
+      });
+    } catch (error) {
+      log.error(`AIBuddy legacy data migration failed: ${error}`);
+    }
+  });
+}
 
 app.whenReady().then(() => {
   appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();

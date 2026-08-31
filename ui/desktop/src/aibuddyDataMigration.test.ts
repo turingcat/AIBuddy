@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -133,6 +133,29 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.existsSync(targetUserDataDir)).toBe(false);
   });
 
+  it('rejects a canonical OA credential with stale sub2api authKind', () => {
+    writeLegacyCredentials({
+      schemaVersion: 2,
+      siteKind: 'oa',
+      authKind: 'sub2api',
+      token: 'oa-token',
+      baseUrl: 'https://oa.example.com',
+      apiKey: 'oa-key',
+      session: { accessToken: 'oa-token' },
+      account: {},
+      gateway: {
+        providerId: 'heybuddy',
+        baseUrl: 'https://oa.example.com',
+        apiKey: 'oa-key',
+      },
+    });
+    writeLegacySettings();
+
+    migrate();
+
+    expect(fs.existsSync(targetUserDataDir)).toBe(false);
+  });
+
   it('rejects invalid credentials leaves target empty', () => {
     writeLegacyCredentials({ token: 1, baseUrl: 'https://tflow.online/v1', apiKey: 'sk-aibuddy' });
     writeLegacySettings();
@@ -188,5 +211,49 @@ describe('migrateLegacyAIBuddyData', () => {
     expect(fs.readFileSync(path.join(targetUserDataDir, 'settings.json'), 'utf8')).toBe(
       '{"theme":"light"}\n'
     );
+  });
+
+  it('rolls back credentials when settings copy fails', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    fs.mkdirSync(path.join(legacyUserDataDir, 'settings.json'));
+
+    expect(migrate).toThrow();
+    expect(fs.existsSync(targetUserDataDir)).toBe(false);
+  });
+
+  it('reports settings as not migrated when another process creates the destination', () => {
+    writeLegacyCredentials({
+      token: 'legacy-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    writeLegacySettings();
+    const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
+    const existsSync = fs.existsSync;
+    let targetSettingsChecks = 0;
+    const existsSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+      if (filePath === targetSettingsFile) {
+        targetSettingsChecks += 1;
+        if (targetSettingsChecks === 2) {
+          fs.writeFileSync(targetSettingsFile, '{"theme":"other"}\n');
+          return true;
+        }
+      }
+      return existsSync(filePath);
+    });
+
+    try {
+      expect(migrate()).toMatchObject({ credentialsMigrated: true, settingsMigrated: false });
+    } finally {
+      existsSpy.mockRestore();
+    }
+
+    expect(fs.readFileSync(targetSettingsFile, 'utf8')).toBe('{"theme":"other"}\n');
   });
 });

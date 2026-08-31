@@ -28,32 +28,50 @@ export function migrateLegacyAIBuddyData({
   const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
 
   if (edition !== 'aibuddy' || fs.existsSync(targetCredentialsFile)) return result;
+  const targetDirectoryExisted = fs.existsSync(targetUserDataDir);
 
   const legacyCredentials = decodeCredentialsFile(
     path.join(legacyUserDataDir, 'credentials.json'),
     codec
   );
-  if (
-    !legacyCredentials ||
-    (legacyCredentials.siteKind !== 'sub2api' && legacyCredentials.authKind !== 'sub2api')
-  ) {
+  if (!legacyCredentials || !isSub2apiCredentials(legacyCredentials)) {
     return result;
   }
 
   writeCredentials(targetCredentialsFile, legacyCredentials, codec);
   result.credentialsMigrated = true;
 
-  const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
-  const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
-  if (fs.existsSync(legacySettingsFile) && !fs.existsSync(targetSettingsFile)) {
-    copySettingsAtomically(legacySettingsFile, targetSettingsFile);
-    result.settingsMigrated = true;
+  try {
+    const legacySettingsFile = path.join(legacyUserDataDir, 'settings.json');
+    const targetSettingsFile = path.join(targetUserDataDir, 'settings.json');
+    if (fs.existsSync(legacySettingsFile) && !fs.existsSync(targetSettingsFile)) {
+      result.settingsMigrated = copySettingsAtomically(legacySettingsFile, targetSettingsFile);
+    }
+  } catch (error) {
+    fs.unlinkSync(targetCredentialsFile);
+    if (!targetDirectoryExisted) {
+      try {
+        fs.rmdirSync(targetUserDataDir);
+      } catch {
+        // A concurrent process created data in the directory.
+      }
+    }
+    throw error;
   }
 
   return result;
 }
 
-function copySettingsAtomically(sourceFile: string, targetFile: string): void {
+function isSub2apiCredentials(credentials: {
+  siteKind?: string;
+  authKind?: 'oa' | 'sub2api';
+}): boolean {
+  return credentials.siteKind
+    ? credentials.siteKind === 'sub2api'
+    : credentials.authKind === 'sub2api';
+}
+
+function copySettingsAtomically(sourceFile: string, targetFile: string): boolean {
   const temporaryFile = path.join(
     path.dirname(targetFile),
     `.${path.basename(targetFile)}.${process.pid}.${Math.random().toString(36).slice(2)}.tmp`
@@ -61,8 +79,9 @@ function copySettingsAtomically(sourceFile: string, targetFile: string): void {
 
   try {
     fs.copyFileSync(sourceFile, temporaryFile, fs.constants.COPYFILE_EXCL);
-    if (fs.existsSync(targetFile)) return;
+    if (fs.existsSync(targetFile)) return false;
     fs.renameSync(temporaryFile, targetFile);
+    return true;
   } finally {
     if (fs.existsSync(temporaryFile)) fs.unlinkSync(temporaryFile);
   }
