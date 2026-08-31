@@ -1982,6 +1982,8 @@ registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
   fetchImpl: net.fetch,
   idempotencyKeyFactory: () => crypto.randomUUID(),
+  writeCredentials: (credentials) =>
+    writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
 });
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），

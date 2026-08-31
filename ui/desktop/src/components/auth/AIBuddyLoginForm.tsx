@@ -1,11 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AIBuddyAuthResult, Sub2apiPublicSettings } from '../../sub2apiAuth';
+import { acpSaveDefaults } from '../../acp/providers';
+import type { AIBuddyAuthResult } from '../../aibuddyAuthIpc';
+import type { Sub2apiPublicSettings } from '../../sub2apiAuth';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
 import AliyunCaptcha, { type AliyunCaptchaHandle } from './AliyunCaptcha';
 
-type LoginStep = { kind: 'account' } | { kind: 'totp'; tempToken: string; maskedEmail?: string };
+type LoginStep =
+  | { kind: 'account' }
+  | { kind: 'totp'; tempToken: string; maskedEmail?: string }
+  | { kind: 'select-group'; pendingLoginId: string; groups: { id: string; name: string }[] };
 
 function captchaRegion(settings: Sub2apiPublicSettings): 'cn' | 'sgp' | null {
   if (settings.aliyunCaptchaRegion === 'cn' || settings.aliyunCaptchaRegion === 'sgp') {
@@ -53,6 +58,7 @@ export default function AIBuddyLoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [resetCaptchaWhenReady, setResetCaptchaWhenReady] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
 
   useEffect(() => {
     let active = true;
@@ -101,8 +107,17 @@ export default function AIBuddyLoginForm() {
       setError(null);
       return;
     }
-
-    await window.electron.setLoginCredentials(result.creds);
+    if (result.step === 'select-group') {
+      setStep({
+        kind: 'select-group',
+        pendingLoginId: result.pendingLoginId,
+        groups: result.groups,
+      });
+      setSelectedGroupId(result.groups[0]?.id ?? '');
+      setError(null);
+      return;
+    }
+    await acpSaveDefaults('aibuddy', result.firstModelId);
     window.electron.restartApp();
   };
 
@@ -161,6 +176,26 @@ export default function AIBuddyLoginForm() {
       await finishAuthentication(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Verification failed.');
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const handleGroupSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (submittingRef.current || step.kind !== 'select-group' || !selectedGroupId) {
+      return;
+    }
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await finishAuthentication(
+        await window.electron.provisionAIBuddyGroup(step.pendingLoginId, selectedGroupId)
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Group setup failed.');
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
@@ -233,7 +268,7 @@ export default function AIBuddyLoginForm() {
               {submitting ? 'Signing in...' : 'Login'}
             </Button>
           </form>
-        ) : (
+        ) : step.kind === 'totp' ? (
           <form onSubmit={handleTotpSubmit} className="space-y-4">
             <label className="block">
               <span className="text-xs text-text-secondary">Verification code</span>
@@ -258,6 +293,33 @@ export default function AIBuddyLoginForm() {
             </Button>
             <Button type="button" variant="ghost" className="w-full" onClick={returnToAccountLogin}>
               Back
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleGroupSubmit} className="space-y-4">
+            <h2 className="text-center text-base text-text-primary">Choose group</h2>
+            <label className="block">
+              <span className="text-xs text-text-secondary">Group</span>
+              <select
+                className="mt-1 w-full rounded-md border border-border-primary bg-background-primary px-3 py-2 text-sm text-text-primary"
+                aria-label="group"
+                value={selectedGroupId}
+                onChange={(event) => setSelectedGroupId(event.target.value)}
+              >
+                {step.groups.map((group) => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {error && (
+              <p role="alert" className="break-words text-sm text-background-danger">
+                {error}
+              </p>
+            )}
+            <Button type="submit" className="w-full" disabled={submitting || !selectedGroupId}>
+              {submitting ? 'Setting up...' : 'Continue'}
             </Button>
           </form>
         )}

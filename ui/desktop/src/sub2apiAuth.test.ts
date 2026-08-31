@@ -4,7 +4,9 @@ import {
   completeAIBuddyAuthentication,
   completeSub2apiTotp,
   fetchSub2apiPublicSettings,
+  prepareAIBuddyProvisioning,
   provisionAIBuddyCredentials,
+  provisionAIBuddyGroup,
   startSub2apiLogin,
   type FetchLike,
   type Sub2apiPublicSettings,
@@ -131,6 +133,84 @@ describe('fetchSub2apiPublicSettings', () => {
     await expect(fetchSub2apiPublicSettings(panelUrl, asFetch(fetchMock), 10)).resolves.toEqual({
       ok: false,
       message: '认证服务响应超时，请稍后重试',
+    });
+  });
+});
+
+describe('group-aware AIBuddy provisioning', () => {
+  it('automatically reuses an active exact-name key with a group and validates its catalog', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        envelope({
+          items: [{ name: 'AIBuddy', status: 'active', group_id: 'team-a', key: 'sk-team-a' }],
+        })
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 'tflow-first-model' }] })));
+
+    await expect(
+      prepareAIBuddyProvisioning(panelUrl, 'access-token', settings, asFetch(fetchMock))
+    ).resolves.toEqual({
+      step: 'authenticated',
+      credentials: {
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-team-a',
+        authKind: 'sub2api',
+      },
+      firstModelId: 'tflow-first-model',
+    });
+
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      'https://tflow.online/v1/models',
+      expect.objectContaining({ headers: { Authorization: 'Bearer sk-team-a' } })
+    );
+  });
+
+  it('returns available groups instead of reusing an ungrouped key', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        envelope({
+          items: [{ name: 'AIBuddy', status: 'active', group_id: null, key: 'sk-ungrouped' }],
+        })
+      )
+      .mockResolvedValueOnce(envelope([{ id: 'team-a', name: 'Team A' }]));
+
+    await expect(
+      prepareAIBuddyProvisioning(panelUrl, 'access-token', settings, asFetch(fetchMock))
+    ).resolves.toEqual({ step: 'select-group', groups: [{ id: 'team-a', name: 'Team A' }] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('creates a selected group key and validates its non-empty catalog before returning credentials', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(envelope({ items: [] }))
+      .mockResolvedValueOnce(envelope({ key: 'sk-team-a' }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 'team-model' }] })));
+
+    await expect(
+      provisionAIBuddyGroup(
+        panelUrl,
+        'access-token',
+        settings,
+        'team-a',
+        asFetch(fetchMock),
+        () => 'idempotency-key'
+      )
+    ).resolves.toEqual({
+      credentials: {
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-team-a',
+        authKind: 'sub2api',
+      },
+      firstModelId: 'team-model',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
+      name: 'AIBuddy',
+      group_id: 'team-a',
     });
   });
 });

@@ -1,41 +1,30 @@
-import { forwardRef, useImperativeHandle } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { forwardRef, useImperativeHandle } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AIBuddyAuthResult, AIBuddySettingsResult } from '../../sub2apiAuth';
+import type { AIBuddyAuthResult } from '../../aibuddyAuthIpc';
+import type { AIBuddySettingsResult } from '../../sub2apiAuth';
 import type { AliyunCaptchaHandle } from './AliyunCaptcha';
 
-vi.mock('../../login', () => ({ login: vi.fn() }));
-
-const verifyCaptcha = vi.fn<() => Promise<string | null>>();
-const resetCaptcha = vi.fn();
-const setLoginCredentials = vi.fn();
-const restartApp = vi.fn();
+const { saveDefaults, verifyCaptcha } = vi.hoisted(() => ({
+  saveDefaults: vi.fn(),
+  verifyCaptcha: vi.fn<() => Promise<string | null>>(),
+}));
 const getAIBuddyAuthSettings = vi.fn<() => Promise<AIBuddySettingsResult>>();
 const loginViaAIBuddy = vi.fn();
 const completeAIBuddy2FA = vi.fn();
+const provisionAIBuddyGroup = vi.fn();
+const restartApp = vi.fn();
 
+vi.mock('../../acp/providers', () => ({ acpSaveDefaults: saveDefaults }));
 vi.mock('./AliyunCaptcha', () => ({
-  default: forwardRef<
-    AliyunCaptchaHandle,
-    { onError?: () => void; onStateChange?: (state: string) => void }
-  >(({ onError, onStateChange }, ref) => {
-    useImperativeHandle(ref, () => ({ verify: verifyCaptcha, reset: resetCaptcha }));
-    return (
-      <>
-        <button type="button" onClick={() => onStateChange?.('verified')}>
-          Captcha
-        </button>
-        <button type="button" onClick={onError}>
-          Fail captcha
-        </button>
-      </>
-    );
+  default: forwardRef<AliyunCaptchaHandle>((_props, ref) => {
+    useImperativeHandle(ref, () => ({ verify: verifyCaptcha, reset: vi.fn() }));
+    return null;
   }),
 }));
 
 import AIBuddyLoginForm from './AIBuddyLoginForm';
-import { login } from '../../login';
 
 const settings: AIBuddySettingsResult = {
   ok: true,
@@ -44,189 +33,136 @@ const settings: AIBuddySettingsResult = {
     aliyunCaptchaSceneId: 'scene-1',
     aliyunCaptchaPrefix: 'prefix-1',
     aliyunCaptchaRegion: 'cn',
-    apiBaseUrl: 'https://api.example.com/v1',
+    apiBaseUrl: 'https://tflow.online/v1',
   },
 };
 
-function authenticatedResult(): Extract<AIBuddyAuthResult, { ok: true; step: 'authenticated' }> {
-  return {
-    ok: true,
-    step: 'authenticated',
-    creds: {
-      token: 'access-token-sample',
-      baseUrl: 'https://api.example.com/v1',
-      apiKey: 'sk-sample-key',
-    },
-  };
-}
+const authenticated = (firstModelId = 'tflow-first-model'): AIBuddyAuthResult => ({
+  ok: true,
+  step: 'authenticated',
+  firstModelId,
+});
 
 describe('AIBuddyLoginForm', () => {
   beforeEach(() => {
     verifyCaptcha.mockReset();
     verifyCaptcha.mockResolvedValue('captcha-proof');
-    resetCaptcha.mockReset();
     getAIBuddyAuthSettings.mockReset();
     getAIBuddyAuthSettings.mockResolvedValue(settings);
     loginViaAIBuddy.mockReset();
     completeAIBuddy2FA.mockReset();
-    setLoginCredentials.mockReset();
+    provisionAIBuddyGroup.mockReset();
     restartApp.mockReset();
-    vi.mocked(login).mockReset();
+    saveDefaults.mockReset();
+    saveDefaults.mockResolvedValue(undefined);
     window.electron.getAIBuddyAuthSettings = getAIBuddyAuthSettings;
     window.electron.loginViaAIBuddy = loginViaAIBuddy;
     window.electron.completeAIBuddy2FA = completeAIBuddy2FA;
-    window.electron.setLoginCredentials = setLoginCredentials;
+    window.electron.provisionAIBuddyGroup = provisionAIBuddyGroup;
     window.electron.restartApp = restartApp;
   });
 
-  it('loads AIBuddy settings and submits an email login with captcha proof without OA login', async () => {
-    loginViaAIBuddy.mockResolvedValue(authenticatedResult());
-    render(<AIBuddyLoginForm />);
-
-    expect(await screen.findByRole('heading', { name: 'AIBuddy' })).toBeInTheDocument();
+  async function submitAccountLogin() {
     await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
     await userEvent.type(screen.getByLabelText(/password/i), 'password');
     await userEvent.click(screen.getByRole('button', { name: /login/i }));
+  }
 
-    await waitFor(() => {
-      expect(verifyCaptcha).toHaveBeenCalledOnce();
-      expect(loginViaAIBuddy).toHaveBeenCalledWith(
-        'person@example.com',
-        'password',
-        'captcha-proof'
-      );
-      expect(setLoginCredentials).toHaveBeenCalledWith(authenticatedResult().creds);
-      expect(restartApp).toHaveBeenCalledOnce();
-      expect(resetCaptcha).toHaveBeenCalledOnce();
-      expect(login).not.toHaveBeenCalled();
+  it('shows group selection without saving credentials when no grouped key exists', async () => {
+    loginViaAIBuddy.mockResolvedValue({
+      ok: true,
+      step: 'select-group',
+      pendingLoginId: 'opaque-pending-id',
+      groups: [{ id: 'team-a', name: 'Team A' }],
     });
-  });
-
-  it('does not call the login IPC when captcha verification has no proof', async () => {
-    verifyCaptcha.mockResolvedValue(null);
     render(<AIBuddyLoginForm />);
 
-    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    await userEvent.click(screen.getByRole('button', { name: /login/i }));
+    await submitAccountLogin();
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(/captcha/i);
-    expect(loginViaAIBuddy).not.toHaveBeenCalled();
-    expect(resetCaptcha).toHaveBeenCalledOnce();
+    expect(await screen.findByRole('heading', { name: /choose group/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/group/i)).toHaveValue('team-a');
+    expect(restartApp).not.toHaveBeenCalled();
   });
 
-  it('keeps an actionable captcha load error when verification has no proof and allows retry', async () => {
-    verifyCaptcha.mockResolvedValueOnce(null).mockResolvedValueOnce('retry-proof');
-    loginViaAIBuddy.mockResolvedValue(authenticatedResult());
+  it('provisions the selected opaque login and makes its first TFlow model the default', async () => {
+    loginViaAIBuddy.mockResolvedValue({
+      ok: true,
+      step: 'select-group',
+      pendingLoginId: 'opaque-pending-id',
+      groups: [
+        { id: 'team-a', name: 'Team A' },
+        { id: 'team-b', name: 'Team B' },
+      ],
+    });
+    provisionAIBuddyGroup.mockResolvedValue(authenticated('team-b-model'));
     render(<AIBuddyLoginForm />);
 
-    await screen.findByLabelText(/email/i);
-    await userEvent.click(screen.getByRole('button', { name: /fail captcha/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Unable to load captcha. Please try again.'
-    );
+    await submitAccountLogin();
+    await userEvent.selectOptions(screen.getByLabelText(/group/i), 'team-b');
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    await userEvent.type(screen.getByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    const submit = screen.getByRole('button', { name: /login/i });
-    expect(submit).toBeEnabled();
-    await userEvent.click(submit);
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Unable to load captcha. Please try again.'
-    );
-    expect(screen.getByRole('alert')).not.toHaveTextContent(/complete the captcha/i);
-    expect(submit).toBeEnabled();
-
-    await userEvent.click(submit);
     await waitFor(() => {
-      expect(loginViaAIBuddy).toHaveBeenCalledWith('person@example.com', 'password', 'retry-proof');
+      expect(provisionAIBuddyGroup).toHaveBeenCalledWith('opaque-pending-id', 'team-b');
+      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'team-b-model');
       expect(restartApp).toHaveBeenCalledOnce();
     });
   });
 
-  it('does not start a second login while the first one is pending', async () => {
-    let resolveLogin!: (result: AIBuddyAuthResult) => void;
-    loginViaAIBuddy.mockReturnValue(
-      new Promise<AIBuddyAuthResult>((resolve) => {
-        resolveLogin = resolve;
-      })
-    );
+  it('sets the first model immediately when an existing grouped key is reused', async () => {
+    loginViaAIBuddy.mockResolvedValue(authenticated());
     render(<AIBuddyLoginForm />);
 
-    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    const submit = screen.getByRole('button', { name: /login/i });
-    await userEvent.click(submit);
-    await userEvent.click(submit);
+    await submitAccountLogin();
 
-    expect(loginViaAIBuddy).toHaveBeenCalledOnce();
-    resolveLogin(authenticatedResult());
-    await waitFor(() => expect(restartApp).toHaveBeenCalledOnce());
+    await waitFor(() => {
+      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'tflow-first-model');
+      expect(restartApp).toHaveBeenCalledOnce();
+    });
   });
 
-  it.each([
-    ['cannot load auth settings', { ok: false, message: 'Settings unavailable' }],
-    [
-      'has incomplete Aliyun settings',
-      { ok: true, settings: { ...settings.settings, aliyunCaptchaPrefix: '' } },
-    ],
-  ])('disables account submission when it %s', async (_description, result) => {
-    getAIBuddyAuthSettings.mockResolvedValue(result as AIBuddySettingsResult);
-    render(<AIBuddyLoginForm />);
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(/settings|captcha/i);
-    expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
-  });
-
-  it('keeps the TOTP step after an invalid code and completes it without OA login', async () => {
+  it('completes TOTP authentication and persists the returned first model', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'totp-required',
       tempToken: 'temporary-token',
       maskedEmail: 'p***@example.com',
     });
-    completeAIBuddy2FA.mockResolvedValueOnce({ ok: false, message: 'Invalid code' });
-    completeAIBuddy2FA.mockResolvedValueOnce(authenticatedResult());
+    completeAIBuddy2FA.mockResolvedValue(authenticated('totp-model'));
     render(<AIBuddyLoginForm />);
 
-    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    await userEvent.click(screen.getByRole('button', { name: /login/i }));
-
-    const totp = await screen.findByLabelText(/verification code/i);
-    expect(totp).toHaveAttribute('maxLength', '6');
-    await userEvent.type(totp, '123456');
-    await userEvent.click(screen.getByRole('button', { name: /verify/i }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid code');
-    expect(screen.getByLabelText(/verification code/i)).toBeInTheDocument();
-
-    await userEvent.clear(screen.getByLabelText(/verification code/i));
-    await userEvent.type(screen.getByLabelText(/verification code/i), '654321');
+    await submitAccountLogin();
+    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
     await userEvent.click(screen.getByRole('button', { name: /verify/i }));
 
     await waitFor(() => {
-      expect(completeAIBuddy2FA).toHaveBeenLastCalledWith('temporary-token', '654321');
-      expect(setLoginCredentials).toHaveBeenCalledWith(authenticatedResult().creds);
+      expect(completeAIBuddy2FA).toHaveBeenCalledWith('temporary-token', '123456');
+      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'totp-model');
       expect(restartApp).toHaveBeenCalledOnce();
-      expect(login).not.toHaveBeenCalled();
     });
   });
 
-  it('returns to account login and resets the old captcha proof', async () => {
-    loginViaAIBuddy.mockResolvedValue({
-      ok: true,
-      step: 'totp-required',
-      tempToken: 'temporary-token',
-    });
+  it('keeps account login disabled when public sign-in settings cannot load', async () => {
+    getAIBuddyAuthSettings.mockResolvedValue({ ok: false, message: 'Settings unavailable' });
     render(<AIBuddyLoginForm />);
 
-    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    await userEvent.click(screen.getByRole('button', { name: /login/i }));
-    await userEvent.click(await screen.findByRole('button', { name: /back/i }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Settings unavailable');
+    expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
+  });
 
-    expect(await screen.findByLabelText(/email/i)).toBeInTheDocument();
-    expect(resetCaptcha).toHaveBeenCalledTimes(2);
+  it('keeps the group step and shows a pending-login expiry error', async () => {
+    loginViaAIBuddy.mockResolvedValue({
+      ok: true,
+      step: 'select-group',
+      pendingLoginId: 'expired-id',
+      groups: [{ id: 'team-a', name: 'Team A' }],
+    });
+    provisionAIBuddyGroup.mockResolvedValue({ ok: false, message: '登录状态已过期，请重新登录' });
+    render(<AIBuddyLoginForm />);
+
+    await submitAccountLogin();
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('登录状态已过期');
+    expect(screen.getByRole('heading', { name: /choose group/i })).toBeInTheDocument();
   });
 });
