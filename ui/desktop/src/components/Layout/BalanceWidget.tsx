@@ -10,7 +10,7 @@ import { defineMessages, useIntl } from '../../i18n';
  * @author logic
  * @date 2026-08-24
  * 侧边栏底部余额组件：计量计费账户显示网关账户余额（new-api 余额语义），
- * 订阅计费账户显示当日剩余额度；悬浮显示已用额度/请求数或日限额/更新时间，
+ * 订阅计费账户显示服务端返回的日/周/月剩余额度；悬浮展示每个可用周期与更新时间，
  * 右侧按钮手动刷新；数据由 useBalance 轮询。
  */
 
@@ -18,18 +18,6 @@ const i18n = defineMessages({
   used: {
     id: 'balanceWidget.used',
     defaultMessage: 'Used: {value}',
-  },
-  dailyRemaining: {
-    id: 'balanceWidget.dailyRemaining',
-    defaultMessage: '{value} left today',
-  },
-  dailyUsed: {
-    id: 'balanceWidget.dailyUsed',
-    defaultMessage: 'Used today: {value}',
-  },
-  dailyLimit: {
-    id: 'balanceWidget.dailyLimit',
-    defaultMessage: 'Daily limit: {value}',
   },
   subscriptionRemaining: {
     id: 'balanceWidget.subscriptionRemaining',

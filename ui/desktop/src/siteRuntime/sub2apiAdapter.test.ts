@@ -192,6 +192,42 @@ describe('fetchSub2apiEntitlement', () => {
     ).rejects.toThrow('订阅服务响应数据异常');
   });
 
+  it('rejects a non-array progress response', async () => {
+    const fetchMock = panelStub({ code: 0, data: { subscriptions: [] } });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).rejects.toThrow('订阅服务响应数据异常');
+  });
+
+  it.each([
+    ['missing progress', { subscription: { group_id: 42 } }],
+    [
+      'an invalid progress group name',
+      {
+        subscription: { group_id: 42 },
+        progress: { group_name: 42, daily: { remaining_usd: 1 } },
+      },
+    ],
+  ])('rejects matched subscriptions with %s', async (_case, item) => {
+    const fetchMock = panelStub({ code: 0, data: [item] });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).rejects.toThrow('订阅服务响应数据异常');
+  });
+
+  it('rejects matched progress with no configured periods', async () => {
+    const fetchMock = panelStub({
+      code: 0,
+      data: [{ subscription: { group_id: 42 }, progress: { group_name: 'TFlow Pro' } }],
+    });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).rejects.toThrow('订阅服务响应数据异常');
+  });
+
   it('surfaces a 401 from progress so the caller can refresh and retry', async () => {
     const fetchMock = vi
       .fn()

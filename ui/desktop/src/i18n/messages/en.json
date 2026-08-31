@@ -158,14 +158,8 @@
   "backButton.back": {
     "defaultMessage": "Back"
   },
-  "balanceWidget.dailyLimit": {
-    "defaultMessage": "Daily limit: {value}"
-  },
-  "balanceWidget.dailyRemaining": {
-    "defaultMessage": "{value} left today"
-  },
-  "balanceWidget.dailyUsed": {
-    "defaultMessage": "Used today: {value}"
+  "balanceWidget.daily": {
+    "defaultMessage": "Daily: {value}"
   },
   "balanceWidget.loadFailed": {
     "defaultMessage": "Balance load failed"
@@ -178,6 +172,15 @@
   },
   "balanceWidget.requests": {
     "defaultMessage": "Requests: {count}"
+  },
+  "balanceWidget.monthly": {
+    "defaultMessage": "Monthly: {value}"
+  },
+  "balanceWidget.subscriptionRemaining": {
+    "defaultMessage": "{value} remaining"
+  },
+  "balanceWidget.weekly": {
+    "defaultMessage": "Weekly: {value}"
   },
   "balanceWidget.unauthorized": {
     "defaultMessage": "Login expired, please re-login"

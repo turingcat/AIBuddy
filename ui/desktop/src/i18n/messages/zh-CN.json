@@ -74,14 +74,8 @@
   "appsView.title": {
     "defaultMessage": "应用"
   },
-  "balanceWidget.dailyLimit": {
-    "defaultMessage": "日限额：{value}"
-  },
-  "balanceWidget.dailyRemaining": {
-    "defaultMessage": "今日剩余 {value}"
-  },
-  "balanceWidget.dailyUsed": {
-    "defaultMessage": "今日已用：{value}"
+  "balanceWidget.daily": {
+    "defaultMessage": "每日：{value}"
   },
   "balanceWidget.loadFailed": {
     "defaultMessage": "余额加载失败"
@@ -94,6 +88,15 @@
   },
   "balanceWidget.requests": {
     "defaultMessage": "请求数：{count}"
+  },
+  "balanceWidget.monthly": {
+    "defaultMessage": "每月：{value}"
+  },
+  "balanceWidget.subscriptionRemaining": {
+    "defaultMessage": "剩余 {value}"
+  },
+  "balanceWidget.weekly": {
+    "defaultMessage": "每周：{value}"
   },
   "balanceWidget.unauthorized": {
     "defaultMessage": "登录已失效，请重新登录"

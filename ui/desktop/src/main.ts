@@ -44,6 +44,7 @@ import {
   fetchCurrencyWithCache,
   fetchUserBalance,
   runBalanceFetch,
+  toSub2apiBalanceData,
   BalanceFetchError,
   type BalanceResult,
   type CurrencyCacheState,
@@ -2064,23 +2065,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
         throw error;
       });
       return {
-        balance:
-          entitlement.kind === 'balance'
-            ? {
-                kind: 'balance' as const,
-                quota: entitlement.balance,
-                usedQuota: 0,
-                requestCount: 0,
-                userName: entitlement.displayName,
-                displayName: entitlement.displayName,
-              }
-            : {
-                kind: 'subscription' as const,
-                userName: entitlement.displayName,
-                displayName: entitlement.displayName,
-                groupName: entitlement.groupName,
-                remainingUSD: entitlement.remainingUSD,
-              },
+        balance: toSub2apiBalanceData(entitlement),
         currency: {
           quotaPerUnit: 1,
           quotaDisplayType: 'USD',
