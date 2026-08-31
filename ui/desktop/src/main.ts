@@ -79,6 +79,7 @@ import {
   getAppProtocolPrefix,
   getAppTrayIconStem,
 } from './brand';
+import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
@@ -126,9 +127,11 @@ function translateMenuLabels(items: MenuItem[]): void {
 }
 
 // Settings management
-const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
-const CREDENTIALS_FILE = path.join(app.getPath('userData'), 'credentials.json');
-const STARTUP_LOGS_DIR = path.join(app.getPath('userData'), 'logs', 'startup');
+const {
+  settingsFile: SETTINGS_FILE,
+  credentialsFile: CREDENTIALS_FILE,
+  startupLogsDir: STARTUP_LOGS_DIR,
+} = initializeAppIdentity(app);
 const validLanguageSettings = new Set<Settings['language']>(['system', 'en', 'zh-CN']);
 
 function isValidLanguageSetting(value: unknown): value is Settings['language'] {
