@@ -15,6 +15,22 @@ import { defineMessages, useIntl } from '../../i18n';
  */
 
 const i18n = defineMessages({
+  currentBalance: {
+    id: 'accountMenu.currentBalance',
+    defaultMessage: 'Current balance',
+  },
+  dailyRemaining: {
+    id: 'accountMenu.dailyRemaining',
+    defaultMessage: 'Daily remaining',
+  },
+  weeklyRemaining: {
+    id: 'accountMenu.weeklyRemaining',
+    defaultMessage: 'Weekly remaining',
+  },
+  monthlyRemaining: {
+    id: 'accountMenu.monthlyRemaining',
+    defaultMessage: 'Monthly remaining',
+  },
   used: {
     id: 'balanceWidget.used',
     defaultMessage: 'Used: {value}',
@@ -159,6 +175,56 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+export function AIBuddyEntitlementRows({ state }: { state: BalanceState }) {
+  const intl = useIntl();
+
+  if (state.status !== 'ready') {
+    return <BalanceStatus state={state} />;
+  }
+
+  const balance = state.balance;
+  const rows =
+    balance.kind === 'balance'
+      ? [
+          {
+            label: intl.formatMessage(i18n.currentBalance),
+            value: formatQuotaWithCurrency(balance.quota, state.currency),
+          },
+        ]
+      : (['daily', 'weekly', 'monthly'] as const).flatMap((period) => {
+          const value = balance.remainingUSD[period];
+          if (value === undefined) return [];
+
+          const label = {
+            daily: i18n.dailyRemaining,
+            weekly: i18n.weeklyRemaining,
+            monthly: i18n.monthlyRemaining,
+          }[period];
+
+          return [
+            {
+              label: intl.formatMessage(label),
+              value: formatQuotaWithCurrency(value, state.currency),
+            },
+          ];
+        });
+
+  return (
+    <div className="flex flex-col gap-1 text-xs text-text-primary">
+      {rows.map(({ label, value }) => (
+        <div
+          key={label}
+          className="flex min-w-0 items-center justify-between gap-2"
+          data-testid="aibuddy-entitlement-row"
+        >
+          <span className="min-w-0 text-text-secondary">{label}</span>
+          <span className="shrink-0 font-mono">{value}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

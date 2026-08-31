@@ -11,17 +11,29 @@
   "announcementModal.gotIt": {
     "defaultMessage": "知道了！"
   },
+  "accountMenu.currentBalance": {
+    "defaultMessage": "当前余额"
+  },
+  "accountMenu.dailyRemaining": {
+    "defaultMessage": "每日剩余"
+  },
   "accountMenu.logout": {
     "defaultMessage": "退出登录"
   },
   "accountMenu.logoutConfirmation": {
     "defaultMessage": "确定退出登录吗？"
   },
+  "accountMenu.monthlyRemaining": {
+    "defaultMessage": "每月剩余"
+  },
   "accountMenu.notLoggedIn": {
     "defaultMessage": "未登录用户"
   },
   "accountMenu.settings": {
     "defaultMessage": "设置"
+  },
+  "accountMenu.weeklyRemaining": {
+    "defaultMessage": "每周剩余"
   },
   "appLayout.collapseNavigation": {
     "defaultMessage": "收起导航栏"
