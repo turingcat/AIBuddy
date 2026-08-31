@@ -57,11 +57,11 @@
 
 **Files:** `ui/desktop/src/aibuddyAuthIpc.ts`, `aibuddyAuthIpc.test.ts`, `preload.ts`, `preload.loginIpc.test-d.ts`, `components/auth/AIBuddyLoginForm.tsx`, `components/auth/AIBuddyLoginForm.test.tsx`.
 
-**Produces:** either `{ step: 'authenticated', credentials }` or `{ step: 'select-group', groups, accessToken, account }`, plus `provisionAIBuddyGroup(accessToken, groupId)`.
+**Produces:** either `{ step: 'authenticated', credentials }` or `{ step: 'select-group', groups, pendingLoginId, account }`, plus `provisionAIBuddyGroup(pendingLoginId, groupId)`. The main process keeps the short-lived panel token and pending account data keyed by `pendingLoginId`; it expires after completion, cancellation, or a bounded timeout.
 
 - [ ] **Step 1: Write the failing form tests.** A successful login with only ungrouped/no keys shows a `Choose a group` heading and does not call `setLoginCredentials`; a login with an existing grouped key persists immediately.
 - [ ] **Step 2: Verify RED.** Run `cd ui/desktop && pnpm vitest run src/aibuddyAuthIpc.test.ts src/components/auth/AIBuddyLoginForm.test.tsx src/preload.loginIpc.test-d.ts`; current code always restarts after login.
-- [ ] **Step 3: Implement selection.** Pass only temporary access token, account fields, and group IDs/names to the renderer; show a required compact selector; provision and save only catalog-validated credentials after confirmation. Keep form errors actionable.
+- [ ] **Step 3: Implement selection.** Pass only the opaque pending ID, account fields, and group IDs/names to the renderer; show a required compact selector; provision and save only catalog-validated credentials after confirmation. Keep form errors actionable.
 - [ ] **Step 4: Verify GREEN.** Re-run the Step 2 command.
 - [ ] **Step 5: Commit.** Stage these files and commit `feat(auth): select TFlow group when needed`.
 
