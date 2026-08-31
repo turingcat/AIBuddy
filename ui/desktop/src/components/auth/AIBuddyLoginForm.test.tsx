@@ -84,7 +84,7 @@ describe('AIBuddyLoginForm', () => {
     expect(restartApp).not.toHaveBeenCalled();
   });
 
-  it('provisions the selected opaque login and makes its first TFlow model the default', async () => {
+  it('provisions the selected opaque login and restarts without touching agent defaults', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'select-group',
@@ -103,24 +103,25 @@ describe('AIBuddyLoginForm', () => {
 
     await waitFor(() => {
       expect(provisionAIBuddyGroup).toHaveBeenCalledWith('opaque-pending-id', 'team-b');
-      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'team-b-model');
       expect(restartApp).toHaveBeenCalledOnce();
     });
   });
 
-  it('sets the first model immediately when an existing grouped key is reused', async () => {
+  // 登录时运行中的后端还没有 AIBUDDY_* 环境变量，此刻写默认 provider 会被后端以
+  // invalid_params 拒绝，登录界面只会显示 "Invalid params"。默认模型必须留到重启之后。
+  it('restarts without writing agent defaults while the provider is still unconfigured', async () => {
     loginViaAIBuddy.mockResolvedValue(authenticated());
     render(<AIBuddyLoginForm />);
 
     await submitAccountLogin();
 
     await waitFor(() => {
-      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'tflow-first-model');
       expect(restartApp).toHaveBeenCalledOnce();
     });
+    expect(saveDefaults).not.toHaveBeenCalled();
   });
 
-  it('completes TOTP authentication and persists the returned first model', async () => {
+  it('completes TOTP authentication and restarts into the provisioned session', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'totp-required',
@@ -136,7 +137,6 @@ describe('AIBuddyLoginForm', () => {
 
     await waitFor(() => {
       expect(completeAIBuddy2FA).toHaveBeenCalledWith('temporary-token', '123456');
-      expect(saveDefaults).toHaveBeenCalledWith('aibuddy', 'totp-model');
       expect(restartApp).toHaveBeenCalledOnce();
     });
   });

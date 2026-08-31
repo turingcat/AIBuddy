@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { acpSaveDefaults } from '../../acp/providers';
 import type { AIBuddyAuthResult } from '../../aibuddyAuthIpc';
 import type { Sub2apiPublicSettings } from '../../sub2apiAuth';
 import { Button } from '../ui/button';
@@ -117,7 +116,9 @@ export default function AIBuddyLoginForm() {
       setError(null);
       return;
     }
-    await acpSaveDefaults('aibuddy', result.firstModelId);
+    // 默认模型不能在这里写：登录时运行中的 goose serve 尚未拿到 AIBUDDY_* 环境变量，
+    // 后端会以 invalid_params 拒绝未配置的 provider。重启后由
+    // ModelAndProviderContext 的兜底路径按网关首个模型落库。
     window.electron.restartApp();
   };
 
