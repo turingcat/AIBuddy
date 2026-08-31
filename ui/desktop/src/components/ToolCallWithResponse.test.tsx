@@ -178,6 +178,7 @@ describe('ToolCallWithResponse live output', () => {
 
     const images = screen.getByTestId('tool-result-images').querySelectorAll('img');
     expect(images).toHaveLength(1);
+    expect(images[0]).toBeVisible();
     expect(images[0]).toHaveAttribute('src', `data:image/png;base64,${imagePayload}`);
     expect(screen.queryByText('text result')).not.toBeInTheDocument();
 
