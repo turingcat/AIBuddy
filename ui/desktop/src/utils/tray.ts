@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain, Menu, nativeImage, Tray } from 'electron';
 import * as path from 'path';
 import log from './logger';
 import { loadRecentDirs } from './recentDirs';
-import { getAppDisplayName, getAppIconStem } from '../brand';
+import { getAppDisplayName, getAppTrayIconStem } from '../brand';
 
 function showAllWindows() {
   const windows = BrowserWindow.getAllWindows();
@@ -38,13 +38,11 @@ export function setTrayRef(tray: Tray) {
     ? path.join(process.resourcesPath, 'images')
     : path.join(process.cwd(), 'src', 'images');
 
-  // 新品牌托盘图标为彩色 logo，不再标记为 template image：
-  // macOS 的 template 渲染会把彩色位图强制压成单色剪影
+  // 托盘取 22/44px 的 *Template 单色字形，不能用 1024px 的彩色应用图标：
+  // macOS 会把满幅彩色位图压成实心剪影，菜单栏上只剩一个白色方块
   // @author logic
   // @date 2026-08-14
-  const image = nativeImage.createFromPath(path.join(imagesDir, `${getAppIconStem()}.png`));
-  if (process.platform === 'darwin') image.setTemplateImage(true);
-  tray.setImage(image);
+  tray.setImage(nativeImage.createFromPath(path.join(imagesDir, `${getAppTrayIconStem()}.png`)));
   tray.setToolTip(getAppDisplayName());
   tray.setContextMenu(
     Menu.buildFromTemplate([

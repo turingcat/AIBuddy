@@ -65,7 +65,13 @@ import * as yaml from 'yaml';
 import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
-import { getAppDisplayName, getAppIconStem, getAppProtocol, getAppProtocolPrefix } from './brand';
+import {
+  getAppDisplayName,
+  getAppIconStem,
+  getAppProtocol,
+  getAppProtocolPrefix,
+  getAppTrayIconStem,
+} from './brand';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
@@ -1603,12 +1609,13 @@ const disableTray = () => {
 const createTray = () => {
   destroyTray();
 
+  const trayIconName = `${getAppTrayIconStem()}.png`;
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', `${getAppIconStem()}.png`),
-    path.join(process.cwd(), 'src', 'images', `${getAppIconStem()}.png`),
-    path.join(__dirname, '..', 'images', `${getAppIconStem()}.png`),
-    path.join(__dirname, 'images', `${getAppIconStem()}.png`),
-    path.join(process.cwd(), 'images', `${getAppIconStem()}.png`),
+    path.join(process.resourcesPath, 'images', trayIconName),
+    path.join(process.cwd(), 'src', 'images', trayIconName),
+    path.join(__dirname, '..', 'images', trayIconName),
+    path.join(__dirname, 'images', trayIconName),
+    path.join(process.cwd(), 'images', trayIconName),
   ];
 
   const iconPath = possiblePaths.find((p) => fsSync.existsSync(p));

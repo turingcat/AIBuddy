@@ -4,6 +4,7 @@ import {
   getAppEdition,
   getAppIconStem,
   getAppProtocol,
+  getAppTrayIconStem,
   getAppProtocolPrefix,
 } from './brand';
 
@@ -18,6 +19,7 @@ describe('brand', () => {
     expect(getAppEdition()).toBe('heybuddy');
     expect(getAppDisplayName()).toBe('HeyBuddy');
     expect(getAppIconStem()).toBe('icon');
+    expect(getAppTrayIconStem()).toBe('iconTemplate');
     expect(getAppProtocol()).toBe('goose');
     expect(getAppProtocolPrefix()).toBe('goose://');
   });
@@ -28,6 +30,7 @@ describe('brand', () => {
     expect(getAppEdition()).toBe('aibuddy');
     expect(getAppDisplayName()).toBe('AIBuddy');
     expect(getAppIconStem()).toBe('aibuddy/icon');
+    expect(getAppTrayIconStem()).toBe('aibuddy/iconTemplate');
     expect(getAppProtocol()).toBe('aibuddy');
     expect(getAppProtocolPrefix()).toBe('aibuddy://');
   });

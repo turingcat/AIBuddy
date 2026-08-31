@@ -84,6 +84,45 @@ def render_tray_update(master: Image.Image, size: int) -> Image.Image:
     return canvas
 
 
+TRAY_SIZES = (22, 44)
+TRAY_FOREGROUND_THRESHOLD = 225
+
+
+def build_tray_glyph(master: Image.Image) -> Image.Image:
+    """满幅彩色图标 -> 菜单栏单色字形：取中心连通的高亮前景，其余透明。
+
+    托盘按 template image 渲染，只有 alpha 参与成像；直接缩放彩色母版会得到
+    一整块实心剪影，所以这里以亮度阈值取出主体（logo 亮色部分），再从中心
+    洪水填充只保留主体连通域，眼睛等暗色区域自然成为镂空。
+    """
+    mask = master.convert('L').point(lambda v: 255 if v > TRAY_FOREGROUND_THRESHOLD else 0)
+    mask.paste(0, (0, 0), master.getchannel('A').point(lambda v: 255 if v < 128 else 0))
+    seed = (mask.width // 2, mask.height // 2)
+    if mask.getpixel(seed) != 255:
+        raise ValueError('源图中心不是亮色主体，无法提取托盘字形')
+
+    ImageDraw.floodfill(mask, seed, 128)
+    body = mask.point(lambda v: 255 if v == 128 else 0)
+    bbox = body.getbbox()
+    body = body.crop(bbox)
+    side = max(body.size)
+    square = Image.new('L', (side, side), 0)
+    square.paste(body, ((side - body.width) // 2, (side - body.height) // 2))
+
+    glyph = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    glyph.putalpha(square)
+    return glyph
+
+
+def write_tray_glyphs(master: Image.Image, output_dir: Path) -> None:
+    glyph = build_tray_glyph(master)
+    for size in TRAY_SIZES:
+        suffix = '@2x' if size != TRAY_SIZES[0] else ''
+        name = f'iconTemplate{suffix}.png'
+        glyph.resize((size, size), Image.LANCZOS).save(output_dir / name, optimize=True)
+        print(f'生成 {output_dir.name}/{name} {size}x{size}（托盘单色字形）')
+
+
 def write_svg_wrapper(png_path: Path, out_path: Path) -> None:
     """flatpak scalable 槽位用的 SVG 包装：位图源只能内嵌 base64 PNG。"""
     data = base64.b64encode(png_path.read_bytes()).decode('ascii')
@@ -127,6 +166,7 @@ def generate_packager_icons(source: Path, output_dir: Path) -> None:
     master.save(output_dir / 'icon.png', optimize=True)
     master.save(output_dir / 'icon.ico', sizes=ICO_SIZES)
     master.save(output_dir / 'icon.icns')
+    write_tray_glyphs(master, output_dir)
     print(f'生成打包图标到 {output_dir}')
 
 
