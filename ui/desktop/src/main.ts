@@ -39,6 +39,7 @@ import {
   type LoginCredentials,
 } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
+import { migrateLegacyAIBuddyData } from './aibuddyDataMigration';
 import {
   fetchCurrencyWithCache,
   fetchUserBalance,
@@ -73,6 +74,7 @@ import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
 import {
+  getAppEdition,
   getAppDisplayName,
   getAppIconStem,
   getAppProtocol,
@@ -128,10 +130,24 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const {
+  userDataDir: USER_DATA_DIR,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
   startupLogsDir: STARTUP_LOGS_DIR,
 } = initializeAppIdentity(app);
+
+if (getAppEdition() === 'aibuddy') {
+  try {
+    migrateLegacyAIBuddyData({
+      edition: 'aibuddy',
+      legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
+      targetUserDataDir: USER_DATA_DIR,
+      codec: getCredentialsCodec(),
+    });
+  } catch (error) {
+    log.error(`AIBuddy legacy data migration failed: ${error}`);
+  }
+}
 const validLanguageSettings = new Set<Settings['language']>(['system', 'en', 'zh-CN']);
 
 function isValidLanguageSetting(value: unknown): value is Settings['language'] {

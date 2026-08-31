@@ -101,6 +101,30 @@ export function readCredentials(
   return null;
 }
 
+export function decodeCredentialsFile(
+  filePath: string,
+  codec: CredentialsCodec
+): LoginCredentials | null {
+  if (!fs.existsSync(filePath)) return null;
+
+  let data: unknown;
+  try {
+    data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch {
+    return null;
+  }
+
+  if (isEnvelope(data)) {
+    const plain = codec.decrypt(data.blob);
+    if (plain === null) return null;
+    const credentials = parseAndValidate(plain);
+    return credentials ? normalizeCredentials(credentials) : null;
+  }
+
+  const legacy = validateFields(data);
+  return legacy ? normalizeCredentials(legacy) : null;
+}
+
 /**
  * 令牌轮换后的回写：flat token 与 session 两处必须同步，
  * 只改一处会让 normalizeCredentials 的 schemaVersion 2 早退分支继续吐旧令牌

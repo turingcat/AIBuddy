@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  decodeCredentialsFile,
   readCredentials,
   writeCredentials,
   withRefreshedSession,
@@ -85,6 +86,22 @@ describe('credentials 读写', () => {
     const creds = readCredentials(tmpFile, identityCodec);
     expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     expect(creds?.pat).toBeUndefined();
+  });
+
+  it('decodeCredentialsFile 读取旧明文但不重写源文件', () => {
+    const plaintext = JSON.stringify({
+      token: 'plain-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    fs.writeFileSync(tmpFile, plaintext);
+
+    expect(decodeCredentialsFile(tmpFile, base64Codec)).toMatchObject({
+      token: 'plain-token',
+      siteKind: 'sub2api',
+    });
+    expect(fs.readFileSync(tmpFile, 'utf8')).toBe(plaintext);
   });
 
   it('旧明文文件用加密 codec 读取时自动迁移为 v:1 信封', () => {
