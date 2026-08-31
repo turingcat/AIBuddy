@@ -148,4 +148,32 @@ describe('ToolCallWithResponse live output', () => {
       'allow_once'
     );
   });
+
+  it('renders a user-visible tool image outside the expandable result output', () => {
+    const imagePayload =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9L9ZcAAAAASUVORK5CYII=';
+    const imageResponse: ToolResponseMessageContent = {
+      ...toolResponse,
+      toolResult: {
+        status: 'success',
+        value: {
+          content: [
+            {
+              type: 'image',
+              mimeType: 'image/png',
+              data: imagePayload,
+            },
+          ],
+          isError: false,
+        },
+      },
+    };
+
+    renderToolCall(imageResponse);
+
+    const images = screen.getByTestId('tool-result-images').querySelectorAll('img');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toHaveAttribute('src', `data:image/png;base64,${imagePayload}`);
+    expect(screen.queryByText('Output')).not.toBeInTheDocument();
+  });
 });

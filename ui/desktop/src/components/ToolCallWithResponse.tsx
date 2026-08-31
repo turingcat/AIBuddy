@@ -17,6 +17,8 @@ import { ChevronRight, ExternalLink } from 'lucide-react';
 import { TooltipWrapper } from './settings/providers/subcomponents/buttons/TooltipWrapper';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ContentBlock } from '../types/message';
+import { partitionUserVisibleToolResultContent } from '../toolResultContent';
+import ImagePreview from './ImagePreview';
 
 import McpAppRenderer from './McpApps/McpAppRenderer';
 import ToolApprovalButtons from './ToolApprovalButtons';
@@ -140,7 +142,7 @@ function getSubagentSessionId(
   return null;
 }
 
-function getToolResultContent(toolResult: Record<string, unknown>): ContentBlock[] {
+export function getToolResultContent(toolResult: Record<string, unknown>): ContentBlock[] {
   if (toolResult.status !== 'success') {
     return [];
   }
@@ -553,10 +555,10 @@ function ToolCallView({
     }
   }, [toolResponse, startTime]);
 
-  const toolResults =
+  const { images: toolResultImages, details: toolResults } =
     loadingStatus === 'success' && toolResponse?.toolResult
-      ? getToolResultContent(toolResponse.toolResult)
-      : [];
+      ? partitionUserVisibleToolResultContent(toolResponse.toolResult)
+      : { images: [], details: [] };
   const liveOutput = toolResponse ? '' : liveOutputToString(notifications);
 
   const logs = notifications
@@ -795,108 +797,123 @@ function ToolCallView({
     </span>
   );
   return (
-    <ToolCallExpandable
-      isStartExpanded={isRenderingActivity || isExpandToolDetails}
-      isForceExpand={false}
-      label={
-        extensionTooltip ? (
-          <TooltipWrapper tooltipContent={extensionTooltip} side="top" align="start">
-            {toolLabel}
-          </TooltipWrapper>
-        ) : (
-          toolLabel
-        )
-      }
-    >
-      {(() => {
-        const code = toolCall.arguments?.code as unknown as string | undefined;
-        const toolGraph = toolCall.arguments?.tool_graph as unknown as ToolGraphNode[] | undefined;
-
-        if (
-          toolCall.name === 'code_execution__execute_typescript' &&
-          (typeof code === 'string' || Array.isArray(toolGraph))
-        ) {
-          return (
-            <div className="border-t border-border-primary">
-              <CodeModeView toolGraph={toolGraph} code={code} />
-            </div>
-          );
+    <>
+      <ToolCallExpandable
+        isStartExpanded={isRenderingActivity || isExpandToolDetails}
+        isForceExpand={false}
+        label={
+          extensionTooltip ? (
+            <TooltipWrapper tooltipContent={extensionTooltip} side="top" align="start">
+              {toolLabel}
+            </TooltipWrapper>
+          ) : (
+            toolLabel
+          )
         }
+      >
+        {(() => {
+          const code = toolCall.arguments?.code as unknown as string | undefined;
+          const toolGraph = toolCall.arguments?.tool_graph as unknown as
+            ToolGraphNode[] | undefined;
 
-        if (isToolDetails) {
-          return (
-            <div className="border-t border-border-primary">
-              <ToolDetailsView toolCall={toolCall} isStartExpanded={isExpandToolDetails} />
-            </div>
-          );
-        }
+          if (
+            toolCall.name === 'code_execution__execute_typescript' &&
+            (typeof code === 'string' || Array.isArray(toolGraph))
+          ) {
+            return (
+              <div className="border-t border-border-primary">
+                <CodeModeView toolGraph={toolGraph} code={code} />
+              </div>
+            );
+          }
 
-        return null;
-      })()}
+          if (isToolDetails) {
+            return (
+              <div className="border-t border-border-primary">
+                <ToolDetailsView toolCall={toolCall} isStartExpanded={isExpandToolDetails} />
+              </div>
+            );
+          }
 
-      {logs && logs.length > 0 && (
-        <div className="border-t border-border-primary">
-          <ToolLogsView
-            logs={logs}
-            working={loadingStatus === 'loading'}
-            isStartExpanded={
-              loadingStatus === 'loading' || responseStyle === 'detailed' || responseStyle === null
-            }
-          />
-        </div>
-      )}
+          return null;
+        })()}
 
-      {liveOutput && (
-        <div className="border-t border-border-primary">
-          <LiveOutputView output={liveOutput} />
-        </div>
-      )}
-
-      {toolResults.length === 0 &&
-        progressEntries.length > 0 &&
-        progressEntries.map((entry, index) => (
-          <div className="p-3 border-t border-border-primary" key={index}>
-            <ProgressBar progress={entry.progress} total={entry.total} message={entry.message} />
+        {logs && logs.length > 0 && (
+          <div className="border-t border-border-primary">
+            <ToolLogsView
+              logs={logs}
+              working={loadingStatus === 'loading'}
+              isStartExpanded={
+                loadingStatus === 'loading' ||
+                responseStyle === 'detailed' ||
+                responseStyle === null
+              }
+            />
           </div>
-        ))}
+        )}
 
-      {/* Tool Output */}
-      {!isCancelledMessage && (
-        <>
-          {toolResults.map((result, index) => (
-            <div key={index} className={cn('border-t border-border-primary')}>
-              <ToolResultView
-                toolCall={toolCall}
-                result={result}
-                isStartExpanded={isExpandToolDetails}
-              />
+        {liveOutput && (
+          <div className="border-t border-border-primary">
+            <LiveOutputView output={liveOutput} />
+          </div>
+        )}
+
+        {toolResults.length === 0 &&
+          progressEntries.length > 0 &&
+          progressEntries.map((entry, index) => (
+            <div className="p-3 border-t border-border-primary" key={index}>
+              <ProgressBar progress={entry.progress} total={entry.total} message={entry.message} />
             </div>
           ))}
-        </>
-      )}
 
-      {(() => {
-        if (loadingStatus === 'loading') return null;
-        const subagentSessionId = getSubagentSessionId(toolResponse, notifications);
-        if (!subagentSessionId) return null;
-        return (
-          <div className="border-t border-border-primary">
-            <button
-              onClick={() => {
-                window.electron.createChatWindow({
-                  resumeSessionId: subagentSessionId,
-                  viewType: 'pair',
-                });
-              }}
-              className="w-full flex items-center gap-2 px-4 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-background-secondary transition-colors cursor-pointer"
-            >
-              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              <span>{intl.formatMessage(i18n.viewSubagentSession)}</span>
-            </button>
-          </div>
-        );
-      })()}
-    </ToolCallExpandable>
+        {/* Tool Output */}
+        {!isCancelledMessage && (
+          <>
+            {toolResults.map((result, index) => (
+              <div key={index} className={cn('border-t border-border-primary')}>
+                <ToolResultView
+                  toolCall={toolCall}
+                  result={result}
+                  isStartExpanded={isExpandToolDetails}
+                />
+              </div>
+            ))}
+          </>
+        )}
+
+        {(() => {
+          if (loadingStatus === 'loading') return null;
+          const subagentSessionId = getSubagentSessionId(toolResponse, notifications);
+          if (!subagentSessionId) return null;
+          return (
+            <div className="border-t border-border-primary">
+              <button
+                onClick={() => {
+                  window.electron.createChatWindow({
+                    resumeSessionId: subagentSessionId,
+                    viewType: 'pair',
+                  });
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2 text-xs text-text-secondary hover:text-text-primary hover:bg-background-secondary transition-colors cursor-pointer"
+              >
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                <span>{intl.formatMessage(i18n.viewSubagentSession)}</span>
+              </button>
+            </div>
+          );
+        })()}
+      </ToolCallExpandable>
+      {toolResultImages.length > 0 && (
+        <div className="mt-2 space-y-2" data-testid="tool-result-images">
+          {toolResultImages.map((image, index) => (
+            <ImagePreview
+              key={`${image.mimeType}-${index}`}
+              src={`data:${image.mimeType};base64,${image.data}`}
+            />
+          ))}
+        </div>
+      )}
+    </>
   );
 }
 
