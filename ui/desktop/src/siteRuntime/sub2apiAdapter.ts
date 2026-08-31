@@ -5,19 +5,19 @@ export interface Sub2apiAccount {
   balance: number;
 }
 
-/**
- * 账户可用额度：TFlow 分组有两种计费模式（domain.SubscriptionType）。
- * 标准计量分组按余额扣费，订阅分组用日/周/月限额控制，余额恒为 0，
- * 两者显示的金额不是一回事，必须分流。
- */
+export type SubscriptionRemainingUSD = {
+  daily?: number;
+  weekly?: number;
+  monthly?: number;
+};
+
 export type Sub2apiEntitlement =
   | { kind: 'balance'; displayName: string; balance: number }
   | {
-      kind: 'daily-quota';
+      kind: 'subscription';
       displayName: string;
       groupName: string;
-      dailyLimitUSD: number;
-      dailyUsedUSD: number;
+      remainingUSD: SubscriptionRemainingUSD;
     };
 
 export interface SiteModel {
@@ -30,11 +30,14 @@ interface Envelope {
   data?: unknown;
 }
 
-interface SubscriptionSummaryItem {
-  group_id?: unknown;
-  group_name?: unknown;
-  daily_used_usd?: unknown;
-  daily_limit_usd?: unknown;
+interface SubscriptionProgressItem {
+  subscription?: { group_id?: unknown };
+  progress?: {
+    group_name?: unknown;
+    daily?: { remaining_usd?: unknown };
+    weekly?: { remaining_usd?: unknown };
+    monthly?: { remaining_usd?: unknown };
+  };
 }
 
 /** 面板 access token 失效：调用方可用 refresh token 换新的一对后重试 */
@@ -91,35 +94,47 @@ export async function fetchSub2apiAccount(
   return { displayName: data.email.split('@', 1)[0], balance: data.balance };
 }
 
-/**
- * 取分组的生效日限额：订阅未覆盖该分组、或该分组只设了周/月限额时返回 null，
- * 由调用方回退到余额展示。daily_limit_usd 为 0 时后端 omitempty 不下发。
- */
-async function fetchDailyQuota(
+async function fetchSubscriptionRemainingUSD(
   baseUrl: string,
   accessToken: string,
   groupId: string,
   fetchImpl: FetchLike
-): Promise<{ groupName: string; dailyLimitUSD: number; dailyUsedUSD: number } | null> {
+): Promise<{ groupName: string; remainingUSD: SubscriptionRemainingUSD } | null> {
   const data = (await fetchPanelData(
     baseUrl,
-    '/api/v1/subscriptions/summary',
+    '/api/v1/subscriptions/progress',
     accessToken,
     fetchImpl,
     '订阅服务'
-  )) as { subscriptions?: unknown } | undefined;
-  if (!Array.isArray(data?.subscriptions)) throw new Error('订阅服务响应数据异常');
+  )) as unknown;
+  if (!Array.isArray(data)) throw new Error('订阅服务响应数据异常');
 
-  const matched = (data.subscriptions as SubscriptionSummaryItem[]).find(
-    (item) => String(item?.group_id ?? '') === groupId
+  const matched = (data as SubscriptionProgressItem[]).find(
+    (item) => String(item?.subscription?.group_id ?? '') === groupId
   );
-  const dailyLimitUSD = matched?.daily_limit_usd;
-  if (typeof dailyLimitUSD !== 'number' || !(dailyLimitUSD > 0)) return null;
+  if (!matched) return null;
+
+  const progress = matched.progress;
+  if (!progress || typeof progress.group_name !== 'string') {
+    throw new Error('订阅服务响应数据异常');
+  }
+
+  const remainingUSD: SubscriptionRemainingUSD = {};
+  for (const period of ['daily', 'weekly', 'monthly'] as const) {
+    const periodProgress = progress[period];
+    if (periodProgress === undefined) continue;
+    const remaining = periodProgress?.remaining_usd;
+    if (typeof remaining !== 'number' || !Number.isFinite(remaining)) {
+      throw new Error('订阅服务响应数据异常');
+    }
+    remainingUSD[period] = remaining;
+  }
+
+  if (Object.keys(remainingUSD).length === 0) throw new Error('订阅服务响应数据异常');
 
   return {
-    groupName: typeof matched?.group_name === 'string' ? matched.group_name : '',
-    dailyLimitUSD,
-    dailyUsedUSD: typeof matched?.daily_used_usd === 'number' ? matched.daily_used_usd : 0,
+    groupName: progress.group_name,
+    remainingUSD,
   };
 }
 
@@ -132,10 +147,15 @@ export async function fetchSub2apiEntitlement(
   const account = await fetchSub2apiAccount(baseUrl, accessToken, fetchImpl);
   if (!groupId) return { kind: 'balance', ...account };
 
-  const quota = await fetchDailyQuota(baseUrl, accessToken, groupId, fetchImpl);
-  if (!quota) return { kind: 'balance', ...account };
+  const subscription = await fetchSubscriptionRemainingUSD(
+    baseUrl,
+    accessToken,
+    groupId,
+    fetchImpl
+  );
+  if (!subscription) return { kind: 'balance', ...account };
 
-  return { kind: 'daily-quota', displayName: account.displayName, ...quota };
+  return { kind: 'subscription', displayName: account.displayName, ...subscription };
 }
 
 export async function fetchSub2apiModels(

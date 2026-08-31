@@ -1,5 +1,6 @@
 import type { CurrencyConfig } from './quotaFormat';
 import { parseCurrencyConfig } from './quotaFormat';
+import type { SubscriptionRemainingUSD } from './siteRuntime/sub2apiAdapter';
 
 /**
  * @author logic
@@ -13,21 +14,23 @@ import { parseCurrencyConfig } from './quotaFormat';
 // 结构化最小 fetch 类型：同时兼容全局 fetch 与 Electron 的 net.fetch
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
 
-export interface BalanceData {
-  /**
-   * 额度语义：计量计费账户为账户余额，订阅计费账户为当日剩余额度。
-   * 侧栏据此选择文案，两者不可混为一谈
-   */
-  kind: 'balance' | 'daily-quota';
-  /** 剩余额度（原始 token 额度，需按 currency 换算显示） */
-  quota: number;
-  usedQuota: number;
-  requestCount: number;
+interface BalanceIdentity {
   userName: string;
   displayName: string;
-  /** 订阅分组名，仅 daily-quota 有 */
-  groupName?: string;
 }
+
+export type BalanceData =
+  | (BalanceIdentity & {
+      kind: 'balance';
+      quota: number;
+      usedQuota: number;
+      requestCount: number;
+    })
+  | (BalanceIdentity & {
+      kind: 'subscription';
+      groupName: string;
+      remainingUSD: SubscriptionRemainingUSD;
+    });
 
 export type BalanceErrorKind = 'unauthorized' | 'http' | 'timeout' | 'network' | 'bad-response';
 
@@ -54,7 +57,7 @@ async function fetchJson(
   url: string,
   init: RequestInit,
   fetchImpl: FetchLike,
-  errorMessages: { timeout: string; network: string; http: (status: number) => string },
+  errorMessages: { timeout: string; network: string; http: (status: number) => string }
 ): Promise<unknown> {
   let res: Response;
   try {
@@ -92,7 +95,7 @@ export async function fetchUserBalance(
   apiBaseUrl: string,
   pat: string,
   fetchImpl: FetchLike,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<BalanceData> {
   const body = (await fetchJson(
     `${apiBaseUrl}/api/user/self`,
@@ -106,7 +109,7 @@ export async function fetchUserBalance(
       timeout: '余额服务响应超时，请稍后重试',
       network: '无法连接余额服务，请检查网络',
       http: (status) => `余额服务不可用（HTTP ${status}）`,
-    },
+    }
   )) as SelfResponseBody;
 
   if (!body.success) {
@@ -145,7 +148,7 @@ type StatusResponseBody = { success?: boolean; data?: unknown };
 export async function fetchStatusCurrency(
   apiBaseUrl: string,
   fetchImpl: FetchLike,
-  timeoutMs: number = DEFAULT_TIMEOUT_MS,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
 ): Promise<CurrencyConfig> {
   const body = (await fetchJson(
     `${apiBaseUrl}/api/status`,
@@ -155,7 +158,7 @@ export async function fetchStatusCurrency(
       timeout: '余额服务响应超时，请稍后重试',
       network: '无法连接余额服务，请检查网络',
       http: (status) => `余额服务不可用（HTTP ${status}）`,
-    },
+    }
   )) as StatusResponseBody;
 
   if (!body.success) {
@@ -179,7 +182,7 @@ export async function fetchCurrencyWithCache(
   apiBaseUrl: string,
   fetchImpl: FetchLike,
   now: number,
-  ttlMs: number = 3_600_000,
+  ttlMs: number = 3_600_000
 ): Promise<CurrencyConfig> {
   if (state.config && now - state.fetchedAt < ttlMs) {
     return state.config;
@@ -202,7 +205,7 @@ export async function fetchCurrencyWithCache(
  * main.ts 的 handler 用它返回而非抛异常，渲染进程解包后自行处理
  */
 export async function runBalanceFetch(
-  fn: () => Promise<{ balance: BalanceData; currency: CurrencyConfig }>,
+  fn: () => Promise<{ balance: BalanceData; currency: CurrencyConfig }>
 ): Promise<BalanceResult> {
   try {
     const { balance, currency } = await fn();

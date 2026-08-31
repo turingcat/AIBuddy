@@ -94,10 +94,8 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     electronMock.getUserBalance.mockResolvedValue({
       ok: true,
       balance: {
-        kind: 'daily-quota',
-        quota: 37.5,
-        usedQuota: 12.5,
-        requestCount: 0,
+        kind: 'subscription',
+        remainingUSD: { daily: 37.5, weekly: -1.25, monthly: 100 },
         userName: 'alice',
         displayName: 'alice',
         groupName: 'Codex Max',
@@ -107,13 +105,14 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     renderWidget();
 
     const value = await screen.findByTestId('balance-value');
-    expect(value).toHaveTextContent('$37.5 left today');
+    expect(value).toHaveTextContent('$37.5 remaining');
 
     await userEvent.hover(value);
     await waitFor(() => {
       expect(screen.getAllByText(/Codex Max/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Used today: \$12\.5/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Daily limit: \$50/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Daily: \$37\.5/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Weekly: -\$1\.25/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Monthly: \$100/).length).toBeGreaterThan(0);
     });
   });
 

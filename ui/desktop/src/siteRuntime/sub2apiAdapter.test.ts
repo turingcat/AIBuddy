@@ -1,16 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchSub2apiAccount, fetchSub2apiEntitlement, fetchSub2apiModels } from './sub2apiAdapter';
+import {
+  fetchSub2apiAccount,
+  fetchSub2apiEntitlement,
+  fetchSub2apiModels,
+  Sub2apiUnauthorizedError,
+} from './sub2apiAdapter';
 
 describe('sub2apiAdapter', () => {
-  it('derives the displayed account name from the TFlow email and returns its USD balance', async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ code: 0, data: { email: 'alice@example.com', balance: 12.34 } }),
-          { status: 200 }
-        )
-      );
+  it('derives the displayed account name from a TFlow email and returns its USD balance', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({ code: 0, data: { email: 'alice@example.com', balance: 12.34 } }),
+        {
+          status: 200,
+        }
+      )
+    );
 
     await expect(fetchSub2apiAccount('https://tflow.online', 'jwt', fetchMock)).resolves.toEqual({
       displayName: 'alice',
@@ -39,17 +44,17 @@ describe('sub2apiAdapter', () => {
 describe('fetchSub2apiEntitlement', () => {
   const account = { code: 0, data: { email: 'alice@example.com', balance: 12.34 } };
 
-  function panelStub(summary: unknown) {
+  function panelStub(progress: unknown) {
     return vi.fn((url: string) =>
       Promise.resolve(
-        new Response(JSON.stringify(url.includes('/subscriptions/summary') ? summary : account), {
+        new Response(JSON.stringify(url.includes('/subscriptions/progress') ? progress : account), {
           status: 200,
         })
       )
     );
   }
 
-  it('shows the account balance when the key has no group and is therefore metered', async () => {
+  it('uses only auth/me and returns metered balance when the key has no group', async () => {
     const fetchMock = panelStub(null);
 
     await expect(
@@ -58,50 +63,143 @@ describe('fetchSub2apiEntitlement', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  // 订阅分组按限额计费，账户余额恒为 0，拿余额当额度显示等于告诉用户"没钱了"
-  it('shows the daily quota of the group the key belongs to when it is subscription billed', async () => {
+  it('matches numeric progress group IDs to a string configured group and preserves negative daily remaining USD', async () => {
     const fetchMock = panelStub({
       code: 0,
-      data: {
-        subscriptions: [
-          { group_id: 7, group_name: 'Other', daily_limit_usd: 5, daily_used_usd: 1 },
-          { group_id: 42, group_name: 'Codex Max', daily_limit_usd: 50, daily_used_usd: 12.5 },
-        ],
-      },
+      data: [
+        {
+          subscription: { group_id: 7 },
+          progress: { group_name: 'Other', daily: { remaining_usd: 4 } },
+        },
+        {
+          subscription: { group_id: 42 },
+          progress: { group_name: 'Codex Max', daily: { remaining_usd: -1.25 } },
+        },
+      ],
     });
 
     await expect(
       fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
     ).resolves.toEqual({
-      kind: 'daily-quota',
+      kind: 'subscription',
       displayName: 'alice',
       groupName: 'Codex Max',
-      dailyLimitUSD: 50,
-      dailyUsedUSD: 12.5,
+      remainingUSD: { daily: -1.25 },
     });
     expect(fetchMock).toHaveBeenLastCalledWith(
-      'https://tflow.online/api/v1/subscriptions/summary',
+      'https://tflow.online/api/v1/subscriptions/progress',
       expect.objectContaining({ headers: { Authorization: 'Bearer jwt' } })
     );
   });
 
-  it('falls back to the balance when no active subscription covers the key group', async () => {
-    const fetchMock = panelStub({ code: 0, data: { subscriptions: [] } });
+  it('preserves only weekly remaining USD from a string progress group ID', async () => {
+    const fetchMock = panelStub({
+      code: 0,
+      data: [
+        {
+          subscription: { group_id: '42' },
+          progress: { group_name: 'TFlow Pro', weekly: { remaining_usd: 2.5 } },
+        },
+      ],
+    });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).resolves.toEqual({
+      kind: 'subscription',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+      remainingUSD: { weekly: 2.5 },
+    });
+  });
+
+  it('preserves only monthly remaining USD and leaves missing periods absent', async () => {
+    const fetchMock = panelStub({
+      code: 0,
+      data: [
+        {
+          subscription: { group_id: '42' },
+          progress: { group_name: 'TFlow Pro', monthly: { remaining_usd: 3.75 } },
+        },
+      ],
+    });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).resolves.toEqual({
+      kind: 'subscription',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+      remainingUSD: { monthly: 3.75 },
+    });
+  });
+
+  it('preserves every configured period remaining USD verbatim', async () => {
+    const fetchMock = panelStub({
+      code: 0,
+      data: [
+        {
+          subscription: { group_id: '42' },
+          progress: {
+            group_name: 'TFlow Pro',
+            daily: { remaining_usd: 1 },
+            weekly: { remaining_usd: 2 },
+            monthly: { remaining_usd: 3 },
+          },
+        },
+      ],
+    });
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).resolves.toEqual({
+      kind: 'subscription',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+      remainingUSD: { daily: 1, weekly: 2, monthly: 3 },
+    });
+  });
+
+  it('falls back to account balance when no progress item covers the configured group', async () => {
+    const fetchMock = panelStub({
+      code: 0,
+      data: [
+        {
+          subscription: { group_id: 'other' },
+          progress: { group_name: 'Other', daily: { remaining_usd: 1 } },
+        },
+      ],
+    });
 
     await expect(
       fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
     ).resolves.toEqual({ kind: 'balance', displayName: 'alice', balance: 12.34 });
   });
 
-  // daily_limit_usd 为 0 时后端 omitempty 不下发，这类分组只有周/月限额，没有日额度可显示
-  it('falls back to the balance when the subscribed group has no daily limit', async () => {
+  it('rejects malformed progress for the matching subscription', async () => {
     const fetchMock = panelStub({
       code: 0,
-      data: { subscriptions: [{ group_id: 42, group_name: 'Weekly', weekly_limit_usd: 100 }] },
+      data: [
+        {
+          subscription: { group_id: 42 },
+          progress: { group_name: 'TFlow Pro', weekly: { remaining_usd: 'not-a-number' } },
+        },
+      ],
     });
 
     await expect(
       fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
-    ).resolves.toEqual({ kind: 'balance', displayName: 'alice', balance: 12.34 });
+    ).rejects.toThrow('订阅服务响应数据异常');
+  });
+
+  it('surfaces a 401 from progress so the caller can refresh and retry', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(account), { status: 200 }))
+      .mockResolvedValueOnce(new Response('unauthorized', { status: 401 }));
+
+    await expect(
+      fetchSub2apiEntitlement('https://tflow.online', 'jwt', '42', fetchMock)
+    ).rejects.toBeInstanceOf(Sub2apiUnauthorizedError);
   });
 });

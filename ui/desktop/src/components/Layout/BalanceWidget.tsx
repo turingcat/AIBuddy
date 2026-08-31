@@ -31,6 +31,22 @@ const i18n = defineMessages({
     id: 'balanceWidget.dailyLimit',
     defaultMessage: 'Daily limit: {value}',
   },
+  subscriptionRemaining: {
+    id: 'balanceWidget.subscriptionRemaining',
+    defaultMessage: '{value} remaining',
+  },
+  daily: {
+    id: 'balanceWidget.daily',
+    defaultMessage: 'Daily: {value}',
+  },
+  weekly: {
+    id: 'balanceWidget.weekly',
+    defaultMessage: 'Weekly: {value}',
+  },
+  monthly: {
+    id: 'balanceWidget.monthly',
+    defaultMessage: 'Monthly: {value}',
+  },
   requests: {
     id: 'balanceWidget.requests',
     defaultMessage: 'Requests: {count}',
@@ -65,22 +81,44 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
   }
 
   if (state.status === 'ready') {
-    const dailyQuota = state.balance.kind === 'daily-quota';
-    const amount = formatQuotaWithCurrency(state.balance.quota, state.currency);
+    const subscription = state.balance.kind === 'subscription' ? state.balance : undefined;
+    const meteredBalance = state.balance.kind === 'balance' ? state.balance : undefined;
+    const remainingUSD = subscription?.remainingUSD;
+    const primaryRemainingUSD =
+      remainingUSD?.daily ?? remainingUSD?.weekly ?? remainingUSD?.monthly;
+    const amount = subscription
+      ? primaryRemainingUSD === undefined
+        ? '--'
+        : formatQuotaWithCurrency(primaryRemainingUSD, state.currency)
+      : formatQuotaWithCurrency(meteredBalance!.quota, state.currency);
+    const subscriptionPeriods = remainingUSD
+      ? (
+          [
+            ['daily', i18n.daily],
+            ['weekly', i18n.weekly],
+            ['monthly', i18n.monthly],
+          ] as const
+        ).flatMap(([period, label]) => {
+          const remaining = remainingUSD[period];
+          return remaining === undefined
+            ? []
+            : [
+                intl.formatMessage(label, {
+                  value: formatQuotaWithCurrency(remaining, state.currency),
+                }),
+              ];
+        })
+      : [];
     const tooltip = [
-      (dailyQuota ? state.balance.groupName : '') || state.balance.displayName,
-      intl.formatMessage(dailyQuota ? i18n.dailyUsed : i18n.used, {
-        value: formatQuotaWithCurrency(state.balance.usedQuota, state.currency),
-      }),
-      dailyQuota
-        ? intl.formatMessage(i18n.dailyLimit, {
-            // quota 是当日剩余，加回已用即分组日限额
-            value: formatQuotaWithCurrency(
-              state.balance.quota + state.balance.usedQuota,
-              state.currency
-            ),
-          })
-        : intl.formatMessage(i18n.requests, { count: state.balance.requestCount }),
+      subscription ? subscription.groupName : meteredBalance!.displayName,
+      ...(subscription
+        ? subscriptionPeriods
+        : [
+            intl.formatMessage(i18n.used, {
+              value: formatQuotaWithCurrency(meteredBalance!.usedQuota, state.currency),
+            }),
+            intl.formatMessage(i18n.requests, { count: meteredBalance!.requestCount }),
+          ]),
       intl.formatMessage(i18n.updatedAt, { time: formatMessageTimestamp(state.updatedAt / 1000) }),
     ]
       .filter(Boolean)
@@ -94,7 +132,9 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
           >
             <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="truncate">
-              {dailyQuota ? intl.formatMessage(i18n.dailyRemaining, { value: amount }) : amount}
+              {subscription
+                ? intl.formatMessage(i18n.subscriptionRemaining, { value: amount })
+                : amount}
             </span>
           </span>
         </TooltipTrigger>

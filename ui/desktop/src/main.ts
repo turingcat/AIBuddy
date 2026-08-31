@@ -2075,13 +2075,11 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
                 displayName: entitlement.displayName,
               }
             : {
-                kind: 'daily-quota' as const,
-                quota: entitlement.dailyLimitUSD - entitlement.dailyUsedUSD,
-                usedQuota: entitlement.dailyUsedUSD,
-                requestCount: 0,
+                kind: 'subscription' as const,
                 userName: entitlement.displayName,
                 displayName: entitlement.displayName,
                 groupName: entitlement.groupName,
+                remainingUSD: entitlement.remainingUSD,
               },
         currency: {
           quotaPerUnit: 1,
