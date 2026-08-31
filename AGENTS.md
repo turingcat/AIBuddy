@@ -21,8 +21,9 @@ These standards apply to all code changes in the HeyBuddy fork.
 
 When fixing a bug:
 
-- By default, diagnose and fix the bug in the current fork without checking the upstream repository.
-- Check whether the upstream repository has already fixed the bug only when the user explicitly asks for an upstream check.
+1. First check whether the upstream repository has already fixed it: https://github.com/aaif-goose/goose.git
+2. If the upstream fix exists, **ask the user** before doing anything else whether to create a new branch to pull the upstream fix in.
+3. Only proceed with a local fix when there is no upstream fix, or after the user has decided against pulling it in.
 
 ## Contribution Workflow
 
