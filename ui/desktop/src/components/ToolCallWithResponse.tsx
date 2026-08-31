@@ -142,17 +142,6 @@ function getSubagentSessionId(
   return null;
 }
 
-export function getToolResultContent(toolResult: Record<string, unknown>): ContentBlock[] {
-  if (toolResult.status !== 'success') {
-    return [];
-  }
-  const value = toolResult.value as ToolResultValue;
-  return value.content.filter((item) => {
-    const annotations = (item as { annotations?: { audience?: string[] } }).annotations;
-    return !annotations?.audience || annotations.audience.includes('user');
-  });
-}
-
 interface McpAppWrapperProps {
   toolRequest: ToolRequestMessageContent;
   toolResponse?: ToolResponseMessageContent;

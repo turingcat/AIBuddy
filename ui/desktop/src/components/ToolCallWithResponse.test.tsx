@@ -149,7 +149,8 @@ describe('ToolCallWithResponse live output', () => {
     );
   });
 
-  it('renders a user-visible tool image outside the expandable result output', () => {
+  it('keeps a user-visible tool image outside concise output details', async () => {
+    vi.mocked(window.electron.getSetting).mockResolvedValue('concise');
     const imagePayload =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9L9ZcAAAAASUVORK5CYII=';
     const imageResponse: ToolResponseMessageContent = {
@@ -158,6 +159,10 @@ describe('ToolCallWithResponse live output', () => {
         status: 'success',
         value: {
           content: [
+            {
+              type: 'text',
+              text: 'text result',
+            },
             {
               type: 'image',
               mimeType: 'image/png',
@@ -174,6 +179,15 @@ describe('ToolCallWithResponse live output', () => {
     const images = screen.getByTestId('tool-result-images').querySelectorAll('img');
     expect(images).toHaveLength(1);
     expect(images[0]).toHaveAttribute('src', `data:image/png;base64,${imagePayload}`);
-    expect(screen.queryByText('Output')).not.toBeInTheDocument();
+    expect(screen.queryByText('text result')).not.toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole('button', { name: /Tool status: success running build/ })
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Output' }));
+
+    expect(screen.getByText('text result')).toBeVisible();
+    expect(screen.queryByAltText('Tool result')).not.toBeInTheDocument();
+    expect(screen.getByTestId('tool-result-images').querySelectorAll('img')).toHaveLength(1);
   });
 });
