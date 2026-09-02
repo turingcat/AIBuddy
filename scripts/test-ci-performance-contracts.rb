@@ -39,6 +39,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "rust-lint" => "ci-clippy-rustup",
     },
   }.freeze
+  SMOKE_BUILD_REF = "${{ github.event.inputs.branch == 'refs/heads/main' && 'main' || github.event.inputs.branch || github.ref_name }}"
 
   def test_ci_isolates_pull_request_push_and_merge_group_concurrency
     workflow = load_workflow("ci.yml")
@@ -187,7 +188,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
                  "CI Rust jobs must not share target artifact caches"
   end
 
-  def test_smoke_build_cache_saves_only_for_the_checked_out_main_input
+  def test_smoke_build_cache_uses_the_normalized_checkout_ref
     workflow = load_workflow("pr-smoke-test.yml")
     job = workflow.fetch("jobs").fetch("build-binary")
     checkout = job.fetch("steps").find do |step|
@@ -196,16 +197,28 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     cache = job.fetch("steps").find do |step|
       step["uses"].to_s.start_with?("Swatinem/rust-cache@")
     end
+    checkout_refs = workflow.fetch("jobs").values.flat_map do |workflow_job|
+      workflow_job.fetch("steps", []).filter_map do |step|
+        step.dig("with", "ref") if step["uses"].to_s.start_with?("actions/checkout@")
+      end
+    end
 
     refute_nil checkout, "smoke build must check out the selected branch"
-    assert_equal "${{ github.event.inputs.branch || github.ref }}", checkout.dig("with", "ref"),
-                 "smoke build checkout must be controlled by the dispatch branch input"
+    assert_equal SMOKE_BUILD_REF, workflow.dig("env", "BUILD_REF"),
+                 "smoke workflow must normalize dispatch refs and default to the current branch name"
+    assert_equal "${{ env.BUILD_REF }}", checkout.dig("with", "ref"),
+                 "smoke build checkout must use the normalized build ref"
+    refute_empty checkout_refs, "smoke workflow must check out the normalized build ref"
+    checkout_refs.each do |checkout_ref|
+      assert_equal "${{ env.BUILD_REF }}", checkout_ref,
+                   "smoke workflow checkout must use the normalized build ref"
+    end
     assert_includes workflow_text("pr-smoke-test.yml"), "default: \"main\"",
                     "smoke build dispatch input must default to main"
     refute_nil cache, "smoke build must restore a Rust cache"
     assert_equal "pr-smoke-build", cache.dig("with", "key")
-    assert_equal "${{ github.event.inputs.branch == 'main' && job.status == 'success' }}", cache.dig("with", "save-if"),
-                 "smoke build cache writes must follow the checked out branch input"
+    assert_equal "${{ env.BUILD_REF == 'main' && job.status == 'success' }}", cache.dig("with", "save-if"),
+                 "smoke build cache writes must follow the normalized checkout ref"
   end
 
   def test_v8_marker_repair_runs_after_cache_restore_and_before_builds
