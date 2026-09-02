@@ -23,3 +23,7 @@ Fix Round 1:
 - Replaced the schedule text assertion with YAML parsing and a five-field nonempty cron assertion.
 - Added a contract binding the build artifact upload name to the conformance matrix download name.
 - Removed the duplicate MCP code-change event-tier test; the existing docs-only PR and non-PR coverage test remains the single assertion of that behavior.
+
+Fix Round 2:
+
+- Replaced the permissive five-field cron shape check with an exact YAML schedule contract: one schedule entry at daily 03:00 UTC (`0 3 * * *`).
