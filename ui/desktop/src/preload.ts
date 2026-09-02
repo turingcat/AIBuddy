@@ -5,6 +5,11 @@ import type { OaLoginResult } from './oaLogin';
 import type { AIBuddyAuthResult } from './aibuddyAuthIpc';
 import type { AIBuddySettingsResult } from './sub2apiAuth';
 import type { BalanceResult } from './balance';
+import type {
+  TopupInfoResult,
+  WechatPayOrderResult,
+  WechatPayOrderStatusResult,
+} from './recharge';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
@@ -184,6 +189,9 @@ export type ElectronAPI = {
   completeAIBuddy2FA: (tempToken: string, totpCode: string) => Promise<AIBuddyAuthResult>;
   provisionAIBuddyGroup: (pendingLoginId: string, groupId: string) => Promise<AIBuddyAuthResult>;
   getUserBalance: () => Promise<BalanceResult>;
+  getTopupInfo: () => Promise<TopupInfoResult>;
+  createWechatPayOrder: (amount: number) => Promise<WechatPayOrderResult>;
+  getWechatPayOrderStatus: (tradeNo: string) => Promise<WechatPayOrderStatusResult>;
   listModelsViaApi: () => Promise<
     {
       id: string;
@@ -349,6 +357,10 @@ const electronAPI: ElectronAPI = {
   provisionAIBuddyGroup: (pendingLoginId: string, groupId: string) =>
     ipcRenderer.invoke('provision-aibuddy-group', pendingLoginId, groupId),
   getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
+  getTopupInfo: () => ipcRenderer.invoke('get-topup-info'),
+  createWechatPayOrder: (amount: number) => ipcRenderer.invoke('create-wechat-pay-order', amount),
+  getWechatPayOrderStatus: (tradeNo: string) =>
+    ipcRenderer.invoke('get-wechat-pay-order-status', tradeNo),
   listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
   getGitBranchInfo: (dir: string) => ipcRenderer.invoke('get-git-branch-info', dir),
   listGitBranches: (dir: string) => ipcRenderer.invoke('list-git-branches', dir),

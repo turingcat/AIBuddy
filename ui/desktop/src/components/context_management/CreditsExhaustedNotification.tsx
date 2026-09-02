@@ -2,6 +2,8 @@ import React from 'react';
 import { AlertTriangle, ExternalLink } from 'lucide-react';
 import type { Message, SystemNotificationContent } from '../../types/message';
 import { WEB_PROTOCOLS } from '../../utils/urlSecurity';
+import { getAppEdition } from '../../brand';
+import { AppEvents } from '../../constants/events';
 import { defineMessages, useIntl } from '../../i18n';
 
 const i18n = defineMessages({
@@ -50,8 +52,16 @@ export const CreditsExhaustedNotification: React.FC<CreditsExhaustedNotification
 }) => {
   const intl = useIntl();
   const topUpUrl = getValidatedTopUpUrl(notification.data);
+  // HeyBuddy 版走应用内微信充值弹窗（站点未开通时弹窗内再回退网页充值）；
+  // 其余版本保持打开外部充值链接
+  const useInAppRecharge = getAppEdition() === 'heybuddy';
+  const showTopUpButton = useInAppRecharge || topUpUrl !== null;
 
   const handleTopUp = () => {
+    if (useInAppRecharge) {
+      window.dispatchEvent(new CustomEvent(AppEvents.OPEN_RECHARGE_DIALOG));
+      return;
+    }
     if (topUpUrl) {
       window.electron.openExternal(topUpUrl);
     }
@@ -68,13 +78,13 @@ export const CreditsExhaustedNotification: React.FC<CreditsExhaustedNotification
           <div className="text-sm text-yellow-800/80 dark:text-yellow-200/80 mt-1">
             {notification.msg}
           </div>
-          {topUpUrl && (
+          {showTopUpButton && (
             <button
               onClick={handleTopUp}
               className="mt-3 inline-flex items-center gap-2 rounded-md bg-yellow-600 hover:bg-yellow-500 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 transition-colors"
             >
               {intl.formatMessage(i18n.addCredits)}
-              <ExternalLink className="h-3.5 w-3.5" />
+              {!useInAppRecharge && <ExternalLink className="h-3.5 w-3.5" />}
             </button>
           )}
         </div>
