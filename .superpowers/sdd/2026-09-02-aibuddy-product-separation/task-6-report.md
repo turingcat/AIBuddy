@@ -24,3 +24,11 @@
 - Identity/root ownership: `appIdentity.ts`, `appIdentity.test.ts`.
 - Backend environment/root precedence: `gooseServeEnv.ts`, `gooseServeEnv.test.ts`, `gooseServe.test.ts`.
 - Main-process root wiring: `main.ts`.
+
+## Review Fix Round 1
+
+- Added `mainGooseRoot.test.ts`, a narrowly mocked main-process boot test that reaches `appMain`, `createNewWindow`, and the embedded `createChat` backend path.
+- The test asserts the exact `path.join(userDataDir, 'goose')` value reaches both `buildGooseServeEnv` and `startGooseServe`.
+- Mutation RED: substituting `/shared/heybuddy` at the `main.ts` environment-builder handoff failed with the expected received root mismatch.
+- GREEN: focused Task 6 suite passed 19/19. V8 reports one hit on every changed handoff statement at lines 1143, 1148-1162.
+- `pnpm --dir ui/desktop run typecheck`, focused Prettier, and `git diff --check` passed. The test intentionally does not claim 80% whole-file coverage for the broad existing `main.ts` module.
