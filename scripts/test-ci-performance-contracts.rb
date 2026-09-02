@@ -93,16 +93,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes filter.dig("with", "filters"), "!documentation/**"
   end
 
-  def test_mcp_conformance_schedule_has_a_nonempty_posix_cron_expression
+  def test_mcp_conformance_schedule_runs_daily_at_0300_utc
     schedule = load_workflow("mcp-conformance.yml").fetch(true).fetch("schedule")
 
-    refute_empty schedule
-    schedule.each do |entry|
-      cron = entry.fetch("cron")
-
-      assert_instance_of String, cron
-      assert_match(/\A\S+(?:\s+\S+){4}\z/, cron)
-    end
+    assert_instance_of Array, schedule
+    assert_equal 1, schedule.length
+    assert_instance_of Hash, schedule.first
+    assert_equal "0 3 * * *", schedule.first.fetch("cron")
   end
 
   def test_mcp_conformance_skips_docs_only_pull_requests_and_runs_all_other_events
