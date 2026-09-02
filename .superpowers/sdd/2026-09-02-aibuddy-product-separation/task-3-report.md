@@ -27,3 +27,10 @@
 ## Commit
 
 Implementation commit: `27367811a feat(aibuddy): remove OA authentication`
+
+## Review Fix Round 1
+
+- RED: Windows wrapper contract tests found both scripts defaulted to `https://ai.linyeyun.cn` and emitted `HEYBUDDY_AUTH_API_BASE_URL`; a root PowerShell fixture also bypassed the boundary CLI.
+- GREEN: both wrappers now default to `https://tflow.online` and emit `AIBUDDY_AUTH_API_BASE_URL`; the boundary checker explicitly scans the two active root wrappers.
+- Verified: `pnpm exec vitest run src/authConfig.test.ts scripts/windows-auth-contract.test.js scripts/check-product-boundary.test.js` passed 13 tests.
+- The actual boundary CLI reports only the pre-existing, out-of-scope provider and legacy-data-migration references.

@@ -28,7 +28,6 @@ function copyChecker(root) {
 afterEach(() => {
   fixtureRoots.splice(0).forEach((root) => fs.rmSync(root, { recursive: true, force: true }));
 });
-
 describe('findProductBoundaryViolations', () => {
   it('reports legacy product markers in active product sources', () => {
     const root = createFixture();
@@ -94,6 +93,18 @@ describe('findProductBoundaryViolations', () => {
 });
 
 describe('check-product-boundary CLI', () => {
+  it('reports a forbidden marker in a root PowerShell build script', () => {
+    const root = createFixture();
+    const checker = copyChecker(root);
+    writeFixture(root, 'build-windows.ps1', '$env:HEYBUDDY_AUTH_API_BASE_URL = "https://legacy.example";');
+
+    const result = spawnSync(process.execPath, [checker], { encoding: 'utf8' });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('build-windows.ps1: HEYBUDDY_AUTH_API_BASE_URL\n');
+  });
+
   it('prints path and pattern to stderr then exits one for a violation', () => {
     const root = createFixture();
     const checker = copyChecker(root);

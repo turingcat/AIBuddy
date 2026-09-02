@@ -6,7 +6,7 @@
     运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\dev-ui.ps1
     可选：-RebuildBackend  先 cargo build（debug 增量）并复制 goose.exe 到 ui/desktop/src/bin 再启动（改过 Rust 代码后用）
           -NoBuild         绝不构建，二进制缺失时直接报错退出（纯前端迭代最快路径）
-          -AuthApiBaseUrl  登录服务地址（默认生产 https://ai.linyeyun.cn；传空串则用源码默认 localhost:3001）
+          -AuthApiBaseUrl  登录服务地址（默认生产 https://tflow.online；传空串则用源码默认 localhost:3001）
 #>
 
 [CmdletBinding()]
@@ -16,7 +16,7 @@ param(
     # 绝不构建，缺二进制直接报错
     [switch]$NoBuild,
     # 登录服务地址：经 vite define 烘焙进主进程（vite.main.config.mts），子进程继承
-    [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn',
+    [string]$AuthApiBaseUrl = 'https://tflow.online',
     # HTTP 代理（cargo/pnpm 下载走代理；传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（首次 forge start 下载 electron 用）
@@ -53,7 +53,7 @@ if ($ElectronMirror) {
 }
 
 if ($AuthApiBaseUrl) {
-    $env:HEYBUDDY_AUTH_API_BASE_URL = $AuthApiBaseUrl
+    $env:AIBUDDY_AUTH_API_BASE_URL = $AuthApiBaseUrl
     Write-Host "登录服务地址已设置：$AuthApiBaseUrl"
 } else {
     Write-Host '未设置登录服务地址，使用源码默认 http://localhost:3001'

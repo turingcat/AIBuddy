@@ -16,6 +16,8 @@ const IGNORED_DIRECTORIES = new Set([
   '__tests__',
 ]);
 
+const ROOT_PRODUCT_SCRIPTS = ['build-windows.ps1', 'dev-ui.ps1'];
+
 const PRODUCT_PATTERNS = [
   { pattern: 'ai.linyeyun.cn', matches: (content) => content.includes('ai.linyeyun.cn') },
   { pattern: 'HEYBUDDY_AUTH_API_BASE_URL', matches: (content) => content.includes('HEYBUDDY_AUTH_API_BASE_URL') },
@@ -98,6 +100,10 @@ function desktopConfigurationFiles(repositoryRoot) {
     .sort((left, right) => left.localeCompare(right));
 }
 
+function rootProductScriptFiles(repositoryRoot) {
+  return ROOT_PRODUCT_SCRIPTS.map((file) => path.join(repositoryRoot, file)).filter((file) => fs.existsSync(file));
+}
+
 function activeProductFiles(repositoryRoot) {
   const roots = [
     path.join(repositoryRoot, 'ui', 'desktop', 'src'),
@@ -110,6 +116,7 @@ function activeProductFiles(repositoryRoot) {
   return [...new Set([
     ...roots.flatMap(listFiles),
     ...desktopConfigurationFiles(repositoryRoot),
+    ...rootProductScriptFiles(repositoryRoot),
   ])].sort((left, right) => left.localeCompare(right));
 }
 
