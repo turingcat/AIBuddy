@@ -107,6 +107,21 @@ jobs:
       - name: Install agentic providers
         run: npm install -g @anthropic-ai/claude-code @zed-industries/claude-agent-acp @zed-industries/codex-acp
 
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
+
       - name: Install Node.js Dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
         working-directory: ui/desktop
@@ -186,6 +201,21 @@ jobs:
 
       - name: Make Binary Executable
         run: chmod +x target/debug/goose
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
 
       - name: Install Node.js Dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile

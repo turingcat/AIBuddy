@@ -238,22 +238,85 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
-  def test_desktop_builds_cache_the_pnpm_store_without_node_modules
-    %w[bundle-macos.yml bundle-windows.yml].each do |workflow_name|
+  def test_desktop_workflows_do_not_cache_node_modules
+    %w[ci.yml pr-smoke-test.yml bundle-macos.yml bundle-windows.yml].each do |workflow_name|
       cache_paths(workflow_name).each do |path|
         refute_match(%r{(^|/)node_modules($|/)}, path, "#{workflow_name} must not cache node_modules")
       end
-
-      assert cache_paths(workflow_name).any? { |path| path.match?(%r{pnpm.*store|store.*pnpm}i) },
-             "#{workflow_name} must cache the pnpm store"
     end
   end
 
-  def test_desktop_builds_cache_electron_artifacts
-    %w[bundle-macos.yml bundle-windows.yml].each do |workflow_name|
-      assert cache_paths(workflow_name).any? { |path| path.match?(/electron/i) },
-             "#{workflow_name} must cache Electron artifacts"
+  def test_desktop_pnpm_install_jobs_cache_the_pnpm_store
+    {
+      "ci.yml" => %w[schema-check desktop-lint],
+      "pr-smoke-test.yml" => %w[smoke-tests smoke-tests-code-exec],
+      "bundle-macos.yml" => ["package-desktop"],
+      "bundle-windows.yml" => ["build-desktop-windows"],
+    }.each do |workflow_name, job_names|
+      workflow = load_workflow(workflow_name)
+
+      job_names.each do |job_name|
+        steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
+        pnpm_store_step = steps.find { |step| step["id"] == "pnpm-store" }
+        pnpm_cache_step = steps.find do |step|
+          step["uses"].to_s.start_with?("actions/cache@") &&
+            step.dig("with", "path") == "${{ steps.pnpm-store.outputs.path }}"
+        end
+
+        refute_nil pnpm_store_step, "#{workflow_name} #{job_name} must resolve the pnpm store"
+        assert_includes pnpm_store_step.fetch("run"), "pnpm store path",
+          "#{workflow_name} #{job_name} must use pnpm to resolve its store"
+        if workflow_name == "bundle-windows.yml"
+          pnpm_install_step = steps.find { |step| step["name"] == "Install pnpm" }
+          refute_nil pnpm_install_step, "#{workflow_name} must install pnpm before resolving its store"
+          assert_operator steps.index(pnpm_install_step), :<, steps.index(pnpm_store_step),
+            "#{workflow_name} must resolve pnpm store after pnpm is available"
+        else
+          assert_includes pnpm_store_step.fetch("run"), "activate-hermit",
+            "#{workflow_name} #{job_name} must resolve the store using Hermit's pnpm"
+        end
+        refute_nil pnpm_cache_step, "#{workflow_name} #{job_name} must cache the resolved pnpm store"
+        assert_includes pnpm_cache_step.dig("with", "key"), "runner.os",
+          "#{workflow_name} #{job_name} pnpm store key must include the OS"
+        assert_includes pnpm_cache_step.dig("with", "key"), "hashFiles('ui/pnpm-lock.yaml')",
+          "#{workflow_name} #{job_name} pnpm store key must include the lockfile hash"
+        assert_operator steps.index(pnpm_store_step), :<, steps.index(pnpm_cache_step),
+          "#{workflow_name} #{job_name} must resolve pnpm store before caching it"
+      end
     end
+  end
+
+  def test_bundle_jobs_cache_electron_downloads_with_platform_specific_keys
+    {
+      "bundle-macos.yml" => ["package-desktop", "arm64"],
+      "bundle-windows.yml" => ["build-desktop-windows", "x64"],
+    }.each do |workflow_name, (job_name, architecture)|
+      job = load_workflow(workflow_name).fetch("jobs").fetch(job_name)
+      electron_cache = job.fetch("env").fetch("ELECTRON_CACHE")
+      electron_cache_step = job.fetch("steps").find do |step|
+        step["uses"].to_s.start_with?("actions/cache@") &&
+          step.dig("with", "path") == electron_cache
+      end
+
+      refute_nil electron_cache_step, "#{workflow_name} must cache ELECTRON_CACHE"
+      electron_cache_key = electron_cache_step.dig("with", "key")
+      assert_includes electron_cache_key, "runner.os", "#{workflow_name} Electron cache key must include the OS"
+      assert_includes electron_cache_key, architecture,
+        "#{workflow_name} Electron cache key must include the architecture"
+      assert_includes electron_cache_key, "hashFiles('ui/pnpm-lock.yaml')",
+        "#{workflow_name} Electron cache key must include the lockfile hash"
+    end
+  end
+
+  def test_schema_check_installs_the_ui_workspace_once
+    schema_check = load_workflow("ci.yml").fetch("jobs").fetch("schema-check")
+    pnpm_install_steps = schema_check.fetch("steps").select do |step|
+      step.fetch("run", "").match?(/\bpnpm install --frozen-lockfile\b/)
+    end
+
+    assert_equal 1, pnpm_install_steps.length, "schema check must install dependencies once"
+    assert_equal "ui", pnpm_install_steps.first["working-directory"],
+      "schema check must install from the UI workspace root"
   end
 
   def test_release_workflows_retain_macos_arm64_and_windows_x64_targets

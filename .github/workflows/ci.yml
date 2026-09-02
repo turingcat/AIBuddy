@@ -367,11 +367,24 @@ jobs:
           sudo apt update -y
           sudo apt install -y libdbus-1-dev libxcb1-dev
 
-      - name: Install Node.js Dependencies
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
         run: |
           source ./bin/activate-hermit
-          cd ui/desktop && pnpm install --frozen-lockfile
-          cd ../sdk && pnpm install --frozen-lockfile
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
+
+      - name: Install Node.js Dependencies
+        run: source ../bin/activate-hermit && pnpm install --frozen-lockfile
+        working-directory: ui
 
       - name: Check ACP Schema is Up-to-Date
         run: |
@@ -406,6 +419,21 @@ jobs:
 
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
 
       - name: Install Dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
