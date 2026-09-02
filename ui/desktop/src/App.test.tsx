@@ -4,7 +4,7 @@
  * @vitest-environment jsdom
  */
 import React from 'react';
-import { screen, render, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, render, waitFor } from '@testing-library/react';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { AppInner, PairRouteWrapper, resolveSessionInitialMessage } from './App';
 import { IntlTestWrapper } from './i18n/test-utils';
@@ -12,6 +12,7 @@ import { FeaturesProvider } from './contexts/FeaturesContext';
 import { reconnectAcpAfterSystemResume } from './acp/acpConnection';
 import { createSession } from './sessions';
 import { RecipeParameterScopesUnsupportedError } from './acp/errors';
+import { acpDeleteSession, acpListSessions } from './acp/sessions';
 
 const mockToastError = vi.hoisted(() => vi.fn());
 const mockImportNostrSessionFromDeepLink = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
@@ -91,7 +92,9 @@ vi.mock('./components/ConfigContext', () => ({
 
 // Mock other components to simplify testing
 vi.mock('./components/ErrorBoundary', () => ({
-  ErrorUI: ({ error }: { error: Error }) => <div>Error: {error.message}</div>,
+  ErrorUI: ({ error }: { error: Error | string }) => (
+    <div>Error: {error instanceof Error ? error.message : error}</div>
+  ),
 }));
 
 vi.mock('./components/ModelAndProviderContext', () => ({
@@ -150,7 +153,11 @@ vi.mock('./components/onboarding/OnboardingGuard', () => ({
 }));
 
 vi.mock('./components/Layout/AppLayout', () => ({
-  AppLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AppLayout: ({ activeSessions }: { activeSessions: Array<{ sessionId: string }> }) => (
+    <output data-testid="active-sessions">
+      {activeSessions.map((session) => session.sessionId).join(',')}
+    </output>
+  ),
 }));
 
 vi.mock('./components/auth/LoginView', () => ({
@@ -226,6 +233,19 @@ function AppInnerTestWrapper({ children }: { children: React.ReactNode }) {
       <FeaturesProvider>{children}</FeaturesProvider>
     </IntlTestWrapper>
   );
+}
+
+function getIpcHandler(channel: string) {
+  return mockElectron.on.mock.calls.find(
+    ([registeredChannel]) => registeredChannel === channel
+  )?.[1];
+}
+
+async function renderAppInner() {
+  render(<AppInner />, { wrapper: AppInnerTestWrapper });
+  await waitFor(() => {
+    expect(mockElectron.reactReady).toHaveBeenCalled();
+  });
 }
 
 describe('App Component - Brand New State', () => {
@@ -409,6 +429,186 @@ describe('App Component - Brand New State', () => {
     expect(mockImportNostrSessionFromDeepLink).not.toHaveBeenCalled();
     expect(mockToastError).toHaveBeenCalledWith('Unsupported session share link');
     expect(mockNavigate).toHaveBeenCalledWith('/sessions');
+  });
+
+  it('cleans up only empty unnamed non-recipe sessions', async () => {
+    vi.mocked(acpListSessions).mockResolvedValueOnce({
+      sessions: [
+        { id: 'phantom', messageCount: 0, userSetName: false, hasRecipe: false },
+        { id: 'named', messageCount: 0, userSetName: true, hasRecipe: false },
+        { id: 'recipe', messageCount: 0, userSetName: false, hasRecipe: true },
+        { id: 'used', messageCount: 1, userSetName: false, hasRecipe: false },
+      ] as any,
+      nextCursor: null,
+    });
+
+    await renderAppInner();
+
+    await waitFor(() => {
+      expect(acpDeleteSession).toHaveBeenCalledTimes(1);
+    });
+    expect(acpDeleteSession).toHaveBeenCalledWith('phantom');
+  });
+
+  it('maintains active sessions as an LRU list and applies session events', async () => {
+    await renderAppInner();
+
+    for (let index = 0; index < 11; index += 1) {
+      act(() => {
+        window.dispatchEvent(
+          new CustomEvent('add-active-session', {
+            detail: {
+              sessionId: `session-${index}`,
+              initialMessage: { msg: `${index}`, images: [] },
+            },
+          })
+        );
+      });
+    }
+
+    expect(screen.getByTestId('active-sessions')).toHaveTextContent(
+      'session-1,session-2,session-3,session-4,session-5,session-6,session-7,session-8,session-9,session-10'
+    );
+
+    act(() => {
+      window.dispatchEvent(
+        new CustomEvent('add-active-session', { detail: { sessionId: 'session-3' } })
+      );
+      window.dispatchEvent(
+        new CustomEvent('clear-initial-message', { detail: { sessionId: 'session-4' } })
+      );
+      window.dispatchEvent(
+        new CustomEvent('session-deleted', { detail: { sessionId: 'session-5' } })
+      );
+    });
+
+    expect(screen.getByTestId('active-sessions')).toHaveTextContent(
+      'session-1,session-2,session-4,session-6,session-7,session-8,session-9,session-10,session-3'
+    );
+  });
+
+  it('deduplicates concurrent Nostr imports and clears stale in-flight requests', async () => {
+    let resolveFirst: (() => void) | undefined;
+    mockImportNostrSessionFromDeepLink
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFirst = resolve;
+          })
+      )
+      .mockResolvedValueOnce(undefined);
+    await renderAppInner();
+    const handler = getIpcHandler('open-shared-session');
+    const firstLink = 'goose://sessions/nostr?nevent=first&key=secret';
+    const secondLink = 'goose://sessions/nostr?nevent=second&key=secret';
+
+    const firstImport = handler?.({} as any, firstLink);
+    await handler?.({} as any, firstLink);
+    await handler?.({} as any, secondLink);
+    resolveFirst?.();
+    await firstImport;
+
+    expect(mockImportNostrSessionFromDeepLink).toHaveBeenCalledTimes(2);
+    expect(mockElectron.logInfo).toHaveBeenCalledWith('Skipping duplicate Nostr deep link import');
+  });
+
+  it('reports Nostr import failures and returns to sessions', async () => {
+    mockImportNostrSessionFromDeepLink.mockRejectedValueOnce(new Error('relay unavailable'));
+    await renderAppInner();
+
+    await getIpcHandler('open-shared-session')?.(
+      {} as any,
+      'goose://sessions/nostr?nevent=test&key=secret'
+    );
+
+    expect(mockToastError).toHaveBeenCalledWith(
+      'Failed to import Nostr session: relay unavailable'
+    );
+    expect(mockNavigate).toHaveBeenCalledWith('/sessions');
+  });
+
+  it('handles platform new-window shortcuts and ignores other key combinations', async () => {
+    await renderAppInner();
+
+    mockElectron.platform = 'darwin';
+    fireEvent.keyDown(window, { key: 'n', metaKey: true });
+    fireEvent.keyDown(window, { key: 'x', metaKey: true });
+    fireEvent.keyDown(window, { key: 'n' });
+    mockElectron.platform = 'win32';
+    fireEvent.keyDown(window, { key: 'n', ctrlKey: true });
+
+    expect(mockElectron.createChatWindow).toHaveBeenCalledTimes(2);
+    expect(mockElectron.createChatWindow).toHaveBeenCalledWith({ dir: '/test/dir' });
+  });
+
+  it('contains global drag events outside designated drop zones', async () => {
+    await renderAppInner();
+    const outside = document.createElement('div');
+    const dropZone = document.createElement('div');
+    const inside = document.createElement('span');
+    dropZone.dataset.dropZone = 'true';
+    dropZone.appendChild(inside);
+    document.body.append(outside, dropZone);
+
+    const outsideDrag = new Event('dragenter', { bubbles: true, cancelable: true });
+    outside.dispatchEvent(outsideDrag);
+    const insideDrop = new Event('drop', { bubbles: true, cancelable: true });
+    inside.dispatchEvent(insideDrop);
+    const dragOver = new Event('dragover', { bubbles: true, cancelable: true });
+    inside.dispatchEvent(dragOver);
+
+    expect(outsideDrag.defaultPrevented).toBe(true);
+    expect(insideDrop.defaultPrevented).toBe(false);
+    expect(dragOver.defaultPrevented).toBe(true);
+    outside.remove();
+    dropZone.remove();
+  });
+
+  it('handles view, focus, and initial-message IPC commands', async () => {
+    await renderAppInner();
+
+    getIpcHandler('set-view')?.({} as any, 'settings', 'models');
+    getIpcHandler('set-view')?.({} as any, 'sessions');
+    expect(mockNavigate).toHaveBeenCalledWith('/settings?section=models');
+    expect(mockNavigate).toHaveBeenCalledWith('/sessions');
+
+    const input = document.createElement('input');
+    const focus = vi.spyOn(input, 'focus');
+    const querySelector = vi
+      .spyOn(document, 'querySelector')
+      .mockReturnValueOnce(input)
+      .mockReturnValueOnce(null);
+    getIpcHandler('focus-input')?.({} as any);
+    getIpcHandler('focus-input')?.({} as any);
+    expect(focus).toHaveBeenCalledOnce();
+    querySelector.mockRestore();
+
+    getIpcHandler('set-initial-message')?.({} as any, 'draft reply', { noAutoSubmit: true });
+    getIpcHandler('set-initial-message')?.({} as any, 'ignored while processing');
+    getIpcHandler('set-initial-message')?.({} as any, '');
+    expect(mockNavigate).toHaveBeenCalledWith('/pair', {
+      state: {
+        initialMessage: { msg: 'draft reply', images: [] },
+        noAutoSubmit: true,
+      },
+    });
+  });
+
+  it('renders fatal errors from startup and main-process events', async () => {
+    mockElectron.reactReady.mockImplementationOnce(() => {
+      throw new Error('renderer handshake failed');
+    });
+    render(<AppInner />, { wrapper: AppInnerTestWrapper });
+    expect(await screen.findByText(/renderer handshake failed/)).toBeInTheDocument();
+
+    vi.clearAllMocks();
+    mockElectron.reactReady.mockImplementation(() => undefined);
+    render(<AppInner />, { wrapper: AppInnerTestWrapper });
+    await waitFor(() => expect(getIpcHandler('fatal-error')).toBeDefined());
+    act(() => {
+      getIpcHandler('fatal-error')?.({} as any, 'backend crashed');
+    });
+    expect(await screen.findByText(/backend crashed/)).toBeInTheDocument();
   });
 
   it('should seed recipe sessions with the recipe prompt when no initial message is provided', () => {

@@ -67,3 +67,27 @@
 - Offline-only Rust test attempt could not start because `aws-lc-sys v0.44.0` is absent from the local Cargo cache. No network retry was made.
 - `check:product-boundary` continues to report the intentional Task 7 migration baseline in `aibuddyDataMigration.ts` and `main.ts`; its allowlist was not changed.
 - Desktop commands retain the existing Node 26.8.1 versus requested Node 24.10.x engine warning.
+
+## Review Fix Round 2
+
+### Coverage Denominator
+
+- Included every functional TypeScript module changed in Review Fix Round 1: `App.tsx`, `SessionListView.tsx`, `nostrProtocol.ts`, `gooseServeLeaseRegistry.ts`, `winShims.ts`, and `forge.config.ts`.
+- Initial full-denominator coverage was statements 50.34% (365/725), branches/path proxy 37.83% (98/259), functions 45.40% (79/174), and lines 51.14% (357/698).
+- No changed module, uncovered branch, or source region was excluded or ignored.
+
+### Added Behavior Coverage
+
+- Added App integration scenarios for phantom-session cleanup, active-session LRU events, concurrent and failed Nostr imports, macOS/Windows new-window shortcuts, drag/drop boundaries, view/focus/initial-message IPC commands, and startup/runtime fatal errors.
+- Added SessionListView workflows for pagination and deduplication, scheduled sessions, debounced search, load and page errors, restricted Nostr mode, edit/duplicate/delete/export/share actions, native and file imports, Nostr imports, clipboard errors, and incremental scrolling.
+- Added in-process Forge configuration tests so environment override and AIBuddy fallback branches are instrumented directly rather than observed only through a child process.
+- Preserved all Round 1 product-versus-Nostr protocol tests and made no production behavior changes.
+
+### Verification
+
+- Full-denominator coverage suite: 7 files / 59 tests passed.
+- Final coverage: statements 88.00% (638/725), branches/path proxy 81.85% (212/259), functions 83.90% (146/174), and lines 88.96% (621/698).
+- Per-file branch coverage: `App.tsx` 65.06% (54/83), `SessionListView.tsx` 90.29% (121/134), `gooseServeLeaseRegistry.ts` 85.71%, `winShims.ts` 90.00%, `forge.config.ts` 100%, and `nostrProtocol.ts` 100%.
+- Expanded focused protocol and identity suite: 15 files / 137 tests passed.
+- `pnpm run typecheck`, `pnpm run i18n:check`, `cargo fmt --all -- --check`, Prettier check, and `git diff --check`: passed.
+- The existing Node 26.8.1 versus requested Node 24.10.x warning remains unchanged.
