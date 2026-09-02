@@ -14,17 +14,10 @@ import type { GatewayCredentials, SiteAccountIdentity, SiteTarget } from './site
 // 重新导出避免调用方同时依赖两个模块
 export type { CredentialsCodec };
 
-export interface LoginCredentials {
-  schemaVersion?: 2;
-  siteKind?: 'sub2api';
-  session?: { accessToken: string; refreshToken?: string; pat?: string };
-  account?: SiteAccountIdentity;
-  target?: SiteTarget;
-  gateway?: GatewayCredentials;
+interface AIBuddyCredentialFields {
   token: string;
   baseUrl: string;
   apiKey: string;
-  authKind?: 'sub2api';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
   /** 面板刷新令牌：access token 过期时换新，缺失则只能重新登录 */
@@ -32,6 +25,28 @@ export interface LoginCredentials {
   /** API Key 所属分组：订阅型分组据此匹配日限额；旧登录数据可能没有 */
   groupId?: string;
 }
+
+export interface CanonicalAIBuddyCredentials extends AIBuddyCredentialFields {
+  schemaVersion: 2;
+  siteKind: 'sub2api';
+  session: { accessToken: string; refreshToken?: string; pat?: string };
+  account: SiteAccountIdentity;
+  target?: SiteTarget;
+  gateway: Omit<GatewayCredentials, 'providerId'> & { providerId: 'aibuddy' };
+  authKind?: 'sub2api';
+}
+
+export interface LegacyAIBuddyCredentials extends AIBuddyCredentialFields {
+  schemaVersion?: undefined;
+  siteKind?: undefined;
+  session?: undefined;
+  account?: undefined;
+  target?: SiteTarget;
+  gateway?: undefined;
+  authKind: 'sub2api';
+}
+
+export type LoginCredentials = CanonicalAIBuddyCredentials | LegacyAIBuddyCredentials;
 
 interface CredentialsEnvelope {
   v: number;
@@ -43,14 +58,14 @@ interface CredentialsEnvelope {
  * @date: 2026-08-27
  * 写入加密信封文件，权限 0o600（Windows 上该参数无害，Unix 上生效）
  */
-export function writeCredentials(
-  filePath: string,
-  creds: LoginCredentials,
-  codec: CredentialsCodec
-): void {
+export function writeCredentials(filePath: string, creds: unknown, codec: CredentialsCodec): void {
+  const validated = validateFields(creds);
+  if (!validated) {
+    throw new Error('Invalid AIBuddy credentials');
+  }
   const envelope: CredentialsEnvelope = {
     v: 1,
-    blob: codec.encrypt(JSON.stringify(creds)),
+    blob: codec.encrypt(JSON.stringify(validated)),
   };
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, JSON.stringify(envelope, null, 2), { mode: 0o600 });
@@ -65,7 +80,7 @@ export function writeCredentials(
 export function readCredentials(
   filePath: string,
   codec: CredentialsCodec
-): LoginCredentials | null {
+): CanonicalAIBuddyCredentials | null {
   if (!fs.existsSync(filePath)) return null;
   let data: unknown;
   try {
@@ -99,7 +114,7 @@ export function readCredentials(
 export function decodeCredentialsFile(
   filePath: string,
   codec: CredentialsCodec
-): LoginCredentials | null {
+): CanonicalAIBuddyCredentials | null {
   if (!fs.existsSync(filePath)) return null;
 
   let data: unknown;
@@ -125,9 +140,9 @@ export function decodeCredentialsFile(
  * 只改一处会让 normalizeCredentials 的 schemaVersion 2 早退分支继续吐旧令牌
  */
 export function withRefreshedSession(
-  credentials: LoginCredentials,
+  credentials: CanonicalAIBuddyCredentials,
   session: { accessToken: string; refreshToken?: string }
-): LoginCredentials {
+): CanonicalAIBuddyCredentials {
   const refreshToken = session.refreshToken ? { refreshToken: session.refreshToken } : {};
   return {
     ...credentials,
@@ -182,7 +197,7 @@ function validateFields(data: unknown): LoginCredentials | null {
   return null;
 }
 
-function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
+function normalizeCredentials(credentials: LoginCredentials): CanonicalAIBuddyCredentials {
   if (
     credentials.schemaVersion === 2 &&
     credentials.siteKind &&

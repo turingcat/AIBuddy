@@ -8,7 +8,7 @@ describe('buildGooseServeEnv', () => {
         token: 'tflow-token',
         baseUrl: 'https://tflow.online/v1',
         apiKey: 'sk-aibuddy',
-        siteKind: 'sub2api',
+        authKind: 'sub2api',
       })
     ).toEqual({
       AIBUDDY_BASE_URL: 'https://tflow.online/v1',

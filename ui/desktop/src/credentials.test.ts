@@ -9,6 +9,7 @@ import {
   withRefreshedSession,
   clearCredentials,
   type CredentialsCodec,
+  type LoginCredentials,
 } from './credentials';
 
 /**
@@ -243,6 +244,28 @@ describe('credentials 读写', () => {
     expect(readCredentials(tmpFile, identityCodec)).toBeNull();
   });
 
+  it.each([
+    ['unmarked', { token: 't', baseUrl: 'u', apiKey: 'k' }],
+    ['OA', { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'oa' }],
+    [
+      'HeyBuddy',
+      {
+        schemaVersion: 2,
+        siteKind: 'oa',
+        session: { accessToken: 't' },
+        gateway: { providerId: 'heybuddy', baseUrl: 'u', apiKey: 'k' },
+        token: 't',
+        baseUrl: 'u',
+        apiKey: 'k',
+      },
+    ],
+  ])('write rejects %s credentials before creating a file', (_name, credentials) => {
+    expect(() => writeCredentials(tmpFile, credentials as LoginCredentials, identityCodec)).toThrow(
+      'Invalid AIBuddy credentials'
+    );
+    expect(fs.existsSync(tmpFile)).toBe(false);
+  });
+
   it('v:1 信封 blob 解密失败时返回 null', () => {
     const blob = Buffer.from('{"token":"t","baseUrl":"u","apiKey":"k"}', 'utf8').toString('base64');
     fs.writeFileSync(tmpFile, JSON.stringify({ v: 1, blob }));
@@ -271,7 +294,11 @@ describe('credentials 读写', () => {
 
   // Windows 上 Unix 权限位不生效，仅在 Linux/macOS 校验 0o600
   it.skipIf(process.platform === 'win32')('write 后文件权限为 0o600', () => {
-    writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k' }, identityCodec);
+    writeCredentials(
+      tmpFile,
+      { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' },
+      identityCodec
+    );
     const mode = fs.statSync(tmpFile).mode & 0o777;
     expect(mode).toBe(0o600);
   });
@@ -295,7 +322,11 @@ describe('credentials 读写', () => {
   });
 
   it('clear 删除文件', () => {
-    writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k' }, identityCodec);
+    writeCredentials(
+      tmpFile,
+      { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' },
+      identityCodec
+    );
     clearCredentials(tmpFile);
     expect(fs.existsSync(tmpFile)).toBe(false);
   });
@@ -330,6 +361,13 @@ describe('withRefreshedSession', () => {
         authKind: 'sub2api',
         groupId: 'team-a',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+        account: {},
+        gateway: {
+          providerId: 'aibuddy',
+          baseUrl: 'https://tflow.online/v1',
+          apiKey: 'sk-secret',
+          groupId: 'team-a',
+        },
       },
       { accessToken: 'new-access', refreshToken: 'new-refresh' }
     );
@@ -346,11 +384,19 @@ describe('withRefreshedSession', () => {
   it('面板未下发新 refresh token 时沿用原有的', () => {
     const refreshed = withRefreshedSession(
       {
+        schemaVersion: 2,
+        siteKind: 'sub2api',
         token: 'old-access',
         refreshToken: 'old-refresh',
         baseUrl: 'https://tflow.online/v1',
         apiKey: 'sk-secret',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+        account: {},
+        gateway: {
+          providerId: 'aibuddy',
+          baseUrl: 'https://tflow.online/v1',
+          apiKey: 'sk-secret',
+        },
       },
       { accessToken: 'new-access' }
     );
