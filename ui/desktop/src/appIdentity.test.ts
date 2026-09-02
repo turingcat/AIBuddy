@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
+import path from 'node:path';
 import { initializeAppIdentity } from './appIdentity';
 
 describe('initializeAppIdentity', () => {
@@ -129,24 +130,91 @@ describe('initializeAppIdentity', () => {
     vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
     vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
     const calls: string[] = [];
-    const accessedPaths: string[] = [];
+    const userDataDir = '/tmp/Application Support/AIBuddy';
+    const userDataParent = path.dirname(userDataDir);
+    const siblingUserDataDir = path.join(userDataParent, 'HeyBuddy');
+    const settingsFile = path.join(userDataDir, 'settings.json');
+    const credentialsFile = path.join(userDataDir, 'credentials.json');
+    const pathResolutions: Array<{
+      operation: 'dirname' | 'join';
+      inputs: string[];
+      output: string;
+    }> = [];
+    const filesystemAccesses: Array<{ operation: string; path: string }> = [];
+    const isUserDataBoundaryPath = (filePath: string) =>
+      filePath === userDataDir ||
+      filePath === userDataParent ||
+      filePath === siblingUserDataDir ||
+      filePath.startsWith(`${userDataDir}${path.sep}`) ||
+      filePath.startsWith(`${siblingUserDataDir}${path.sep}`);
+    const recordFilesystemAccess = (operation: string, ...filePaths: unknown[]) => {
+      for (const filePath of filePaths) {
+        if (typeof filePath === 'string') {
+          filesystemAccesses.push({ operation, path: filePath });
+        }
+      }
+    };
     let resolveReady: () => void;
     const ready = new Promise<void>((resolve) => {
       resolveReady = resolve;
     });
-    const settingsFile = '/tmp/Application Support/AIBuddy/settings.json';
     const existsSync = fs.existsSync;
+    const readFileSync = fs.readFileSync;
+    const writeFileSync = fs.writeFileSync;
+    const renameSync = fs.renameSync;
+    const copyFileSync = fs.copyFileSync;
     const existsSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
-      if (typeof filePath === 'string') accessedPaths.push(filePath);
+      recordFilesystemAccess('existsSync', filePath);
       if (filePath === settingsFile) calls.push('settings-read');
       return existsSync(filePath);
+    });
+    const readFileSpy = vi.spyOn(fs, 'readFileSync').mockImplementation((...args) => {
+      recordFilesystemAccess('readFileSync', args[0]);
+      return Reflect.apply(readFileSync, fs, args);
+    });
+    const writeFileSpy = vi.spyOn(fs, 'writeFileSync').mockImplementation((...args) => {
+      recordFilesystemAccess('writeFileSync', args[0]);
+      return Reflect.apply(writeFileSync, fs, args);
+    });
+    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation((...args) => {
+      recordFilesystemAccess('renameSync', args[0], args[1]);
+      return Reflect.apply(renameSync, fs, args);
+    });
+    const copyFileSpy = vi.spyOn(fs, 'copyFileSync').mockImplementation((...args) => {
+      recordFilesystemAccess('copyFileSync', args[0], args[1]);
+      return Reflect.apply(copyFileSync, fs, args);
+    });
+    vi.doMock('node:path', async (importOriginal) => {
+      const actualPath = await importOriginal<typeof import('node:path')>();
+      const pathApi = (actualPath as { default?: typeof path }).default ?? actualPath;
+      const dirname = (filePath: string) => {
+        const output = pathApi.dirname(filePath);
+        if (isUserDataBoundaryPath(filePath) || isUserDataBoundaryPath(output)) {
+          pathResolutions.push({ operation: 'dirname', inputs: [filePath], output });
+        }
+        return output;
+      };
+      const join = (...inputs: string[]) => {
+        const output = pathApi.join(...inputs);
+        if (inputs.some(isUserDataBoundaryPath) || isUserDataBoundaryPath(output)) {
+          pathResolutions.push({ operation: 'join', inputs, output });
+        }
+        return output;
+      };
+
+      return {
+        ...actualPath,
+        dirname,
+        join,
+        default: { ...pathApi, dirname, join },
+      };
     });
     const app = new Proxy(
       {
         setName: (name: string) => calls.push(`setName:${name}`),
         getPath: (name: 'userData') => {
           calls.push(`getPath:${name}`);
-          return '/tmp/Application Support/AIBuddy';
+          return userDataDir;
         },
         isPackaged: false,
         whenReady: () => ready,
@@ -180,12 +248,37 @@ describe('initializeAppIdentity', () => {
       await Promise.resolve();
 
       expect(calls.indexOf('settings-read')).toBeGreaterThan(-1);
-      expect(accessedPaths).toContain(settingsFile);
       expect(
-        accessedPaths.every((filePath) => filePath.startsWith('/tmp/Application Support/AIBuddy/'))
+        [settingsFile, credentialsFile].every((filePath) =>
+          filePath.startsWith(`${userDataDir}${path.sep}`)
+        )
       ).toBe(true);
+      expect(pathResolutions).toEqual(
+        expect.arrayContaining([
+          { operation: 'join', inputs: [userDataDir, 'settings.json'], output: settingsFile },
+          { operation: 'join', inputs: [userDataDir, 'credentials.json'], output: credentialsFile },
+        ])
+      );
+
+      const observedPaths = [
+        ...pathResolutions.flatMap(({ inputs, output }) => [...inputs, output]),
+        ...filesystemAccesses.map(({ path }) => path),
+      ];
+      expect(filesystemAccesses).toContainEqual({ operation: 'existsSync', path: settingsFile });
+      expect(
+        observedPaths.some(
+          (filePath) =>
+            filePath === siblingUserDataDir ||
+            filePath.startsWith(`${siblingUserDataDir}${path.sep}`)
+        )
+      ).toBe(false);
     } finally {
       existsSpy.mockRestore();
+      readFileSpy.mockRestore();
+      writeFileSpy.mockRestore();
+      renameSpy.mockRestore();
+      copyFileSpy.mockRestore();
+      vi.doUnmock('node:path');
       vi.doUnmock('electron');
     }
   });
