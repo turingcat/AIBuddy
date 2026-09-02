@@ -19,6 +19,14 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     "schema-check" => "Check Generated Schemas are Up-to-Date",
     "desktop-lint" => "Test and Lint Electron Desktop App",
   }.freeze
+  CODE_PULL_REQUEST_REQUIRED_JOBS = %w[
+    rust-format
+    rust-build-and-test
+    rust-build-and-test-tls
+    rust-lint
+    schema-check
+    desktop-lint
+  ].freeze
 
   def test_ci_isolates_pull_request_push_and_merge_group_concurrency
     workflow = load_workflow("ci.yml")
@@ -70,18 +78,32 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     workflow = load_workflow("ci.yml")
     job = workflow.fetch("jobs").fetch("dependency-locks")
     commands = job_run_commands("ci.yml", "dependency-locks").join("\n")
+    pnpm_step = job.fetch("steps").find { |step| step["name"] == "Validate pnpm lockfiles" }
 
     assert_code_change_event_tier(workflow, "dependency-locks", requires_dependency_locks: false)
     assert_includes commands, "cargo metadata --locked --format-version 1 --no-deps"
-    assert_includes commands, "pnpm install --frozen-lockfile --ignore-scripts"
+    assert_equal "ui", pnpm_step.fetch("working-directory")
+    assert_includes pnpm_step.fetch("run"), "pnpm install --lockfile-only --frozen-lockfile --ignore-scripts"
+    assert_equal 1, commands.scan("pnpm install").length, "pnpm lock validation must run once from the UI workspace root"
     refute_match(/cargo\s+(build|check|test)\b/, commands)
   end
 
   def test_pull_requests_only_run_standard_ci_jobs_when_code_changes
     workflow = load_workflow("ci.yml")
 
-    %w[rust-format rust-build-and-test rust-build-and-test-tls rust-lint schema-check desktop-lint].each do |job_name|
+    CODE_PULL_REQUEST_REQUIRED_JOBS.each do |job_name|
       assert_code_change_event_tier(workflow, job_name)
+    end
+  end
+
+  def test_code_pull_request_required_jobs_fail_explicitly_when_lock_validation_fails
+    workflow = load_workflow("ci.yml")
+
+    CODE_PULL_REQUEST_REQUIRED_JOBS.each do |job_name|
+      job = workflow.fetch("jobs").fetch(job_name)
+
+      assert_includes job.fetch("if"), "always()", "#{job_name} must evaluate when dependency-locks fails"
+      assert_dependency_lock_failure_guard(job, job_name)
     end
   end
 
@@ -194,7 +216,11 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     condition = job.fetch("if")
 
     assert_includes Array(job["needs"]), "changes", "#{job_name} must depend on changes"
-    assert_includes Array(job["needs"]), "dependency-locks", "#{job_name} must depend on dependency-locks" if requires_dependency_locks
+    if requires_dependency_locks
+      assert_includes Array(job["needs"]), "dependency-locks", "#{job_name} must depend on dependency-locks"
+      assert_includes condition, "always()", "#{job_name} must evaluate after dependency-locks fails"
+      assert_dependency_lock_failure_guard(job, job_name)
+    end
     assert_includes condition, "github.event_name != 'pull_request'", job_name
     assert_includes condition, "needs.changes.outputs.code == 'true'", job_name
     assert_includes condition, "||", "#{job_name} must run for non-PR events or code changes"
@@ -206,7 +232,17 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     assert_includes Array(job["needs"]), "changes", "#{job_name} must depend on changes"
     assert_includes Array(job["needs"]), "dependency-locks", "#{job_name} must depend on dependency-locks"
-    assert_equal "github.event_name != 'pull_request'", condition, "#{job_name} must retain full non-PR coverage"
+    assert_includes condition, "always()", "#{job_name} must evaluate after dependency-locks fails"
+    assert_includes condition, "github.event_name != 'pull_request'", "#{job_name} must retain full non-PR coverage"
+    assert_dependency_lock_failure_guard(job, job_name)
+  end
+
+  def assert_dependency_lock_failure_guard(job, job_name)
+    guard = job.fetch("steps").first
+
+    assert_equal "Fail when dependency lock validation fails", guard.fetch("name"), "#{job_name} must check dependency locks before expensive steps"
+    assert_equal "needs.dependency-locks.result != 'success'", guard.fetch("if"), "#{job_name} must fail when dependency-locks fails"
+    assert_equal "exit 1", guard.fetch("run"), "#{job_name} must fail explicitly when dependency-locks fails"
   end
 
   def cache_paths(workflow_name)
