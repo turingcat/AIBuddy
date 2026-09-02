@@ -34,11 +34,9 @@ function portableArchiveName(brand) {
   return `${brand.artifactStem}-windows-x64-portable.zip`;
 }
 
-function resolveWindowsPackage(edition, version, sourceDir, outputDir) {
-  const brand = resolveBrand(edition);
-
+function resolveWindowsPackage(version, sourceDir, outputDir) {
+  const brand = resolveBrand();
   return {
-    edition: brand.edition,
     productName: brand.productName,
     appId: brand.windowsAppId,
     executableName: `${brand.executableName}.exe`,

@@ -1,22 +1,10 @@
-const brands = require('../branding/brands.json');
+const brand = Object.freeze({ ...require('../branding/brands.json') });
 
-const supportedEditions = Object.keys(brands);
-const resolvedBrands = Object.fromEntries(
-  Object.entries(brands).map(([edition, brand]) => [edition, Object.freeze({ ...brand })])
-);
-
-function resolveBrand(edition = process.env.APP_EDITION) {
-  if (!edition || !Object.hasOwn(resolvedBrands, edition)) {
-    throw new Error(
-      `Invalid APP_EDITION ${JSON.stringify(edition)}; expected one of: ${supportedEditions.join(', ')}`
-    );
-  }
-
-  return resolvedBrands[edition];
+function resolveBrand() {
+  return brand;
 }
 
-function runCli([edition, field]) {
-  const brand = resolveBrand(edition);
+function runCli([field]) {
   const value = brand[field];
   if (typeof value !== 'string') {
     throw new Error(`Unknown brand field ${JSON.stringify(field)}`);

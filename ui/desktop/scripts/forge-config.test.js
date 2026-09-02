@@ -3,47 +3,32 @@ const path = require('node:path');
 
 const desktopRoot = path.join(__dirname, '..');
 
-function loadForgeIdentity(edition) {
+function loadForgeIdentity() {
   const output = execFileSync(
     process.execPath,
     [
       '-e',
       `const config = require('./forge.config.ts');
-       const protocol = config.packagerConfig.protocols[0];
-       process.stdout.write(JSON.stringify({
-         name: config.packagerConfig.name,
-         executableName: config.packagerConfig.executableName,
-         appBundleId: config.packagerConfig.appBundleId,
-         protocolName: protocol.name,
-          protocol: protocol.schemes[0],
-          icon: config.packagerConfig.icon,
-          windowsIcon: config.packagerConfig.win32.icon
-       }));`,
+const protocol = config.packagerConfig.protocols[0];
+process.stdout.write(JSON.stringify({
+  name: config.packagerConfig.name,
+  executableName: config.packagerConfig.executableName,
+  appBundleId: config.packagerConfig.appBundleId,
+  protocolName: protocol.name,
+  protocol: protocol.schemes[0],
+  icon: config.packagerConfig.icon,
+  windowsIcon: config.packagerConfig.win32.icon
+}));`,
     ],
-    {
-      cwd: desktopRoot,
-      encoding: 'utf8',
-      env: { ...process.env, APP_EDITION: edition },
-    }
+    { cwd: desktopRoot, encoding: 'utf8', env: process.env }
   );
+
   return JSON.parse(output);
 }
 
 describe('Forge brand identity', () => {
-  it('configures HeyBuddy package identity', () => {
-    expect(loadForgeIdentity('heybuddy')).toEqual({
-      name: 'HeyBuddy',
-      executableName: 'HeyBuddy',
-      appBundleId: 'com.electron.heybuddy',
-      protocolName: 'GooseProtocol',
-      protocol: 'goose',
-      icon: 'src/images/icon.icns',
-      windowsIcon: 'src/images/icon.ico',
-    });
-  });
-
-  it('configures AIBuddy package identity', () => {
-    expect(loadForgeIdentity('aibuddy')).toEqual({
+  it('configures the fixed AIBuddy package identity', () => {
+    expect(loadForgeIdentity()).toEqual({
       name: 'AIBuddy',
       executableName: 'AIBuddy',
       appBundleId: 'com.electron.aibuddy',
