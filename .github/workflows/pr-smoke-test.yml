@@ -59,7 +59,7 @@ jobs:
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
           key: pr-smoke-build
-          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+          save-if: ${{ github.event.inputs.branch == 'main' && job.status == 'success' }}
 
       - name: Install Dependencies
         run: |

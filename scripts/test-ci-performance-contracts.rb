@@ -38,9 +38,6 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "rust-msrv" => "ci-msrv-${{ steps.msrv.outputs.msrv }}",
       "rust-lint" => "ci-clippy-rustup",
     },
-    "pr-smoke-test.yml" => {
-      "build-binary" => "pr-smoke-build",
-    },
   }.freeze
 
   def test_ci_isolates_pull_request_push_and_merge_group_concurrency
@@ -188,6 +185,27 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     assert_equal expected_caches.length, expected_caches.map(&:last).uniq.length,
                  "CI Rust jobs must not share target artifact caches"
+  end
+
+  def test_smoke_build_cache_saves_only_for_the_checked_out_main_input
+    workflow = load_workflow("pr-smoke-test.yml")
+    job = workflow.fetch("jobs").fetch("build-binary")
+    checkout = job.fetch("steps").find do |step|
+      step["uses"].to_s.start_with?("actions/checkout@")
+    end
+    cache = job.fetch("steps").find do |step|
+      step["uses"].to_s.start_with?("Swatinem/rust-cache@")
+    end
+
+    refute_nil checkout, "smoke build must check out the selected branch"
+    assert_equal "${{ github.event.inputs.branch || github.ref }}", checkout.dig("with", "ref"),
+                 "smoke build checkout must be controlled by the dispatch branch input"
+    assert_includes workflow_text("pr-smoke-test.yml"), "default: \"main\"",
+                    "smoke build dispatch input must default to main"
+    refute_nil cache, "smoke build must restore a Rust cache"
+    assert_equal "pr-smoke-build", cache.dig("with", "key")
+    assert_equal "${{ github.event.inputs.branch == 'main' && job.status == 'success' }}", cache.dig("with", "save-if"),
+                 "smoke build cache writes must follow the checked out branch input"
   end
 
   def test_v8_marker_repair_runs_after_cache_restore_and_before_builds
