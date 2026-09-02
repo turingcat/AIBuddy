@@ -1,6 +1,5 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { AppEdition } from './brand';
 import {
   decodeCredentialsFile,
   writeCredentials,
@@ -9,7 +8,6 @@ import {
 } from './credentials';
 
 export interface MigrationOptions {
-  edition: AppEdition;
   legacyUserDataDir: string;
   targetUserDataDir: string;
   codec: CredentialsCodec;
@@ -26,7 +24,6 @@ interface PublishedCredentials {
 }
 
 export function migrateLegacyAIBuddyData({
-  edition,
   legacyUserDataDir,
   targetUserDataDir,
   codec,
@@ -37,7 +34,7 @@ export function migrateLegacyAIBuddyData({
   };
   const targetCredentialsFile = path.join(targetUserDataDir, 'credentials.json');
 
-  if (edition !== 'aibuddy' || fs.existsSync(targetCredentialsFile)) return result;
+  if (fs.existsSync(targetCredentialsFile)) return result;
   const targetDirectoryExisted = fs.existsSync(targetUserDataDir);
 
   const legacyCredentials = decodeCredentialsFile(

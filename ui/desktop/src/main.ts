@@ -75,7 +75,6 @@ import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
 import {
-  getAppEdition,
   getAppDisplayName,
   getAppIconStem,
   getAppProtocol,
@@ -341,20 +340,17 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
   callback(verifyBackendCertificate(parsed.hostname, certificate.fingerprint));
 });
 
-if (getAppEdition() === 'aibuddy') {
-  app.whenReady().then(() => {
-    try {
-      migrateLegacyAIBuddyData({
-        edition: 'aibuddy',
-        legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
-        targetUserDataDir: USER_DATA_DIR,
-        codec: getCredentialsCodec(),
-      });
-    } catch (error) {
-      log.error(`AIBuddy legacy data migration failed: ${error}`);
-    }
-  });
-}
+app.whenReady().then(() => {
+  try {
+    migrateLegacyAIBuddyData({
+      legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
+      targetUserDataDir: USER_DATA_DIR,
+      codec: getCredentialsCodec(),
+    });
+  } catch (error) {
+    log.error(`AIBuddy legacy data migration failed: ${error}`);
+  }
+});
 
 app.whenReady().then(() => {
   appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();

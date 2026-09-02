@@ -244,7 +244,6 @@ jobs:
       - name: Build desktop UI with pnpm
         shell: bash
         env:
-          APP_EDITION: heybuddy
           ELECTRON_PLATFORM: win32
         run: |
           cd ui/desktop
@@ -256,10 +255,9 @@ jobs:
       - name: Prepare flat distribution
         shell: bash
         env:
-          APP_EDITION: heybuddy
         run: |
           cd ui/desktop
-          packaged="out/$(node -p "require('./scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').packagedDirName")"
+          packaged="out/$(node -p "require('./scripts/windows-package').resolveWindowsPackage('0.0.0', '.', '.').packagedDirName")"
           mkdir -p "$packaged/resources/bin"
           cp -r src/bin/* "$packaged/resources/bin/"
 
@@ -310,7 +308,6 @@ jobs:
       - name: Create Windows installer
         shell: pwsh
         env:
-          APP_EDITION: heybuddy
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           $version = $env:INPUT_VERSION
@@ -321,7 +318,7 @@ jobs:
           $outputDir = $env:GITHUB_WORKSPACE
           New-Item -ItemType Directory -Force $outputDir | Out-Null
           $distDir = Join-Path $env:GITHUB_WORKSPACE "ui\desktop\dist-windows"
-          $pkg = & node "ui/desktop/scripts/windows-package.js" $env:APP_EDITION $version $distDir $outputDir | ConvertFrom-Json
+          $pkg = & node "ui/desktop/scripts/windows-package.js" $version $distDir $outputDir | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw "Failed to resolve Windows package definitions" }
           & $env:ISCC_PATH @($pkg.isccArgs) "ui/desktop/desktop-setup.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
@@ -334,10 +331,9 @@ jobs:
         working-directory: ui/desktop/dist-windows
         shell: bash
         env:
-          APP_EDITION: heybuddy
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
         run: |
-          portable_file_name="$(node -p "require('../scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').portableFileName")"
+          portable_file_name="$(node -p "require('../scripts/windows-package').resolveWindowsPackage('0.0.0', '.', '.').portableFileName")"
           portable_file_name="${portable_file_name%.zip}${VARIANT_SUFFIX}.zip"
           7z a -tzip "$GITHUB_WORKSPACE/$portable_file_name" ./*
           echo "portable_file_name=$portable_file_name" >> "$GITHUB_OUTPUT"
@@ -348,6 +344,6 @@ jobs:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
           path: |
             ${{ steps.package-windows-zip.outputs.portable_file_name }}
-            HeyBuddy-windows-x64-setup.exe
+          AIBuddy-windows-x64-setup.exe
           if-no-files-found: error
           overwrite: true

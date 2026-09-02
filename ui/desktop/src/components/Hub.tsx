@@ -27,7 +27,6 @@ import {
 } from '../utils/nextChatExtensions';
 import { formatAcpError } from '../acp/errors';
 import { toastError } from '../toasts';
-import { getAppEdition } from '../brand';
 
 const i18n = defineMessages({
   goodMorning: { id: 'hub.goodMorning', defaultMessage: 'Good morning' },
@@ -58,7 +57,6 @@ export default function Hub({
   setView: (view: View, viewOptions?: ViewOptions) => void;
 }) {
   const intl = useIntl();
-  const edition = getAppEdition();
   const { extensionsList } = useConfig();
   const [workingDir, setWorkingDir] = useState(getInitialWorkingDir());
   const userSelectedWorkingDirRef = useRef(false);
@@ -87,9 +85,9 @@ export default function Hub({
         : hour < 18
           ? intl.formatMessage(i18n.goodAfternoon)
           : intl.formatMessage(i18n.goodEvening);
-    const assistantIdentity = edition === 'aibuddy' ? i18n.aibuddyIdentity : i18n.assistantIdentity;
+    const assistantIdentity = i18n.aibuddyIdentity;
     return `${timeOfDay}${intl.formatMessage(assistantIdentity)}`;
-  }, [edition, intl, hour]);
+  }, [intl, hour]);
 
   const draftForMenu = useMemo(
     () => nextChatExtensionDraft ?? createNextChatExtensionDraft(extensionsList),

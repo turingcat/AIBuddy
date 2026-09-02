@@ -1,7 +1,6 @@
 import { ChevronUp, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
 
 import { useBalance, type BalanceState } from '../../hooks/useBalance';
-import { getAppEdition } from '../../brand';
 import { defineMessages, useIntl } from '../../i18n';
 import {
   DropdownMenu,
@@ -11,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
-import { AIBuddyEntitlementRows, BalanceStatus } from './BalanceWidget';
+import { AIBuddyEntitlementRows } from './BalanceWidget';
 
 const i18n = defineMessages({
   notLoggedIn: { id: 'accountMenu.notLoggedIn', defaultMessage: 'Not signed in' },
@@ -59,29 +58,6 @@ function BalanceRefreshMenuItem({
   );
 }
 
-function HeyBuddyAccountSummary({
-  state,
-  accountName,
-  refreshing,
-  onRefresh,
-}: {
-  state: BalanceState;
-  accountName: string;
-  refreshing: boolean;
-  onRefresh: () => void;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-2 px-2 py-2" data-testid="account-menu-summary">
-      <UserRound className="size-4 shrink-0 text-text-secondary" />
-      <span className="min-w-0 flex-1 truncate font-medium">{accountName}</span>
-      <span className="min-w-0 shrink-0 text-xs text-text-primary">
-        <BalanceStatus state={state} />
-      </span>
-      <BalanceRefreshMenuItem refreshing={refreshing} onRefresh={onRefresh} />
-    </div>
-  );
-}
-
 function AIBuddyEntitlementSummary({
   state,
   accountName,
@@ -111,7 +87,6 @@ function AIBuddyEntitlementSummary({
 
 export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuProps) {
   const intl = useIntl();
-  const edition = getAppEdition();
   const { state, refreshing, refresh } = useBalance();
   const accountName = getAccountName(state, intl.formatMessage(i18n.notLoggedIn));
 
@@ -124,15 +99,10 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
         <UserRound className="size-4 shrink-0 text-text-secondary" />
         <span
           className="min-w-0 flex-1 truncate"
-          title={edition === 'aibuddy' ? accountName : undefined}
+          title={accountName}
         >
           {accountName}
         </span>
-        {edition === 'heybuddy' ? (
-          <span className="min-w-0 shrink-0 text-xs">
-            <BalanceStatus state={state} />
-          </span>
-        ) : null}
         <ChevronUp className="size-4 shrink-0 text-text-secondary" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -140,21 +110,12 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
         align="start"
         className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-0"
       >
-        {edition === 'aibuddy' ? (
-          <AIBuddyEntitlementSummary
-            state={state}
-            accountName={accountName}
-            refreshing={refreshing}
-            onRefresh={refresh}
-          />
-        ) : (
-          <HeyBuddyAccountSummary
-            state={state}
-            accountName={accountName}
-            refreshing={refreshing}
-            onRefresh={refresh}
-          />
-        )}
+        <AIBuddyEntitlementSummary
+          state={state}
+          accountName={accountName}
+          refreshing={refreshing}
+          onRefresh={refresh}
+        />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onOpenSettings}>
           <Settings />

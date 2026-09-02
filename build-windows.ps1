@@ -11,7 +11,6 @@
 param(
     # 构建版本（品牌标识取自 ui/desktop/branding/brands.json）
     [ValidateSet('heybuddy', 'aibuddy')]
-    [string]$Edition = 'heybuddy',
     # HTTP 代理（默认本机代理，cargo/pnpm 下载走代理；其他环境用 -Proxy 覆盖，传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（@electron/get 不读 HTTPS_PROXY，直连 GitHub 拉校验文件会卡死）
@@ -61,8 +60,7 @@ if ($NodePath) {
 }
 
 # 版本标识：forge / vite / 安装包脚本均按此解析品牌，子进程继承
-$env:APP_EDITION = $Edition
-Write-Host "构建版本：$Edition"
+Write-Host "构建版本：AIBuddy"
 
 # 切换到项目根目录（脚本所在目录）
 $ProjectRoot = $PSScriptRoot
@@ -228,7 +226,7 @@ function Package-Distribution {
     # 版本产物名与 Inno 定义统一由 windows-package.js 生成，避免脚本内硬编码品牌
     $version = (Get-Content (Join-Path $desktopDir 'package.json') -Raw | ConvertFrom-Json).version
     $distDir = Join-Path $desktopDir 'dist-windows'
-    $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $Edition $version $distDir $ProjectRoot
+ $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $version $distDir $ProjectRoot
     if ($LASTEXITCODE -ne 0) { throw "解析 Windows 打包参数失败" }
     $pkg = $pkgJson | ConvertFrom-Json
 

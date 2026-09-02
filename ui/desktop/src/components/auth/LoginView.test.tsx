@@ -1,141 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('../../acp/providers', () => ({ acpListProviderDetails: vi.fn().mockResolvedValue([]) }));
-
-const setLoginCredentials = vi.fn();
-const restartApp = vi.fn();
-
-vi.mock('../../login', () => ({
-  login: vi.fn().mockResolvedValue({
-    token: 'access-token-sample',
-    baseUrl: 'http://localhost:3001/v1',
-    apiKey: 'sk-sample-key',
-  }),
+vi.mock('./AIBuddyLoginForm', () => ({
+  default: () => <div>AIBuddy login form</div>,
 }));
 
 import LoginView from './LoginView';
-import { login } from '../../login';
 
 describe('LoginView', () => {
-  beforeEach(() => {
-    vi.stubEnv('APP_EDITION', 'heybuddy');
-    window.electron.setLoginCredentials = setLoginCredentials;
-    window.electron.restartApp = restartApp;
-  });
-
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.clearAllMocks();
-    delete window.initAliyunCaptcha;
-    delete window.AliyunCaptchaConfig;
-  });
-
-  it('keeps the HeyBuddy OA login flow, original copy, and persisted credentials', async () => {
-    render(
-      <MemoryRouter initialEntries={['/login']}>
-        <Routes>
-          <Route path="/login" element={<LoginView />} />
-          <Route path="/" element={<div>main</div>} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    expect(screen.getByRole('heading', { name: '登录 HeyBuddy' })).toBeInTheDocument();
-    expect(screen.getByText('请使用公司OA账号登录')).toBeInTheDocument();
-    expect(screen.getByText('登录名')).toBeInTheDocument();
-    expect(screen.getByText('密码')).toBeInTheDocument();
-    expect(screen.getByText('登录')).toBeInTheDocument();
-    await userEvent.type(screen.getByLabelText(/login-name/i), 'seeyon6');
-    await userEvent.type(screen.getByLabelText(/password/i), 'test@1234');
-    await userEvent.click(screen.getByRole('button', { name: /login/i }));
-
-    await waitFor(() => {
-      expect(login).toHaveBeenCalledWith('seeyon6', 'test@1234');
-      expect(setLoginCredentials).toHaveBeenCalledWith({
-        token: 'access-token-sample',
-        baseUrl: 'http://localhost:3001/v1',
-        apiKey: 'sk-sample-key',
-      });
-      expect(restartApp).toHaveBeenCalledOnce();
-    });
-  });
-
-  it('keeps the HeyBuddy fallback error text', async () => {
-    vi.mocked(login).mockRejectedValueOnce('failed');
+  it('always renders the AIBuddy login form', () => {
     render(<LoginView />);
 
-    await userEvent.click(screen.getByRole('button', { name: /login/i }));
-    expect(await screen.findByText('登录失败')).toBeInTheDocument();
-  });
-
-  it('routes the AIBuddy edition to the real AIBuddy form without OA login', async () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
-    window.electron.getAIBuddyAuthSettings = vi.fn().mockResolvedValue({
-      ok: false,
-      message: 'Settings unavailable',
-    });
-
-    render(<LoginView />);
-
-    expect(await screen.findByRole('heading', { name: 'AIBuddy' })).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(await screen.findByText('Settings unavailable')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
-    expect(screen.queryByText('登录 HeyBuddy')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('login-name')).not.toBeInTheDocument();
-    expect(login).not.toHaveBeenCalled();
-  });
-
-  it('keeps programmatic captcha verification pending across AIBuddy form renders', async () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
-    let captchaOptions: Parameters<NonNullable<Window['initAliyunCaptcha']>>[0] | undefined;
-    window.initAliyunCaptcha = vi.fn((options) => {
-      captchaOptions = options;
-    });
-    const loginViaAIBuddy = vi.fn().mockResolvedValue({
-      ok: true,
-      step: 'authenticated',
-      creds: {
-        token: 'access-token',
-        baseUrl: 'https://tflow.online/v1',
-        apiKey: 'sk-aibuddy',
-        authKind: 'sub2api',
-      },
-    });
-    window.electron.getAIBuddyAuthSettings = vi.fn().mockResolvedValue({
-      ok: true,
-      settings: {
-        aliyunCaptchaEnabled: true,
-        aliyunCaptchaSceneId: 'scene-1',
-        aliyunCaptchaPrefix: 'prefix-1',
-        aliyunCaptchaRegion: 'cn',
-        apiBaseUrl: 'https://tflow.online/v1',
-      },
-    });
-    window.electron.loginViaAIBuddy = loginViaAIBuddy;
-
-    render(<LoginView />);
-
-    await userEvent.type(await screen.findByLabelText(/email/i), 'person@example.com');
-    await userEvent.type(screen.getByLabelText(/password/i), 'password');
-    await waitFor(() => expect(captchaOptions).toBeDefined());
-    await userEvent.click(screen.getByRole('button', { name: /^login$/i }));
-
-    expect(loginViaAIBuddy).not.toHaveBeenCalled();
-    act(() => {
-      captchaOptions?.captchaVerifyCallback('proof-after-submit');
-    });
-
-    await waitFor(() => {
-      expect(loginViaAIBuddy).toHaveBeenCalledWith(
-        'person@example.com',
-        'password',
-        'proof-after-submit'
-      );
-    });
+    expect(screen.getByText('AIBuddy login form')).toBeInTheDocument();
   });
 });

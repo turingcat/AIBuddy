@@ -174,7 +174,7 @@ describe('UserAccountMenu', () => {
 
     const summary = screen.getByTestId('account-menu-summary');
     expect(within(summary).getByText('林也')).toBeInTheDocument();
-    expect(within(summary).getByTestId('balance-value')).toBeInTheDocument();
+    expect(within(summary).getByTestId('aibuddy-entitlement-row')).toHaveTextContent('$10');
     expect(within(summary).getByRole('menuitem', { name: '刷新余额' })).toBeInTheDocument();
   });
 
@@ -213,8 +213,8 @@ describe('UserAccountMenu', () => {
 
     renderMenu();
 
-    expect(screen.getByRole('button', { name: /林也/ })).toContainElement(
-      screen.getByTestId('balance-value')
+    expect(screen.getByRole('button', { name: /林也/ })).not.toContainElement(
+      screen.queryByTestId('balance-value')
     );
   });
 

@@ -35,7 +35,6 @@ describe('migrateLegacyAIBuddyData', () => {
 
   function migrate(overrides: Partial<MigrationOptions> = {}) {
     return migrateLegacyAIBuddyData({
-      edition: 'aibuddy',
       legacyUserDataDir,
       targetUserDataDir,
       codec: identityCodec,
@@ -103,7 +102,7 @@ describe('migrateLegacyAIBuddyData', () => {
     );
   });
 
-  it('does nothing in HeyBuddy edition', () => {
+  it('migrates AIBuddy credentials without edition selection', () => {
     writeLegacyCredentials({
       token: 'legacy-token',
       baseUrl: 'https://tflow.online/v1',
@@ -112,11 +111,11 @@ describe('migrateLegacyAIBuddyData', () => {
     });
     writeLegacySettings();
 
-    expect(migrate({ edition: 'heybuddy' })).toMatchObject({
-      credentialsMigrated: false,
-      settingsMigrated: false,
+    expect(migrate()).toMatchObject({
+      credentialsMigrated: true,
+      settingsMigrated: true,
     });
-    expect(fs.existsSync(targetUserDataDir)).toBe(false);
+    expect(fs.existsSync(targetUserDataDir)).toBe(true);
   });
 
   it('rejects OA credentials does not copy settings', () => {

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { getAppEdition } from '../../brand';
 import { login } from '../../login';
 import { Goose } from '../icons/Goose';
 import { Button } from '../ui/button';
@@ -8,14 +7,10 @@ import { Input } from '../ui/input';
 import AIBuddyLoginForm from './AIBuddyLoginForm';
 
 export default function LoginView() {
-  if (getAppEdition() === 'aibuddy') {
-    return <AIBuddyLoginForm />;
-  }
-
-  return <HeyBuddyLoginForm />;
+  return <AIBuddyLoginForm />;
 }
 
-function HeyBuddyLoginForm() {
+export function HeyBuddyLoginForm() {
   const [account, setAccount] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);

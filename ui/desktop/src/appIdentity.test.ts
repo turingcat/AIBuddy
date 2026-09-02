@@ -41,7 +41,7 @@ describe('initializeAppIdentity', () => {
       userDataDir: '/tmp/Application Support/HeyBuddy',
       startupLogsDir: '/tmp/Application Support/HeyBuddy/logs/startup',
     });
-    expect(calls.slice(0, 2)).toEqual(['setName:HeyBuddy', 'getPath:userData']);
+    expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
 
   it('does not resolve userData while bootstrap dependencies load', async () => {

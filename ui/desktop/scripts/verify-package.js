@@ -81,8 +81,8 @@ function parseArgs(argv) {
 
 if (require.main === module) {
   try {
-    const { edition, platform, root } = parseArgs(process.argv.slice(2));
-    const brand = resolveBrand(edition);
+    const { platform, root } = parseArgs(process.argv.slice(2));
+    const brand = resolveBrand();
     verifyPackage(brand, platform, root);
     process.stdout.write(`${brand.productName} ${platform} package at ${root} is valid\n`);
   } catch (error) {

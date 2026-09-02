@@ -32,6 +32,15 @@ describe('buildInnoDefinitions', () => {
   it.each(['', '1.0', 'v1.0.1', '1.0.1-rc.1', '1.0.1.2.3'])('rejects invalid version %j', (version) => {
     expect(() => buildInnoDefinitions(resolveBrand(), version, 'src', 'out')).toThrow(/version/i);
   });
+
+  it.each(['sourceDir', 'outputDir'])('rejects a missing %s', (missing) => {
+    const directories = { sourceDir: 'src', outputDir: 'out' };
+    directories[missing] = '';
+
+    expect(() =>
+      buildInnoDefinitions(resolveBrand(), '1.0.1', directories.sourceDir, directories.outputDir)
+    ).toThrow(/directory/i);
+  });
 });
 
 describe('release artifact names', () => {
