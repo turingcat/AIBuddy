@@ -10,12 +10,35 @@ on:
   merge_group:
     branches:
       - main
+  schedule:
+    - cron: '0 3 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Check for file changes
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '!documentation/**'
+
   build:
     name: Build Conformance Binaries
     runs-on: ubuntu-latest
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     steps:
       - name: Checkout Code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
@@ -51,7 +74,8 @@ jobs:
   conformance:
     name: Conformance ${{ matrix.spec-version }} / ${{ matrix.conformance-version }}
     runs-on: ubuntu-latest
-    needs: build
+    needs: [changes, build]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.code == 'true'
     strategy:
       fail-fast: false
       matrix:
