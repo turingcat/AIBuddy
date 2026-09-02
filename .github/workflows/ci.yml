@@ -33,15 +33,23 @@ jobs:
           filters: |
             docs-only:
               - 'documentation/**'
+              - 'docs/**'
+              - '*.md'
             code:
               - '!documentation/**'
+              - '!docs/**'
+              - '!*.md'
 
   dependency-locks:
     name: Validate Dependency Locks
     runs-on: ubuntu-latest
     needs: changes
-    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+
       - name: Checkout Code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -62,7 +70,7 @@ jobs:
     name: Check Rust Code Format
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -82,7 +90,7 @@ jobs:
     name: Build and Test Rust Project
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -116,8 +124,8 @@ jobs:
         run: |
           gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
           export CARGO_INCREMENTAL=0
-          cargo test -- --skip scenario_tests::scenarios::tests
-          cargo test --jobs 1 scenario_tests::scenarios::tests
+          cargo test --locked -- --skip scenario_tests::scenarios::tests
+          cargo test --locked --jobs 1 scenario_tests::scenarios::tests
         working-directory: crates
         env:
           RUST_MIN_STACK: 8388608
@@ -126,7 +134,7 @@ jobs:
     name: Check goose-sdk UniFFI
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && github.event_name != 'pull_request'
+    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -160,7 +168,7 @@ jobs:
     name: Build and Test TLS Backend (${{ matrix.tls-feature }})
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     strategy:
       fail-fast: false
       matrix:
@@ -195,10 +203,10 @@ jobs:
         run: |
           gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
           export CARGO_INCREMENTAL=0
-          cargo test -p goose --no-default-features --features ${{ matrix.tls-feature }},code-mode
-          cargo test -p goose-providers --no-default-features --features ${{ matrix.tls-feature }}
-          cargo test -p goose-cli --no-default-features --features ${{ matrix.tls-feature }},code-mode -- --skip scenario_tests::scenarios::tests
-          cargo test -p goose-cli --no-default-features --features ${{ matrix.tls-feature }},code-mode --jobs 1 scenario_tests::scenarios::tests
+          cargo test --locked -p goose --no-default-features --features ${{ matrix.tls-feature }},code-mode
+          cargo test --locked -p goose-providers --no-default-features --features ${{ matrix.tls-feature }}
+          cargo test --locked -p goose-cli --no-default-features --features ${{ matrix.tls-feature }},code-mode -- --skip scenario_tests::scenarios::tests
+          cargo test --locked -p goose-cli --no-default-features --features ${{ matrix.tls-feature }},code-mode --jobs 1 scenario_tests::scenarios::tests
         env:
           RUST_MIN_STACK: 8388608
 
@@ -207,7 +215,7 @@ jobs:
     name: Build and Test Roaming Feature
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && github.event_name != 'pull_request'
+    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -233,9 +241,9 @@ jobs:
         run: |
           gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
           export CARGO_INCREMENTAL=0
-          cargo test -p goose-roaming
-          cargo build -p goose-cli --features roaming
-          cargo test -p goose-cli --features roaming --test roam_acp_client
+          cargo test --locked -p goose-roaming
+          cargo build --locked -p goose-cli --features roaming
+          cargo test --locked -p goose-cli --features roaming --test roam_acp_client
         env:
           RUST_MIN_STACK: 8388608
 
@@ -243,7 +251,7 @@ jobs:
     name: Build Rust Project on Windows
     runs-on: windows-latest
     needs: [changes, dependency-locks]
-    if: always() && github.event_name != 'pull_request'
+    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -265,7 +273,7 @@ jobs:
           rustup target add x86_64-pc-windows-msvc
 
       - name: Build
-        run: cargo build --target x86_64-pc-windows-msvc
+        run: cargo build --locked --target x86_64-pc-windows-msvc
         env:
           CARGO_INCREMENTAL: "0"
 
@@ -273,7 +281,7 @@ jobs:
     name: Check MSRV
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && github.event_name != 'pull_request'
+    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -319,7 +327,7 @@ jobs:
     name: Lint Rust Code
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -345,13 +353,13 @@ jobs:
           # play nicely with hermit-managed rust
           hermit uninstall rustup
           export CARGO_INCREMENTAL=0
-          cargo clippy --workspace --all-targets --exclude v8 -- -D warnings
+          cargo clippy --locked --workspace --all-targets --exclude v8 -- -D warnings
 
   schema-check:
     name: Check Generated Schemas are Up-to-Date
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -411,7 +419,7 @@ jobs:
     name: Test and Lint Electron Desktop App
     runs-on: macos-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.outputs.code == 'true' || github.event_name != 'pull_request')
+    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -446,3 +454,91 @@ jobs:
       - name: Run Tests
         run: source ../../bin/activate-hermit && pnpm run test:run
         working-directory: ui/desktop
+
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - changes
+      - dependency-locks
+      - rust-format
+      - rust-build-and-test
+      - goose-sdk-uniffi
+      - rust-build-and-test-tls
+      - rust-build-and-test-roaming
+      - rust-build-windows
+      - rust-msrv
+      - rust-lint
+      - schema-check
+      - gdk-api-docs-check
+      - desktop-lint
+    steps:
+      - name: Verify CI results
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CODE_CHANGED: ${{ needs.changes.outputs.code }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DEPENDENCY_LOCKS_RESULT: ${{ needs.dependency-locks.result }}
+          RUST_FORMAT_RESULT: ${{ needs.rust-format.result }}
+          RUST_BUILD_AND_TEST_RESULT: ${{ needs.rust-build-and-test.result }}
+          UNIFFI_RESULT: ${{ needs.goose-sdk-uniffi.result }}
+          TLS_RESULT: ${{ needs.rust-build-and-test-tls.result }}
+          ROAMING_RESULT: ${{ needs.rust-build-and-test-roaming.result }}
+          WINDOWS_RESULT: ${{ needs.rust-build-windows.result }}
+          MSRV_RESULT: ${{ needs.rust-msrv.result }}
+          RUST_LINT_RESULT: ${{ needs.rust-lint.result }}
+          SCHEMA_RESULT: ${{ needs.schema-check.result }}
+          GDK_API_DOCS_RESULT: ${{ needs.gdk-api-docs-check.result }}
+          DESKTOP_LINT_RESULT: ${{ needs.desktop-lint.result }}
+        run: |
+          set -euo pipefail
+
+          gate_failed=false
+          require_result() {
+            local job_name="$1"
+            local actual="$2"
+            local expected="$3"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error title=CI Gate::$job_name was $actual; expected $expected"
+              gate_failed=true
+            fi
+          }
+
+          case "$EVENT_NAME" in
+            pull_request|push|merge_group|workflow_dispatch) ;;
+            *)
+              echo "::error title=CI Gate::Unsupported event $EVENT_NAME"
+              exit 1
+              ;;
+          esac
+
+          require_result changes "$CHANGES_RESULT" success
+          require_result gdk-api-docs-check "$GDK_API_DOCS_RESULT" success
+
+          code_tier_result=skipped
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || "$CODE_CHANGED" == "true" ]]; then
+            code_tier_result=success
+          fi
+
+          require_result dependency-locks "$DEPENDENCY_LOCKS_RESULT" "$code_tier_result"
+          require_result rust-format "$RUST_FORMAT_RESULT" "$code_tier_result"
+          require_result rust-build-and-test "$RUST_BUILD_AND_TEST_RESULT" "$code_tier_result"
+          require_result rust-build-and-test-tls "$TLS_RESULT" "$code_tier_result"
+          require_result rust-lint "$RUST_LINT_RESULT" "$code_tier_result"
+          require_result schema-check "$SCHEMA_RESULT" "$code_tier_result"
+          require_result desktop-lint "$DESKTOP_LINT_RESULT" "$code_tier_result"
+
+          compatibility_tier_result=skipped
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || ( "$EVENT_NAME" != "pull_request" && "$CODE_CHANGED" == "true" ) ]]; then
+            compatibility_tier_result=success
+          fi
+
+          require_result goose-sdk-uniffi "$UNIFFI_RESULT" "$compatibility_tier_result"
+          require_result rust-build-and-test-roaming "$ROAMING_RESULT" "$compatibility_tier_result"
+          require_result rust-build-windows "$WINDOWS_RESULT" "$compatibility_tier_result"
+          require_result rust-msrv "$MSRV_RESULT" "$compatibility_tier_result"
+
+          if [[ "$gate_failed" == "true" ]]; then
+            exit 1
+          fi
