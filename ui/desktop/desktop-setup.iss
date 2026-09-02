@@ -37,11 +37,11 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-; 安装/卸载图标直接用应用可执行文件内嵌图标（即 src/images/icon.ico 打进 exe 的图标）
+; 安装/卸载图标直接用应用可执行文件内嵌图标（即 AIBuddy icon.ico 打进 exe 的图标）
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 ; 安装器自身图标（资源管理器中看到的 Setup.exe 图标）
-SetupIconFile=src\images\icon.ico
+SetupIconFile=src\images\aibuddy\icon.ico
 OutputDir={#OutputDir}
 OutputBaseFilename={#OutputBaseFilename}
 Compression=lzma2/max

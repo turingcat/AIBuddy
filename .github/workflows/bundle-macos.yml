@@ -262,10 +262,8 @@ jobs:
           fi
         working-directory: ui/desktop
 
-      - name: Verify macOS updater resources
-        env:
-          APP_PATH: out/AIBuddy-darwin-arm64/AIBuddy.app
-        run: node scripts/verify-mac-update-resources.js "$APP_PATH"
+      - name: Verify macOS package
+        run: pnpm run verify:package -- darwin out/AIBuddy-darwin-arm64
         working-directory: ui/desktop
 
       - name: Clean up signing keychain

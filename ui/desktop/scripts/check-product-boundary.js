@@ -16,6 +16,17 @@ const IGNORED_DIRECTORIES = new Set([
 
 const ROOT_PRODUCT_FILES = ['Justfile', 'build-windows.ps1', 'dev-ui.ps1'];
 const DESKTOP_PRODUCT_FILES = ['desktop-setup.iss', 'index.html'];
+const REPOSITORY_CONTRACT_FILES = [
+  '.github/workflows/bundle-macos.yml',
+  '.github/workflows/bundle-windows.yml',
+  '.github/workflows/canary.yml',
+  '.github/workflows/publish-existing-release.yml',
+  '.github/workflows/release-branches.yml',
+  '.github/workflows/release.yml',
+  'crates/goose/src/agents/prompt_manager.rs',
+  'scripts/test-release-workflows.rb',
+  'scripts/test-supported-build-architectures.py',
+];
 
 const ALLOWED_VIOLATIONS = new Map([
   [
@@ -35,6 +46,9 @@ const ALLOWED_VIOLATIONS = new Map([
       'OA login implementation or IPC identifier',
       'AIBuddy legacy migration identifier',
       'APP_EDITION active usage',
+      'HeyBuddy artifact or release name',
+      'legacy installer icon',
+      'HeyBuddy prompt fallback identity',
     ]),
   ],
   [
@@ -54,6 +68,9 @@ const ALLOWED_VIOLATIONS = new Map([
       'OA login implementation or IPC identifier',
       'AIBuddy legacy migration identifier',
       'APP_EDITION active usage',
+      'HeyBuddy artifact or release name',
+      'legacy installer icon',
+      'HeyBuddy prompt fallback identity',
     ]),
   ],
   ['ui/desktop/scripts/brand.test.js', new Set(['APP_EDITION active usage'])],
@@ -106,6 +123,21 @@ const PRODUCT_PATTERNS = [
   {
     pattern: 'AIBuddy legacy migration identifier',
     matches: (content) => /\b(?:migrateLegacyAIBuddyData|aibuddyDataMigration)\b/.test(content),
+  },
+  {
+    pattern: 'HeyBuddy artifact or release name',
+    matches: (content) =>
+      /(?:HeyBuddy(?:\*|[-_][^\s"'`]*)?\.(?:zip|exe|app)\b|name:\s*HeyBuddy(?:\s|\$))/i.test(
+        content
+      ),
+  },
+  {
+    pattern: 'legacy installer icon',
+    matches: (content) => /SetupIconFile\s*=\s*src[\\/]images[\\/]icon\.ico\b/i.test(content),
+  },
+  {
+    pattern: 'HeyBuddy prompt fallback identity',
+    matches: (content) => /(?:You are|你是)\s*HeyBuddy\b/i.test(content),
   },
   { pattern: 'APP_EDITION active usage', matches: isActiveEditionUsage },
 ];
@@ -211,6 +243,12 @@ function desktopProductFiles(repositoryRoot) {
   );
 }
 
+function repositoryContractFiles(repositoryRoot) {
+  return REPOSITORY_CONTRACT_FILES.map((file) => path.join(repositoryRoot, file)).filter((file) =>
+    fs.existsSync(file)
+  );
+}
+
 function activeProductFiles(repositoryRoot) {
   const roots = [
     path.join(repositoryRoot, 'ui', 'desktop', 'src'),
@@ -228,6 +266,7 @@ function activeProductFiles(repositoryRoot) {
       ...desktopConfigurationFiles(repositoryRoot),
       ...desktopProductFiles(repositoryRoot),
       ...rootProductFiles(repositoryRoot),
+      ...repositoryContractFiles(repositoryRoot),
     ]),
   ].sort((left, right) => left.localeCompare(right));
 }

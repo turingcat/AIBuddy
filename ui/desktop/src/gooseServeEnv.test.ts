@@ -27,8 +27,9 @@ describe('buildGooseServeEnv', () => {
     });
   });
 
-  it('returns no provider variables when credentials are absent', () => {
+  it('selects the AIBuddy provider when credentials are absent', () => {
     expect(buildGooseServeEnv(null, '/tmp/Application Support/AIBuddy/goose')).toEqual({
+      GOOSE_PROVIDER: 'aibuddy',
       GOOSE_PATH_ROOT: '/tmp/Application Support/AIBuddy/goose',
     });
   });

@@ -15,6 +15,8 @@ describe('Nostr session protocol', () => {
     ['goose://sessions/nostr?nevent=test&key=secret', true],
     ['aibuddy://sessions/nostr?nevent=test&key=secret', false],
     ['goose://recipe?url=https://example.com/recipe.yaml', false],
+    ['goose://sessions/nostr-extra?nevent=test&key=secret', false],
+    ['goose://sessions/nostr/extra?nevent=test&key=secret', false],
   ])('classifies %s', (link, expected) => {
     expect(isNostrSessionLink(link)).toBe(expected);
   });

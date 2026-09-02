@@ -127,6 +127,8 @@ describe('main embedded Goose root', () => {
     try {
       await import('./main');
       expect(app.whenReady).toHaveBeenCalled();
+      expect(app.setAsDefaultProtocolClient).toHaveBeenCalledWith('aibuddy');
+      expect(app.setAsDefaultProtocolClient).toHaveBeenCalledWith('goose');
       resolveReady!();
 
       await vi.waitFor(() => {

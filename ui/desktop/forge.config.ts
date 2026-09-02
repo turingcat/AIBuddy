@@ -10,7 +10,7 @@ let cfg = {
   name: brand.productName,
   executableName: brand.executableName,
   appBundleId: brand.bundleId,
-  extraResource: ['src/bin', 'src/images'],
+  extraResource: ['src/bin', 'src/images/aibuddy'],
   icon: `src/images/${brand.iconStem}.icns`,
   // Windows specific configuration
   win32: {
@@ -25,6 +25,10 @@ let cfg = {
     {
       name: brand.protocolName,
       schemes: [brand.protocol],
+    },
+    {
+      name: 'GooseNostrProtocol',
+      schemes: ['goose'],
     },
   ],
   // macOS Info.plist extensions for drag-and-drop support

@@ -4901,6 +4901,41 @@ echo start >> "$PLUGIN_ROOT/hook.log"
         }
     }
 
+    #[derive(Default)]
+    struct SystemPromptCaptureProvider {
+        system_prompt: std::sync::Mutex<Option<String>>,
+    }
+
+    impl SystemPromptCaptureProvider {
+        fn system_prompt(&self) -> String {
+            self.system_prompt
+                .lock()
+                .unwrap()
+                .clone()
+                .expect("provider request should include a system prompt")
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl crate::providers::base::Provider for SystemPromptCaptureProvider {
+        async fn stream(
+            &self,
+            _model_config: &goose_providers::model::ModelConfig,
+            system_prompt: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> Result<MessageStream, ProviderError> {
+            *self.system_prompt.lock().unwrap() = Some(system_prompt.to_string());
+            let message = Message::assistant().with_text("provider response");
+            let usage = ProviderUsage::new("mock-model".to_string(), Usage::default());
+            Ok(stream_from_single_message(message, usage))
+        }
+
+        fn get_name(&self) -> &str {
+            "system-prompt-capture"
+        }
+    }
+
     struct ChunkedTextProvider;
 
     #[async_trait::async_trait]
@@ -5175,6 +5210,24 @@ echo start >> "$PLUGIN_ROOT/hook.log"
             .map(Message::as_concat_text)
             .filter(|text| !text.is_empty())
             .collect()
+    }
+
+    #[tokio::test]
+    async fn legacy_provider_request_uses_aibuddy_chinese_identity() -> Result<()> {
+        let _guard = env_lock::lock_env([("GOOSE_STATE_MACHINE", None::<&str>)]);
+        let temp_dir = tempfile::tempdir()?;
+        let hook_manager = crate::hooks::HookManager::from_plugins_for_test(vec![]);
+        let provider = Arc::new(SystemPromptCaptureProvider::default());
+        let (agent, session_id) =
+            create_test_agent(temp_dir.path().join("data"), hook_manager, provider.clone()).await?;
+
+        run_stop_hook_test_turn(&agent, &session_id, "你好").await?;
+
+        let prompt = provider.system_prompt();
+        assert!(prompt.contains("AIBuddy"));
+        assert!(prompt.contains("默认使用中文"));
+        assert!(!prompt.contains("HeyBuddy"));
+        Ok(())
     }
 
     #[tokio::test]

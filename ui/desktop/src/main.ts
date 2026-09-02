@@ -56,10 +56,15 @@ import { translateMenuLabel } from './menuLabels';
 import {
   getAppDisplayName,
   getAppIconStem,
-  getAppProtocol,
   getAppProtocolPrefix,
   getAppTrayIconStem,
 } from './brand';
+import { packagedAibuddyAssetPath } from './appAssets';
+import {
+  findInboundProtocolUrl,
+  getInboundProtocolSchemes,
+  parseInboundProtocolUrl,
+} from './protocolRouting';
 import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
@@ -342,31 +347,31 @@ if (process.env.ENABLE_PLAYWRIGHT) {
 
 // In development mode, force registration as the default protocol client
 // In production, register normally
+const inboundProtocolSchemes = getInboundProtocolSchemes();
+
 if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
   // Development mode - force registration
   console.log(
-    `[Main] Development mode: Forcing protocol registration for ${getAppProtocolPrefix()}`
+    `[Main] Development mode: Forcing protocol registration for ${inboundProtocolSchemes.join(', ')}`
   );
-  app.setAsDefaultProtocolClient(getAppProtocol());
+  for (const protocol of inboundProtocolSchemes) app.setAsDefaultProtocolClient(protocol);
 
   if (process.platform === 'darwin') {
     try {
       // Reset the default handler to ensure dev version takes precedence
-      spawn(
-        'open',
-        ['-a', process.execPath, '--args', '--reset-protocol-handler', getAppProtocol()],
-        {
+      for (const protocol of inboundProtocolSchemes) {
+        spawn('open', ['-a', process.execPath, '--args', '--reset-protocol-handler', protocol], {
           detached: true,
           stdio: 'ignore',
-        }
-      );
+        });
+      }
     } catch {
       console.warn('[Main] Could not reset protocol handler');
     }
   }
 } else {
   // Production mode - normal registration
-  app.setAsDefaultProtocolClient(getAppProtocol());
+  for (const protocol of inboundProtocolSchemes) app.setAsDefaultProtocolClient(protocol);
 }
 
 // Apply single instance lock on Windows and Linux where it's needed for deep links
@@ -380,9 +385,9 @@ if (process.platform !== 'darwin') {
     app.quit();
   } else {
     app.on('second-instance', (_event, commandLine) => {
-      const protocolUrl = commandLine.find((arg) => arg.startsWith(getAppProtocolPrefix()));
-      if (protocolUrl) {
-        const parsedUrl = new URL(protocolUrl);
+      const protocolRoute = findInboundProtocolUrl(commandLine);
+      if (protocolRoute) {
+        const { url: protocolUrl, parsedUrl } = protocolRoute;
         // If it's a bot/recipe URL, handle it directly by creating a new window
         if (parsedUrl.hostname === 'bot' || parsedUrl.hostname === 'recipe') {
           app.whenReady().then(async () => {
@@ -438,7 +443,7 @@ if (process.platform !== 'darwin') {
           mainWindow.restore();
         }
         mainWindow.focus();
-      } else if (!protocolUrl) {
+      } else {
         app.whenReady().then(async () => {
           const recentDirs = loadRecentDirs();
           const openDir = recentDirs.length > 0 ? recentDirs[0] : null;
@@ -449,16 +454,10 @@ if (process.platform !== 'darwin') {
   }
 
   // Handle protocol URLs on Windows and Linux startup
-  const protocolUrl = process.argv.find((arg) => arg.startsWith(getAppProtocolPrefix()));
-  if (protocolUrl) {
+  const protocolRoute = findInboundProtocolUrl(process.argv);
+  if (protocolRoute) {
     app.whenReady().then(async () => {
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(protocolUrl);
-      } catch (error) {
-        log.warn('[Main] Ignoring invalid startup protocol URL:', errorMessage(error));
-        return;
-      }
+      const { url: protocolUrl, parsedUrl } = protocolRoute;
 
       openUrlHandledLaunch = true;
       try {
@@ -626,9 +625,14 @@ async function processProtocolUrl(url: string, parsedUrl: URL, window: BrowserWi
 
 let windowDeeplinkURL: string | null = null;
 
-app.on('open-url', async (_event, url) => {
-  if (process.platform !== 'win32') {
-    const parsedUrl = new URL(url);
+app.on('open-url', async (_event, incomingUrl) => {
+  if (process.platform === 'darwin') {
+    const protocolRoute = parseInboundProtocolUrl(incomingUrl);
+    if (!protocolRoute) {
+      log.warn('[Main] Ignoring unsupported open-url route');
+      return;
+    }
+    const { url, parsedUrl } = protocolRoute;
 
     log.info(
       '[Main] Received open-url event:',
@@ -1221,7 +1225,11 @@ const createChat = async (
           ? `${windowIconStem}.icns`
           : `${windowIconStem}.png`;
     const windowIcon = [
-      path.join(process.resourcesPath, 'images', windowIconName),
+      packagedAibuddyAssetPath(
+        process.resourcesPath,
+        windowIconStem,
+        path.extname(windowIconName).slice(1)
+      ),
       path.join(process.cwd(), 'src', 'images', windowIconName),
       path.join(__dirname, '..', 'images', windowIconName),
     ].find((p) => fsSync.existsSync(p));
@@ -1602,7 +1610,7 @@ const createTray = () => {
 
   const trayIconName = `${getAppTrayIconStem()}.png`;
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', trayIconName),
+    packagedAibuddyAssetPath(process.resourcesPath, getAppTrayIconStem(), 'png'),
     path.join(process.cwd(), 'src', 'images', trayIconName),
     path.join(__dirname, '..', 'images', trayIconName),
     path.join(__dirname, 'images', trayIconName),

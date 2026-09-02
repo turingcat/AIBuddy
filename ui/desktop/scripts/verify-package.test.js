@@ -5,12 +5,27 @@ const { resolveBrand } = require('./brand');
 const { verifyInfoPlist, verifyPackage, verifyPackageTree } = require('./verify-package');
 
 const brand = resolveBrand();
+const runtimeAssets = [
+  'icon.icns',
+  'icon.ico',
+  'icon.png',
+  'iconTemplate.png',
+  'iconTemplate@2x.png',
+];
 
 function tempRoot(name) {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'verify-package-')), name);
 }
 
-function makeDarwinTree(root, { omitGoose = false } = {}) {
+function makeRuntimeAssets(resourcesDir, omitAsset) {
+  const assetsDir = path.join(resourcesDir, 'aibuddy');
+  fs.mkdirSync(assetsDir, { recursive: true });
+  for (const asset of runtimeAssets) {
+    if (asset !== omitAsset) fs.writeFileSync(path.join(assetsDir, asset), '');
+  }
+}
+
+function makeDarwinTree(root, { omitGoose = false, omitAsset = null } = {}) {
   const contents = path.join(root, `${brand.productName}.app`, 'Contents');
   fs.mkdirSync(path.join(contents, 'MacOS'), { recursive: true });
   fs.writeFileSync(path.join(contents, 'MacOS', brand.executableName), '');
@@ -19,13 +34,15 @@ function makeDarwinTree(root, { omitGoose = false } = {}) {
     fs.mkdirSync(path.join(contents, 'Resources', 'bin'), { recursive: true });
     fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'goose'), '');
   }
+  makeRuntimeAssets(path.join(contents, 'Resources'), omitAsset);
   return root;
 }
 
-function makeWin32Tree(root, { omitGoose = false } = {}) {
+function makeWin32Tree(root, { omitGoose = false, omitAsset = null } = {}) {
   fs.mkdirSync(path.join(root, 'resources', 'bin'), { recursive: true });
   fs.writeFileSync(path.join(root, `${brand.executableName}.exe`), '');
   if (!omitGoose) fs.writeFileSync(path.join(root, 'resources', 'bin', 'goose.exe'), '');
+  makeRuntimeAssets(path.join(root, 'resources'), omitAsset);
   return root;
 }
 
@@ -34,23 +51,36 @@ function plistFor() {
     CFBundleIdentifier: brand.bundleId,
     CFBundleName: brand.productName,
     CFBundleExecutable: brand.executableName,
-    CFBundleURLTypes: [{ CFBundleURLName: brand.protocolName, CFBundleURLSchemes: [brand.protocol] }],
+    CFBundleURLTypes: [
+      { CFBundleURLName: brand.protocolName, CFBundleURLSchemes: [brand.protocol] },
+      { CFBundleURLName: 'GooseNostrProtocol', CFBundleURLSchemes: ['goose'] },
+    ],
   };
 }
 
 describe('verifyPackageTree', () => {
+  it('rejects unsupported package platforms', () => {
+    expect(() => verifyPackageTree(brand, 'linux', tempRoot('AIBuddy-linux-x64'))).toThrow(
+      'Unsupported platform "linux"'
+    );
+  });
+
   it('accepts a complete AIBuddy macOS tree', () => {
-    expect(verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('AIBuddy-darwin-arm64')))).toEqual([]);
+    expect(
+      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('AIBuddy-darwin-arm64')))
+    ).toEqual([]);
   });
 
   it('accepts a complete AIBuddy Windows tree', () => {
-    expect(verifyPackageTree(brand, 'win32', makeWin32Tree(tempRoot('AIBuddy-win32-x64')))).toEqual([]);
+    expect(verifyPackageTree(brand, 'win32', makeWin32Tree(tempRoot('AIBuddy-win32-x64')))).toEqual(
+      []
+    );
   });
 
   it('rejects a tree named for another product', () => {
-    expect(verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('HeyBuddy-darwin-arm64')))).toEqual([
-      expect.stringContaining('AIBuddy-darwin-arm64'),
-    ]);
+    expect(
+      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('HeyBuddy-darwin-arm64')))
+    ).toEqual([expect.stringContaining('AIBuddy-darwin-arm64')]);
   });
 
   it.each([
@@ -72,6 +102,31 @@ describe('verifyInfoPlist', () => {
   it('rejects a missing AIBuddy URL scheme', () => {
     expect(verifyInfoPlist(brand, { ...plistFor(), CFBundleURLTypes: [] })).toEqual([
       expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
+    ]);
+  });
+
+  it('rejects a plist without URL type metadata', () => {
+    const plist = plistFor();
+    delete plist.CFBundleURLTypes;
+
+    expect(verifyInfoPlist(brand, plist)).toEqual([
+      expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
+    ]);
+  });
+
+  it('rejects a mismatched bundle identifier and URL type without schemes', () => {
+    expect(
+      verifyInfoPlist(brand, {
+        ...plistFor(),
+        CFBundleIdentifier: 'com.electron.heybuddy',
+        CFBundleURLTypes: [{}],
+      })
+    ).toEqual([
+      expect.stringContaining('com.electron.heybuddy'),
+      expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
     ]);
   });
 });
@@ -80,5 +135,20 @@ describe('verifyPackage', () => {
   it('accepts the fixed AIBuddy package', () => {
     const root = makeDarwinTree(tempRoot('AIBuddy-darwin-arm64'));
     expect(() => verifyPackage(brand, 'darwin', root, plistFor)).not.toThrow();
+  });
+
+  it('accepts a Windows package without reading a macOS plist', () => {
+    const root = makeWin32Tree(tempRoot('AIBuddy-win32-x64'));
+    expect(() => verifyPackage(brand, 'win32', root)).not.toThrow();
+  });
+
+  it('rejects an invalid tree before reading a macOS plist', () => {
+    const root = tempRoot('AIBuddy-darwin-arm64');
+
+    expect(() =>
+      verifyPackage(brand, 'darwin', root, () => {
+        throw new Error('plist reader should not run');
+      })
+    ).toThrow(/missing/);
   });
 });

@@ -192,6 +192,34 @@ describe('findProductBoundaryViolations', () => {
     ]);
   });
 
+  it('scans release, installer, and prompt fallback product contracts', () => {
+    const root = createFixture();
+    writeFixture(root, '.github/workflows/release.yml', 'artifacts: HeyBuddy*.zip');
+    writeFixture(root, '.github/workflows/canary.yml', 'name: HeyBuddy v1.2.3');
+    writeFixture(root, '.github/workflows/bundle-macos.yml', 'name: Goose-darwin-arm64');
+    writeFixture(root, 'scripts/test-release-workflows.rb', 'required = "HeyBuddy*.exe"');
+    writeFixture(root, 'ui/desktop/desktop-setup.iss', 'SetupIconFile=src\\images\\icon.ico');
+    writeFixture(
+      root,
+      'crates/goose/src/agents/prompt_manager.rs',
+      '"你是 HeyBuddy，默认使用中文".to_string()'
+    );
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: '.github/workflows/canary.yml', pattern: 'HeyBuddy artifact or release name' },
+      { file: '.github/workflows/release.yml', pattern: 'HeyBuddy artifact or release name' },
+      {
+        file: 'crates/goose/src/agents/prompt_manager.rs',
+        pattern: 'HeyBuddy prompt fallback identity',
+      },
+      {
+        file: 'scripts/test-release-workflows.rb',
+        pattern: 'HeyBuddy artifact or release name',
+      },
+      { file: 'ui/desktop/desktop-setup.iss', pattern: 'legacy installer icon' },
+    ]);
+  });
+
   it('ignores historical design documents and generated output', () => {
     const root = createFixture();
     const legacyContent = [

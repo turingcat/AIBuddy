@@ -2,29 +2,57 @@
 
 require "yaml"
 
-release_workflow = File.read(".github/workflows/release.yml")
-recovery_path = ".github/workflows/publish-existing-release.yml"
+workflow_paths = {
+  bundle_macos: ".github/workflows/bundle-macos.yml",
+  release: ".github/workflows/release.yml",
+  canary: ".github/workflows/canary.yml",
+  recovery: ".github/workflows/publish-existing-release.yml",
+  release_branches: ".github/workflows/release-branches.yml",
+}
 
-YAML.parse(release_workflow)
+workflows = workflow_paths.transform_values do |path|
+  abort "missing release workflow #{path}" unless File.exist?(path)
 
-attestation_steps = release_workflow.scan(
-  /- name: Attest(?: macOS update manifest| build provenance).*?(?=\n\s*- name:|\z)/m
+  content = File.read(path)
+  YAML.parse(content)
+  content
+end
+
+attestation_steps = workflows.fetch(:release).scan(
+  /- name: Attest build provenance.*?(?=\n\s*- name:|\z)/m
 )
+abort "expected one build-provenance attestation step" unless attestation_steps.length == 1
+unless attestation_steps.first.include?("github.event.repository.owner.type == 'Organization'")
+  abort "attestation must be limited to organization-owned repositories"
+end
 
-abort "expected two attestation steps" unless attestation_steps.length == 2
-
-attestation_steps.each do |step|
-  unless step.include?("github.event.repository.owner.type == 'Organization'")
-    abort "attestation must be limited to organization-owned repositories"
+obsolete_updater_fragments = [
+  "ENABLE_MAC_NATIVE_AUTO_UPDATE",
+  "generate-mac-update-manifest.js",
+  "verify-mac-update-resources.js",
+  "latest-mac.yml",
+]
+obsolete_updater_fragments.each do |fragment|
+  workflows.each do |name, workflow|
+    abort "#{name} workflow retains obsolete updater fragment #{fragment}" if workflow.include?(fragment)
   end
 end
 
-abort "missing release recovery workflow" unless File.exist?(recovery_path)
+mac_verification = "pnpm run verify:package -- darwin out/AIBuddy-darwin-arm64"
+unless workflows.fetch(:bundle_macos).include?(mac_verification)
+  abort "macOS workflow does not run AIBuddy package verification"
+end
 
-recovery_workflow = File.read(recovery_path)
-YAML.parse(recovery_workflow)
+release_consumers = workflows.values_at(:release, :canary, :recovery)
+release_consumers.each do |workflow|
+  ["AIBuddy*.zip", "AIBuddy*.exe"].each do |artifact_glob|
+    abort "release consumer missing #{artifact_glob}" unless workflow.include?(artifact_glob)
+  end
+  abort "release consumer retains HeyBuddy artifact names" if workflow.include?("HeyBuddy")
+end
 
-required_fragments = [
+recovery = workflows.fetch(:recovery)
+required_recovery_fragments = [
   "workflow_dispatch:",
   "release_tag:",
   "source_run_id:",
@@ -32,12 +60,13 @@ required_fragments = [
   "pattern: '!internal-*'",
   "merge-multiple: true",
   "tag: ${{ inputs.release_tag }}",
-  "HeyBuddy*.zip",
-  "HeyBuddy*.exe",
+  "name: AIBuddy ${{ inputs.release_tag }}",
 ]
-
-required_fragments.each do |fragment|
-  abort "recovery workflow missing #{fragment}" unless recovery_workflow.include?(fragment)
+required_recovery_fragments.each do |fragment|
+  abort "recovery workflow missing #{fragment}" unless recovery.include?(fragment)
 end
+
+release_branches = workflows.fetch(:release_branches)
+abort "release candidate instructions missing AIBuddy.app" unless release_branches.include?("AIBuddy.app")
 
 puts "release workflow contracts pass"

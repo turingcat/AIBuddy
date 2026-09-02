@@ -12,25 +12,26 @@ function verifyPackageTree(brand, platform, root) {
     );
   }
 
-  const required =
+  const resourcesRoot =
     platform === 'darwin'
-      ? [
-          path.join(root, `${brand.productName}.app`, 'Contents', 'MacOS', brand.executableName),
-          path.join(root, `${brand.productName}.app`, 'Contents', 'Resources', 'bin', 'goose'),
-        ]
-      : [
-          path.join(root, `${brand.executableName}.exe`),
-          path.join(root, 'resources', 'bin', 'goose.exe'),
-        ];
+      ? path.join(root, `${brand.productName}.app`, 'Contents', 'Resources')
+      : path.join(root, 'resources');
+  const required = [
+    platform === 'darwin'
+      ? path.join(root, `${brand.productName}.app`, 'Contents', 'MacOS', brand.executableName)
+      : path.join(root, `${brand.executableName}.exe`),
+    path.join(resourcesRoot, 'bin', platform === 'darwin' ? 'goose' : 'goose.exe'),
+    ...['icon.icns', 'icon.ico', 'icon.png', 'iconTemplate.png', 'iconTemplate@2x.png'].map(
+      (asset) => path.join(resourcesRoot, 'aibuddy', asset)
+    ),
+  ];
 
   const problems = required.filter((file) => !fs.existsSync(file)).map((file) => `missing ${file}`);
 
   // A correctly named tree is what release automation globs for, so a package
   // built into another edition's directory has to fail even if its contents match.
   const expectedDirName =
-    platform === 'darwin'
-      ? `${brand.artifactStem}-darwin-arm64`
-      : `${brand.productName}-win32-x64`;
+    platform === 'darwin' ? `${brand.artifactStem}-darwin-arm64` : `${brand.productName}-win32-x64`;
   if (path.basename(root) !== expectedDirName) {
     problems.push(`package root ${path.basename(root)} is not named ${expectedDirName}`);
   }
@@ -49,7 +50,12 @@ function verifyInfoPlist(brand, plist) {
 
   const schemes = (plist.CFBundleURLTypes ?? []).flatMap((type) => type.CFBundleURLSchemes ?? []);
   if (!schemes.includes(brand.protocol)) {
-    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected ${brand.protocol}`);
+    problems.push(
+      `CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected ${brand.protocol}`
+    );
+  }
+  if (!schemes.includes('goose')) {
+    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected goose`);
   }
 
   return problems;
@@ -67,7 +73,9 @@ function verifyPackage(brand, platform, root, readPlist = readInfoPlist) {
   }
 
   if (problems.length > 0) {
-    throw new Error(`${brand.productName} package at ${root} is invalid:\n  ${problems.join('\n  ')}`);
+    throw new Error(
+      `${brand.productName} package at ${root} is invalid:\n  ${problems.join('\n  ')}`
+    );
   }
 }
 
