@@ -92,9 +92,6 @@
   "balanceWidget.loadFailed": {
     "defaultMessage": "余额加载失败"
   },
-  "balanceWidget.noPat": {
-    "defaultMessage": "重新登录后可查看余额"
-  },
   "balanceWidget.refresh": {
     "defaultMessage": "刷新余额"
   },

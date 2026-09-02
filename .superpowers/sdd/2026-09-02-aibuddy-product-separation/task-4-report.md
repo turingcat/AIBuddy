@@ -107,3 +107,15 @@ Vitest V8 branch coverage is used as the closest available path metric.
 - `pnpm run typecheck`: passed.
 - `pnpm exec prettier --write ...` and `cargo fmt --all`: completed.
 - Desktop source search contains no `no-pat`, `noPat`, or `balanceWidget.noPat` references.
+
+## Review Fix Round 3
+
+### Outcome
+
+- Removed the two dead `balanceWidget.noPat` locale entries from the English and Simplified Chinese message catalogs.
+
+### Verification
+
+- `pnpm run i18n:check`: passed; zh-CN validated with 1,492 messages.
+- `pnpm run i18n:compile`: passed.
+- `rg -n "balanceWidget\\.noPat|noPat" ui/desktop/src/i18n/messages ui/desktop/src -g '*.json' -g '*.ts' -g '*.tsx'`: no matches.

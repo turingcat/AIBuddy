@@ -179,9 +179,6 @@
   "balanceWidget.monthly": {
     "defaultMessage": "Monthly: {value}"
   },
-  "balanceWidget.noPat": {
-    "defaultMessage": "Re-login to view balance"
-  },
   "balanceWidget.refresh": {
     "defaultMessage": "Refresh balance"
   },
