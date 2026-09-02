@@ -118,9 +118,9 @@ jobs:
           $isCuda = "${{ inputs.windows_variant }}" -eq "cuda"
 
           if ($isCuda) {
-            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --features cuda
+            cargo build --locked --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --features cuda
           } else {
-            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
+            cargo build --locked --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
           }
 
           $binaryPath = "./target/x86_64-pc-windows-msvc/release/goose.exe"

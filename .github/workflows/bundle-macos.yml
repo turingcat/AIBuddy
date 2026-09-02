@@ -127,7 +127,7 @@ jobs:
         run: |
           source ./bin/activate-hermit
           rustup target add "$MACOS_TARGET"
-          cargo build --release -p goose-cli --bin goose --target "$MACOS_TARGET"
+          cargo build --locked --release -p goose-cli --bin goose --target "$MACOS_TARGET"
 
       - name: Prepare binary artifact
         run: |
