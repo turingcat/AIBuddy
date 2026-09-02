@@ -16,3 +16,10 @@ Verification:
 Concerns:
 
 - Scheduled execution and paths-filter behavior need observation in GitHub Actions once workflow execution is authorized.
+
+Fix Round 1:
+
+- Restricted the `changes` job that runs `dorny/paths-filter` to `contents: read` and `pull-requests: read`; build and conformance jobs retain no added permissions.
+- Replaced the schedule text assertion with YAML parsing and a five-field nonempty cron assertion.
+- Added a contract binding the build artifact upload name to the conformance matrix download name.
+- Removed the duplicate MCP code-change event-tier test; the existing docs-only PR and non-PR coverage test remains the single assertion of that behavior.
