@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
@@ -22,6 +22,7 @@ const messages = {
   'accountMenu.dailyRemaining': '每日剩余',
   'accountMenu.weeklyRemaining': '每周剩余',
   'accountMenu.monthlyRemaining': '每月剩余',
+  'accountMenu.recharge': '充值',
   'balanceWidget.refresh': '刷新余额',
 };
 
@@ -176,6 +177,52 @@ describe('UserAccountMenu', () => {
     expect(within(summary).getByText('林也')).toBeInTheDocument();
     expect(within(summary).getByTestId('balance-value')).toBeInTheDocument();
     expect(within(summary).getByRole('menuitem', { name: '刷新余额' })).toBeInTheDocument();
+  });
+
+  it('dispatches the recharge dialog event from the summary icon and the menu item after the menu closes', async () => {
+    const listener = vi.fn();
+    window.addEventListener('open-recharge-dialog', listener);
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        kind: 'balance',
+        displayName: '林也',
+        userName: 'linye',
+        quota: 5_000_000,
+        usedQuota: 0,
+        requestCount: 1,
+      },
+      currency: DEFAULT_CURRENCY_CONFIG,
+      updatedAt: Date.now(),
+    });
+
+    try {
+      // 摘要行充值图标：菜单随选择关闭，弹窗事件延迟一拍派发
+      const user = userEvent.setup();
+      renderMenu();
+      await user.click(screen.getByRole('button', { name: /林也/ }));
+      await user.click(screen.getByTestId('account-menu-recharge'));
+
+      await waitFor(() => {
+        expect(listener).toHaveBeenCalledTimes(1);
+      });
+      await waitFor(() => {
+        expect(screen.queryByRole('menu')).toBeNull();
+      });
+
+      // 菜单项"充值"：同样先关菜单再派发事件
+      await user.click(screen.getByRole('button', { name: /林也/ }));
+      await user.click(screen.getByTestId('account-menu-recharge-item'));
+
+      await waitFor(() => {
+        expect(listener).toHaveBeenCalledTimes(2);
+      });
+      await waitFor(() => {
+        expect(screen.queryByRole('menu')).toBeNull();
+      });
+    } finally {
+      window.removeEventListener('open-recharge-dialog', listener);
+    }
   });
 
   it('refreshes from the summary with keyboard navigation without closing the account menu', async () => {

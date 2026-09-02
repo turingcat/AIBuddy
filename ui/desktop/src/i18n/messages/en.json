@@ -8,6 +8,9 @@
   "accountMenu.notLoggedIn": {
     "defaultMessage": "Not signed in"
   },
+  "accountMenu.recharge": {
+    "defaultMessage": "Add credits"
+  },
   "accountMenu.settings": {
     "defaultMessage": "Settings"
   },
@@ -2923,6 +2926,72 @@
   },
   "providerSetupActions.submit": {
     "defaultMessage": "Submit"
+  },
+  "rechargeDialog.backToAmount": {
+    "defaultMessage": "Change amount"
+  },
+  "rechargeDialog.createFailed": {
+    "defaultMessage": "Failed to create order"
+  },
+  "rechargeDialog.customAmount": {
+    "defaultMessage": "Custom amount (whole CNY)"
+  },
+  "rechargeDialog.description": {
+    "defaultMessage": "Pay with WeChat to top up your account"
+  },
+  "rechargeDialog.expired": {
+    "defaultMessage": "QR code expired"
+  },
+  "rechargeDialog.expiresIn": {
+    "defaultMessage": "Expires in {time}"
+  },
+  "rechargeDialog.loadFailed": {
+    "defaultMessage": "Failed to load payment options"
+  },
+  "rechargeDialog.loading": {
+    "defaultMessage": "Loading payment options…"
+  },
+  "rechargeDialog.minHint": {
+    "defaultMessage": "Minimum {amount} CNY"
+  },
+  "rechargeDialog.notEnabled": {
+    "defaultMessage": "In-app top-up is not available on this site yet"
+  },
+  "rechargeDialog.openWebTopup": {
+    "defaultMessage": "Top up in browser"
+  },
+  "rechargeDialog.orderExpired": {
+    "defaultMessage": "Order expired, please place a new one"
+  },
+  "rechargeDialog.payAmount": {
+    "defaultMessage": "Pay ¥{amount}"
+  },
+  "rechargeDialog.payButton": {
+    "defaultMessage": "WeChat Pay ¥{amount}"
+  },
+  "rechargeDialog.payFailed": {
+    "defaultMessage": "Payment failed, please try again"
+  },
+  "rechargeDialog.qrNote": {
+    "defaultMessage": "Closing this dialog will not cancel the order; it stays payable until expiry"
+  },
+  "rechargeDialog.retry": {
+    "defaultMessage": "Retry"
+  },
+  "rechargeDialog.scanHint": {
+    "defaultMessage": "Scan with WeChat to pay"
+  },
+  "rechargeDialog.selectAmount": {
+    "defaultMessage": "Select amount (CNY)"
+  },
+  "rechargeDialog.success": {
+    "defaultMessage": "Payment successful"
+  },
+  "rechargeDialog.title": {
+    "defaultMessage": "Add credits"
+  },
+  "rechargeDialog.unauthorized": {
+    "defaultMessage": "Login expired, please re-login"
   },
   "recipeActivityEditor.activitiesDescription": {
     "defaultMessage": "The top-line prompts and activity buttons that will display in the recipe chat window."

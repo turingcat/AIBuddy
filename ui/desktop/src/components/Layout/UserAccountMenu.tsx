@@ -1,6 +1,7 @@
-import { ChevronUp, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
+import { ChevronUp, CircleDollarSign, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
 
 import { useBalance, type BalanceState } from '../../hooks/useBalance';
+import { AppEvents } from '../../constants/events';
 import { defineMessages, useIntl } from '../../i18n';
 import {
   DropdownMenu,
@@ -16,8 +17,17 @@ const i18n = defineMessages({
   notLoggedIn: { id: 'accountMenu.notLoggedIn', defaultMessage: 'Not signed in' },
   settings: { id: 'accountMenu.settings', defaultMessage: 'Settings' },
   logout: { id: 'accountMenu.logout', defaultMessage: 'Log out' },
+  recharge: { id: 'accountMenu.recharge', defaultMessage: 'Add credits' },
   refresh: { id: 'balanceWidget.refresh', defaultMessage: 'Refresh balance' },
 });
+
+function openRechargeDialog() {
+  // 延迟到下一个宏任务再打开弹窗：让 DropdownMenu 先完成关闭卸载，
+  // 避免模态 Dialog 与打开中的菜单同时争抢焦点代理，导致菜单触发器失去响应
+  window.setTimeout(() => {
+    window.dispatchEvent(new CustomEvent(AppEvents.OPEN_RECHARGE_DIALOG));
+  }, 0);
+}
 
 interface UserAccountMenuProps {
   onOpenSettings: () => void;
@@ -58,6 +68,27 @@ function BalanceRefreshMenuItem({
   );
 }
 
+function RechargeMenuItem() {
+  const intl = useIntl();
+  const rechargeLabel = intl.formatMessage(i18n.recharge);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <DropdownMenuItem
+          aria-label={rechargeLabel}
+          className="shrink-0 p-1 text-text-secondary hover:text-text-primary"
+          onSelect={() => openRechargeDialog()}
+          data-testid="account-menu-recharge"
+        >
+          <CircleDollarSign className="size-3" />
+        </DropdownMenuItem>
+      </TooltipTrigger>
+      <TooltipContent>{rechargeLabel}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function HeyBuddyAccountSummary({
   state,
   accountName,
@@ -77,6 +108,7 @@ function HeyBuddyAccountSummary({
         <BalanceStatus state={state} />
       </span>
       <BalanceRefreshMenuItem refreshing={refreshing} onRefresh={onRefresh} />
+      <RechargeMenuItem />
     </div>
   );
 }
@@ -111,6 +143,10 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
           onRefresh={refresh}
         />
         <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={openRechargeDialog} data-testid="account-menu-recharge-item">
+          <CircleDollarSign />
+          {intl.formatMessage(i18n.recharge)}
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onOpenSettings}>
           <Settings />
           {intl.formatMessage(i18n.settings)}
