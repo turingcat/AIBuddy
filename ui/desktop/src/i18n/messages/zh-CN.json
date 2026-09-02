@@ -1487,9 +1487,6 @@
   "hub.goodAfternoon": {
     "defaultMessage": "下午好"
   },
-  "hub.assistantIdentity": {
-    "defaultMessage": "，我是广林AI助手"
-  },
   "hub.aibuddyIdentity": {
     "defaultMessage": "，我是AIBuddy"
   },

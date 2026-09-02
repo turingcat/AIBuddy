@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useIntl as useReactIntl, type IntlShape, type MessageDescriptor } from 'react-intl';
-import { getAppDisplayName, getAppProtocol } from '../brand';
+import { appBrand } from '../brand';
 
 /**
  * Locale detection and message loading for the i18n system.
@@ -18,15 +18,14 @@ import { getAppDisplayName, getAppProtocol } from '../brand';
 export { defineMessages } from 'react-intl';
 
 /**
- * Every message that names the product or its URL scheme is written against
- * `{appName}` / `{protocol}` so a single catalog serves both editions. Those
- * values are supplied here rather than repeated at each call site.
+ * Product and URL scheme placeholders are supplied centrally so call sites
+ * consistently render the fixed AIBuddy identity.
  */
 export function useIntl(): IntlShape {
   const intl = useReactIntl();
 
   return useMemo(() => {
-    const brandValues = { appName: getAppDisplayName(), protocol: getAppProtocol() };
+    const brandValues = { appName: appBrand.productName, protocol: appBrand.protocol };
 
     return {
       ...intl,

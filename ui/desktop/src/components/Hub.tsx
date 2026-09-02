@@ -32,7 +32,6 @@ const i18n = defineMessages({
   goodMorning: { id: 'hub.goodMorning', defaultMessage: 'Good morning' },
   goodAfternoon: { id: 'hub.goodAfternoon', defaultMessage: 'Good afternoon' },
   goodEvening: { id: 'hub.goodEvening', defaultMessage: 'Good evening' },
-  assistantIdentity: { id: 'hub.assistantIdentity', defaultMessage: ", I'm Guanglin AI Assistant" },
   aibuddyIdentity: { id: 'hub.aibuddyIdentity', defaultMessage: ", I'm AIBuddy" },
 });
 
@@ -85,8 +84,7 @@ export default function Hub({
         : hour < 18
           ? intl.formatMessage(i18n.goodAfternoon)
           : intl.formatMessage(i18n.goodEvening);
-    const assistantIdentity = i18n.aibuddyIdentity;
-    return `${timeOfDay}${intl.formatMessage(assistantIdentity)}`;
+    return `${timeOfDay}${intl.formatMessage(i18n.aibuddyIdentity)}`;
   }, [intl, hour]);
 
   const draftForMenu = useMemo(
