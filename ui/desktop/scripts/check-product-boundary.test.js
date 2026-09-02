@@ -2,7 +2,10 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
-const { findProductBoundaryViolations, isDesktopConfigurationFile } = require('./check-product-boundary');
+const {
+  findProductBoundaryViolations,
+  isDesktopConfigurationFile,
+} = require('./check-product-boundary');
 
 const fixtureRoots = [];
 
@@ -33,18 +36,28 @@ describe('findProductBoundaryViolations', () => {
     const root = createFixture();
     writeFixture(root, 'ui/desktop/src/runtime.ts', 'const host = "https://ai.linyeyun.cn";');
     writeFixture(root, 'ui/desktop/scripts/auth.js', 'process.env.HEYBUDDY_AUTH_API_BASE_URL;');
-    writeFixture(root, 'ui/desktop/forge.config.ts', 'if (process.env.APP_EDITION === "heybuddy") {}');
+    writeFixture(
+      root,
+      'ui/desktop/forge.config.ts',
+      'if (process.env.APP_EDITION === "heybuddy") {}'
+    );
     writeFixture(root, 'ui/desktop/src/preload.ts', 'export const login = loginViaOA;');
     writeFixture(root, 'ui/desktop/src/migration.ts', 'migrateLegacyAIBuddyData();');
     writeFixture(
       root,
       'crates/goose-providers/src/declarative/definitions/heybuddy.json',
-      '{"name":"heybuddy","api_key_env":"HEYBUDDY_API_KEY"}',
+      '{"name":"heybuddy","api_key_env":"HEYBUDDY_API_KEY"}'
     );
 
     expect(findProductBoundaryViolations(root)).toEqual([
-      { file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json', pattern: 'bundled heybuddy provider definition' },
-      { file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json', pattern: 'HeyBuddy provider credential variable' },
+      {
+        file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json',
+        pattern: 'bundled heybuddy provider definition',
+      },
+      {
+        file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json',
+        pattern: 'HeyBuddy provider credential variable',
+      },
       { file: 'ui/desktop/forge.config.ts', pattern: 'APP_EDITION active usage' },
       { file: 'ui/desktop/scripts/auth.js', pattern: 'HEYBUDDY_AUTH_API_BASE_URL' },
       { file: 'ui/desktop/src/migration.ts', pattern: 'AIBuddy legacy migration identifier' },
@@ -55,11 +68,15 @@ describe('findProductBoundaryViolations', () => {
 
   it('reports active edition selection without reporting comments or documentation', () => {
     const root = createFixture();
-    writeFixture(root, 'ui/desktop/src/runtime.ts', [
-      '// APP_EDITION is no longer supported.',
-      'const edition = process.env.APP_EDITION;',
-      'const label = "APP_EDITION";',
-    ].join('\n'));
+    writeFixture(
+      root,
+      'ui/desktop/src/runtime.ts',
+      [
+        '// APP_EDITION is no longer supported.',
+        'const edition = process.env.APP_EDITION;',
+        'const label = "APP_EDITION";',
+      ].join('\n')
+    );
     writeFixture(root, 'ui/desktop/src/edition-guide.md', 'APP_EDITION was a legacy setting.');
 
     expect(findProductBoundaryViolations(root)).toEqual([
@@ -72,12 +89,64 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(
       root,
       'ui/desktop/src/gooseServeEnv.ts',
-      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };",
+      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };"
     );
     writeFixture(root, 'ui/desktop/scripts/start.sh', 'GOOSE_PROVIDER=heybuddy goose serve');
 
     expect(findProductBoundaryViolations(root)).toEqual([
       { file: 'ui/desktop/scripts/start.sh', pattern: 'HeyBuddy provider selection' },
+    ]);
+  });
+
+  it('rejects HeyBuddy provider values in shell, object, JSON, and YAML configuration', () => {
+    const root = createFixture();
+    writeFixture(root, 'ui/desktop/scripts/start.sh', 'export GOOSE_PROVIDER = heybuddy');
+    writeFixture(
+      root,
+      'ui/desktop/src/gooseServeEnv.ts',
+      "const env = { 'GOOSE_PROVIDER': 'heybuddy' };"
+    );
+    writeFixture(root, 'ui/desktop/src/provider.json', '{"GOOSE_PROVIDER": "heybuddy"}');
+    writeFixture(root, 'ui/desktop/src/provider.yaml', 'GOOSE_PROVIDER : "heybuddy"');
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'ui/desktop/scripts/start.sh', pattern: 'HeyBuddy provider selection' },
+      { file: 'ui/desktop/src/gooseServeEnv.ts', pattern: 'HeyBuddy provider selection' },
+      { file: 'ui/desktop/src/provider.json', pattern: 'HeyBuddy provider selection' },
+      { file: 'ui/desktop/src/provider.yaml', pattern: 'HeyBuddy provider selection' },
+    ]);
+  });
+
+  it('rejects HeyBuddy login, OA, and product identity copy without rejecting generic Goose names', () => {
+    const root = createFixture();
+    writeFixture(root, 'ui/desktop/src/LoginView.tsx', '登录 HeyBuddy; 公司OA;');
+    writeFixture(root, 'ui/desktop/src/Welcome.tsx', 'Welcome to HeyBuddy');
+    writeFixture(root, 'ui/desktop/forge.config.ts', 'const app = { productName: "HeyBuddy" };');
+    writeFixture(
+      root,
+      'ui/desktop/src/gooseServeEnv.ts',
+      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };"
+    );
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'ui/desktop/forge.config.ts', pattern: 'HeyBuddy product identity' },
+      { file: 'ui/desktop/src/LoginView.tsx', pattern: 'Company OA copy' },
+      { file: 'ui/desktop/src/LoginView.tsx', pattern: 'HeyBuddy login copy' },
+      { file: 'ui/desktop/src/Welcome.tsx', pattern: 'HeyBuddy welcome copy' },
+    ]);
+  });
+
+  it('allows only checker fixture literals while reporting forbidden markers in unrelated test files', () => {
+    const root = createFixture();
+    writeFixture(
+      root,
+      'ui/desktop/scripts/check-product-boundary.test.js',
+      ['GOOSE_PROVIDER=heybuddy', '登录 HeyBuddy', '公司OA'].join('\n')
+    );
+    writeFixture(root, 'ui/desktop/src/unrelated.test.ts', 'const legacy = "登录 HeyBuddy";');
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'ui/desktop/src/unrelated.test.ts', pattern: 'HeyBuddy login copy' },
     ]);
   });
 
@@ -89,13 +158,18 @@ describe('findProductBoundaryViolations', () => {
       'APP_EDITION === "heybuddy"',
     ].join('\n');
     writeFixture(root, 'docs/superpowers/plans/legacy.md', legacyContent);
+    writeFixture(root, 'branding/README.md', '公司OA historical icon notes');
+    writeFixture(root, 'branding/active.md', '公司OA active product copy');
+    writeFixture(root, 'branding/icon.ts', 'const copy = "公司OA";');
     writeFixture(root, 'ui/desktop/out/main.js', legacyContent);
     writeFixture(root, 'ui/desktop/node_modules/example/index.js', legacyContent);
     writeFixture(root, 'ui/desktop/src/__snapshots__/runtime.snap', legacyContent);
-    writeFixture(root, 'ui/desktop/src/test/setup.ts', legacyContent);
     writeFixture(root, 'ui/desktop/scripts/check-product-boundary.js', legacyContent);
 
-    expect(findProductBoundaryViolations(root)).toEqual([]);
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'branding/active.md', pattern: 'Company OA copy' },
+      { file: 'branding/icon.ts', pattern: 'Company OA copy' },
+    ]);
   });
 
   it('recognizes desktop root configuration files with Windows separators', () => {
@@ -110,7 +184,11 @@ describe('check-product-boundary CLI', () => {
   it('reports a forbidden marker in a root PowerShell build script', () => {
     const root = createFixture();
     const checker = copyChecker(root);
-    writeFixture(root, 'build-windows.ps1', '$env:HEYBUDDY_AUTH_API_BASE_URL = "https://legacy.example";');
+    writeFixture(
+      root,
+      'build-windows.ps1',
+      '$env:HEYBUDDY_AUTH_API_BASE_URL = "https://legacy.example";'
+    );
 
     const result = spawnSync(process.execPath, [checker], { encoding: 'utf8' });
 
@@ -143,8 +221,12 @@ describe('check-product-boundary CLI', () => {
   });
 
   it('is exposed through the desktop package script', () => {
-    const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+    const packageJson = JSON.parse(
+      fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8')
+    );
 
-    expect(packageJson.scripts['check:product-boundary']).toBe('node scripts/check-product-boundary.js');
+    expect(packageJson.scripts['check:product-boundary']).toBe(
+      'node scripts/check-product-boundary.js'
+    );
   });
 });
