@@ -59,13 +59,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_equal entries.length, entries.map { |entry| entry[:key] }.uniq.length,
                  "Rust cache keys must be unique across performance workflows"
 
-    assert_rust_cache_key_context(entries, "ci.yml", "rust-build-and-test", /standard/i)
-    assert_rust_cache_key_context(entries, "ci.yml", "rust-msrv", /msrv/i)
-    assert_rust_cache_key_context(entries, "ci.yml", "rust-build-windows", /x86_64-pc-windows-msvc/)
-    assert_rust_cache_key_context(entries, "bundle-macos.yml", "build-goose", /aarch64-apple-darwin|MACOS_TARGET/)
-    assert_rust_cache_key_context(entries, "bundle-windows.yml", "build-goose-windows",
-                                  /x86_64-pc-windows-msvc/,
-                                  /inputs\.windows_variant/)
+    assert_semantic_rust_cache_contexts(entries)
   end
 
   def test_desktop_builds_cache_the_pnpm_store_without_node_modules
@@ -149,25 +143,78 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def rust_cache_entries
     %w[ci.yml mcp-conformance.yml bundle-macos.yml bundle-windows.yml].flat_map do |workflow_name|
-      load_workflow(workflow_name).fetch("jobs").flat_map do |job_name, job|
+      workflow = load_workflow(workflow_name)
+
+      workflow.fetch("jobs").flat_map do |job_name, job|
         job.fetch("steps", []).filter_map do |step|
           next unless step["uses"].to_s.start_with?("Swatinem/rust-cache@")
 
-          { workflow: workflow_name, job: job_name, key: step.dig("with", "key") }
+          {
+            workflow: workflow_name,
+            job: job_name,
+            job_definition: job,
+            key: step.dig("with", "key"),
+          }
         end
       end
     end
   end
 
-  def assert_rust_cache_key_context(entries, workflow_name, job_name, *patterns)
-    keys = entries.filter_map do |entry|
-      entry[:key] if entry[:workflow] == workflow_name && entry[:job] == job_name
-    end
+  def assert_semantic_rust_cache_contexts(entries)
+    assert_cache_context(entries, :standard, /standard/i)
+    assert_cache_context(entries, :msrv, /msrv/i)
+    assert_cache_context(entries, :target, /aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+    assert_cache_context(entries, :cuda, /inputs\.windows_variant/)
+  end
 
-    refute_empty keys, "#{workflow_name} #{job_name} must define a Rust cache key"
-    patterns.each do |pattern|
-      assert keys.any? { |key| key.to_s.match?(pattern) },
-             "#{workflow_name} #{job_name} Rust cache key must include #{pattern.inspect}"
+  def assert_cache_context(entries, context, pattern)
+    context_entries = entries.select { |entry| cache_context?(entry, context) }
+
+    refute_empty context_entries, "Rust cache must cover the #{context} compiler context"
+    context_entries.each do |entry|
+      assert entry[:key].to_s.match?(pattern),
+             "#{entry[:workflow]} #{entry[:job]} Rust cache key must include #{pattern.inspect} for #{context}"
     end
+  end
+
+  def cache_context?(entry, context)
+    job = job_yaml(entry)
+
+    case context
+    when :standard
+      default_rust_toolchain?(entry) && cargo_build_or_test?(job) && !msrv_job?(job) && !target_job?(job) && !cuda_job?(job)
+    when :msrv
+      msrv_job?(job)
+    when :target
+      target_job?(job)
+    when :cuda
+      cuda_job?(job)
+    end
+  end
+
+  def default_rust_toolchain?(entry)
+    entry[:job_definition].fetch("steps", []).any? do |step|
+      step["uses"].to_s.start_with?("actions-rust-lang/setup-rust-toolchain@") && step.dig("with", "toolchain").to_s.empty?
+    end
+  end
+
+  def cargo_build_or_test?(job)
+    job.match?(/\bcargo\s+(build|test)\b/)
+  end
+
+  def msrv_job?(job)
+    job.match?(/rust-version/) && job.match?(/toolchain:.*steps\./m)
+  end
+
+  def target_job?(job)
+    job.match?(/rustup target add|--target/) && job.match?(/aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+  end
+
+  def cuda_job?(job)
+    job.match?(/cuda-toolkit|--features cuda|windows_variant.*cuda/i)
+  end
+
+  def job_yaml(entry)
+    YAML.dump(entry[:job_definition])
   end
 end
