@@ -6,14 +6,32 @@ require "yaml"
 class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
+  CI_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
+  CI_REQUIRED_CHECK_NAMES = {
+    "rust-format" => "Check Rust Code Format",
+    "rust-build-and-test" => "Build and Test Rust Project",
+    "goose-sdk-uniffi" => "Check goose-sdk UniFFI",
+    "rust-build-and-test-tls" => "Build and Test TLS Backend (${{ matrix.tls-feature }})",
+    "rust-build-and-test-roaming" => "Build and Test Roaming Feature",
+    "rust-build-windows" => "Build Rust Project on Windows",
+    "rust-msrv" => "Check MSRV",
+    "rust-lint" => "Lint Rust Code",
+    "schema-check" => "Check Generated Schemas are Up-to-Date",
+    "desktop-lint" => "Test and Lint Electron Desktop App",
+  }.freeze
 
-  def test_ci_and_mcp_conformance_cancel_superseded_pull_request_runs
-    %w[ci.yml mcp-conformance.yml].each do |workflow_name|
-      workflow = load_workflow(workflow_name)
+  def test_ci_isolates_pull_request_push_and_merge_group_concurrency
+    workflow = load_workflow("ci.yml")
 
-      assert_equal PR_CONCURRENCY_GROUP, workflow.dig("concurrency", "group"), workflow_name
-      assert_equal true, workflow.dig("concurrency", "cancel-in-progress"), workflow_name
-    end
+    assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
+    assert_equal "${{ github.event_name == 'pull_request' }}", workflow.dig("concurrency", "cancel-in-progress")
+  end
+
+  def test_mcp_conformance_cancels_superseded_pull_request_runs
+    workflow = load_workflow("mcp-conformance.yml")
+
+    assert_equal PR_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
+    assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
   end
 
   def test_direct_cargo_commands_use_locked_rust_dependencies
@@ -33,11 +51,61 @@ class WorkflowPerformanceContractsTest < Minitest::Test
                     "mcp-conformance-build must lock Rust dependencies"
   end
 
-  def test_pull_requests_only_run_code_dependent_ci_jobs_when_code_changes
+  def test_ci_changes_reports_code_and_docs_only_state_for_every_ci_event
+    workflow = load_workflow("ci.yml")
+    changes = workflow.fetch("jobs").fetch("changes")
+    filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
+
+    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
+      assert_match(/^  #{event_name}:/, workflow_text("ci.yml"), "ci.yml must handle #{event_name} events")
+    end
+    assert_equal "${{ steps.filter.outputs.docs-only }}", changes.dig("outputs", "docs-only")
+    assert_equal "${{ steps.filter.outputs.code }}", changes.dig("outputs", "code")
+    assert_includes filter.dig("with", "filters"), "docs-only:"
+    assert_includes filter.dig("with", "filters"), "code:"
+    assert_includes filter.dig("with", "filters"), "!documentation/**"
+  end
+
+  def test_dependency_locks_skip_docs_only_pull_requests_without_compiling
+    workflow = load_workflow("ci.yml")
+    job = workflow.fetch("jobs").fetch("dependency-locks")
+    commands = job_run_commands("ci.yml", "dependency-locks").join("\n")
+
+    assert_code_change_event_tier(workflow, "dependency-locks", requires_dependency_locks: false)
+    assert_includes commands, "cargo metadata --locked --format-version 1 --no-deps"
+    assert_includes commands, "pnpm install --frozen-lockfile --ignore-scripts"
+    refute_match(/cargo\s+(build|check|test)\b/, commands)
+  end
+
+  def test_pull_requests_only_run_standard_ci_jobs_when_code_changes
     workflow = load_workflow("ci.yml")
 
-    %w[rust-build-and-test goose-sdk-uniffi rust-build-and-test-tls rust-build-and-test-roaming rust-msrv rust-lint].each do |job_name|
+    %w[rust-format rust-build-and-test rust-build-and-test-tls rust-lint schema-check desktop-lint].each do |job_name|
       assert_code_change_event_tier(workflow, job_name)
+    end
+  end
+
+  def test_compatibility_jobs_run_only_for_complete_non_pull_request_coverage
+    workflow = load_workflow("ci.yml")
+
+    %w[goose-sdk-uniffi rust-build-and-test-roaming rust-build-windows rust-msrv].each do |job_name|
+      assert_non_pull_request_event_tier(workflow, job_name)
+    end
+  end
+
+  def test_tls_matrix_uses_one_backend_for_pull_requests_and_both_otherwise
+    matrix = load_workflow("ci.yml").dig("jobs", "rust-build-and-test-tls", "strategy", "matrix", "tls-feature")
+
+    assert_includes matrix, "github.event_name == 'pull_request'"
+    assert_includes matrix, '"rustls-tls"'
+    assert_includes matrix, '"native-tls"'
+  end
+
+  def test_ci_required_check_names_remain_stable
+    jobs = load_workflow("ci.yml").fetch("jobs")
+
+    CI_REQUIRED_CHECK_NAMES.each do |job_name, check_name|
+      assert_equal check_name, jobs.fetch(job_name).fetch("name")
     end
   end
 
@@ -45,7 +113,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     workflow = load_workflow("mcp-conformance.yml")
 
     %w[build conformance].each do |job_name|
-      assert_code_change_event_tier(workflow, job_name)
+      assert_code_change_event_tier(workflow, job_name, requires_dependency_locks: false)
     end
   end
 
@@ -121,14 +189,24 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     justfile.match(pattern)[0]
   end
 
-  def assert_code_change_event_tier(workflow, job_name)
+  def assert_code_change_event_tier(workflow, job_name, requires_dependency_locks: true)
     job = workflow.fetch("jobs").fetch(job_name)
     condition = job.fetch("if")
 
     assert_includes Array(job["needs"]), "changes", "#{job_name} must depend on changes"
+    assert_includes Array(job["needs"]), "dependency-locks", "#{job_name} must depend on dependency-locks" if requires_dependency_locks
     assert_includes condition, "github.event_name != 'pull_request'", job_name
     assert_includes condition, "needs.changes.outputs.code == 'true'", job_name
     assert_includes condition, "||", "#{job_name} must run for non-PR events or code changes"
+  end
+
+  def assert_non_pull_request_event_tier(workflow, job_name)
+    job = workflow.fetch("jobs").fetch(job_name)
+    condition = job.fetch("if")
+
+    assert_includes Array(job["needs"]), "changes", "#{job_name} must depend on changes"
+    assert_includes Array(job["needs"]), "dependency-locks", "#{job_name} must depend on dependency-locks"
+    assert_equal "github.event_name != 'pull_request'", condition, "#{job_name} must retain full non-PR coverage"
   end
 
   def cache_paths(workflow_name)
