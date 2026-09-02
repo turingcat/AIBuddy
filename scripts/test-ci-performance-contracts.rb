@@ -49,10 +49,23 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
-  def test_rust_caches_are_scoped_to_their_workflow
-    %w[ci.yml mcp-conformance.yml bundle-macos.yml bundle-windows.yml].each do |workflow_name|
-      assert_rust_cache_keys_are_isolated(workflow_name)
+  def test_rust_caches_are_isolated_across_all_performance_workflows
+    entries = rust_cache_entries
+
+    refute_empty entries, "performance workflows must define Rust cache keys"
+    entries.each do |entry|
+      refute_empty entry[:key].to_s.strip, "#{entry[:workflow]} #{entry[:job]} Rust cache key"
     end
+    assert_equal entries.length, entries.map { |entry| entry[:key] }.uniq.length,
+                 "Rust cache keys must be unique across performance workflows"
+
+    assert_rust_cache_key_context(entries, "ci.yml", "rust-build-and-test", /standard/i)
+    assert_rust_cache_key_context(entries, "ci.yml", "rust-msrv", /msrv/i)
+    assert_rust_cache_key_context(entries, "ci.yml", "rust-build-windows", /x86_64-pc-windows-msvc/)
+    assert_rust_cache_key_context(entries, "bundle-macos.yml", "build-goose", /aarch64-apple-darwin|MACOS_TARGET/)
+    assert_rust_cache_key_context(entries, "bundle-windows.yml", "build-goose-windows",
+                                  /x86_64-pc-windows-msvc/,
+                                  /inputs\.windows_variant/)
   end
 
   def test_desktop_builds_cache_the_pnpm_store_without_node_modules
@@ -134,18 +147,27 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end.flat_map { |path| path.lines.map(&:strip) }.reject(&:empty?)
   end
 
-  def assert_rust_cache_keys_are_isolated(workflow_name)
-    entries = load_workflow(workflow_name).fetch("jobs").flat_map do |job_name, job|
-      job.fetch("steps", []).filter_map do |step|
-        next unless step["uses"].to_s.start_with?("Swatinem/rust-cache@")
+  def rust_cache_entries
+    %w[ci.yml mcp-conformance.yml bundle-macos.yml bundle-windows.yml].flat_map do |workflow_name|
+      load_workflow(workflow_name).fetch("jobs").flat_map do |job_name, job|
+        job.fetch("steps", []).filter_map do |step|
+          next unless step["uses"].to_s.start_with?("Swatinem/rust-cache@")
 
-        [job_name, step.dig("with", "key")]
+          { workflow: workflow_name, job: job_name, key: step.dig("with", "key") }
+        end
       end
     end
+  end
 
-    refute_empty entries, "#{workflow_name} must define Rust cache keys"
-    entries.each { |job_name, key| refute_empty key.to_s.strip, "#{workflow_name} #{job_name} Rust cache key" }
-    assert_equal entries.length, entries.map(&:last).uniq.length,
-                 "#{workflow_name} Rust cache keys must be isolated"
+  def assert_rust_cache_key_context(entries, workflow_name, job_name, *patterns)
+    keys = entries.filter_map do |entry|
+      entry[:key] if entry[:workflow] == workflow_name && entry[:job] == job_name
+    end
+
+    refute_empty keys, "#{workflow_name} #{job_name} must define a Rust cache key"
+    patterns.each do |pattern|
+      assert keys.any? { |key| key.to_s.match?(pattern) },
+             "#{workflow_name} #{job_name} Rust cache key must include #{pattern.inspect}"
+    end
   end
 end
