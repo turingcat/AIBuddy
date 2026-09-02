@@ -86,7 +86,6 @@ describe('main embedded Goose root', () => {
       shell: { openPath: vi.fn() },
       Tray: class {},
     }));
-    vi.doMock('./aibuddyDataMigration', () => ({ migrateLegacyAIBuddyData: vi.fn() }));
     vi.doMock('./backendCertificateVerifier', () => ({
       installBackendCertificateVerifiers: vi.fn(),
     }));
@@ -142,7 +141,6 @@ describe('main embedded Goose root', () => {
         })
       );
     } finally {
-      vi.doUnmock('./aibuddyDataMigration');
       vi.doUnmock('./backendCertificateVerifier');
       vi.doUnmock('./credentials');
       vi.doUnmock('./credentialsCrypto');

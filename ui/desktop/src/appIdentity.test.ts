@@ -124,11 +124,12 @@ describe('initializeAppIdentity', () => {
     vi.doUnmock('electron');
   });
 
-  it('runs AIBuddy migration after readiness before settings are read', async () => {
+  it('reads startup data only from the AIBuddy userData directory', async () => {
     vi.resetModules();
     vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
     vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
     const calls: string[] = [];
+    const accessedPaths: string[] = [];
     let resolveReady: () => void;
     const ready = new Promise<void>((resolve) => {
       resolveReady = resolve;
@@ -136,6 +137,7 @@ describe('initializeAppIdentity', () => {
     const settingsFile = '/tmp/Application Support/AIBuddy/settings.json';
     const existsSync = fs.existsSync;
     const existsSpy = vi.spyOn(fs, 'existsSync').mockImplementation((filePath) => {
+      if (typeof filePath === 'string') accessedPaths.push(filePath);
       if (filePath === settingsFile) calls.push('settings-read');
       return existsSync(filePath);
     });
@@ -170,32 +172,20 @@ describe('initializeAppIdentity', () => {
       shell: {},
       Tray: class {},
     }));
-    vi.doMock('./credentialsCrypto', () => ({
-      getCredentialsCodec: () => {
-        calls.push('codec');
-        return { encrypt: (plain: string) => plain, decrypt: (blob: string) => blob };
-      },
-    }));
-    vi.doMock('./aibuddyDataMigration', () => ({
-      migrateLegacyAIBuddyData: () => calls.push('migration'),
-    }));
-
     try {
       await import('./main');
-      expect(calls).not.toContain('codec');
-      expect(calls).not.toContain('migration');
 
       resolveReady!();
       await Promise.resolve();
       await Promise.resolve();
 
-      expect(calls.indexOf('codec')).toBeGreaterThan(-1);
-      expect(calls.indexOf('migration')).toBeGreaterThan(calls.indexOf('codec'));
-      expect(calls.indexOf('settings-read')).toBeGreaterThan(calls.indexOf('migration'));
+      expect(calls.indexOf('settings-read')).toBeGreaterThan(-1);
+      expect(accessedPaths).toContain(settingsFile);
+      expect(
+        accessedPaths.every((filePath) => filePath.startsWith('/tmp/Application Support/AIBuddy/'))
+      ).toBe(true);
     } finally {
       existsSpy.mockRestore();
-      vi.doUnmock('./aibuddyDataMigration');
-      vi.doUnmock('./credentialsCrypto');
       vi.doUnmock('electron');
     }
   });

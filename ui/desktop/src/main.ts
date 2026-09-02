@@ -33,7 +33,6 @@ import { registerAIBuddyRuntimeIpc } from './aibuddyRuntimeIpc';
 import { withSub2apiSession } from './sub2apiAuth';
 import { readCredentials, writeCredentials, clearCredentials } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
-import { migrateLegacyAIBuddyData } from './aibuddyDataMigration';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
 import { buildGooseServeEnv } from './gooseServeEnv';
@@ -110,7 +109,6 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const {
-  userDataDir: USER_DATA_DIR,
   goosePathRoot: GOOSE_PATH_ROOT,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
@@ -319,18 +317,6 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
 
   event.preventDefault();
   callback(verifyBackendCertificate(parsed.hostname, certificate.fingerprint));
-});
-
-app.whenReady().then(() => {
-  try {
-    migrateLegacyAIBuddyData({
-      legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
-      targetUserDataDir: USER_DATA_DIR,
-      codec: getCredentialsCodec(),
-    });
-  } catch (error) {
-    log.error(`AIBuddy legacy data migration failed: ${error}`);
-  }
 });
 
 app.whenReady().then(() => {
