@@ -28,6 +28,21 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     desktop-lint
   ].freeze
 
+  RUST_CACHE_IDENTITIES = {
+    "ci.yml" => {
+      "rust-build-and-test" => "ci-default-tests",
+      "goose-sdk-uniffi" => "ci-uniffi",
+      "rust-build-and-test-tls" => "ci-tls-${{ matrix.tls-feature }}",
+      "rust-build-and-test-roaming" => "ci-roaming",
+      "rust-build-windows" => "ci-windows-x86_64-pc-windows-msvc",
+      "rust-msrv" => "ci-msrv-${{ steps.msrv.outputs.msrv }}",
+      "rust-lint" => "ci-clippy-rustup",
+    },
+    "pr-smoke-test.yml" => {
+      "build-binary" => "pr-smoke-build",
+    },
+  }.freeze
+
   def test_ci_isolates_pull_request_push_and_merge_group_concurrency
     workflow = load_workflow("ci.yml")
 
@@ -150,6 +165,46 @@ class WorkflowPerformanceContractsTest < Minitest::Test
                  "Rust cache keys must be unique across performance workflows"
 
     assert_semantic_rust_cache_contexts(entries)
+  end
+
+  def test_ci_rust_caches_use_distinct_identities_and_save_only_successful_main_builds
+    expected_caches = RUST_CACHE_IDENTITIES.flat_map do |workflow_name, jobs|
+      workflow = load_workflow(workflow_name)
+
+      jobs.map do |job_name, key|
+        job = workflow.fetch("jobs").fetch(job_name)
+        cache = job.fetch("steps").find do |step|
+          step["uses"].to_s.start_with?("Swatinem/rust-cache@")
+        end
+
+        refute_nil cache, "#{workflow_name} #{job_name} must restore a Rust cache"
+        assert_equal key, cache.dig("with", "key"), "#{workflow_name} #{job_name} cache identity changed"
+        assert_equal "${{ github.ref == 'refs/heads/main' && job.status == 'success' }}", cache.dig("with", "save-if"),
+                     "#{workflow_name} #{job_name} must not upload failed or pull request builds"
+
+        [workflow_name, job_name, cache.dig("with", "key")]
+      end
+    end
+
+    assert_equal expected_caches.length, expected_caches.map(&:last).uniq.length,
+                 "CI Rust jobs must not share target artifact caches"
+  end
+
+  def test_v8_marker_repair_runs_after_cache_restore_and_before_builds
+    workflow = load_workflow("ci.yml")
+
+    %w[rust-build-and-test rust-msrv rust-lint].each do |job_name|
+      steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
+      cache_index = steps.index { |step| step["uses"].to_s.start_with?("Swatinem/rust-cache@") }
+      repair_index = steps.index { |step| step["run"] == ".github/scripts/repair-v8-prebuilt.sh" }
+      build_index = steps.index { |step| step["run"].to_s.match?(/\bcargo\s+(build|check|test|clippy)\b/) }
+
+      refute_nil cache_index, "#{job_name} must restore target artifacts before repair"
+      refute_nil repair_index, "#{job_name} must repair stale V8 markers"
+      refute_nil build_index, "#{job_name} must run a Rust build command"
+      assert_operator cache_index, :<, repair_index, "#{job_name} must repair restored target artifacts"
+      assert_operator repair_index, :<, build_index, "#{job_name} must repair V8 before building"
+    end
   end
 
   def test_desktop_builds_cache_the_pnpm_store_without_node_modules
