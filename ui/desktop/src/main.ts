@@ -51,7 +51,7 @@ import {
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
-import { buildSiteRuntimeEnv } from './gooseServeEnv';
+import { buildGooseServeEnv } from './gooseServeEnv';
 import {
   fetchSub2apiEntitlement,
   fetchSub2apiModels,
@@ -1158,7 +1158,7 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const siteRuntimeEnv = buildSiteRuntimeEnv(
+    const siteRuntimeEnv = buildGooseServeEnv(
       readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
     );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
@@ -2110,7 +2110,7 @@ ipcMain.handle('list-models-via-api', async () => {
       reasoning: null,
     }));
   } catch (e) {
-    log.error(`[HeyBuddy] list-models-via-api failed: ${e}`);
+    log.error(`[AIBuddy] list-models-via-api failed: ${e}`);
     return [];
   }
 });

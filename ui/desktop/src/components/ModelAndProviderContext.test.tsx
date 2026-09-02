@@ -65,7 +65,7 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     mocks.saveDefaults.mockResolvedValue(undefined);
     mocks.listModelsViaApi.mockResolvedValue([]);
     mocks.appConfigGet.mockImplementation((key: string) =>
-      key === 'GOOSE_DEFAULT_PROVIDER' ? 'heybuddy' : undefined
+      key === 'GOOSE_DEFAULT_PROVIDER' ? 'aibuddy' : undefined
     );
 
     (window as unknown as { appConfig: { get: typeof mocks.appConfigGet } }).appConfig = {
@@ -83,7 +83,10 @@ describe('ModelAndProviderProvider fallback defaults', () => {
   });
 
   it('keeps a complete persisted default without loading or saving another model', async () => {
-    mocks.readDefaults.mockResolvedValue({ providerId: 'existing-provider', modelId: 'existing-model' });
+    mocks.readDefaults.mockResolvedValue({
+      providerId: 'existing-provider',
+      modelId: 'existing-model',
+    });
 
     renderContext();
 
@@ -104,14 +107,14 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     renderContext();
 
     await waitFor(() => {
-      expect(mocks.saveDefaults).toHaveBeenCalledWith('heybuddy', 'first-model');
+      expect(mocks.saveDefaults).toHaveBeenCalledWith('aibuddy', 'first-model');
       expect(screen.getByTestId('current-model')).toHaveTextContent('first-model');
     });
     expect(mocks.listModelsViaApi).toHaveBeenCalledTimes(1);
     expect(mocks.saveDefaults).toHaveBeenCalledTimes(1);
   });
 
-  it('uses HeyBuddy for the first loaded model when the configured provider is missing', async () => {
+  it('uses AIBuddy for the first loaded model when the configured provider is missing', async () => {
     mocks.appConfigGet.mockReturnValue(undefined);
     mocks.listModelsViaApi.mockResolvedValue([
       { id: 'first-model', name: 'First model', contextLimit: 128000, reasoning: true },
@@ -120,8 +123,8 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     renderContext();
 
     await waitFor(() => {
-      expect(mocks.saveDefaults).toHaveBeenCalledWith('heybuddy', 'first-model');
-      expect(screen.getByTestId('current-provider')).toHaveTextContent('heybuddy');
+      expect(mocks.saveDefaults).toHaveBeenCalledWith('aibuddy', 'first-model');
+      expect(screen.getByTestId('current-provider')).toHaveTextContent('aibuddy');
       expect(screen.getByTestId('current-model')).toHaveTextContent('first-model');
     });
   });
@@ -130,7 +133,7 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     renderContext();
 
     await waitFor(() => expect(mocks.listModelsViaApi).toHaveBeenCalledTimes(1));
-    expect(screen.getByTestId('current-provider')).toHaveTextContent('heybuddy');
+    expect(screen.getByTestId('current-provider')).toHaveTextContent('aibuddy');
     expect(screen.getByTestId('current-model')).toBeEmptyDOMElement();
     expect(mocks.saveDefaults).not.toHaveBeenCalled();
   });
@@ -141,7 +144,7 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     renderContext();
 
     await waitFor(() => expect(mocks.listModelsViaApi).toHaveBeenCalledTimes(1));
-    expect(screen.getByTestId('current-provider')).toHaveTextContent('heybuddy');
+    expect(screen.getByTestId('current-provider')).toHaveTextContent('aibuddy');
     expect(screen.getByTestId('current-model')).toBeEmptyDOMElement();
     expect(mocks.saveDefaults).not.toHaveBeenCalled();
   });

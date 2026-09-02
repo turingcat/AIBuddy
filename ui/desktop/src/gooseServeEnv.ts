@@ -1,29 +1,11 @@
 import type { LoginCredentials } from './credentials';
 
-/**
- * @author logic
- * @date 2026-08-11
- * 把登录下发的凭证映射为 goose serve 子进程环境变量，供 heybuddy provider 接收；
- * 无凭证时返回空对象，避免污染子进程环境。
- */
-export function buildHeyBuddyEnv(creds: LoginCredentials | null): Record<string, string> {
+export function buildGooseServeEnv(creds: LoginCredentials | null): Record<string, string> {
   if (!creds) return {};
-  return {
-    HEYBUDDY_BASE_URL: creds.baseUrl,
-    HEYBUDDY_API_KEY: creds.apiKey,
-    // 强制 active provider 为 heybuddy，覆盖 config.yaml 里残留的旧 active_provider
-    GOOSE_PROVIDER: 'heybuddy',
-  };
-}
-
-export function buildSiteRuntimeEnv(creds: LoginCredentials | null): Record<string, string> {
-  if (!creds || creds.authKind !== 'sub2api') {
-    return buildHeyBuddyEnv(creds);
-  }
 
   return {
-    AIBUDDY_BASE_URL: creds.baseUrl,
-    AIBUDDY_API_KEY: creds.apiKey,
+    AIBUDDY_BASE_URL: creds.gateway?.baseUrl ?? creds.baseUrl,
+    AIBUDDY_API_KEY: creds.gateway?.apiKey ?? creds.apiKey,
     GOOSE_PROVIDER: 'aibuddy',
   };
 }

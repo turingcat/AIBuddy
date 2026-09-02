@@ -250,10 +250,10 @@ export function BalanceRefreshButton({
 }
 
 export function BalanceWidget() {
-  return <HeyBuddyBalanceWidget />;
+  return <AIBuddyBalanceWidget />;
 }
 
-function HeyBuddyBalanceWidget() {
+function AIBuddyBalanceWidget() {
   const { state, refreshing, refresh } = useBalance();
 
   if (state.status === 'not-logged-in') {
@@ -265,7 +265,7 @@ function HeyBuddyBalanceWidget() {
       className="flex items-center gap-1 px-3 py-1.5 text-xs min-w-0"
       data-testid="balance-widget"
     >
-      <BalanceStatus state={state} />
+      <AIBuddyEntitlementRows state={state} />
       <BalanceRefreshButton refreshing={refreshing} onRefresh={refresh} />
     </div>
   );

@@ -1,17 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { CredentialsCodec } from './credentialsCrypto';
-import type {
-  GatewayCredentials,
-  SiteAccountIdentity,
-  SiteKind,
-  SiteTarget,
-} from './siteRuntime/types';
+import type { GatewayCredentials, SiteAccountIdentity, SiteTarget } from './siteRuntime/types';
 
 /**
  * @author: logic
  * @date: 2026-08-11
- * HeyBuddy 登录凭证：登录成功后由服务端下发，写入独立文件，注入给 goose serve
+ * AIBuddy 登录凭证：登录成功后由服务端下发，写入独立文件，注入给 goose serve
  * 2026-08-27 起：文件为 v:1 加密信封 {"v":1,"blob":"..."}，codec 由调用方注入；
  * 读取到旧版明文文件时自动加密迁移，迁移失败仅记录不阻断
  */
@@ -21,7 +16,7 @@ export type { CredentialsCodec };
 
 export interface LoginCredentials {
   schemaVersion?: 2;
-  siteKind?: SiteKind;
+  siteKind?: 'sub2api';
   session?: { accessToken: string; refreshToken?: string; pat?: string };
   account?: SiteAccountIdentity;
   target?: SiteTarget;
@@ -29,7 +24,7 @@ export interface LoginCredentials {
   token: string;
   baseUrl: string;
   apiKey: string;
-  authKind?: 'oa' | 'sub2api';
+  authKind?: 'sub2api';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
   /** 面板刷新令牌：access token 过期时换新，缺失则只能重新登录 */
@@ -177,7 +172,10 @@ function validateFields(data: unknown): LoginCredentials | null {
     typeof creds?.token === 'string' &&
     typeof creds?.baseUrl === 'string' &&
     typeof creds?.apiKey === 'string' &&
-    (creds.authKind === undefined || creds.authKind === 'oa' || creds.authKind === 'sub2api')
+    ((creds.schemaVersion === 2 &&
+      creds.siteKind === 'sub2api' &&
+      creds.gateway?.providerId === 'aibuddy') ||
+      (creds.schemaVersion === undefined && creds.authKind === 'sub2api'))
   ) {
     return creds;
   }
@@ -194,11 +192,10 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
     return credentials;
   }
 
-  const siteKind: SiteKind = credentials.authKind === 'sub2api' ? 'sub2api' : 'oa';
   return {
     ...credentials,
     schemaVersion: 2,
-    siteKind,
+    siteKind: 'sub2api',
     session: {
       accessToken: credentials.token,
       ...(credentials.refreshToken ? { refreshToken: credentials.refreshToken } : {}),
@@ -206,7 +203,7 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
     },
     account: {},
     gateway: {
-      providerId: siteKind === 'sub2api' ? 'aibuddy' : 'heybuddy',
+      providerId: 'aibuddy',
       baseUrl: credentials.baseUrl,
       apiKey: credentials.apiKey,
       ...(credentials.groupId ? { groupId: credentials.groupId } : {}),
