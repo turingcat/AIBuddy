@@ -17,6 +17,7 @@ describe('initializeAppIdentity', () => {
       settingsFile: '/tmp/Application Support/AIBuddy/settings.json',
       credentialsFile: '/tmp/Application Support/AIBuddy/credentials.json',
       startupLogsDir: '/tmp/Application Support/AIBuddy/logs/startup',
+      goosePathRoot: '/tmp/Application Support/AIBuddy/goose',
     });
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
@@ -34,6 +35,7 @@ describe('initializeAppIdentity', () => {
     expect(initializeAppIdentity(app)).toMatchObject({
       userDataDir: '/tmp/Application Support/ExistingData',
       startupLogsDir: '/tmp/Application Support/ExistingData/logs/startup',
+      goosePathRoot: '/tmp/Application Support/ExistingData/goose',
     });
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
@@ -77,6 +79,7 @@ describe('initializeAppIdentity', () => {
 
   it('initializes identity before evaluating the main-process entry point', async () => {
     vi.resetModules();
+    vi.stubEnv('GOOSE_PATH_ROOT', '~/shared/heybuddy');
     vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
     vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
     const calls: string[] = [];
@@ -116,6 +119,8 @@ describe('initializeAppIdentity', () => {
 
     expect(calls.filter((call) => call.startsWith('getPath:'))[0]).toBe('getPath:userData');
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
+    expect(process.env.GOOSE_PATH_ROOT).toBe('~/shared/heybuddy');
+    vi.unstubAllEnvs();
     vi.doUnmock('electron');
   });
 

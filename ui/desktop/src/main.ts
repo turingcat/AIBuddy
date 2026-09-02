@@ -41,7 +41,7 @@ import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2a
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
-import { expandTilde, sanitizeGoosePathRoot } from './utils/pathUtils';
+import { expandTilde } from './utils/pathUtils';
 import log from './utils/logger';
 import { ensureWinShims } from './utils/winShims';
 import { addRecentDir, loadRecentDirs } from './utils/recentDirs';
@@ -111,6 +111,7 @@ function translateMenuLabels(items: MenuItem[]): void {
 // Settings management
 const {
   userDataDir: USER_DATA_DIR,
+  goosePathRoot: GOOSE_PATH_ROOT,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
   startupLogsDir: STARTUP_LOGS_DIR,
@@ -919,7 +920,7 @@ const getExternalBackendForCsp = (settings: Settings) => {
 let appConfig = {
   GOOSE_DEFAULT_PROVIDER: defaultProvider,
   GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PATH_ROOT: sanitizeGoosePathRoot(process.env),
+  GOOSE_PATH_ROOT,
   GOOSE_WORKING_DIR: '',
   // Whether the window is bound to an external backend (fixed at window
   // creation via gooseServeLeases) and which URL it is bound to.
@@ -1140,7 +1141,8 @@ const createChat = async (
     const loginShellPath = await getLoginShellPath(log);
 
     const siteRuntimeEnv = buildGooseServeEnv(
-      readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+      readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
+      GOOSE_PATH_ROOT
     );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
@@ -1148,10 +1150,7 @@ const createChat = async (
         serverSecret,
         dir: workingDir,
         tls: true,
-        env: {
-          GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...siteRuntimeEnv,
-        },
+        env: { ...siteRuntimeEnv, GOOSE_PATH_ROOT },
         loginShellPath,
         isPackaged: app.isPackaged,
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,

@@ -118,6 +118,42 @@ describe('buildLocalServeUrls', () => {
 });
 
 describe('startGooseServe', () => {
+  it.skipIf(process.platform === 'win32')(
+    'passes the owned Goose data root to the child process',
+    async () => {
+      const tempDir = makeTempDir();
+      const envPath = path.join(tempDir, 'goose-path-root.txt');
+      const goosePath = makeExecutable(
+        path.join(tempDir, 'goose'),
+        [
+          '#!/usr/bin/env sh',
+          'printf "%s\\n" "$GOOSE_PATH_ROOT" > "$TEST_GOOSE_PATH_ROOT_FILE"',
+          'while true; do sleep 1; done',
+          '',
+        ].join('\n')
+      );
+      vi.stubEnv('GOOSE_BINARY', goosePath);
+      vi.stubEnv('GOOSE_PATH_ROOT', '/shared/heybuddy');
+
+      const result = await startGooseServe({
+        serverSecret: 'test-secret',
+        dir: tempDir,
+        env: {
+          TEST_GOOSE_PATH_ROOT_FILE: envPath,
+          GOOSE_PATH_ROOT: '/tmp/Application Support/AIBuddy/goose',
+        },
+        readinessFetch: vi.fn(async () => new Response(null, { status: 200 })),
+      });
+
+      try {
+        expect(await waitForFileLines(envPath)).toEqual(['/tmp/Application Support/AIBuddy/goose']);
+        expect(process.env.GOOSE_PATH_ROOT).toBe('/shared/heybuddy');
+      } finally {
+        await result.cleanup();
+      }
+    }
+  );
+
   afterEach(() => {
     vi.unstubAllEnvs();
     process.chdir(originalCwd);
