@@ -4,8 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useIntl } from './index';
 
 // Every user-facing string that names the product or its URL scheme is written
-// against {appName}/{protocol} so one catalog serves both editions. Supplying
-// those values centrally is what keeps ~60 call sites from having to pass them.
+// against {appName}/{protocol} rather than hard-coding them. Supplying those
+// values centrally is what keeps ~60 call sites from having to pass them.
 const PROBE_ID = 'probe';
 
 function Probe({ message }: { message: string }) {
@@ -27,19 +27,16 @@ describe('useIntl brand values', () => {
     vi.unstubAllEnvs();
   });
 
-  it.each([
-    { edition: 'heybuddy', appName: 'HeyBuddy', protocol: 'goose' },
-    { edition: 'aibuddy', appName: 'AIBuddy', protocol: 'aibuddy' },
-  ])('supplies $edition brand values', ({ edition, appName, protocol }) => {
-    renderProbe('Welcome to {appName}, use {protocol}://recipe', edition);
+  it('supplies heybuddy brand values', () => {
+    renderProbe('Welcome to {appName}, use {protocol}://recipe', 'heybuddy');
 
-    expect(screen.getByText(`Welcome to ${appName}, use ${protocol}://recipe`)).toBeInTheDocument();
+    expect(screen.getByText('Welcome to HeyBuddy, use goose://recipe')).toBeInTheDocument();
   });
 
   it('supplies brand values to translated catalog messages too', () => {
-    renderProbe('About {appName}', 'aibuddy', { probe: '关于 {appName}' });
+    renderProbe('About {appName}', 'heybuddy', { probe: '关于 {appName}' });
 
-    expect(screen.getByText('关于 AIBuddy')).toBeInTheDocument();
+    expect(screen.getByText('关于 HeyBuddy')).toBeInTheDocument();
   });
 
   it('lets a call site override the injected values', () => {

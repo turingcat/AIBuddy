@@ -19,8 +19,8 @@ describe('translateMenuLabel', () => {
   });
 
   // Electron generates role labels like "Hide <productName>" from the bundle
-  // name, so the dictionary is keyed on {app} and must match either edition.
-  describe.each(['HeyBuddy', 'AIBuddy'])('for the %s product name', (appName) => {
+  // name, so the dictionary is keyed on {app}.
+  describe.each(['HeyBuddy'])('for the %s product name', (appName) => {
     it('translates labels that embed the product name', () => {
       expect(translateMenuLabel(`Hide ${appName}`, 'zh-CN', appName)).toBe(`隐藏 ${appName}`);
       expect(translateMenuLabel('About {app}', 'zh-CN', appName)).toBe(`关于 ${appName}`);

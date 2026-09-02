@@ -1,27 +1,15 @@
 {
-  "accountMenu.currentBalance": {
-    "defaultMessage": "Current balance"
-  },
-  "accountMenu.dailyRemaining": {
-    "defaultMessage": "Daily remaining"
-  },
   "accountMenu.logout": {
     "defaultMessage": "Log out"
   },
   "accountMenu.logoutConfirmation": {
     "defaultMessage": "Are you sure you want to log out?"
   },
-  "accountMenu.monthlyRemaining": {
-    "defaultMessage": "Monthly remaining"
-  },
   "accountMenu.notLoggedIn": {
     "defaultMessage": "Not signed in"
   },
   "accountMenu.settings": {
     "defaultMessage": "Settings"
-  },
-  "accountMenu.weeklyRemaining": {
-    "defaultMessage": "Weekly remaining"
   },
   "acpReadinessPanel.adapterFound": {
     "defaultMessage": "ACP adapter found"
@@ -170,14 +158,8 @@
   "backButton.back": {
     "defaultMessage": "Back"
   },
-  "balanceWidget.daily": {
-    "defaultMessage": "Daily: {value}"
-  },
   "balanceWidget.loadFailed": {
     "defaultMessage": "Balance load failed"
-  },
-  "balanceWidget.monthly": {
-    "defaultMessage": "Monthly: {value}"
   },
   "balanceWidget.noPat": {
     "defaultMessage": "Re-login to view balance"
@@ -188,9 +170,6 @@
   "balanceWidget.requests": {
     "defaultMessage": "Requests: {count}"
   },
-  "balanceWidget.subscriptionRemaining": {
-    "defaultMessage": "{value} remaining"
-  },
   "balanceWidget.unauthorized": {
     "defaultMessage": "Login expired, please re-login"
   },
@@ -199,9 +178,6 @@
   },
   "balanceWidget.used": {
     "defaultMessage": "Used: {value}"
-  },
-  "balanceWidget.weekly": {
-    "defaultMessage": "Weekly: {value}"
   },
   "baseChat.failedToLoadSession": {
     "defaultMessage": "Failed to Load Session"
@@ -1507,9 +1483,6 @@
   },
   "headersSection.value": {
     "defaultMessage": "Value"
-  },
-  "hub.aibuddyIdentity": {
-    "defaultMessage": ", I'm AIBuddy"
   },
   "hub.assistantIdentity": {
     "defaultMessage": ", I'm Guanglin AI Assistant"

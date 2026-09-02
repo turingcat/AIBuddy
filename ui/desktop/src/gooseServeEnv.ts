@@ -15,15 +15,3 @@ export function buildHeyBuddyEnv(creds: LoginCredentials | null): Record<string,
     GOOSE_PROVIDER: 'heybuddy',
   };
 }
-
-export function buildSiteRuntimeEnv(creds: LoginCredentials | null): Record<string, string> {
-  if (!creds || creds.authKind !== 'sub2api') {
-    return buildHeyBuddyEnv(creds);
-  }
-
-  return {
-    AIBUDDY_BASE_URL: creds.baseUrl,
-    AIBUDDY_API_KEY: creds.apiKey,
-    GOOSE_PROVIDER: 'aibuddy',
-  };
-}

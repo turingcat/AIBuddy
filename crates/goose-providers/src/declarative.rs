@@ -58,7 +58,6 @@ pub(crate) mod declarative_providers {
         zai,
         zhipu,
         heybuddy,
-        aibuddy,
     );
 }
 
@@ -391,17 +390,6 @@ mod tests {
         assert_eq!(config["engine"], "openai");
         assert_eq!(config["api_key_env"], "HEYBUDDY_API_KEY");
         assert_eq!(config["base_url"], "${HEYBUDDY_BASE_URL}");
-        assert_eq!(config["dynamic_models"], true);
-    }
-
-    #[test]
-    fn aibuddy_provider_is_bundled_and_valid() {
-        let json = crate::declarative::declarative_providers::aibuddy::JSON;
-        let config: serde_json::Value = serde_json::from_str(json).unwrap();
-        assert_eq!(config["name"], "aibuddy");
-        assert_eq!(config["engine"], "openai");
-        assert_eq!(config["api_key_env"], "AIBUDDY_API_KEY");
-        assert_eq!(config["base_url"], "${AIBUDDY_BASE_URL}");
         assert_eq!(config["dynamic_models"], true);
     }
 

@@ -1,6 +1,5 @@
 import type { CurrencyConfig } from './quotaFormat';
 import { parseCurrencyConfig } from './quotaFormat';
-import type { Sub2apiEntitlement, SubscriptionRemainingUSD } from './siteRuntime/sub2apiAdapter';
 
 /**
  * @author logic
@@ -19,39 +18,12 @@ interface BalanceIdentity {
   displayName: string;
 }
 
-export type BalanceData =
-  | (BalanceIdentity & {
-      kind: 'balance';
-      quota: number;
-      usedQuota: number;
-      requestCount: number;
-    })
-  | (BalanceIdentity & {
-      kind: 'subscription';
-      groupName: string;
-      remainingUSD: SubscriptionRemainingUSD;
-    });
-
-export function toSub2apiBalanceData(entitlement: Sub2apiEntitlement): BalanceData {
-  if (entitlement.kind === 'balance') {
-    return {
-      kind: 'balance',
-      quota: entitlement.balance,
-      usedQuota: 0,
-      requestCount: 0,
-      userName: entitlement.displayName,
-      displayName: entitlement.displayName,
-    };
-  }
-
-  return {
-    kind: 'subscription',
-    userName: entitlement.displayName,
-    displayName: entitlement.displayName,
-    groupName: entitlement.groupName,
-    remainingUSD: entitlement.remainingUSD,
-  };
-}
+export type BalanceData = BalanceIdentity & {
+  kind: 'balance';
+  quota: number;
+  usedQuota: number;
+  requestCount: number;
+};
 
 export type BalanceErrorKind = 'unauthorized' | 'http' | 'timeout' | 'network' | 'bad-response';
 

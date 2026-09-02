@@ -9,47 +9,14 @@ import { defineMessages, useIntl } from '../../i18n';
 /**
  * @author logic
  * @date 2026-08-24
- * 侧边栏底部余额组件：计量计费账户显示网关账户余额（new-api 余额语义），
- * 订阅计费账户显示服务端返回的日/周/月剩余额度；悬浮展示每个可用周期与更新时间，
- * 右侧按钮手动刷新；数据由 useBalance 轮询。
+ * 侧边栏底部余额组件：显示网关账户余额（new-api 余额语义），
+ * 悬浮展示已用额度、请求数与更新时间，右侧按钮手动刷新；数据由 useBalance 轮询。
  */
 
 const i18n = defineMessages({
-  currentBalance: {
-    id: 'accountMenu.currentBalance',
-    defaultMessage: 'Current balance',
-  },
-  dailyRemaining: {
-    id: 'accountMenu.dailyRemaining',
-    defaultMessage: 'Daily remaining',
-  },
-  weeklyRemaining: {
-    id: 'accountMenu.weeklyRemaining',
-    defaultMessage: 'Weekly remaining',
-  },
-  monthlyRemaining: {
-    id: 'accountMenu.monthlyRemaining',
-    defaultMessage: 'Monthly remaining',
-  },
   used: {
     id: 'balanceWidget.used',
     defaultMessage: 'Used: {value}',
-  },
-  subscriptionRemaining: {
-    id: 'balanceWidget.subscriptionRemaining',
-    defaultMessage: '{value} remaining',
-  },
-  daily: {
-    id: 'balanceWidget.daily',
-    defaultMessage: 'Daily: {value}',
-  },
-  weekly: {
-    id: 'balanceWidget.weekly',
-    defaultMessage: 'Weekly: {value}',
-  },
-  monthly: {
-    id: 'balanceWidget.monthly',
-    defaultMessage: 'Monthly: {value}',
   },
   requests: {
     id: 'balanceWidget.requests',
@@ -85,44 +52,14 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
   }
 
   if (state.status === 'ready') {
-    const subscription = state.balance.kind === 'subscription' ? state.balance : undefined;
-    const meteredBalance = state.balance.kind === 'balance' ? state.balance : undefined;
-    const remainingUSD = subscription?.remainingUSD;
-    const primaryRemainingUSD =
-      remainingUSD?.daily ?? remainingUSD?.weekly ?? remainingUSD?.monthly;
-    const amount = subscription
-      ? primaryRemainingUSD === undefined
-        ? '--'
-        : formatQuotaWithCurrency(primaryRemainingUSD, state.currency)
-      : formatQuotaWithCurrency(meteredBalance!.quota, state.currency);
-    const subscriptionPeriods = remainingUSD
-      ? (
-          [
-            ['daily', i18n.daily],
-            ['weekly', i18n.weekly],
-            ['monthly', i18n.monthly],
-          ] as const
-        ).flatMap(([period, label]) => {
-          const remaining = remainingUSD[period];
-          return remaining === undefined
-            ? []
-            : [
-                intl.formatMessage(label, {
-                  value: formatQuotaWithCurrency(remaining, state.currency),
-                }),
-              ];
-        })
-      : [];
+    const balance = state.balance;
+    const amount = formatQuotaWithCurrency(balance.quota, state.currency);
     const tooltip = [
-      subscription ? subscription.groupName : meteredBalance!.displayName,
-      ...(subscription
-        ? subscriptionPeriods
-        : [
-            intl.formatMessage(i18n.used, {
-              value: formatQuotaWithCurrency(meteredBalance!.usedQuota, state.currency),
-            }),
-            intl.formatMessage(i18n.requests, { count: meteredBalance!.requestCount }),
-          ]),
+      balance.displayName,
+      intl.formatMessage(i18n.used, {
+        value: formatQuotaWithCurrency(balance.usedQuota, state.currency),
+      }),
+      intl.formatMessage(i18n.requests, { count: balance.requestCount }),
       intl.formatMessage(i18n.updatedAt, { time: formatMessageTimestamp(state.updatedAt / 1000) }),
     ]
       .filter(Boolean)
@@ -135,11 +72,7 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
             data-testid="balance-value"
           >
             <Wallet className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">
-              {subscription
-                ? intl.formatMessage(i18n.subscriptionRemaining, { value: amount })
-                : amount}
-            </span>
+            <span className="truncate">{amount}</span>
           </span>
         </TooltipTrigger>
         <TooltipContent>{tooltip}</TooltipContent>
@@ -175,56 +108,6 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
-  );
-}
-
-export function AIBuddyEntitlementRows({ state }: { state: BalanceState }) {
-  const intl = useIntl();
-
-  if (state.status !== 'ready') {
-    return <BalanceStatus state={state} />;
-  }
-
-  const balance = state.balance;
-  const rows =
-    balance.kind === 'balance'
-      ? [
-          {
-            label: intl.formatMessage(i18n.currentBalance),
-            value: formatQuotaWithCurrency(balance.quota, state.currency),
-          },
-        ]
-      : (['daily', 'weekly', 'monthly'] as const).flatMap((period) => {
-          const value = balance.remainingUSD[period];
-          if (value === undefined) return [];
-
-          const label = {
-            daily: i18n.dailyRemaining,
-            weekly: i18n.weeklyRemaining,
-            monthly: i18n.monthlyRemaining,
-          }[period];
-
-          return [
-            {
-              label: intl.formatMessage(label),
-              value: formatQuotaWithCurrency(value, state.currency),
-            },
-          ];
-        });
-
-  return (
-    <div className="flex flex-col gap-1 text-xs text-text-primary">
-      {rows.map(({ label, value }) => (
-        <div
-          key={label}
-          className="flex min-w-0 items-center justify-between gap-2"
-          data-testid="aibuddy-entitlement-row"
-        >
-          <span className="min-w-0 text-text-secondary">{label}</span>
-          <span className="shrink-0 font-mono">{value}</span>
-        </div>
-      ))}
-    </div>
   );
 }
 

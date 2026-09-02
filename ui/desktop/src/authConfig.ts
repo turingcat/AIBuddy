@@ -2,7 +2,7 @@ import brands from '../branding/brands.json';
 import { getAppEdition, type AppEdition } from './brand';
 
 export type AuthEnv = 'production' | 'test';
-export type AuthMode = 'oa' | 'sub2api';
+export type AuthMode = 'oa';
 
 export interface AuthConfig {
   env: AuthEnv;
@@ -16,7 +16,6 @@ export const PRODUCTION_AUTH_API_BASE_URL = 'https://ai.linyeyun.cn';
 
 export interface AuthEnvironment {
   HEYBUDDY_AUTH_API_BASE_URL?: string;
-  AIBUDDY_AUTH_API_BASE_URL?: string;
 }
 
 declare const __AUTH_API_BASE_URL__: string | undefined;
@@ -27,11 +26,9 @@ export function resolveAuthApiBaseUrl(
   edition: AppEdition = 'heybuddy',
   fallback?: string
 ): string {
-  const environmentValue =
-    edition === 'aibuddy'
-      ? environment.AIBUDDY_AUTH_API_BASE_URL
-      : environment.HEYBUDDY_AUTH_API_BASE_URL;
-  return environmentValue?.trim() || fallback || brands[edition].authApiBaseUrl;
+  return (
+    environment.HEYBUDDY_AUTH_API_BASE_URL?.trim() || fallback || brands[edition].authApiBaseUrl
+  );
 }
 
 export function resolveAuthMode(edition: AppEdition): AuthMode {

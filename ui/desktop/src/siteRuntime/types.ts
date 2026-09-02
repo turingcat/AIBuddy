@@ -1,4 +1,4 @@
-export type SiteKind = 'oa' | 'sub2api';
+export type SiteKind = 'oa';
 
 export interface SiteAccountIdentity {
   email?: string;
