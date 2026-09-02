@@ -4,13 +4,11 @@
     Windows 桌面一键构建脚本
     复刻 .github/workflows/bundle-windows.yml 的 standard 变体（不含代码签名）
     产物：ui/desktop/dist-windows/、项目根 <版本>-windows-x64-portable.zip 与 <版本>-windows-x64-setup.exe
-    运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1 -Edition heybuddy
+  运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1
 #>
 
 [CmdletBinding()]
 param(
-    # 构建版本（品牌标识取自 ui/desktop/branding/brands.json）
-    [ValidateSet('heybuddy', 'aibuddy')]
     # HTTP 代理（默认本机代理，cargo/pnpm 下载走代理；其他环境用 -Proxy 覆盖，传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（@electron/get 不读 HTTPS_PROXY，直连 GitHub 拉校验文件会卡死）

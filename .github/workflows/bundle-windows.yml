@@ -254,7 +254,6 @@ jobs:
 
       - name: Prepare flat distribution
         shell: bash
-        env:
         run: |
           cd ui/desktop
           packaged="out/$(node -p "require('./scripts/windows-package').resolveWindowsPackage('0.0.0', '.', '.').packagedDirName")"
@@ -342,8 +341,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: |
-            ${{ steps.package-windows-zip.outputs.portable_file_name }}
+        path: |
+          ${{ steps.package-windows-zip.outputs.portable_file_name }}
           AIBuddy-windows-x64-setup.exe
           if-no-files-found: error
           overwrite: true

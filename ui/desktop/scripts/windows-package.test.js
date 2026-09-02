@@ -1,3 +1,6 @@
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   buildInnoDefinitions,
   portableArchiveName,
@@ -68,5 +71,25 @@ describe('resolveWindowsPackage', () => {
         'C:\\artifacts'
       ),
     });
+  });
+});
+
+describe('Windows packaging automation contracts', () => {
+  const repositoryRoot = path.resolve(__dirname, '../../..');
+
+  it('keeps the Windows bundle workflow parseable', () => {
+    expect(() =>
+      execFileSync('ruby', ['-e', "require 'yaml'; YAML.load_file(ARGV.fetch(0))", '.github/workflows/bundle-windows.yml'], {
+        cwd: repositoryRoot,
+        stdio: 'pipe',
+      })
+    ).not.toThrow();
+  });
+
+  it('does not apply the removed edition validator to the proxy parameter', () => {
+    const script = fs.readFileSync(path.join(repositoryRoot, 'build-windows.ps1'), 'utf8');
+
+    expect(script).not.toMatch(/\[ValidateSet\('heybuddy', 'aibuddy'\)\]/);
+    expect(script).not.toMatch(/build-windows\.ps1\s+-Edition/);
   });
 });
