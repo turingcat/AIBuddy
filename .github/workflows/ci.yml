@@ -98,6 +98,12 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo docker image prune --all --force
 
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-default-tests
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
       - name: Repair stale v8 prebuilt marker
         run: .github/scripts/repair-v8-prebuilt.sh
 
@@ -130,6 +136,12 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-uniffi
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
       - name: Install Dependencies
         run: |
@@ -176,7 +188,8 @@ jobs:
       - name: Cache Cargo artifacts
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: ${{ matrix.tls-feature }}
+          key: ci-tls-${{ matrix.tls-feature }}
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
       - name: Build and Test with ${{ matrix.tls-feature }}
         run: |
@@ -213,7 +226,8 @@ jobs:
       - name: Cache Cargo artifacts
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: roaming
+          key: ci-roaming
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
       - name: Build and Test with roaming
         run: |
@@ -241,7 +255,8 @@ jobs:
       - name: Cache Cargo artifacts
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: windows-ci
+          key: ci-windows-x86_64-pc-windows-msvc
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
       - name: Setup Rust
         shell: bash
@@ -281,6 +296,12 @@ jobs:
         with:
           toolchain: ${{ steps.msrv.outputs.msrv }}
 
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-msrv-${{ steps.msrv.outputs.msrv }}
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
       - name: Install Dependencies
         run: |
           sudo apt update -y
@@ -307,6 +328,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-clippy-rustup
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
       - name: Repair stale v8 prebuilt marker
         run: .github/scripts/repair-v8-prebuilt.sh
