@@ -30,7 +30,6 @@ import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
 import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
 import { withSub2apiSession } from './sub2apiAuth';
-import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
   writeCredentials,
@@ -2001,15 +2000,6 @@ ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
 ipcMain.handle('clear-login-credentials', () => {
   clearCredentials(CREDENTIALS_FILE);
 });
-
-// 登录走主进程 fetch：绕开 renderer 的 CSP（connect-src 白名单 + upgrade-insecure-requests）
-// 请求与错误处理逻辑在 oaLogin.ts（可单测）；以 result 模式返回而非抛异常，
-// 避免 Electron 给 IPC 异常加 "Error invoking remote method" 前缀
-// @author logic
-// @date 2026-08-12
-ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
-);
 
 registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,

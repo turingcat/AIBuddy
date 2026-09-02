@@ -4,7 +4,6 @@ import { createMainViteConfig } from './viteMainConfig';
 describe('createMainViteConfig', () => {
   it('injects fixed AIBuddy authentication defines', () => {
     const config = createMainViteConfig({
-      HEYBUDDY_AUTH_API_BASE_URL: 'https://oa.example',
       AIBUDDY_AUTH_API_BASE_URL: 'https://sub2api.example',
     });
 

@@ -1,7 +1,6 @@
 import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
-import type { OaLoginResult } from './oaLogin';
 import type { AIBuddyAuthResult } from './aibuddyAuthIpc';
 import type { AIBuddySettingsResult } from './sub2apiAuth';
 import type { BalanceResult } from './balance';
@@ -174,7 +173,6 @@ export type ElectronAPI = {
   isLoggedIn: () => Promise<boolean>;
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
-  loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
   getAIBuddyAuthSettings: () => Promise<AIBuddySettingsResult>;
   loginViaAIBuddy: (
     email: string,
@@ -339,8 +337,6 @@ const electronAPI: ElectronAPI = {
   setLoginCredentials: (creds: LoginCredentials) =>
     ipcRenderer.invoke('set-login-credentials', creds),
   clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
-  loginViaOA: (loginName: string, password: string) =>
-    ipcRenderer.invoke('login-via-oa', loginName, password),
   getAIBuddyAuthSettings: () => ipcRenderer.invoke('get-aibuddy-auth-settings'),
   loginViaAIBuddy: (email: string, password: string, captchaProof: string) =>
     ipcRenderer.invoke('login-via-aibuddy', email, password, captchaProof),

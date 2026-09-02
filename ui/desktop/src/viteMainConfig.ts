@@ -2,7 +2,7 @@ import { resolveAuthApiBaseUrl } from './authConfig';
 import { appBrand } from './brand';
 
 export function createMainViteConfig(environment: NodeJS.ProcessEnv) {
-  const authApiBaseUrl = resolveAuthApiBaseUrl(environment, 'aibuddy', appBrand.authApiBaseUrl);
+  const authApiBaseUrl = resolveAuthApiBaseUrl(environment, appBrand.authApiBaseUrl);
 
   return {
     define: {
