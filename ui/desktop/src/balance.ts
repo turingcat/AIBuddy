@@ -43,7 +43,7 @@ export function toSub2apiBalanceData(entitlement: Sub2apiEntitlement): BalanceDa
 }
 
 export type BalanceErrorKind = 'unauthorized' | 'http' | 'timeout' | 'network' | 'bad-response';
-export type BalanceFailureKind = BalanceErrorKind | 'not-logged-in' | 'no-pat';
+export type BalanceFailureKind = BalanceErrorKind | 'not-logged-in';
 
 export type BalanceResult =
   | { ok: true; balance: BalanceData; currency: CurrencyConfig }

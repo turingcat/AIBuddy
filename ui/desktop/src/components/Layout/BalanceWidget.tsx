@@ -59,10 +59,6 @@ const i18n = defineMessages({
     id: 'balanceWidget.refresh',
     defaultMessage: 'Refresh balance',
   },
-  noPat: {
-    id: 'balanceWidget.noPat',
-    defaultMessage: 'Re-login to view balance',
-  },
   loadFailed: {
     id: 'balanceWidget.loadFailed',
     defaultMessage: 'Balance load failed',
@@ -156,11 +152,9 @@ export function BalanceStatus({ state }: { state: BalanceState }) {
   }
 
   const hint =
-    state.status === 'no-pat'
-      ? intl.formatMessage(i18n.noPat)
-      : state.status === 'unauthorized'
-        ? intl.formatMessage(i18n.unauthorized)
-        : intl.formatMessage(i18n.loadFailed);
+    state.status === 'unauthorized'
+      ? intl.formatMessage(i18n.unauthorized)
+      : intl.formatMessage(i18n.loadFailed);
   const tooltip = state.status === 'error' ? `${hint}\n${state.message}` : hint;
   return (
     <Tooltip>

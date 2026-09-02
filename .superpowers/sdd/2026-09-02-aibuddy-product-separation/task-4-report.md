@@ -68,3 +68,42 @@ Focused Vitest V8 coverage includes `aibuddyRuntimeIpc.ts`, `balance.ts`, `crede
 - `cargo test -p goose-providers declarative::tests --lib`: 13/13 tests passed.
 - `pnpm exec prettier --write ...` and `cargo fmt --all`: completed.
 - `git diff --check`: passed.
+
+## Review Fix Round 2
+
+### Outcome
+
+- Removed the unreachable PAT-specific `no-pat` result kind, hook state, widget message branch, and obsolete fixtures.
+- Preserved logged-out, TFlow entitlement, loading, unauthorized, and generic error behavior.
+- Expanded coverage to every named Task 4 functional module plus `useBalance.ts`; no UI module was excluded from the denominator.
+
+### TDD
+
+- RED: an obsolete auth payload produced the dedicated `{ status: 'no-pat' }` state instead of the generic error state (1 failed, 22 passed).
+- GREEN: after removing the dedicated result/state/UI branches, the focused hook and widget suites passed 27/27.
+- Added behavior coverage for global and session model changes, model-change failures, display-name resolution, balance status variants, and the refreshing control.
+
+### Full Module Coverage
+
+Vitest V8 branch coverage is used as the closest available path metric.
+
+| Module | Statements | Branches | Functions | Lines |
+| --- | ---: | ---: | ---: | ---: |
+| `aibuddyRuntimeIpc.ts` | 95.65% | 75% | 100% | 95.45% |
+| `balance.ts` | 100% | 100% | 100% | 100% |
+| `credentials.ts` | 87.03% | 84.61% | 100% | 90% |
+| `gooseServeEnv.ts` | 100% | 100% | 100% | 100% |
+| `ModelAndProviderContext.tsx` | 86.45% | 73.46% | 100% | 88.29% |
+| `SwitchModelModal.tsx` | 89.24% | 74.64% | 90.47% | 90.9% |
+| `BalanceWidget.tsx` | 97.43% | 92.68% | 100% | 97.36% |
+| `UserAccountMenu.tsx` | 100% | 100% | 100% | 100% |
+| `useBalance.ts` | 100% | 100% | 100% | 100% |
+| **Aggregate** | **91.44% (342/374)** | **82.94% (214/258)** | **97.36% (74/76)** | **92.71% (331/357)** |
+
+### Verification
+
+- Broader focused Task 4 suite: 11 files, 123/123 tests passed.
+- Full-include coverage suite: 9 files, 105/105 tests passed.
+- `pnpm run typecheck`: passed.
+- `pnpm exec prettier --write ...` and `cargo fmt --all`: completed.
+- Desktop source search contains no `no-pat`, `noPat`, or `balanceWidget.noPat` references.

@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { IntlProvider } from 'react-intl';
-import { BalanceWidget } from './BalanceWidget';
+import {
+  AIBuddyEntitlementRows,
+  BalanceRefreshButton,
+  BalanceStatus,
+  BalanceWidget,
+} from './BalanceWidget';
 import type { BalanceResult } from '../../balance';
 import { DEFAULT_CURRENCY_CONFIG } from '../../quotaFormat';
 
@@ -21,6 +27,14 @@ function renderWidget() {
   return render(
     <IntlProvider locale="en" onError={() => {}}>
       <BalanceWidget />
+    </IntlProvider>
+  );
+}
+
+function renderBalanceNode(node: ReactNode) {
+  return render(
+    <IntlProvider locale="en" onError={() => {}}>
+      {node}
     </IntlProvider>
   );
 }
@@ -77,15 +91,61 @@ describe('BalanceWidget', () => {
     expect(within(rows[1]).getByText('$100')).toBeInTheDocument();
   });
 
-  it('renders loading and login error states', async () => {
+  it('renders the loading state', () => {
     electronMock.getUserBalance.mockReturnValue(new Promise(() => {}));
-    const view = renderWidget();
-    expect(screen.getByTestId('balance-loading')).toBeInTheDocument();
-
-    view.unmount();
-    electronMock.getUserBalance.mockResolvedValue({ ok: false, kind: 'no-pat' } as BalanceResult);
     renderWidget();
-    expect(await screen.findByTestId('balance-hint')).toHaveTextContent('Re-login to view balance');
+    expect(screen.getByTestId('balance-loading')).toBeInTheDocument();
+  });
+
+  it('renders compact metered and subscription balance states', () => {
+    const view = renderBalanceNode(
+      <BalanceStatus
+        state={{
+          status: 'ready',
+          balance: (meteredBalance() as Extract<BalanceResult, { ok: true }>).balance,
+          currency: DEFAULT_CURRENCY_CONFIG,
+          updatedAt: 1_700_000_000_000,
+        }}
+      />
+    );
+    expect(screen.getByTestId('balance-value')).toHaveTextContent('$10');
+
+    view.rerender(
+      <IntlProvider locale="en" onError={() => {}}>
+        <BalanceStatus
+          state={{
+            status: 'ready',
+            balance: {
+              kind: 'subscription',
+              groupName: 'Codex Max',
+              remainingUSD: {},
+              userName: 'aibuddy',
+              displayName: 'AIBuddy user',
+            },
+            currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+            updatedAt: 1_700_000_000_000,
+          }}
+        />
+      </IntlProvider>
+    );
+    expect(screen.getByTestId('balance-value')).toHaveTextContent('-- remaining');
+  });
+
+  it.each([
+    [{ status: 'unauthorized' } as const, 'Login expired, please re-login'],
+    [{ status: 'error', message: 'gateway unavailable' } as const, 'Balance load failed'],
+  ])('renders %s as an actionable balance hint', (state, message) => {
+    renderBalanceNode(<AIBuddyEntitlementRows state={state} />);
+    expect(screen.getByTestId('balance-hint')).toHaveTextContent(message);
+  });
+
+  it('shows and invokes the refreshing control', async () => {
+    const onRefresh = vi.fn();
+    renderBalanceNode(<BalanceRefreshButton refreshing onRefresh={onRefresh} />);
+
+    expect(screen.getByTestId('balance-refresh').querySelector('svg')).toHaveClass('animate-spin');
+    await userEvent.click(screen.getByTestId('balance-refresh'));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('does not render when signed out', async () => {

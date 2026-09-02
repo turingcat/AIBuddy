@@ -18,7 +18,6 @@ import { AppEvents } from '../constants/events';
 export type BalanceState =
   | { status: 'loading' }
   | { status: 'ready'; balance: BalanceData; currency: CurrencyConfig; updatedAt: number }
-  | { status: 'no-pat' }
   | { status: 'not-logged-in' }
   | { status: 'unauthorized' }
   | { status: 'error'; message: string };
@@ -46,8 +45,6 @@ export function markSessionStreamState(
 
 function resultKindToState(kind: BalanceFailureKind, message: string): BalanceState {
   switch (kind) {
-    case 'no-pat':
-      return { status: 'no-pat' };
     case 'not-logged-in':
       return { status: 'not-logged-in' };
     case 'unauthorized':
