@@ -86,6 +86,28 @@ describe('Windows packaging automation contracts', () => {
     ).not.toThrow();
   });
 
+  it('keeps AIBuddy upload artifacts inside the upload action options', () => {
+    const output = execFileSync(
+      'ruby',
+      [
+        '-rjson',
+        '-ryaml',
+        '-e',
+        "workflow = YAML.load_file(ARGV.fetch(0)); step = workflow['jobs']['package-desktop-windows']['steps'].find { |entry| entry['name'] == 'Upload Windows build' }; puts JSON.generate(step)",
+        '.github/workflows/bundle-windows.yml',
+      ],
+      { cwd: repositoryRoot, encoding: 'utf8' }
+    );
+    const upload = JSON.parse(output);
+
+    expect(upload.with.path.trim().split(/\r?\n/)).toEqual([
+      '${{ steps.package-windows-zip.outputs.portable_file_name }}',
+      'AIBuddy-windows-x64-setup.exe',
+    ]);
+    expect(upload.with['if-no-files-found']).toBe('error');
+    expect(upload.with.overwrite).toBe(true);
+  });
+
   it('does not apply the removed edition validator to the proxy parameter', () => {
     const script = fs.readFileSync(path.join(repositoryRoot, 'build-windows.ps1'), 'utf8');
 
