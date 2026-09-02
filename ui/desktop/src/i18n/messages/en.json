@@ -3896,9 +3896,6 @@
   "sessions.importNostr.description": {
     "defaultMessage": "Paste a {appName} Nostr share link to fetch, decrypt, and import the session."
   },
-  "sessions.importNostr.placeholder": {
-    "defaultMessage": "{protocol}://sessions/nostr?nevent=...&key=..."
-  },
   "sessions.importNostr.title": {
     "defaultMessage": "Import Nostr Session"
   },

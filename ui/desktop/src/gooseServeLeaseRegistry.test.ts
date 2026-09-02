@@ -54,8 +54,10 @@ describe('GooseServeLeaseRegistry', () => {
 
     expect(() => store.getAcpUrl(1)).toThrow(GOOSE_SERVE_EXITED_USER_MESSAGE);
     expect(() => store.getSecretKey(1)).toThrow(GOOSE_SERVE_EXITED_USER_MESSAGE);
+    expect(GOOSE_SERVE_EXITED_USER_MESSAGE).toContain('AIBuddy Desktop');
+    expect(GOOSE_SERVE_EXITED_USER_MESSAGE).not.toContain('HeyBuddy');
     expect(logger.error).toHaveBeenCalledWith(
-      'HeyBuddy ACP server exited unexpectedly',
+      'AIBuddy ACP server exited unexpectedly',
       expect.objectContaining({ code: 1, signal: null, windowIds: [1] })
     );
   });

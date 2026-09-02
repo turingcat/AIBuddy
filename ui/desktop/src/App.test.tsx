@@ -14,6 +14,7 @@ import { createSession } from './sessions';
 import { RecipeParameterScopesUnsupportedError } from './acp/errors';
 
 const mockToastError = vi.hoisted(() => vi.fn());
+const mockImportNostrSessionFromDeepLink = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
 // Set up globals for jsdom
 Object.defineProperty(window, 'location', {
@@ -42,6 +43,10 @@ vi.mock('./utils/costDatabase', () => ({
 vi.mock('./acp/sessions', () => ({
   acpListSessions: vi.fn().mockResolvedValue({ sessions: [], nextCursor: null }),
   acpDeleteSession: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock('./sessionLinks', () => ({
+  importNostrSessionFromDeepLink: mockImportNostrSessionFromDeepLink,
 }));
 
 vi.mock('./sessions', async (importOriginal) => ({
@@ -137,6 +142,18 @@ vi.mock('./components/GoosehintsModal', () => ({
 }));
 
 vi.mock('./components/AnnouncementModal', () => ({
+  default: () => null,
+}));
+
+vi.mock('./components/onboarding/OnboardingGuard', () => ({
+  default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('./components/Layout/AppLayout', () => ({
+  AppLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock('./components/auth/LoginView', () => ({
   default: () => null,
 }));
 
@@ -353,6 +370,45 @@ describe('App Component - Brand New State', () => {
     systemResumeHandler?.({} as any);
 
     expect(reconnectAcpAfterSystemResume).toHaveBeenCalledOnce();
+  });
+
+  it('imports generic Goose Nostr session links', async () => {
+    render(<AppInner />, { wrapper: AppInnerTestWrapper });
+
+    await waitFor(() => {
+      expect(mockElectron.reactReady).toHaveBeenCalled();
+    });
+
+    const openSharedSessionHandler = mockElectron.on.mock.calls.find(
+      ([channel]) => channel === 'open-shared-session'
+    )?.[1];
+    const link = 'goose://sessions/nostr?nevent=test&key=secret';
+
+    expect(openSharedSessionHandler).toBeDefined();
+    await openSharedSessionHandler?.({} as any, link);
+
+    expect(mockImportNostrSessionFromDeepLink).toHaveBeenCalledWith(link);
+    expect(mockNavigate).toHaveBeenCalledWith('/sessions');
+    expect(mockToastError).not.toHaveBeenCalled();
+  });
+
+  it('rejects product-protocol Nostr session links', async () => {
+    render(<AppInner />, { wrapper: AppInnerTestWrapper });
+
+    await waitFor(() => {
+      expect(mockElectron.reactReady).toHaveBeenCalled();
+    });
+
+    const openSharedSessionHandler = mockElectron.on.mock.calls.find(
+      ([channel]) => channel === 'open-shared-session'
+    )?.[1];
+
+    expect(openSharedSessionHandler).toBeDefined();
+    await openSharedSessionHandler?.({} as any, 'aibuddy://sessions/nostr?nevent=test&key=secret');
+
+    expect(mockImportNostrSessionFromDeepLink).not.toHaveBeenCalled();
+    expect(mockToastError).toHaveBeenCalledWith('Unsupported session share link');
+    expect(mockNavigate).toHaveBeenCalledWith('/sessions');
   });
 
   it('should seed recipe sessions with the recipe prompt when no initial message is provided', () => {

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { IpcRendererEvent } from 'electron';
 import { HashRouter, Routes, Route, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { importNostrSessionFromDeepLink } from './sessionLinks';
+import { isNostrSessionLink } from './nostrProtocol';
 import { ErrorUI } from './components/ErrorBoundary';
 import { ExtensionInstallModal } from './components/ExtensionInstallModal';
 import RecipeParamsModalContainer from './components/RecipeParamsModalContainer';
@@ -52,7 +53,6 @@ import { trackErrorWithContext } from './utils/analytics';
 import { AppEvents } from './constants/events';
 import { registerPlatformEventHandlers } from './utils/platform_events';
 import { reconnectAcpAfterSystemResume } from './acp/acpConnection';
-import { getAppProtocolPrefix } from './brand';
 
 function PageViewTracker() {
   usePageViewTracking();
@@ -420,7 +420,7 @@ export function AppInner() {
       const link = args[0] as string;
       window.electron.logInfo('Opening session share link');
 
-      if (!link.startsWith(`${getAppProtocolPrefix()}sessions/nostr`)) {
+      if (!isNostrSessionLink(link)) {
         toast.error('Unsupported session share link');
         navigate('/sessions');
         return;

@@ -1,7 +1,7 @@
 import type { GooseServeExitSignal, GooseServeResult, Logger } from './gooseServe';
 
 export const GOOSE_SERVE_EXITED_USER_MESSAGE =
-  "This window's HeyBuddy backend stopped. Close this window and open a new chat to start a new backend. If this keeps happening, restart HeyBuddy Desktop.";
+  "This window's AIBuddy backend stopped. Close this window and open a new chat to start a new backend. If this keeps happening, restart AIBuddy Desktop.";
 
 export interface GooseServeLease {
   acpUrl: string;
@@ -50,7 +50,7 @@ export class GooseServeLeaseRegistry {
       }
 
       if (logUnexpected && firstExit && !lease.cleanedUp) {
-        this.logger.error('HeyBuddy ACP server exited unexpectedly', {
+        this.logger.error('AIBuddy ACP server exited unexpectedly', {
           code: lease.exitCode,
           signal: lease.exitSignal,
           windowIds: [...lease.windowIds],

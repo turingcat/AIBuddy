@@ -1,14 +1,9 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import { initializeAppIdentity } from './appIdentity';
 
 describe('initializeAppIdentity', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
   it('sets AIBuddy name before userData', () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     const calls: string[] = [];
     const app = {
       setName: (name: string) => calls.push(`setName:${name}`),
@@ -26,20 +21,19 @@ describe('initializeAppIdentity', () => {
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
 
-  it('uses HeyBuddy without changing its path family', () => {
-    vi.stubEnv('APP_EDITION', 'heybuddy');
+  it('preserves the userData path returned by Electron', () => {
     const calls: string[] = [];
     const app = {
       setName: (name: string) => calls.push(`setName:${name}`),
       getPath: (name: 'userData') => {
         calls.push(`getPath:${name}`);
-        return '/tmp/Application Support/HeyBuddy';
+        return '/tmp/Application Support/ExistingData';
       },
     };
 
     expect(initializeAppIdentity(app)).toMatchObject({
-      userDataDir: '/tmp/Application Support/HeyBuddy',
-      startupLogsDir: '/tmp/Application Support/HeyBuddy/logs/startup',
+      userDataDir: '/tmp/Application Support/ExistingData',
+      startupLogsDir: '/tmp/Application Support/ExistingData/logs/startup',
     });
     expect(calls.slice(0, 2)).toEqual(['setName:AIBuddy', 'getPath:userData']);
   });
@@ -70,7 +64,6 @@ describe('initializeAppIdentity', () => {
     expect(calls).toEqual([]);
 
     const { initializeAppIdentity: initialize } = await import('./appIdentity');
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     initialize({
       setName: (name: string) => calls.push(`setName:${name}`),
       getPath: (name: 'userData') => {
@@ -84,7 +77,6 @@ describe('initializeAppIdentity', () => {
 
   it('initializes identity before evaluating the main-process entry point', async () => {
     vi.resetModules();
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
     vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
     const calls: string[] = [];
@@ -129,7 +121,6 @@ describe('initializeAppIdentity', () => {
 
   it('runs AIBuddy migration after readiness before settings are read', async () => {
     vi.resetModules();
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     vi.stubGlobal('MAIN_WINDOW_VITE_DEV_SERVER_URL', undefined);
     vi.stubGlobal('MAIN_WINDOW_VITE_NAME', 'main_window');
     const calls: string[] = [];

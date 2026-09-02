@@ -58,6 +58,7 @@ import { acpChatSessionActions } from '../../acp/chatSessionStore';
 import { cancelAcpPermissionRequestsForSession } from '../../acp/permissionRequests';
 import { cancelAcpElicitationRequestsForSession } from '../../acp/elicitationRequests';
 import { getSearchShortcutText } from '../../utils/keyboardShortcuts';
+import { getNostrImportPlaceholder } from '../../nostrProtocol';
 
 const i18n = defineMessages({
   editSessionTitle: { id: 'sessions.edit.title', defaultMessage: 'Edit Session Description' },
@@ -83,10 +84,6 @@ const i18n = defineMessages({
   importNostrDesc: {
     id: 'sessions.importNostr.description',
     defaultMessage: 'Paste a {appName} Nostr share link to fetch, decrypt, and import the session.',
-  },
-  importNostrPlaceholder: {
-    id: 'sessions.importNostr.placeholder',
-    defaultMessage: '{protocol}://sessions/nostr?nevent=...&key=...',
   },
   importing: { id: 'sessions.importing', defaultMessage: 'Importing...' },
   chatHistoryDesc: {
@@ -1220,7 +1217,7 @@ const SessionListView: React.FC<SessionListViewProps> = React.memo(({ onSelectSe
           <textarea
             value={nostrImportLink}
             onChange={(event) => setNostrImportLink(event.target.value)}
-            placeholder={intl.formatMessage(i18n.importNostrPlaceholder)}
+            placeholder={getNostrImportPlaceholder()}
             className="min-h-28 w-full resize-none rounded-lg border border-border-primary bg-background-primary p-3 text-sm text-text-primary outline-none focus:ring-2 focus:ring-border-active"
             disabled={isImportingNostr}
           />

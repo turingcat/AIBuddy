@@ -41,3 +41,29 @@
 - No standards or spec defects found in the final diff. Legacy and state-machine prompt paths assert the same AIBuddy identity and retain the Chinese-language requirement.
 - Rust tests and clippy were not executable in this environment: network dependency downloads stalled, and offline Cargo reported missing `aws-lc-sys v0.44.0`. No further network retries were made as directed.
 - Desktop commands emit the existing Node engine warning because the host uses Node 26.8.1 while the project requests Node 24.10.x; verification still completed successfully.
+
+## Review Fix Round 1
+
+### Outcome
+
+- Preserved AIBuddy-only recipe and extension deep links while restoring generic Nostr share/import compatibility through `goose://sessions/nostr`.
+- Extracted the Nostr prefix, validation, and locale-independent placeholder into `nostrProtocol.ts`; `App.tsx` and `SessionListView.tsx` are wiring callsites covered by component regressions.
+- Replaced active HeyBuddy identity in the desktop title, backend recovery message/log, Windows shim path/logs, and Forge repository fallback. Legacy migration paths and historical compatibility references remain unchanged.
+- Removed the `APP_EDITION=heybuddy` suite seed and edition-oriented app identity fixtures.
+- Extended the state-machine lifecycle assertion to retain the standard Chinese-language instruction.
+
+### RED
+
+- Nostr component tests failed because `goose://sessions/nostr` was rejected and both English and Chinese placeholders rendered the product protocol.
+- Desktop identity tests failed on the HeyBuddy lease message/log, `%LOCALAPPDATA%/HeyBuddy/bin`, Forge repository fallback, and HTML title.
+
+### GREEN Verification
+
+- Final protocol/identity focused suite: 14 files / 109 tests passed before the final test-only cleanup; the corrected Forge and winShims tests then passed 10/10.
+- Behavior-module coverage (`nostrProtocol.ts`, `gooseServeLeaseRegistry.ts`, `winShims.ts`): statements 90.69% (78/86), branches/path proxy 86.84% (33/38), functions 80.95% (17/21), lines 91.56% (76/83).
+- `pnpm run typecheck`: passed after final cleanup.
+- `pnpm run i18n:check`: passed; Simplified Chinese catalog validated 1,490 messages.
+- Prettier check, `cargo fmt --all -- --check`, and `git diff --check`: passed.
+- Offline-only Rust test attempt could not start because `aws-lc-sys v0.44.0` is absent from the local Cargo cache. No network retry was made.
+- `check:product-boundary` continues to report the intentional Task 7 migration baseline in `aibuddyDataMigration.ts` and `main.ts`; its allowlist was not changed.
+- Desktop commands retain the existing Node 26.8.1 versus requested Node 24.10.x engine warning.

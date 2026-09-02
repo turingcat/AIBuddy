@@ -243,6 +243,7 @@ async fn provider_lifecycle() -> Result<()> {
     let call = api.calls().last().cloned().expect("provider request");
     assert!(call.uses_model("gpt-4.1"));
     assert!(call.system_contains("AIBuddy"));
+    assert!(call.system_contains("默认使用中文"));
     assert!(!call.system_contains("HeyBuddy"));
 
     Ok(())

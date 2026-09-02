@@ -3848,9 +3848,6 @@
   "sessions.importNostr.description": {
     "defaultMessage": "粘贴 {appName} Nostr 分享链接以获取、解密并导入会话。"
   },
-  "sessions.importNostr.placeholder": {
-    "defaultMessage": "{protocol}://sessions/nostr?nevent=...&key=..."
-  },
   "sessions.importNostr.title": {
     "defaultMessage": "导入 Nostr 会话"
   },

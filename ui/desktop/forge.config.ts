@@ -53,7 +53,7 @@ module.exports = {
       config: {
         repository: {
           owner: process.env.GITHUB_OWNER || 'turingcat',
-          name: process.env.GITHUB_REPO || 'HeyBuddy',
+          name: process.env.GITHUB_REPO || 'AIBuddy',
         },
         prerelease: false,
         draft: true,
