@@ -77,15 +77,32 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     changes = workflow.fetch("jobs").fetch("changes")
     filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
 
-    %w[push pull_request merge_group schedule workflow_dispatch].each do |event_name|
+    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
       assert_match(/^  #{event_name}:/, workflow_text("mcp-conformance.yml"),
                    "mcp-conformance.yml must handle #{event_name} events")
     end
     refute_match(/^\s+paths(?:-ignore)?:/, workflow_text("mcp-conformance.yml"),
                  "mcp-conformance.yml must create required checks for every pull request")
+    assert_equal({ "contents" => "read", "pull-requests" => "read" }, changes.fetch("permissions"))
+    refute workflow.key?("permissions")
+    %w[build conformance].each do |job_name|
+      refute workflow.fetch("jobs").fetch(job_name).key?("permissions")
+    end
     assert_equal "${{ steps.filter.outputs.code }}", changes.dig("outputs", "code")
     assert_includes filter.dig("with", "filters"), "code:"
     assert_includes filter.dig("with", "filters"), "!documentation/**"
+  end
+
+  def test_mcp_conformance_schedule_has_a_nonempty_posix_cron_expression
+    schedule = load_workflow("mcp-conformance.yml").fetch(true).fetch("schedule")
+
+    refute_empty schedule
+    schedule.each do |entry|
+      cron = entry.fetch("cron")
+
+      assert_instance_of String, cron
+      assert_match(/\A\S+(?:\s+\S+){4}\z/, cron)
+    end
   end
 
   def test_mcp_conformance_skips_docs_only_pull_requests_and_runs_all_other_events
@@ -101,6 +118,20 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     assert_equal MCP_CONFORMANCE_MATRIX,
                  workflow.dig("jobs", "conformance", "strategy", "matrix", "include")
+  end
+
+  def test_mcp_conformance_matrix_jobs_download_the_build_artifact
+    workflow = load_workflow("mcp-conformance.yml")
+    build_steps = workflow.fetch("jobs").fetch("build").fetch("steps")
+    conformance_steps = workflow.fetch("jobs").fetch("conformance").fetch("steps")
+    upload = build_steps.find { |step| step["uses"].to_s.start_with?("actions/upload-artifact@") }
+    downloads = conformance_steps.select { |step| step["uses"].to_s.start_with?("actions/download-artifact@") }
+
+    refute_nil upload
+    assert_equal 1, downloads.length
+    downloads.each do |download|
+      assert_equal upload.dig("with", "name"), download.dig("with", "name")
+    end
   end
 
   def test_direct_cargo_commands_use_locked_rust_dependencies
@@ -189,14 +220,6 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     CI_REQUIRED_CHECK_NAMES.each do |job_name, check_name|
       assert_equal check_name, jobs.fetch(job_name).fetch("name")
-    end
-  end
-
-  def test_mcp_conformance_uses_the_code_change_event_tier
-    workflow = load_workflow("mcp-conformance.yml")
-
-    %w[build conformance].each do |job_name|
-      assert_code_change_event_tier(workflow, job_name, requires_dependency_locks: false)
     end
   end
 
