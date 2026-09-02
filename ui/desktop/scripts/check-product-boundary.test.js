@@ -117,6 +117,30 @@ describe('findProductBoundaryViolations', () => {
     ]);
   });
 
+  it('rejects HeyBuddy process environment provider assignments without rejecting AIBuddy or Goose paths', () => {
+    const root = createFixture();
+    writeFixture(
+      root,
+      'ui/desktop/src/provider-dot.ts',
+      'process.env.GOOSE_PROVIDER = "heybuddy";'
+    );
+    writeFixture(
+      root,
+      'ui/desktop/src/provider-bracket.ts',
+      "process.env['GOOSE_PROVIDER'] = 'heybuddy';"
+    );
+    writeFixture(
+      root,
+      'ui/desktop/src/provider-aibuddy.ts',
+      "process.env.GOOSE_PROVIDER = 'aibuddy'; process.env.GOOSE_PATH_ROOT = '/aibuddy/goose';"
+    );
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'ui/desktop/src/provider-bracket.ts', pattern: 'HeyBuddy provider selection' },
+      { file: 'ui/desktop/src/provider-dot.ts', pattern: 'HeyBuddy provider selection' },
+    ]);
+  });
+
   it('rejects HeyBuddy login, OA, and product identity copy without rejecting generic Goose names', () => {
     const root = createFixture();
     writeFixture(root, 'ui/desktop/src/LoginView.tsx', '登录 HeyBuddy; 公司OA;');
@@ -150,6 +174,24 @@ describe('findProductBoundaryViolations', () => {
     ]);
   });
 
+  it('scans prompt, HTML, and announcement product surfaces', () => {
+    const root = createFixture();
+    writeFixture(root, 'crates/goose/src/prompts/system.md', '<h1>HeyBuddy</h1>');
+    writeFixture(
+      root,
+      'ui/desktop/index.html',
+      "<script>const assistantName = 'HeyBuddy';</script>"
+    );
+    writeFixture(root, 'ui/desktop/announcements/release.md', 'HeyBuddyLoginForm login-via-oa');
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'crates/goose/src/prompts/system.md', pattern: 'HeyBuddy visible identity' },
+      { file: 'ui/desktop/announcements/release.md', pattern: 'HeyBuddy login component' },
+      { file: 'ui/desktop/announcements/release.md', pattern: 'OA login route' },
+      { file: 'ui/desktop/index.html', pattern: 'HeyBuddy visible identity' },
+    ]);
+  });
+
   it('ignores historical design documents and generated output', () => {
     const root = createFixture();
     const legacyContent = [
@@ -158,18 +200,13 @@ describe('findProductBoundaryViolations', () => {
       'APP_EDITION === "heybuddy"',
     ].join('\n');
     writeFixture(root, 'docs/superpowers/plans/legacy.md', legacyContent);
-    writeFixture(root, 'branding/README.md', '公司OA historical icon notes');
-    writeFixture(root, 'branding/active.md', '公司OA active product copy');
-    writeFixture(root, 'branding/icon.ts', 'const copy = "公司OA";');
+    writeFixture(root, 'docs/superpowers/plans/identity.md', '<h1>HeyBuddy</h1> login-via-oa');
     writeFixture(root, 'ui/desktop/out/main.js', legacyContent);
     writeFixture(root, 'ui/desktop/node_modules/example/index.js', legacyContent);
     writeFixture(root, 'ui/desktop/src/__snapshots__/runtime.snap', legacyContent);
     writeFixture(root, 'ui/desktop/scripts/check-product-boundary.js', legacyContent);
 
-    expect(findProductBoundaryViolations(root)).toEqual([
-      { file: 'branding/active.md', pattern: 'Company OA copy' },
-      { file: 'branding/icon.ts', pattern: 'Company OA copy' },
-    ]);
+    expect(findProductBoundaryViolations(root)).toEqual([]);
   });
 
   it('recognizes desktop root configuration files with Windows separators', () => {
@@ -181,6 +218,18 @@ describe('findProductBoundaryViolations', () => {
 });
 
 describe('check-product-boundary CLI', () => {
+  it('reports a forbidden identity in the root Justfile', () => {
+    const root = createFixture();
+    const checker = copyChecker(root);
+    writeFixture(root, 'Justfile', "assistantName = 'HeyBuddy'");
+
+    const result = spawnSync(process.execPath, [checker], { encoding: 'utf8' });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('Justfile: HeyBuddy visible identity\n');
+  });
+
   it('reports a forbidden marker in a root PowerShell build script', () => {
     const root = createFixture();
     const checker = copyChecker(root);

@@ -14,8 +14,8 @@ const IGNORED_DIRECTORIES = new Set([
   '__snapshots__',
 ]);
 
-const ROOT_PRODUCT_SCRIPTS = ['build-windows.ps1', 'dev-ui.ps1'];
-const HISTORICAL_DOCUMENTATION_PATHS = new Set(['branding/README.md']);
+const ROOT_PRODUCT_FILES = ['Justfile', 'build-windows.ps1', 'dev-ui.ps1'];
+const DESKTOP_PRODUCT_FILES = ['desktop-setup.iss', 'index.html'];
 
 const ALLOWED_VIOLATIONS = new Map([
   [
@@ -27,6 +27,9 @@ const ALLOWED_VIOLATIONS = new Map([
       'HeyBuddy provider selection',
       'HeyBuddy login copy',
       'HeyBuddy welcome copy',
+      'HeyBuddy visible identity',
+      'HeyBuddy login component',
+      'OA login route',
       'Company OA copy',
       'HeyBuddy product identity',
       'OA login implementation or IPC identifier',
@@ -43,6 +46,9 @@ const ALLOWED_VIOLATIONS = new Map([
       'HeyBuddy provider selection',
       'HeyBuddy login copy',
       'HeyBuddy welcome copy',
+      'HeyBuddy visible identity',
+      'HeyBuddy login component',
+      'OA login route',
       'Company OA copy',
       'HeyBuddy product identity',
       'OA login implementation or IPC identifier',
@@ -68,8 +74,7 @@ const PRODUCT_PATTERNS = [
   },
   {
     pattern: 'HeyBuddy provider selection',
-    matches: (content) =>
-      /(?:^|[\s{,;:])['"]?GOOSE_PROVIDER['"]?\s*(?::|=)\s*['"]?heybuddy\b['"]?/im.test(content),
+    matches: isHeyBuddyProviderSelection,
   },
   {
     pattern: 'HeyBuddy login copy',
@@ -79,6 +84,12 @@ const PRODUCT_PATTERNS = [
     pattern: 'HeyBuddy welcome copy',
     matches: (content) => /Welcome to\s+HeyBuddy\b/i.test(content),
   },
+  { pattern: 'HeyBuddy visible identity', matches: isHeyBuddyVisibleIdentity },
+  {
+    pattern: 'HeyBuddy login component',
+    matches: (content) => /\bHeyBuddy(?:LoginForm|Login|Auth)\b/.test(content),
+  },
+  { pattern: 'OA login route', matches: (content) => /\blogin-via-oa\b/i.test(content) },
   { pattern: 'Company OA copy', matches: (content) => /公司\s*OA/i.test(content) },
   {
     pattern: 'HeyBuddy product identity',
@@ -107,9 +118,22 @@ function isAllowedViolation(relativeFile, pattern) {
   return ALLOWED_VIOLATIONS.get(relativeFile)?.has(pattern) ?? false;
 }
 
-function isHistoricalDocumentationFile(repositoryRoot, file) {
-  const relativeFile = path.relative(repositoryRoot, file).split(path.sep).join('/');
-  return HISTORICAL_DOCUMENTATION_PATHS.has(relativeFile);
+function isHeyBuddyProviderSelection(content) {
+  return (
+    /(?:^|[\s{,;:])['"]?GOOSE_PROVIDER['"]?\s*(?::|=)\s*['"]?heybuddy\b['"]?/im.test(content) ||
+    /process\.env(?:\.GOOSE_PROVIDER|\[['"]GOOSE_PROVIDER['"]\])\s*=\s*['"]?heybuddy\b['"]?/i.test(
+      content
+    )
+  );
+}
+
+function isHeyBuddyVisibleIdentity(content) {
+  return (
+    /<(?:h[1-6]|title|span|p|div|button)\b[^>]*>\s*HeyBuddy\s*</i.test(content) ||
+    /(?:^|[\s{,;:])['"]?(?:assistantName|assistant_name)['"]?\s*(?::|=)\s*['"]?HeyBuddy\b['"]?/im.test(
+      content
+    )
+  );
 }
 
 function listFiles(root) {
@@ -174,8 +198,15 @@ function desktopConfigurationFiles(repositoryRoot) {
     .sort((left, right) => left.localeCompare(right));
 }
 
-function rootProductScriptFiles(repositoryRoot) {
-  return ROOT_PRODUCT_SCRIPTS.map((file) => path.join(repositoryRoot, file)).filter((file) =>
+function rootProductFiles(repositoryRoot) {
+  return ROOT_PRODUCT_FILES.map((file) => path.join(repositoryRoot, file)).filter((file) =>
+    fs.existsSync(file)
+  );
+}
+
+function desktopProductFiles(repositoryRoot) {
+  const desktopRoot = path.join(repositoryRoot, 'ui', 'desktop');
+  return DESKTOP_PRODUCT_FILES.map((file) => path.join(desktopRoot, file)).filter((file) =>
     fs.existsSync(file)
   );
 }
@@ -185,7 +216,9 @@ function activeProductFiles(repositoryRoot) {
     path.join(repositoryRoot, 'ui', 'desktop', 'src'),
     path.join(repositoryRoot, 'ui', 'desktop', 'scripts'),
     path.join(repositoryRoot, 'ui', 'desktop', 'branding'),
+    path.join(repositoryRoot, 'ui', 'desktop', 'announcements'),
     path.join(repositoryRoot, 'branding'),
+    path.join(repositoryRoot, 'crates', 'goose', 'src', 'prompts'),
     path.join(repositoryRoot, 'crates', 'goose-providers'),
   ];
 
@@ -193,11 +226,10 @@ function activeProductFiles(repositoryRoot) {
     ...new Set([
       ...roots.flatMap(listFiles),
       ...desktopConfigurationFiles(repositoryRoot),
-      ...rootProductScriptFiles(repositoryRoot),
+      ...desktopProductFiles(repositoryRoot),
+      ...rootProductFiles(repositoryRoot),
     ]),
-  ]
-    .filter((file) => !isHistoricalDocumentationFile(repositoryRoot, file))
-    .sort((left, right) => left.localeCompare(right));
+  ].sort((left, right) => left.localeCompare(right));
 }
 
 function findProductBoundaryViolations(rootDir) {
