@@ -1,4 +1,4 @@
-import type { OpenDialogOptions, OpenDialogReturnValue } from 'electron';
+import type { IpcMainInvokeEvent, OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 import {
   app,
   App,
@@ -28,24 +28,36 @@ import { execFileSync, spawn, execFile } from 'child_process';
 import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
+import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
+import { withSub2apiSession } from './sub2apiAuth';
 import { performOaLogin, runOaLogin } from './oaLogin';
 import {
   readCredentials,
   writeCredentials,
+  withRefreshedSession,
   clearCredentials,
   type LoginCredentials,
 } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
+import { migrateLegacyAIBuddyData } from './aibuddyDataMigration';
 import {
   fetchCurrencyWithCache,
   fetchUserBalance,
   runBalanceFetch,
+  toSub2apiBalanceData,
+  BalanceFetchError,
   type BalanceResult,
   type CurrencyCacheState,
 } from './balance';
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
+import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
-import { buildHeyBuddyEnv } from './gooseServeEnv';
+import { buildSiteRuntimeEnv } from './gooseServeEnv';
+import {
+  fetchSub2apiEntitlement,
+  fetchSub2apiModels,
+  Sub2apiUnauthorizedError,
+} from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
@@ -60,109 +72,40 @@ import { defaultSettings, getKeyboardShortcuts } from './utils/settings';
 import * as crypto from 'crypto';
 import * as yaml from 'yaml';
 import windowStateKeeper from 'electron-window-state';
+import { setTrayRef } from './utils/tray';
+import { translateMenuLabel } from './menuLabels';
 import {
-  getUpdateAvailable,
-  registerUpdateIpcHandlers,
-  setAutoDownloadDisabled,
-  setTrayRef,
-  setupAutoUpdater,
-  updateTrayMenu,
-} from './utils/autoUpdater';
-import { UPDATES_ENABLED } from './updates';
+  getAppEdition,
+  getAppDisplayName,
+  getAppIconStem,
+  getAppProtocol,
+  getAppProtocolPrefix,
+  getAppTrayIconStem,
+} from './brand';
+import { initializeAppIdentity } from './appIdentity';
+import './utils/gitBranchIpc';
 import './utils/recipeHash';
 import type { GooseApp } from './types/apps';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
-import { BLOCKED_PROTOCOLS, WEB_PROTOCOLS } from './utils/urlSecurity';
+import { WEB_PROTOCOLS } from './utils/urlSecurity';
+import { openExternalUrl } from './utils/openExternalUrl';
 import { buildCSP } from './utils/csp';
-
-function shouldSetupUpdater(): boolean {
-  // Setup updater if either the flag is enabled OR dev updates are enabled
-  return UPDATES_ENABLED || process.env.ENABLE_DEV_UPDATES === 'true';
-}
+import { resolveWorkingDir } from './utils/workingDir';
+import {
+  DesktopFileAccess,
+  isAuthorizedFileAccessRequest,
+  readSelectedRecipe,
+} from './desktopFileAccess';
 
 // =======================================================================
 // Native menu localization
 // -----------------------------------------------------------------------
-// Electron's main process can't use react-intl (which runs in the renderer),
-// so the native menu bar is translated here with a small hand-maintained
-// dictionary. Only Simplified Chinese is filled in right now; other locales
-// fall through to the original English labels. Keep the keys in sync with
-// the raw label strings used below.
-// =======================================================================
-
-const MENU_TRANSLATIONS_ZH_CN: Record<string, string> = {
-  // Top-level
-  File: '文件',
-  Edit: '编辑',
-  View: '视图',
-  Window: '窗口',
-  Help: '帮助',
-  // Context menu
-  'Add to dictionary': '添加到词典',
-  Cut: '剪切',
-  Copy: '复制',
-  Paste: '粘贴',
-  // HeyBuddy-added items
-  'New Window': '新建窗口',
-  Settings: '设置',
-  'Find…': '查找…',
-  'Find Next': '查找下一个',
-  'Find Previous': '查找上一个',
-  'Use Selection for Find': '用所选内容查找',
-  Find: '查找',
-  'New Chat': '新建聊天',
-  'New Chat Window': '新建聊天窗口',
-  'Open Directory...': '打开目录…',
-  'Recent Directories': '最近的目录',
-  'Focus HeyBuddy Window': '聚焦 HeyBuddy 窗口',
-  'Quick Launcher': '快速启动器',
-  'Always on Top': '窗口置顶',
-  'Toggle Navigation': '切换导航',
-  'About HeyBuddy': '关于 HeyBuddy',
-  // Electron's default role-based labels we want to translate as well.
-  // (The menu role itself still provides the correct behaviour; only the
-  // display string is overridden.)
-  Undo: '撤销',
-  Redo: '重做',
-  'Select All': '全选',
-  Delete: '删除',
-  Speech: '语音',
-  Reload: '重新加载',
-  'Force Reload': '强制重新加载',
-  'Toggle Developer Tools': '切换开发者工具',
-  'Actual Size': '实际大小',
-  'Reset Zoom': '重置缩放',
-  'Zoom In': '放大',
-  'Zoom Out': '缩小',
-  'Toggle Full Screen': '切换全屏',
-  'Toggle Fullscreen': '切换全屏',
-  Minimize: '最小化',
-  Close: '关闭',
-  'Close Window': '关闭窗口',
-  Quit: '退出',
-  Exit: '退出',
-  'Bring All to Front': '全部置于最前',
-  'Emoji & Symbols': '表情符号',
-  'Start Dictation…': '开始听写…',
-  'Hide HeyBuddy': '隐藏 HeyBuddy',
-  'Hide Others': '隐藏其他',
-  'Show All': '全部显示',
-  Services: '服务',
-};
-
 function detectMenuLocale(): string {
   return getConfiguredGooseLocale() ?? 'en';
 }
 
 function menuT(label: string): string {
-  // Normalize underscores to hyphens so POSIX-style tags like "zh_CN" work.
-  const lower = detectMenuLocale().replace(/_/g, '-').toLowerCase();
-  const isTraditional = /^zh-(hant|tw|hk|mo)\b/.test(lower);
-  const isSimplifiedChinese = !isTraditional && (lower === 'zh' || lower.startsWith('zh-'));
-  if (isSimplifiedChinese) {
-    return MENU_TRANSLATIONS_ZH_CN[label] ?? label;
-  }
-  return label;
+  return translateMenuLabel(label, detectMenuLocale(), getAppDisplayName());
 }
 
 /**
@@ -187,9 +130,13 @@ function translateMenuLabels(items: MenuItem[]): void {
 }
 
 // Settings management
-const SETTINGS_FILE = path.join(app.getPath('userData'), 'settings.json');
-const CREDENTIALS_FILE = path.join(app.getPath('userData'), 'credentials.json');
-const STARTUP_LOGS_DIR = path.join(app.getPath('userData'), 'logs', 'startup');
+const {
+  userDataDir: USER_DATA_DIR,
+  settingsFile: SETTINGS_FILE,
+  credentialsFile: CREDENTIALS_FILE,
+  startupLogsDir: STARTUP_LOGS_DIR,
+} = initializeAppIdentity(app);
+
 const validLanguageSettings = new Set<Settings['language']>(['system', 'en', 'zh-CN']);
 
 function isValidLanguageSetting(value: unknown): value is Settings['language'] {
@@ -394,21 +341,34 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
   callback(verifyBackendCertificate(parsed.hostname, certificate.fingerprint));
 });
 
+if (getAppEdition() === 'aibuddy') {
+  app.whenReady().then(() => {
+    try {
+      migrateLegacyAIBuddyData({
+        edition: 'aibuddy',
+        legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
+        targetUserDataDir: USER_DATA_DIR,
+        codec: getCredentialsCodec(),
+      });
+    } catch (error) {
+      log.error(`AIBuddy legacy data migration failed: ${error}`);
+    }
+  });
+}
+
 app.whenReady().then(() => {
   appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
 });
 
-// Main-process net.fetch: pin to the exact cert once known.
+// Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
 app.whenReady().then(() => {
-  session.defaultSession.setCertificateVerifyProc((request, callback) => {
-    if (!isTrustedHost(request.hostname)) {
-      callback(-3);
-      return;
+  installBackendCertificateVerifiers(
+    [session.defaultSession, session.fromPartition('persist:goose')],
+    {
+      has: isTrustedHost,
+      verify: verifyBackendCertificate,
     }
-
-    const match = verifyBackendCertificate(request.hostname, request.certificate.fingerprint);
-    callback(match ? 0 : -2);
-  });
+  );
 });
 
 if (process.env.ENABLE_PLAYWRIGHT) {
@@ -421,28 +381,34 @@ if (process.env.ENABLE_PLAYWRIGHT) {
 // In production, register normally
 if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
   // Development mode - force registration
-  console.log('[Main] Development mode: Forcing protocol registration for goose://');
-  app.setAsDefaultProtocolClient('goose');
+  console.log(
+    `[Main] Development mode: Forcing protocol registration for ${getAppProtocolPrefix()}`
+  );
+  app.setAsDefaultProtocolClient(getAppProtocol());
 
   if (process.platform === 'darwin') {
     try {
       // Reset the default handler to ensure dev version takes precedence
-      spawn('open', ['-a', process.execPath, '--args', '--reset-protocol-handler', 'goose'], {
-        detached: true,
-        stdio: 'ignore',
-      });
+      spawn(
+        'open',
+        ['-a', process.execPath, '--args', '--reset-protocol-handler', getAppProtocol()],
+        {
+          detached: true,
+          stdio: 'ignore',
+        }
+      );
     } catch {
       console.warn('[Main] Could not reset protocol handler');
     }
   }
 } else {
   // Production mode - normal registration
-  app.setAsDefaultProtocolClient('goose');
+  app.setAsDefaultProtocolClient(getAppProtocol());
 }
 
 // Apply single instance lock on Windows and Linux where it's needed for deep links
 // macOS uses the 'open-url' event instead
-let gotTheLock = true;
+let gotTheLock: boolean;
 let openUrlHandledLaunch = false;
 if (process.platform !== 'darwin') {
   gotTheLock = app.requestSingleInstanceLock();
@@ -451,7 +417,7 @@ if (process.platform !== 'darwin') {
     app.quit();
   } else {
     app.on('second-instance', (_event, commandLine) => {
-      const protocolUrl = commandLine.find((arg) => arg.startsWith('goose://'));
+      const protocolUrl = commandLine.find((arg) => arg.startsWith(getAppProtocolPrefix()));
       if (protocolUrl) {
         const parsedUrl = new URL(protocolUrl);
         // If it's a bot/recipe URL, handle it directly by creating a new window
@@ -501,20 +467,26 @@ if (process.platform !== 'darwin') {
         handleProtocolUrl(protocolUrl, parsedUrl);
       }
 
-      // Only focus existing windows for non-bot/recipe URLs
-      const existingWindows = BrowserWindow.getAllWindows();
-      if (existingWindows.length > 0) {
-        const mainWindow = existingWindows[0];
+      // Only focus existing regular windows for non-bot/recipe URLs
+      const regularWindows = getRegularWindows();
+      if (regularWindows.length > 0) {
+        const mainWindow = regularWindows[0];
         if (mainWindow.isMinimized()) {
           mainWindow.restore();
         }
         mainWindow.focus();
+      } else if (!protocolUrl) {
+        app.whenReady().then(async () => {
+          const recentDirs = loadRecentDirs();
+          const openDir = recentDirs.length > 0 ? recentDirs[0] : null;
+          await createChat(app, { dir: openDir || undefined });
+        });
       }
     });
   }
 
   // Handle protocol URLs on Windows and Linux startup
-  const protocolUrl = process.argv.find((arg) => arg.startsWith('goose://'));
+  const protocolUrl = process.argv.find((arg) => arg.startsWith(getAppProtocolPrefix()));
   if (protocolUrl) {
     app.whenReady().then(async () => {
       let parsedUrl: URL;
@@ -612,7 +584,7 @@ function getResumeSessionId(parsedUrl: URL): string | null {
 async function createResumeChatWindow(parsedUrl: URL, dir?: string): Promise<boolean> {
   const resumeSessionId = getResumeSessionId(parsedUrl);
   if (!resumeSessionId) {
-    log.warn('[Main] Ignoring goose://resume URL without a session id');
+    log.warn(`[Main] Ignoring ${getAppProtocolPrefix()}resume URL without a session id`);
     return false;
   }
 
@@ -646,10 +618,10 @@ async function handleProtocolUrl(url: string, parsedUrl: URL) {
     if (!targetWindow) return;
     await processProtocolUrl(url, parsedUrl, targetWindow);
   } else {
-    const existingWindows = BrowserWindow.getAllWindows();
+    const regularWindows = getRegularWindows();
     let targetWindow: BrowserWindow | undefined;
-    if (existingWindows.length > 0) {
-      targetWindow = existingWindows[0];
+    if (regularWindows.length > 0) {
+      targetWindow = regularWindows[0];
       if (targetWindow.isMinimized()) {
         targetWindow.restore();
       }
@@ -744,10 +716,10 @@ app.on('open-url', async (_event, url) => {
       return;
     }
 
-    // For extension/session URLs, send to existing window or store pending for new one
-    const existingWindows = BrowserWindow.getAllWindows();
-    if (existingWindows.length > 0) {
-      const targetWindow = existingWindows[0];
+    // For extension/session URLs, send to an existing regular window or open one
+    const regularWindows = getRegularWindows();
+    if (regularWindows.length > 0) {
+      const targetWindow = regularWindows[0];
       if (targetWindow.isMinimized()) targetWindow.restore();
       targetWindow.focus();
       if (parsedUrl.hostname === 'extension' || parsedUrl.hostname === 'sessions') {
@@ -766,7 +738,7 @@ app.on('open-url', async (_event, url) => {
 app.on('will-finish-launching', () => {
   if (process.platform === 'darwin') {
     app.setAboutPanelOptions({
-      applicationName: 'HeyBuddy',
+      applicationName: getAppDisplayName(),
       applicationVersion: app.getVersion(),
     });
   }
@@ -821,7 +793,7 @@ async function handleFileOpen(filePath: string) {
 
     // Show user-friendly error notification
     new Notification({
-      title: 'HeyBuddy',
+      title: getAppDisplayName(),
       body: `Could not open directory: ${path.basename(filePath)}`,
     }).show();
   }
@@ -889,6 +861,7 @@ interface ExternalBackend {
   url: string;
   secret: string;
   certFingerprint?: string;
+  workingDir?: string;
 }
 
 const getExternalBackendUrlFromEnv = (): string | null => {
@@ -935,7 +908,10 @@ const getServerSecret = (settings: Settings): string => {
 const getActiveExternalBackend = (settings: Settings): ExternalBackend | null => {
   const envBackend = getExternalBackendFromEnv();
   if (envBackend) {
-    return envBackend;
+    return {
+      ...envBackend,
+      workingDir: settings.externalGoosed?.workingDir,
+    };
   }
 
   if (settings.externalGoosed?.enabled && settings.externalGoosed.url) {
@@ -944,6 +920,7 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
       url: settings.externalGoosed.url,
       secret: getServerSecret(settings),
       certFingerprint: settings.externalGoosed.certFingerprint,
+      workingDir: settings.externalGoosed.workingDir,
     };
   }
 
@@ -968,6 +945,11 @@ let appConfig = {
   GOOSE_DEFAULT_MODEL: defaultModel,
   GOOSE_PATH_ROOT: sanitizeGoosePathRoot(process.env),
   GOOSE_WORKING_DIR: '',
+  // Whether the window is bound to an external backend (fixed at window
+  // creation via gooseServeLeases) and which URL it is bound to.
+  GOOSE_EXTERNAL_BACKEND: false,
+  GOOSE_EXTERNAL_BACKEND_URL: '',
+  GOOSE_EXTERNAL_BACKEND_SOURCE: '',
   // Start with the env-var override; the OS region locale is filled in after app.ready
   // (see updateLocaleFromSystem below) since getSystemLocale() cannot be called earlier.
   GOOSE_LOCALE: process.env.GOOSE_LOCALE || undefined,
@@ -978,6 +960,31 @@ let appConfig = {
 
 const windowMap = new Map<number, BrowserWindow>();
 const appWindows = new Map<string, BrowserWindow>();
+const desktopFileAccess = new DesktopFileAccess();
+
+function requireRegularRendererWindow(event: IpcMainInvokeEvent): BrowserWindow {
+  const senderWindow = BrowserWindow.fromWebContents(event.sender);
+  const senderFrame = event.senderFrame;
+  if (
+    !senderWindow ||
+    !senderFrame ||
+    !isAuthorizedFileAccessRequest(
+      {
+        isRegisteredWindow: windowMap.get(senderWindow.id) === senderWindow,
+        isMainFrame: senderFrame === event.sender.mainFrame,
+        rendererUrl: senderFrame.url,
+      },
+      getAppUrl()
+    )
+  ) {
+    throw new Error('This renderer is not authorized for local file access');
+  }
+  return senderWindow;
+}
+
+function getRegularWindows(): BrowserWindow[] {
+  return [...windowMap.values()].filter((w) => !w.isDestroyed());
+}
 
 const gooseServeLeases = new GooseServeLeaseRegistry(log);
 
@@ -1066,7 +1073,7 @@ const createChat = async (
   }
 
   const serverSecret = externalBackend ? externalBackend.secret : GENERATED_SECRET;
-  let workingDir = dir || os.homedir();
+  let workingDir = resolveWorkingDir(externalBackend?.workingDir, dir, os.homedir());
   let gooseServeLease: GooseServeLease | null = null;
 
   if (externalBackend) {
@@ -1156,7 +1163,9 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
+    const siteRuntimeEnv = buildSiteRuntimeEnv(
+      readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+    );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
       gooseServeResult = await startGooseServe({
@@ -1165,7 +1174,7 @@ const createChat = async (
         tls: true,
         env: {
           GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...heyBuddyEnv,
+          ...siteRuntimeEnv,
         },
         loginShellPath,
         isPackaged: app.isPackaged,
@@ -1195,7 +1204,7 @@ const createChat = async (
       log.error('goose serve failed to start', error);
       dialog.showMessageBoxSync({
         type: 'error',
-        title: 'HeyBuddy Failed to Start',
+        title: `${getAppDisplayName()} Failed to Start`,
         message: 'The backend server failed to start.',
         detail: [
           'Backend: goose serve',
@@ -1243,12 +1252,13 @@ const createChat = async (
     // 也落不到 extraResource 的实际位置，只会静默回退默认图标。
     // @author logic
     // @date 2026-08-14
+    const windowIconStem = getAppIconStem();
     const windowIconName =
       process.platform === 'win32'
-        ? 'icon.ico'
+        ? `${windowIconStem}.ico`
         : process.platform === 'darwin'
-          ? 'icon.icns'
-          : 'icon.png';
+          ? `${windowIconStem}.icns`
+          : `${windowIconStem}.png`;
     const windowIcon = [
       path.join(process.resourcesPath, 'images', windowIconName),
       path.join(process.cwd(), 'src', 'images', windowIconName),
@@ -1284,6 +1294,9 @@ const createChat = async (
             ...appConfig,
             GOOSE_LOCALE: getConfiguredGooseLocale(),
             GOOSE_WORKING_DIR: workingDir,
+            GOOSE_EXTERNAL_BACKEND: externalBackend !== null,
+            GOOSE_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
+            GOOSE_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
             REQUEST_DIR: dir,
             GOOSE_VERSION: version,
             recipeDeeplink: recipeDeeplink,
@@ -1389,16 +1402,9 @@ const createChat = async (
 
   // Handle new window creation for links (fallback for any links not handled by onClick)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      const protocol = new URL(url).protocol;
-      if (BLOCKED_PROTOCOLS.includes(protocol)) {
-        return { action: 'deny' };
-      }
-    } catch {
-      return { action: 'deny' };
-    }
-
-    shell.openExternal(url);
+    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+      log.error('Failed to open external URL:', error);
+    });
     return { action: 'deny' };
   });
 
@@ -1407,15 +1413,9 @@ const createChat = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mainWindow.webContents.on('new-window' as any, function (event: any, url: string) {
     event.preventDefault();
-    try {
-      const protocol = new URL(url).protocol;
-      if (BLOCKED_PROTOCOLS.includes(protocol)) {
-        return;
-      }
-    } catch {
-      return;
-    }
-    shell.openExternal(url);
+    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+      log.error('Failed to open external URL:', error);
+    });
   });
 
   const windowId = mainWindow.id;
@@ -1460,6 +1460,40 @@ const createChat = async (
       mainWindow.show();
     }
   });
+
+  await desktopFileAccess.bindWindow(windowId, workingDir);
+  if (mainWindow.isDestroyed()) {
+    desktopFileAccess.unbindWindow(windowId);
+    return;
+  }
+  windowMap.set(windowId, mainWindow);
+
+  // Handle window closure
+  mainWindow.on('closed', () => {
+    windowMap.delete(windowId);
+    desktopFileAccess.unbindWindow(windowId);
+
+    pendingInitialMessages.delete(windowId);
+    pendingDeepLinks.delete(windowId);
+    reactReadyWindows.delete(windowId);
+
+    if (windowPowerSaveBlockers.has(windowId)) {
+      const blockerId = windowPowerSaveBlockers.get(windowId)!;
+      try {
+        powerSaveBlocker.stop(blockerId);
+        console.log(
+          `[Main] Stopped power save blocker ${blockerId} for closing window ${windowId}`
+        );
+      } catch (error) {
+        console.error(
+          `[Main] Failed to stop power save blocker ${blockerId} for window ${windowId}:`,
+          error
+        );
+      }
+      windowPowerSaveBlockers.delete(windowId);
+    }
+  });
+
   mainWindow.loadURL(formattedUrl);
 
   // If we have an initial message, store it to send after React is ready
@@ -1508,32 +1542,6 @@ const createChat = async (
     }
   });
 
-  windowMap.set(windowId, mainWindow);
-
-  // Handle window closure
-  mainWindow.on('closed', () => {
-    windowMap.delete(windowId);
-
-    pendingInitialMessages.delete(windowId);
-    pendingDeepLinks.delete(windowId);
-    reactReadyWindows.delete(windowId);
-
-    if (windowPowerSaveBlockers.has(windowId)) {
-      const blockerId = windowPowerSaveBlockers.get(windowId)!;
-      try {
-        powerSaveBlocker.stop(blockerId);
-        console.log(
-          `[Main] Stopped power save blocker ${blockerId} for closing window ${windowId}`
-        );
-      } catch (error) {
-        console.error(
-          `[Main] Failed to stop power save blocker ${blockerId} for window ${windowId}:`,
-          error
-        );
-      }
-      windowPowerSaveBlockers.delete(windowId);
-    }
-  });
   return mainWindow;
 };
 
@@ -1631,12 +1639,13 @@ const disableTray = () => {
 const createTray = () => {
   destroyTray();
 
+  const trayIconName = `${getAppTrayIconStem()}.png`;
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'src', 'images', 'iconTemplate.png'),
-    path.join(__dirname, '..', 'images', 'iconTemplate.png'),
-    path.join(__dirname, 'images', 'iconTemplate.png'),
-    path.join(process.cwd(), 'images', 'iconTemplate.png'),
+    path.join(process.resourcesPath, 'images', trayIconName),
+    path.join(process.cwd(), 'src', 'images', trayIconName),
+    path.join(__dirname, '..', 'images', trayIconName),
+    path.join(__dirname, 'images', trayIconName),
+    path.join(process.cwd(), 'images', trayIconName),
   ];
 
   const iconPath = possiblePaths.find((p) => fsSync.existsSync(p));
@@ -1650,7 +1659,6 @@ const createTray = () => {
   try {
     tray = new Tray(iconPath);
     setTrayRef(tray);
-    updateTrayMenu(getUpdateAvailable());
 
     if (process.platform === 'win32') {
       tray.on('click', showWindow);
@@ -1908,15 +1916,9 @@ ipcMain.on('react-ready', (event) => {
   }
 });
 
-ipcMain.handle('open-external', async (_event, url: string) => {
-  const parsedUrl = new URL(url);
-
-  if (BLOCKED_PROTOCOLS.includes(parsedUrl.protocol)) {
-    console.warn(`[Main] Blocked dangerous protocol: ${parsedUrl.protocol}`);
-    return;
-  }
-
-  await shell.openExternal(url);
+ipcMain.handle('open-external', async (event, url: string) => {
+  const senderWindow = BrowserWindow.fromWebContents(event.sender) ?? undefined;
+  return openExternalUrl(url, senderWindow, getConfiguredGooseLocale());
 });
 
 ipcMain.handle('directory-chooser', async () => {
@@ -1960,7 +1962,7 @@ const validSettingKeys: Set<string> = new Set([
   'language',
   'responseStyle',
   'seenAnnouncementIds',
-  'disableAutoDownload',
+  'recentModels',
 ]);
 
 ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
@@ -1988,14 +1990,15 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   if (key === 'keyboardShortcuts') {
     registerGlobalShortcuts();
   }
-
-  if (key === 'disableAutoDownload') {
-    setAutoDownloadDisabled(value as boolean);
-  }
 });
 
-ipcMain.handle('get-login-credentials', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
-ipcMain.handle('is-logged-in', () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null);
+ipcMain.handle('get-login-credentials', () =>
+  readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+);
+ipcMain.handle(
+  'is-logged-in',
+  () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null
+);
 ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
   writeCredentials(CREDENTIALS_FILE, creds, getCredentialsCodec());
 });
@@ -2009,8 +2012,16 @@ ipcMain.handle('clear-login-credentials', () => {
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch)),
+  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
 );
+
+registerAIBuddyAuthIpc(ipcMain, {
+  apiBaseUrl: authConfig.apiBaseUrl,
+  fetchImpl: net.fetch,
+  idempotencyKeyFactory: () => crypto.randomUUID(),
+  writeCredentials: (credentials) =>
+    writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
+});
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
 // /api/status 的货币显示配置带 1 小时模块级缓存；currency 拉取失败且无缓存时
@@ -2024,6 +2035,47 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
   if (!creds) {
     return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
   }
+  if (creds.siteKind === 'sub2api') {
+    const refreshToken = creds.session?.refreshToken ?? creds.refreshToken;
+    return runBalanceFetch(async () => {
+      const entitlement = await withSub2apiSession(
+        authConfig.apiBaseUrl,
+        {
+          accessToken: creds.session?.accessToken ?? creds.token,
+          ...(refreshToken ? { refreshToken } : {}),
+        },
+        net.fetch,
+        (refreshed) =>
+          writeCredentials(
+            CREDENTIALS_FILE,
+            withRefreshedSession(creds, refreshed),
+            getCredentialsCodec()
+          ),
+        (accessToken) =>
+          fetchSub2apiEntitlement(
+            authConfig.apiBaseUrl,
+            accessToken,
+            creds.gateway?.groupId ?? creds.groupId,
+            net.fetch
+          )
+      ).catch((error) => {
+        if (error instanceof Sub2apiUnauthorizedError) {
+          throw new BalanceFetchError('unauthorized', error.message);
+        }
+        throw error;
+      });
+      return {
+        balance: toSub2apiBalanceData(entitlement),
+        currency: {
+          quotaPerUnit: 1,
+          quotaDisplayType: 'USD',
+          usdExchangeRate: 1,
+          customCurrencySymbol: '$',
+          customCurrencyExchangeRate: 1,
+        },
+      };
+    });
+  }
   const pat = creds.pat;
   if (!pat) {
     return { ok: false, kind: 'no-pat', message: '请重新登录后查看余额' };
@@ -2032,7 +2084,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
     const [balance, currency] = await Promise.all([
       fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
       fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
-        () => DEFAULT_CURRENCY_CONFIG,
+        () => DEFAULT_CURRENCY_CONFIG
       ),
     ]);
     return { balance, currency };
@@ -2046,6 +2098,21 @@ ipcMain.handle('list-models-via-api', async () => {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) return [];
   try {
+    if (creds.siteKind === 'sub2api') {
+      return (
+        await fetchSub2apiModels(
+          creds.gateway?.baseUrl ?? creds.baseUrl,
+          creds.gateway?.apiKey ?? creds.apiKey,
+          net.fetch
+        )
+      ).map((model) => ({
+        id: model.id,
+        name: model.id,
+        contextLimit: null,
+        reasoning: null,
+        providerId: model.providerId,
+      }));
+    }
     const res = await net.fetch(`${creds.baseUrl}/models`, {
       headers: { Authorization: `Bearer ${creds.apiKey}` },
     });
@@ -2287,6 +2354,43 @@ ipcMain.handle('select-file-or-directory', async (_event, defaultPath?: string) 
   return null;
 });
 
+ipcMain.handle('select-recipe-file', async (event) => {
+  const senderWindow = requireRegularRendererWindow(event);
+  const pathRoot = appConfig.GOOSE_PATH_ROOT as string | undefined;
+  const recipeDirectory = pathRoot
+    ? path.join(pathRoot, 'config', 'recipes')
+    : path.join(os.homedir(), '.config', 'goose', 'recipes');
+  let defaultPath = os.homedir();
+  try {
+    if ((await fs.stat(recipeDirectory)).isDirectory()) {
+      defaultPath = recipeDirectory;
+    }
+  } catch {
+    // The recipe directory is optional; the native picker falls back to the home directory.
+  }
+
+  const result = await dialog.showOpenDialog(senderWindow, {
+    title: 'Select a recipe',
+    defaultPath,
+    properties: ['openFile'],
+    filters: [{ name: 'YAML recipes', extensions: ['yaml', 'yml'] }],
+  });
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+  return readSelectedRecipe(result.filePaths[0]);
+});
+
+ipcMain.handle('read-goosehints', async (event) => {
+  const senderWindow = requireRegularRendererWindow(event);
+  return desktopFileAccess.readGoosehints(senderWindow.id);
+});
+
+ipcMain.handle('write-goosehints', async (event, content) => {
+  const senderWindow = requireRegularRendererWindow(event);
+  return desktopFileAccess.writeGoosehints(senderWindow.id, content);
+});
+
 // Native picker tailored for session imports: shows hidden files (so users can
 // reach `~/.claude/projects/...` or `~/.pi/agent/sessions/...`), filters for
 // .json/.jsonl, and returns the file's contents inline so the renderer doesn't
@@ -2366,46 +2470,6 @@ ipcMain.handle('check-ollama', async () => {
   } catch (err) {
     console.error('Error checking for Ollama:', err);
     return false;
-  }
-});
-
-ipcMain.handle('read-file', async (_event, filePath) => {
-  try {
-    const expandedPath = expandTilde(filePath);
-    if (process.platform === 'win32') {
-      const buffer = await fs.readFile(expandedPath);
-      return { file: buffer.toString('utf8'), filePath: expandedPath, error: null, found: true };
-    }
-    // Non-Windows: keep previous behavior via cat for parity
-    return await new Promise((resolve) => {
-      const cat = spawn('cat', [expandedPath]);
-      let output = '';
-      let errorOutput = '';
-
-      cat.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      cat.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-
-      cat.on('close', (code) => {
-        if (code !== 0) {
-          resolve({ file: '', filePath: expandedPath, error: errorOutput || null, found: false });
-          return;
-        }
-        resolve({ file: output, filePath: expandedPath, error: null, found: true });
-      });
-
-      cat.on('error', (error) => {
-        console.error('Error reading file:', error);
-        resolve({ file: '', filePath: expandedPath, error, found: false });
-      });
-    });
-  } catch (error) {
-    console.error('Error reading file:', error);
-    return { file: '', filePath: expandTilde(filePath), error, found: false };
   }
 });
 
@@ -2522,8 +2586,6 @@ async function appMain() {
   // Ensure Windows shims are available before any MCP processes are spawned
   await ensureWinShims();
 
-  registerUpdateIpcHandlers();
-
   // Handle microphone permission requests
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     console.log('Permission requested:', permission);
@@ -2581,22 +2643,6 @@ async function appMain() {
     log.info('[Main] Skipping window creation in appMain - open-url already handled launch');
   }
 
-  // Setup auto-updater AFTER window is created and displayed (with delay to avoid blocking)
-  setTimeout(() => {
-    if (shouldSetupUpdater()) {
-      log.info('Setting up auto-updater after window creation...');
-      try {
-        const settings = getSettings();
-        if (settings.disableAutoDownload) {
-          setAutoDownloadDisabled(true);
-        }
-        setupAutoUpdater();
-      } catch (error) {
-        log.error('Error setting up auto-updater:', error);
-      }
-    }
-  }, 2000);
-
   if (process.platform === 'darwin') {
     const dockMenu = Menu.buildFromTemplate([
       {
@@ -2613,7 +2659,7 @@ async function appMain() {
 
   const shortcuts = getKeyboardShortcuts(settings);
 
-  const appMenu = menu?.items.find((item) => item.label === 'HeyBuddy');
+  const appMenu = menu?.items.find((item) => item.label === getAppDisplayName());
   if (appMenu?.submenu) {
     appMenu.submenu.insert(1, new MenuItem({ type: 'separator' }));
     if (shortcuts.settings) {
@@ -2736,12 +2782,12 @@ async function appMain() {
       );
     }
 
-    fileMenu.submenu.insert(menuIndex++, new MenuItem({ type: 'separator' }));
+    fileMenu.submenu.insert(menuIndex, new MenuItem({ type: 'separator' }));
 
     if (shortcuts.focusWindow) {
       fileMenu.submenu.append(
         new MenuItem({
-          label: menuT('Focus HeyBuddy Window'),
+          label: menuT('Focus {app} Window'),
           accelerator: shortcuts.focusWindow,
           click() {
             focusWindow();
@@ -2848,13 +2894,13 @@ async function appMain() {
         helpMenu.submenu.append(new MenuItem({ type: 'separator' }));
       }
 
-      // Create the About HeyBuddy menu item with a submenu
+      // Create the About menu item with a submenu
       const aboutGooseMenuItem = new MenuItem({
-        label: menuT('About HeyBuddy'),
+        label: menuT('About {app}'),
         submenu: Menu.buildFromTemplate([]), // Start with an empty submenu for About
       });
 
-      // Add the Version menu item (display only) to the About HeyBuddy submenu
+      // Add the Version menu item (display only) to the About submenu
       if (aboutGooseMenuItem.submenu) {
         aboutGooseMenuItem.submenu.append(
           new MenuItem({
@@ -3089,7 +3135,17 @@ async function appMain() {
         throw new Error('No backend lease found for launching window');
       }
 
-      const workingDir = app.getPath('home');
+      const launchingWorkingDir = await launchingWindow.webContents
+        .executeJavaScript(`window.appConfig ? window.appConfig.get('GOOSE_WORKING_DIR') : null`)
+        .catch((error) => {
+          console.warn('Failed to get working directory from launching window:', error);
+          return undefined;
+        });
+      const workingDir = resolveWorkingDir(
+        typeof launchingWorkingDir === 'string' ? launchingWorkingDir : undefined,
+        undefined,
+        app.getPath('home')
+      );
       const appWindow = new BrowserWindow({
         title: formatAppName(gooseApp.name),
         width: gooseApp.width ?? 800,
@@ -3184,7 +3240,7 @@ app.whenReady().then(async () => {
   try {
     await appMain();
   } catch (error) {
-    dialog.showErrorBox('HeyBuddy Error', `Failed to create main window: ${error}`);
+    dialog.showErrorBox(`${getAppDisplayName()} Error`, `Failed to create main window: ${error}`);
     app.quit();
   }
 });

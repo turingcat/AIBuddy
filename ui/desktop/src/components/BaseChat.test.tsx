@@ -13,6 +13,7 @@ vi.mock('./conversation/SearchView', () => ({
   SearchView: ({ children }: React.PropsWithChildren) => children,
 }));
 vi.mock('./LoadingGoose', () => ({ default: () => null }));
+vi.mock('./ChatBrand', () => ({ default: () => <div data-testid="chat-brand" /> }));
 vi.mock('./ProgressiveMessageList', () => ({ default: () => null }));
 vi.mock('./Layout/MainPanelLayout', () => ({
   MainPanelLayout: ({ children }: React.PropsWithChildren) => <div>{children}</div>,
@@ -79,6 +80,7 @@ describe('BaseChat', () => {
       </IntlProvider>
     );
 
+    expect(screen.getByTestId('chat-brand')).toBeInTheDocument();
     expect(screen.getByTestId('chat-input').parentElement).toHaveClass(
       'w-[calc(100%-2rem)]',
       'mx-auto'

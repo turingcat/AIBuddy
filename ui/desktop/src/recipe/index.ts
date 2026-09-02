@@ -11,6 +11,7 @@ import {
   parseRecipe as acpParseRecipe,
   scanRecipe as acpScanRecipe,
 } from '../acp/recipe';
+import { getAppProtocolPrefix } from '../brand';
 
 export type Parameter = RecipeParameterDto;
 export type RecipeExtension = RecipeExtensionDto;
@@ -52,9 +53,13 @@ export async function scanRecipe(recipe: Recipe): Promise<{ has_security_warning
   }
 }
 
+export function recipeDeeplinkPrefix(): string {
+  return `${getAppProtocolPrefix()}recipe?config=`;
+}
+
 export async function generateDeepLink(recipe: Recipe): Promise<string> {
   const encoded = await encodeRecipe(recipe);
-  return `goose://recipe?config=${encoded}`;
+  return `${recipeDeeplinkPrefix()}${encoded}`;
 }
 
 /**
@@ -86,7 +91,7 @@ export async function parseRecipeFromFile(fileContent: string): Promise<Recipe> 
     if (typeof error === 'object' && error !== null && 'message' in error) {
       errorMessage = error.message as string;
     }
-    throw new Error(errorMessage);
+    throw new Error(errorMessage, { cause: error });
   }
 }
 
@@ -94,11 +99,12 @@ export async function parseDeeplink(deeplink: string): Promise<Recipe | null> {
   try {
     const cleanLink = deeplink.trim();
 
-    if (!cleanLink.startsWith('goose://recipe?config=')) {
-      throw new Error('Invalid deeplink format. Expected: goose://recipe?config=...');
+    const prefix = recipeDeeplinkPrefix();
+    if (!cleanLink.startsWith(prefix)) {
+      throw new Error(`Invalid deeplink format. Expected: ${prefix}...`);
     }
 
-    const recipeEncoded = cleanLink.replace('goose://recipe?config=', '');
+    const recipeEncoded = cleanLink.slice(prefix.length);
 
     if (!recipeEncoded) {
       throw new Error('No recipe configuration found in deeplink');

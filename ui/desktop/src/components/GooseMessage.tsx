@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { memo, useMemo, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import ImagePreview from './ImagePreview';
 import { formatMessageTimestamp } from '../utils/timeUtils';
@@ -38,7 +38,7 @@ interface GooseMessageProps {
   ) => Promise<boolean>;
 }
 
-export default function GooseMessage({
+function GooseMessage({
   sessionId,
   message,
   messages,
@@ -181,6 +181,7 @@ export default function GooseMessage({
               <div className="flex flex-col gap-3">
                 {toolRequests.map((toolRequest) => {
                   const hasResponse = toolResponsesMap.has(toolRequest.id);
+                  const isCancelledMessage = messageIndex < messages.length - 1 && !hasResponse;
                   const isPending = pendingConfirmationIds.has(toolRequest.id);
                   const confirmationContent = findConfirmationForToolAcrossMessages(toolRequest.id);
                   const isApprovalClicked = confirmationContent && !isPending && hasResponse;
@@ -188,7 +189,7 @@ export default function GooseMessage({
                     <div className="goose-message-tool" key={toolRequest.id}>
                       <ToolCallWithResponse
                         sessionId={sessionId}
-                        isCancelledMessage={false}
+                        isCancelledMessage={isCancelledMessage}
                         toolRequest={toolRequest}
                         toolResponse={toolResponsesMap.get(toolRequest.id)}
                         notifications={toolCallNotifications.get(toolRequest.id)}
@@ -238,3 +239,5 @@ export default function GooseMessage({
     </div>
   );
 }
+
+export default memo(GooseMessage);

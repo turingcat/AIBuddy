@@ -70,6 +70,7 @@ module.exports = [
         setInterval: 'readonly',
         clearTimeout: 'readonly',
         CustomEvent: 'readonly',
+        Element: 'readonly',
         HTMLElement: 'readonly',
         HTMLInputElement: 'readonly',
         HTMLSelectElement: 'readonly',
@@ -88,6 +89,8 @@ module.exports = [
         URLSearchParams: 'readonly',
         Response: 'readonly',
         ReadableStream: 'readonly',
+        ReadableStreamDefaultController: 'readonly',
+        WritableStream: 'readonly',
         AbortController: 'readonly',
         AbortSignal: 'readonly', // @author logic @date 2026-08-25
         RequestInit: 'readonly', // @author logic @date 2026-08-25
@@ -102,6 +105,8 @@ module.exports = [
         requestAnimationFrame: 'readonly',
         cancelAnimationFrame: 'readonly',
         ResizeObserver: 'readonly',
+        ResizeObserverCallback: 'readonly', // @author logic @date 2026-08-30
+        ResizeObserverEntry: 'readonly', // @author logic @date 2026-08-30
         MutationObserver: 'readonly',
         NodeFilter: 'readonly',
         Text: 'readonly',

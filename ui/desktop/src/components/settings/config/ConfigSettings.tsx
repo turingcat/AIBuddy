@@ -27,11 +27,11 @@ const i18n = defineMessages({
   },
   description: {
     id: 'configSettings.description',
-    defaultMessage: 'Edit your HeyBuddy configuration settings',
+    defaultMessage: 'Edit your {appName} configuration settings',
   },
   descriptionWithProvider: {
     id: 'configSettings.descriptionWithProvider',
-    defaultMessage: 'Edit your HeyBuddy configuration settings (current settings for {provider})',
+    defaultMessage: 'Edit your {appName} configuration settings (current settings for {provider})',
   },
   editConfiguration: {
     id: 'configSettings.editConfiguration',

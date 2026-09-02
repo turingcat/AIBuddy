@@ -8,6 +8,7 @@ import ProgressiveMessageList from './ProgressiveMessageList';
 import { MainPanelLayout } from './Layout/MainPanelLayout';
 import ChatInput from './ChatInput';
 import { ChatInputCard } from './ChatInputCard';
+import { Button } from './ui/button';
 import { ScrollArea, ScrollAreaHandle } from './ui/scroll-area';
 import { useFileDrop } from '../hooks/useFileDrop';
 import { ChatState } from '../types/chatState';
@@ -31,8 +32,8 @@ import {
 } from '../types/message';
 import { substituteParameters } from '../utils/parameterSubstitution';
 import { useAutoSubmit } from '../hooks/useAutoSubmit';
-import { Goose } from './icons';
 import EnvironmentBadge from './GooseSidebar/EnvironmentBadge';
+import ChatBrand from './ChatBrand';
 import SessionActionsHeader from './SessionActionsHeader';
 import { isAcpRecovering, subscribeToAcpRecovery } from '../acp/acpConnection';
 
@@ -44,6 +45,10 @@ const i18n = defineMessages({
   goHome: {
     id: 'baseChat.goHome',
     defaultMessage: 'Go home',
+  },
+  retry: {
+    id: 'baseChat.retry',
+    defaultMessage: 'Retry',
   },
   reconnecting: {
     id: 'baseChat.reconnecting',
@@ -106,6 +111,7 @@ export default function BaseChat({
     onSteerQueuedMessage,
     submitElicitationResponse,
     stopStreaming,
+    retrySessionLoad,
     sessionLoadError,
     tokenState,
     notifications: toolCallNotifications,
@@ -142,7 +148,7 @@ export default function BaseChat({
   }, [initialMessage, recipe?.prompt, session?.user_recipe_values]);
 
   // noAutoSubmit only suppresses auto-submitting the initial prompt of a fresh session
-  // (goose://new-session?prompt=...). Once the conversation has messages, later flows
+  // (<protocol>://new-session?prompt=...). Once the conversation has messages, later flows
   // such as forks or resumes should auto-submit normally.
   const suppressInitialAutoSubmit = noAutoSubmit && messages.length === 0;
   const canAutoSubmit =
@@ -384,14 +390,14 @@ export default function BaseChat({
                   </h3>
                   <p className="text-sm">{sessionLoadError}</p>
                 </div>
-                <button
-                  onClick={() => {
-                    setView('chat');
-                  }}
-                  className="px-4 py-2 text-center cursor-pointer text-text-primary border border-border-primary hover:bg-background-secondary rounded-lg transition-all duration-150"
-                >
-                  {intl.formatMessage(i18n.goHome)}
-                </button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => void retrySessionLoad()}>
+                    {intl.formatMessage(i18n.retry)}
+                  </Button>
+                  <Button variant="outline" onClick={() => setView('chat')}>
+                    {intl.formatMessage(i18n.goHome)}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
@@ -412,19 +418,9 @@ export default function BaseChat({
 
         {/* Chat container with sticky recipe header */}
         <div className="flex flex-col flex-1 min-h-0 relative">
-          {/* HeyBuddy watermark - top right */}
+          {/* Product watermark - top right */}
           <div className="absolute top-[14px] right-4 z-[60] flex flex-row items-center gap-1">
-            <a
-              href="https://github.com/turingcat/HeyBuddy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="no-drag flex flex-row items-center gap-1 hover:opacity-80 transition-opacity"
-            >
-              <Goose className="size-5 goose-icon-animation" />
-              <span className="text-sm leading-none text-text-secondary -translate-y-px">
-                HeyBuddy
-              </span>
-            </a>
+            <ChatBrand />
             <EnvironmentBadge className="translate-y-px" />
           </div>
 
@@ -493,7 +489,7 @@ export default function BaseChat({
 
         <ChatInputCard
           className={cn(
-            'relative z-10 mb-4 w-[calc(100%-2rem)]',
+            'relative z-30 mb-4 w-[calc(100%-2rem)]',
             !disableAnimation && 'animate-[fadein_400ms_ease-in_forwards]'
           )}
         >

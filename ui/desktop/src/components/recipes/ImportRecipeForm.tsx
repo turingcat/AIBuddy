@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { Download } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
-import { Recipe, parseDeeplink, parseRecipeFromFile } from '../../recipe';
+import { Recipe, parseDeeplink, parseRecipeFromFile, recipeDeeplinkPrefix } from '../../recipe';
 import { toastSuccess, toastError } from '../../toasts';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { getRecipeJsonSchema } from '../../recipe/validation';
@@ -23,11 +23,11 @@ const i18n = defineMessages({
   },
   deeplinkPlaceholder: {
     id: 'importRecipeForm.deeplinkPlaceholder',
-    defaultMessage: 'Paste your goose://recipe?config=... deeplink here',
+    defaultMessage: 'Paste your {protocol}://recipe?config=... deeplink here',
   },
   deeplinkHint: {
     id: 'importRecipeForm.deeplinkHint',
-    defaultMessage: 'Paste a recipe deeplink starting with "goose://recipe?config="',
+    defaultMessage: 'Paste a recipe deeplink starting with "{protocol}://recipe?config="',
   },
   or: {
     id: 'importRecipeForm.or',
@@ -48,7 +48,7 @@ const i18n = defineMessages({
   reviewWarning: {
     id: 'importRecipeForm.reviewWarning',
     defaultMessage:
-      'Ensure you review contents of recipe files before adding them to your HeyBuddy interface.',
+      'Ensure you review contents of recipe files before adding them to your {appName} interface.',
   },
   cancel: {
     id: 'importRecipeForm.cancel',
@@ -87,8 +87,8 @@ const importRecipeSchema = z
     deeplink: z
       .string()
       .refine(
-        (value) => !value || value.trim().startsWith('goose://recipe?config='),
-        'Invalid deeplink format. Expected: goose://recipe?config=...'
+        (value) => !value || value.trim().startsWith(recipeDeeplinkPrefix()),
+        `Invalid deeplink format. Expected: ${recipeDeeplinkPrefix()}...`
       ),
     recipeUploadFile: z
       .instanceof(File)

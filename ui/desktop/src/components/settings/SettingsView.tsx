@@ -7,14 +7,7 @@ import AppSettingsSection from './app/AppSettingsSection';
 import PromptsSettingsSection from './PromptsSettingsSection';
 import type { ExtensionConfig } from '../../types/extensions';
 import { MainPanelLayout } from '../Layout/MainPanelLayout';
-import {
-  Bot,
-  Share2,
-  Monitor,
-  MessageSquare,
-  FileText,
-  Keyboard,
-} from 'lucide-react';
+import { Bot, Share2, Monitor, MessageSquare, FileText, Keyboard } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import ChatSettingsSection from './chat/ChatSettingsSection';
 import KeyboardShortcutsSection from './keyboard/KeyboardShortcutsSection';
@@ -228,7 +221,7 @@ export default function SettingsView({
                 >
                   <div className="space-y-8">
                     {/* 阶段一：隐藏 ConfigSettings 原始 config 编辑器 */}
-                    <AppSettingsSection scrollToSection={viewOptions.section} />
+                    <AppSettingsSection />
                   </div>
                 </TabsContent>
               </ScrollArea>

@@ -19,6 +19,7 @@ import type { View } from '../../../../utils/navigationUtils';
 import Model, { fetchModelReasoning } from '../modelInterface';
 import type { ThinkingEffort } from '../../../../types/providers';
 import { trackModelChanged } from '../../../../utils/analytics';
+import { addToRecentModels } from '../../../../utils/recentModels';
 
 const i18n = defineMessages({
   thinkingEffortOff: {
@@ -237,8 +238,15 @@ export const SwitchModelModal = ({
 
       const success = await changeModel(sessionId, modelObj);
       if (success) {
-        onModelSelected?.(modelObj.name, modelObj.provider || '');
         trackModelChanged(modelObj.provider || '', modelObj.name);
+        if (currentModel && currentProvider) {
+          const current = (await window.electron.getSetting('recentModels')) ?? [];
+          await window.electron.setSetting(
+            'recentModels',
+            addToRecentModels(current, currentProvider, currentModel)
+          );
+        }
+        onModelSelected?.(modelObj.name, modelObj.provider || '');
       }
 
       onClose();
@@ -277,7 +285,7 @@ export const SwitchModelModal = ({
       if (cancelled) return;
       const mapped = raw.map((m) => ({
         name: m.id,
-        provider: currentProvider ?? 'heybuddy',
+        provider: m.providerId ?? currentProvider ?? 'heybuddy',
         context_limit: m.contextLimit ?? undefined,
         reasoning: m.reasoning ?? undefined,
       }));

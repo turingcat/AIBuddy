@@ -154,10 +154,9 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
       return { model, provider: configuredProvider };
     }
 
-    const provider = configuredProvider || 'heybuddy';
-
     try {
       const firstModel = (await window.electron.listModelsViaApi())[0];
+      const provider = configuredProvider || firstModel?.providerId || 'heybuddy';
       if (provider && firstModel) {
         await acpSaveDefaults(provider, firstModel.id);
         return { model: firstModel.id, provider };
@@ -166,7 +165,7 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
       console.error('[getFallbackModelAndProvider] Failed to load available models', error);
     }
 
-    return { model: model, provider: provider };
+    return { model: model, provider: configuredProvider || 'heybuddy' };
   }, []);
 
   const getCurrentModelAndProvider = useCallback(async () => {

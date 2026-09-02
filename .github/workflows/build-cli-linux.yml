@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   build-cli-linux:
-    name: Build CLI
+    name: Build Goose (Linux, ${{ matrix.architecture }}, ${{ matrix.variant }})
     runs-on: ${{ matrix.build-on }}
     container: ${{ matrix.container }}
     strategy:
@@ -107,7 +107,7 @@ jobs:
             tar
 
       - name: Cache Cargo artifacts
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
           key: ${{ matrix.architecture }}-${{ matrix.target-suffix }}-${{ matrix.build-on }}-${{ matrix.container || 'native' }}
 
@@ -189,3 +189,22 @@ jobs:
           path: |
             ${{ env.ARTIFACT_BZ2 }}
             ${{ env.ARTIFACT_GZ }}
+
+      - name: Prepare internal Goose binary
+        if: ${{ inputs.package_desktop && matrix.target-suffix == 'unknown-linux-gnu' }}
+        env:
+          TARGET: ${{ matrix.architecture }}-${{ matrix.target-suffix }}
+          VARIANT_SUFFIX: ${{ matrix.variant == 'vulkan' && '-vulkan' || '' }}
+        run: |
+          mkdir -p artifacts
+          cp "target/${TARGET}/release/goose" "artifacts/internal-goose-${TARGET}${VARIANT_SUFFIX}"
+
+      - name: Upload internal Goose binary
+        if: ${{ inputs.package_desktop && matrix.target-suffix == 'unknown-linux-gnu' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: internal-goose-${{ matrix.architecture }}-${{ matrix.target-suffix }}${{ matrix.variant == 'vulkan' && '-vulkan' || '' }}
+          path: artifacts/internal-goose-${{ matrix.architecture }}-${{ matrix.target-suffix }}${{ matrix.variant == 'vulkan' && '-vulkan' || '' }}
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true

@@ -17,7 +17,6 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
 
             "Justfile",
             "ui/desktop/package.json",
-            "ui/desktop/scripts/generate-mac-update-manifest.js",
             "documentation/src/components/MacDesktopInstallButtons.js",
             "download_cli.sh",
             "crates/goose-cli/src/commands/update.rs",
@@ -56,7 +55,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
     def test_desktop_bundle_has_no_intel_script(self) -> None:
         package = json.loads((ROOT / "ui/desktop/package.json").read_text(encoding="utf-8"))
         self.assertNotIn("bundle:intel", package["scripts"])
-        self.assertIn("--arch=arm64", package["scripts"]["package"])
+        self.assertIn("--arch=arm64", package["scripts"]["package:macos"])
         self.assertIn("--arch=arm64", package["scripts"]["bundle:default"])
 
     def test_macos_workflow_has_no_target_input(self) -> None:
@@ -70,6 +69,12 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertIn("--platform=win32 --arch=x64", workflow)
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
+
+    def test_windows_workflow_uses_edition_aware_portable_name(self) -> None:
+        workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
+        self.assertIn("portableFileName", workflow)
+        self.assertIn("steps.package-windows-zip.outputs.portable_file_name", workflow)
+        self.assertNotIn("HeyBuddy-win32-x64", workflow)
 
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(

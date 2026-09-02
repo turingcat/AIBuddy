@@ -12,7 +12,7 @@ const i18n = defineMessages({
   description: {
     id: 'goosehintsSection.description',
     defaultMessage:
-      "Configure your project's .goosehints file to provide additional context to HeyBuddy",
+      "Configure your project's .goosehints file to provide additional context to {appName}",
   },
   configure: {
     id: 'goosehintsSection.configure',

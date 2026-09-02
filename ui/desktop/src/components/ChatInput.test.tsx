@@ -48,6 +48,7 @@ vi.mock('./settings/models/predefinedModelsUtils', () => ({
 vi.mock('../utils/canonical', () => ({ fetchCanonicalModelInfo: vi.fn().mockResolvedValue(null) }));
 vi.mock('./MentionPopover', () => ({ default: () => null }));
 vi.mock('./MessageQueue', () => ({ MessageQueue: () => null }));
+vi.mock('./GitBranchIndicator', () => ({ GitBranchIndicator: () => null }));
 vi.mock('./bottom_menu/DirSwitcher', () => ({ DirSwitcher: () => <span>目录</span> }));
 vi.mock('./bottom_menu/ContextWindowIndicator', () => ({
   ContextWindowIndicator: () => <span>上下文</span>,

@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 
 import { BalanceWidget } from './BalanceWidget';
 import type { BalanceResult } from '../../balance';
+import zhCatalog from '../../i18n/messages/zh-CN.json';
 import { DEFAULT_CURRENCY_CONFIG } from '../../quotaFormat';
 
 /**
@@ -14,13 +15,16 @@ import { DEFAULT_CURRENCY_CONFIG } from '../../quotaFormat';
  * IntlProvider locale=en 直接展示 defaultMessage。
  *
  * 路径分析（BalanceWidget，V(G)=6）：
- *   W1 ready（余额 + Tooltip 明细）/ W2 loading / W3 no-pat / W4 unauthorized /
+ *   W1 ready（余额 + Tooltip 明细）/ W1b ready（订阅日额度）/ W2 loading / W3 no-pat / W4 unauthorized /
  *   W5 error（提示 + message 详情）/ W6 not-logged-in 不渲染 / W7 点击刷新按钮再次拉取。
  */
 
 const electronMock = window.electron as unknown as {
   getUserBalance: ReturnType<typeof vi.fn>;
 };
+const zhMessages = Object.fromEntries(
+  Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])
+);
 
 // jsdom 缺少 ResizeObserver，Radix Tooltip 内容挂载时依赖它，补最小 stub
 class ResizeObserverStub {
@@ -34,6 +38,7 @@ function okResult(): BalanceResult {
   return {
     ok: true,
     balance: {
+      kind: 'balance',
       quota: 5000000,
       usedQuota: 100000,
       requestCount: 42,
@@ -44,17 +49,31 @@ function okResult(): BalanceResult {
   };
 }
 
-function renderWidget() {
+function renderWidget(locale = 'en', messages: Record<string, string> = {}) {
   return render(
-    <IntlProvider locale="en" onError={() => {}}>
+    <IntlProvider locale={locale} messages={messages} onError={() => {}}>
       <BalanceWidget />
-    </IntlProvider>,
+    </IntlProvider>
   );
 }
 
 describe('BalanceWidget（侧边栏余额组件）', () => {
   beforeEach(() => {
+    vi.stubEnv('APP_EDITION', 'heybuddy');
     electronMock.getUserBalance = vi.fn();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('AIBuddy renders the shared account balance widget', async () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+
+    renderWidget();
+
+    expect(await screen.findByTestId('balance-widget')).toBeInTheDocument();
+    expect(electronMock.getUserBalance).toHaveBeenCalled();
   });
 
   it('W1: ready 时显示格式化余额，悬浮展示已用/请求数/更新时间', async () => {
@@ -74,6 +93,57 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     });
   });
 
+  it('W1b: 订阅计费时显示服务端周期剩余额度', async () => {
+    electronMock.getUserBalance.mockResolvedValue({
+      ok: true,
+      balance: {
+        kind: 'subscription',
+        remainingUSD: { daily: 37.5, weekly: -1.25, monthly: 100 },
+        userName: 'alice',
+        displayName: 'alice',
+        groupName: 'Codex Max',
+      },
+      currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+    } as BalanceResult);
+    renderWidget();
+
+    const value = await screen.findByTestId('balance-value');
+    expect(value).toHaveTextContent('$37.5 remaining');
+
+    await userEvent.hover(value);
+    await waitFor(() => {
+      expect(screen.getAllByText(/Codex Max/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Daily: \$37\.5/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Weekly: -\$1\.25/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/Monthly: \$100/).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('W1c: 在中文区域设置中使用订阅额度翻译，而非英文回退', async () => {
+    electronMock.getUserBalance.mockResolvedValue({
+      ok: true,
+      balance: {
+        kind: 'subscription',
+        remainingUSD: { daily: 37.5, weekly: -1.25, monthly: 100 },
+        userName: 'alice',
+        displayName: 'alice',
+        groupName: 'Codex Max',
+      },
+      currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+    } satisfies BalanceResult);
+
+    renderWidget('zh-CN', zhMessages);
+
+    const value = await screen.findByTestId('balance-value');
+    expect(value).toHaveTextContent('剩余 $37.5');
+    await userEvent.hover(value);
+    await waitFor(() => {
+      expect(screen.getAllByText(/每日：\$37\.5/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/每周：-\$1\.25/).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/每月：\$100/).length).toBeGreaterThan(0);
+    });
+  });
+
   it('W2: loading 时显示占位符', async () => {
     electronMock.getUserBalance.mockReturnValue(new Promise(() => {}));
     renderWidget();
@@ -89,9 +159,7 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     } as BalanceResult);
     renderWidget();
 
-    expect(await screen.findByTestId('balance-hint')).toHaveTextContent(
-      'Re-login to view balance',
-    );
+    expect(await screen.findByTestId('balance-hint')).toHaveTextContent('Re-login to view balance');
   });
 
   it('W4: unauthorized 时显示登录失效提示', async () => {
@@ -103,7 +171,7 @@ describe('BalanceWidget（侧边栏余额组件）', () => {
     renderWidget();
 
     expect(await screen.findByTestId('balance-hint')).toHaveTextContent(
-      'Login expired, please re-login',
+      'Login expired, please re-login'
     );
   });
 

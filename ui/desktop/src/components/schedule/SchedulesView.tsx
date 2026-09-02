@@ -11,6 +11,7 @@ import {
   acpKillRunningJob,
   acpInspectRunningJob,
 } from '../../acp/schedules';
+import { scheduleRecipe } from '../../recipe/recipe_management';
 import { ScrollArea } from '../ui/scroll-area';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
@@ -309,9 +310,16 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
         });
       } else {
         const newPayload = payload as NewSchedulePayload;
-        await acpCreateSchedule(newPayload);
-        const sourceType = pendingDeepLink ? 'deeplink' : 'file';
-        trackScheduleCreated(sourceType, true);
+        if (newPayload.sourceType === 'saved') {
+          await scheduleRecipe(newPayload.recipeId, newPayload.cron);
+        } else {
+          await acpCreateSchedule({
+            id: newPayload.id,
+            recipe: newPayload.recipe,
+            cron: newPayload.cron,
+          });
+        }
+        trackScheduleCreated(newPayload.sourceType, true);
       }
       await fetchSchedules();
       setIsModalOpen(false);
@@ -322,8 +330,13 @@ const SchedulesView: React.FC<SchedulesViewProps> = ({ onClose: _onClose }) => {
       setSubmitApiError(errorMsg);
 
       if (!editingSchedule) {
-        const sourceType = pendingDeepLink ? 'deeplink' : 'file';
-        trackScheduleCreated(sourceType, false, getErrorType(error));
+        const failedSourceType =
+          typeof payload === 'object' && payload && 'sourceType' in payload
+            ? payload.sourceType
+            : pendingDeepLink
+              ? 'deeplink'
+              : 'file';
+        trackScheduleCreated(failedSourceType, false, getErrorType(error));
       }
     } finally {
       setIsSubmitting(false);

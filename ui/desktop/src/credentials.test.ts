@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { readCredentials, writeCredentials, clearCredentials, type CredentialsCodec } from './credentials';
+import {
+  decodeCredentialsFile,
+  readCredentials,
+  writeCredentials,
+  withRefreshedSession,
+  clearCredentials,
+  type CredentialsCodec,
+} from './credentials';
 
 /**
  * @author: logic
@@ -52,17 +59,21 @@ describe('credentials 读写', () => {
   it('write 后 read 能读回（identity 回退）', () => {
     const creds = { token: 't', baseUrl: 'https://gw', apiKey: 'k' };
     writeCredentials(tmpFile, creds, identityCodec);
-    expect(readCredentials(tmpFile, identityCodec)).toEqual(creds);
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject(creds);
   });
 
   it('含 pat 时 write/read 往返保留（加密 codec）', () => {
     const creds = { token: 't', baseUrl: 'u', apiKey: 'k', pat: 'pat-x' };
     writeCredentials(tmpFile, creds, base64Codec);
-    expect(readCredentials(tmpFile, base64Codec)).toEqual(creds);
+    expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
   });
 
   it('加密写入后文件不含明文凭证', () => {
-    writeCredentials(tmpFile, { token: 'secret-token', baseUrl: 'https://gw', apiKey: 'secret-key', pat: 'secret-pat' }, base64Codec);
+    writeCredentials(
+      tmpFile,
+      { token: 'secret-token', baseUrl: 'https://gw', apiKey: 'secret-key', pat: 'secret-pat' },
+      base64Codec
+    );
     const raw = fs.readFileSync(tmpFile, 'utf8');
     expect(raw).not.toContain('secret-token');
     expect(raw).not.toContain('secret-key');
@@ -73,14 +84,30 @@ describe('credentials 读写', () => {
   it('旧登录文件（明文）无 pat 字段时仍可读', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, identityCodec);
-    expect(creds).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     expect(creds?.pat).toBeUndefined();
+  });
+
+  it('decodeCredentialsFile 读取旧明文但不重写源文件', () => {
+    const plaintext = JSON.stringify({
+      token: 'plain-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api',
+    });
+    fs.writeFileSync(tmpFile, plaintext);
+
+    expect(decodeCredentialsFile(tmpFile, base64Codec)).toMatchObject({
+      token: 'plain-token',
+      siteKind: 'sub2api',
+    });
+    expect(fs.readFileSync(tmpFile, 'utf8')).toBe(plaintext);
   });
 
   it('旧明文文件用加密 codec 读取时自动迁移为 v:1 信封', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, base64Codec);
-    expect(creds).toEqual({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' });
     const raw = fs.readFileSync(tmpFile, 'utf8');
     expect(raw).not.toContain('plain-token');
     expect(JSON.parse(raw)).toMatchObject({ v: 1 });
@@ -91,10 +118,75 @@ describe('credentials 读写', () => {
   it('旧明文文件用 identity codec 读取时重写为信封结构', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     const creds = readCredentials(tmpFile, identityCodec);
-    expect(creds).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+    expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     const envelope = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
     expect(envelope).toMatchObject({ v: 1 });
     expect(typeof envelope.blob).toBe('string');
+  });
+
+  it('sub2api authKind 加密往返后保留', () => {
+    const creds = {
+      token: 'access-token',
+      baseUrl: 'https://tflow.online/v1',
+      apiKey: 'sk-aibuddy',
+      authKind: 'sub2api' as const,
+    };
+
+    writeCredentials(tmpFile, creds, base64Codec);
+
+    expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
+  });
+
+  it('migrates a legacy TFlow credential into a normalized site record', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+      })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+      schemaVersion: 2,
+      siteKind: 'sub2api',
+      session: { accessToken: 'access-token' },
+      account: {},
+      gateway: {
+        providerId: 'aibuddy',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+      },
+    });
+  });
+
+  // 余额取数按 gateway.groupId 判断该账号走计量余额还是订阅日限额，归一化不能把它丢掉
+  it('surfaces the key group on the normalized gateway record', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        token: 'access-token',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-aibuddy',
+        authKind: 'sub2api',
+        groupId: '42',
+      })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+      gateway: { groupId: '42' },
+    });
+  });
+
+  it('旧版凭证没有 authKind 时仍然有效', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k' }));
+
+    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+      token: 'legacy',
+      baseUrl: 'u',
+      apiKey: 'k',
+    });
   });
 
   it('v:1 信封 blob 解密失败时返回 null', () => {
@@ -115,7 +207,10 @@ describe('credentials 读写', () => {
   });
 
   it('v:1 信封解密后字段类型不匹配时返回 null', () => {
-    const blob = Buffer.from(JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }), 'utf8').toString('base64');
+    const blob = Buffer.from(
+      JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }),
+      'utf8'
+    ).toString('base64');
     fs.writeFileSync(tmpFile, JSON.stringify({ v: 1, blob }));
     expect(readCredentials(tmpFile, base64Codec)).toBeNull();
   });
@@ -132,7 +227,11 @@ describe('credentials 读写', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
     fs.chmodSync(tmpFile, 0o400);
     try {
-      expect(readCredentials(tmpFile, identityCodec)).toEqual({ token: 't', baseUrl: 'u', apiKey: 'k' });
+      expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
+        token: 't',
+        baseUrl: 'u',
+        apiKey: 'k',
+      });
     } finally {
       fs.chmodSync(tmpFile, 0o600);
     }
@@ -156,5 +255,54 @@ describe('credentials 读写', () => {
   it('read 字段类型不匹配返回 null', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 1, baseUrl: 'u', apiKey: 'k' }));
     expect(readCredentials(tmpFile, identityCodec)).toBeNull();
+  });
+});
+
+// 令牌轮换后如果只更新 flat token，schemaVersion 2 的记录读回来仍是旧 session，
+// 下一次取数又是 401，刷新形同虚设
+describe('withRefreshedSession', () => {
+  it('更新 flat 与 session 两处令牌并保留其余凭证', () => {
+    const refreshed = withRefreshedSession(
+      {
+        schemaVersion: 2,
+        siteKind: 'sub2api',
+        token: 'old-access',
+        refreshToken: 'old-refresh',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-secret',
+        authKind: 'sub2api',
+        groupId: 'team-a',
+        session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+      },
+      { accessToken: 'new-access', refreshToken: 'new-refresh' }
+    );
+
+    expect(refreshed).toMatchObject({
+      token: 'new-access',
+      refreshToken: 'new-refresh',
+      session: { accessToken: 'new-access', refreshToken: 'new-refresh' },
+      apiKey: 'sk-secret',
+      groupId: 'team-a',
+    });
+  });
+
+  it('面板未下发新 refresh token 时沿用原有的', () => {
+    const refreshed = withRefreshedSession(
+      {
+        token: 'old-access',
+        refreshToken: 'old-refresh',
+        baseUrl: 'https://tflow.online/v1',
+        apiKey: 'sk-secret',
+        session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+      },
+      { accessToken: 'new-access' }
+    );
+
+    expect(refreshed.token).toBe('new-access');
+    expect(refreshed.refreshToken).toBe('old-refresh');
+    expect(refreshed.session).toEqual({
+      accessToken: 'new-access',
+      refreshToken: 'old-refresh',
+    });
   });
 });

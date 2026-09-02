@@ -16,7 +16,7 @@ import { ChatState } from '../types/chatState';
 import 'react-toastify/dist/ReactToastify.css';
 import { View, ViewOptions } from '../utils/navigationUtils';
 import { useConfig } from './ConfigContext';
-import { getInitialWorkingDir } from '../utils/workingDir';
+import { getEffectiveWorkingDir, getInitialWorkingDir } from '../utils/workingDir';
 import { createSession } from '../sessions';
 import LoadingGoose from './LoadingGoose';
 import { UserInput } from '../types/message';
@@ -25,12 +25,16 @@ import {
   selectNextChatExtensions,
   type NextChatExtensionDraft,
 } from '../utils/nextChatExtensions';
+import { formatAcpError } from '../acp/errors';
+import { toastError } from '../toasts';
+import { getAppEdition } from '../brand';
 
 const i18n = defineMessages({
   goodMorning: { id: 'hub.goodMorning', defaultMessage: 'Good morning' },
   goodAfternoon: { id: 'hub.goodAfternoon', defaultMessage: 'Good afternoon' },
   goodEvening: { id: 'hub.goodEvening', defaultMessage: 'Good evening' },
   assistantIdentity: { id: 'hub.assistantIdentity', defaultMessage: ", I'm Guanglin AI Assistant" },
+  aibuddyIdentity: { id: 'hub.aibuddyIdentity', defaultMessage: ", I'm AIBuddy" },
 });
 
 function useClock(): { time: string; meridiem: string; hour: number } {
@@ -54,13 +58,27 @@ export default function Hub({
   setView: (view: View, viewOptions?: ViewOptions) => void;
 }) {
   const intl = useIntl();
+  const edition = getAppEdition();
   const { extensionsList } = useConfig();
   const [workingDir, setWorkingDir] = useState(getInitialWorkingDir());
+  const userSelectedWorkingDirRef = useRef(false);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [nextChatExtensionDraft, setNextChatExtensionDraft] =
     useState<NextChatExtensionDraft | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { time, meridiem, hour } = useClock();
+
+  // Re-resolve the working dir on mount: GOOSE_WORKING_DIR is fixed at window
+  // creation, so a configured remote directory may have changed since then.
+  useEffect(() => {
+    let active = true;
+    void getEffectiveWorkingDir().then((dir) => {
+      if (active && !userSelectedWorkingDirRef.current) setWorkingDir(dir);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const greeting = useMemo(() => {
     const timeOfDay =
@@ -69,8 +87,9 @@ export default function Hub({
         : hour < 18
           ? intl.formatMessage(i18n.goodAfternoon)
           : intl.formatMessage(i18n.goodEvening);
-    return `${timeOfDay}${intl.formatMessage(i18n.assistantIdentity)}`;
-  }, [intl, hour]);
+    const assistantIdentity = edition === 'aibuddy' ? i18n.aibuddyIdentity : i18n.assistantIdentity;
+    return `${timeOfDay}${intl.formatMessage(assistantIdentity)}`;
+  }, [edition, intl, hour]);
 
   const draftForMenu = useMemo(
     () => nextChatExtensionDraft ?? createNextChatExtensionDraft(extensionsList),
@@ -89,6 +108,11 @@ export default function Hub({
     setNextChatExtensionDraft(draft);
   }, []);
 
+  const handleWorkingDirChange = useCallback((dir: string) => {
+    userSelectedWorkingDirRef.current = true;
+    setWorkingDir(dir);
+  }, []);
+
   const handleSubmit = async (input: UserInput) => {
     const { msg: userMessage, images } = input;
     if (!(images.length > 0 || userMessage.trim()) || isCreatingSession) return;
@@ -104,7 +128,10 @@ export default function Hub({
           ? { extensionConfigs: selectedExtensions }
           : { allExtensions: extensionsList };
 
-      const session = await createSession(workingDir, sessionOptions);
+      // Resolve the effective directory at submit time: the IPC lookup may still
+      // be pending when the user submits, and an explicit pick must win.
+      const dir = userSelectedWorkingDirRef.current ? workingDir : await getEffectiveWorkingDir();
+      const session = await createSession(dir, sessionOptions);
       setNextChatExtensionDraft(null);
 
       window.dispatchEvent(new CustomEvent(AppEvents.SESSION_CREATED));
@@ -121,6 +148,7 @@ export default function Hub({
       });
     } catch (error) {
       console.error('Failed to create session:', error);
+      toastError({ title: "Couldn't start chat", msg: formatAcpError(error) });
       setIsCreatingSession(false);
     }
   };
@@ -149,7 +177,8 @@ export default function Hub({
             onFilesProcessed={() => {}}
             messages={[]}
             disableAnimation={false}
-            onWorkingDirChange={setWorkingDir}
+            workingDir={workingDir}
+            onWorkingDirChange={handleWorkingDirChange}
             inputRef={inputRef}
             nextChatExtensionDraft={draftForMenu}
             onNextChatExtensionDraftChange={handleNextChatExtensionDraftChange}

@@ -84,6 +84,131 @@ def render_tray_update(master: Image.Image, size: int) -> Image.Image:
     return canvas
 
 
+TRAY_SIZES = (22, 44)
+TRAY_FOREGROUND_THRESHOLD = 225
+AIBUDDY_TRAY_BASE_SIZE = 22
+AIBUDDY_TRAY_SUPERSAMPLE = 4
+
+
+def build_tray_glyph(master: Image.Image) -> Image.Image:
+    """满幅彩色图标 -> 菜单栏单色字形：取中心连通的高亮前景，其余透明。
+
+    托盘按 template image 渲染，只有 alpha 参与成像；直接缩放彩色母版会得到
+    一整块实心剪影，所以这里以亮度阈值取出主体（logo 亮色部分），再从中心
+    洪水填充只保留主体连通域，眼睛等暗色区域自然成为镂空。
+    """
+    mask = master.convert('L').point(lambda v: 255 if v > TRAY_FOREGROUND_THRESHOLD else 0)
+    mask.paste(0, (0, 0), master.getchannel('A').point(lambda v: 255 if v < 128 else 0))
+    seed = (mask.width // 2, mask.height // 2)
+    if mask.getpixel(seed) != 255:
+        raise ValueError('源图中心不是亮色主体，无法提取托盘字形')
+
+    ImageDraw.floodfill(mask, seed, 128)
+    body = mask.point(lambda v: 255 if v == 128 else 0)
+    bbox = body.getbbox()
+    body = body.crop(bbox)
+    side = max(body.size)
+    square = Image.new('L', (side, side), 0)
+    square.paste(body, ((side - body.width) // 2, (side - body.height) // 2))
+
+    glyph = Image.new('RGBA', (side, side), (0, 0, 0, 0))
+    glyph.putalpha(square)
+    return glyph
+
+
+def write_tray_glyphs(master: Image.Image, output_dir: Path) -> None:
+    glyph = build_tray_glyph(master)
+    for size in TRAY_SIZES:
+        suffix = '@2x' if size != TRAY_SIZES[0] else ''
+        name = f'iconTemplate{suffix}.png'
+        glyph.resize((size, size), Image.LANCZOS).save(output_dir / name, optimize=True)
+        print(f'生成 {output_dir.name}/{name} {size}x{size}（托盘单色字形）')
+
+
+def render_aibuddy_tray_glyph(size: int) -> Image.Image:
+    """Render the AIBuddy macOS template glyph from a deterministic alpha mask."""
+    if size not in TRAY_SIZES:
+        raise ValueError(f'不支持的 AIBuddy 托盘尺寸: {size}')
+
+    scale = size * AIBUDDY_TRAY_SUPERSAMPLE / AIBUDDY_TRAY_BASE_SIZE
+    mask = Image.new('L', (size * AIBUDDY_TRAY_SUPERSAMPLE,) * 2, 0)
+    draw = ImageDraw.Draw(mask)
+
+    def point(value: float) -> int:
+        return round(value * scale)
+
+    draw.rounded_rectangle(
+        [point(4.5), point(7), point(17.5), point(18.5)],
+        radius=point(4.5),
+        fill=255,
+    )
+    draw.rounded_rectangle(
+        [point(10), point(3.5), point(12), point(8)],
+        radius=point(1),
+        fill=255,
+    )
+    for eye_center in (8, 14):
+        draw.ellipse(
+            [
+                point(eye_center - 1.7),
+                point(12 - 1.7),
+                point(eye_center + 1.7),
+                point(12 + 1.7),
+            ],
+            fill=0,
+        )
+
+    glyph = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+    glyph.putalpha(mask.resize((size, size), Image.LANCZOS))
+    return glyph
+
+
+def write_aibuddy_tray_glyphs(output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for size in TRAY_SIZES:
+        suffix = '@2x' if size != TRAY_SIZES[0] else ''
+        name = f'iconTemplate{suffix}.png'
+        render_aibuddy_tray_glyph(size).save(output_dir / name, optimize=True)
+        print(f'生成 {output_dir.name}/{name} {size}x{size}（AIBuddy Minimal Bot 托盘字形）')
+
+
+def verify_aibuddy_tray_glyph(image: Image.Image, expected_size: int) -> list[str]:
+    errors = []
+    if image.mode != 'RGBA':
+        errors.append(f'模式为 {image.mode}，期望 RGBA')
+        return errors
+    if image.size != (expected_size, expected_size):
+        errors.append(f'尺寸为 {image.size}，期望 {expected_size}x{expected_size}')
+        return errors
+
+    alpha = image.getchannel('A')
+    bbox = alpha.getbbox()
+    if bbox is None:
+        errors.append('alpha 图层为空')
+        return errors
+    if bbox[0] <= 0 or bbox[1] <= 0 or bbox[2] >= expected_size or bbox[3] >= expected_size:
+        errors.append(f'alpha 可见边界 {bbox} 没有保留透明边距')
+
+    for channel in ('R', 'G', 'B'):
+        if image.getchannel(channel).getextrema() != (0, 0):
+            errors.append(f'{channel} 通道不是纯黑')
+
+    scale = expected_size / AIBUDDY_TRAY_BASE_SIZE
+
+    def alpha_at(x: float, y: float) -> int:
+        return alpha.getpixel((round(x * scale), round(y * scale)))
+
+    if alpha_at(11, 3) == 0 or alpha_at(5, 3) != 0 or alpha_at(17, 3) != 0:
+        errors.append('缺失居中的短天线')
+    if alpha_at(11, 7) == 0 or alpha_at(5, 7) != 0 or alpha_at(6, 11) == 0:
+        errors.append('缺失圆角机器人头部')
+    if alpha_at(8, 12) != 0 or alpha_at(14, 12) != 0:
+        errors.append('缺失两个透明眼孔')
+    if alpha_at(6, 12) == 0 or alpha_at(10, 12) == 0:
+        errors.append('眼孔破坏了机器人头部')
+    return errors
+
+
 def write_svg_wrapper(png_path: Path, out_path: Path) -> None:
     """flatpak scalable 槽位用的 SVG 包装：位图源只能内嵌 base64 PNG。"""
     data = base64.b64encode(png_path.read_bytes()).decode('ascii')
@@ -121,6 +246,16 @@ def generate(source: Path) -> None:
     print('生成 icon.svg（512 位图内嵌包装）')
 
 
+def generate_packager_icons(source: Path, output_dir: Path) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    master = build_master(source)
+    master.save(output_dir / 'icon.png', optimize=True)
+    master.save(output_dir / 'icon.ico', sizes=ICO_SIZES)
+    master.save(output_dir / 'icon.icns')
+    write_tray_glyphs(master, output_dir)
+    print(f'生成打包图标到 {output_dir}')
+
+
 def verify() -> bool:
     ok = True
     for name, size in PNG_OUTPUTS.items():
@@ -129,16 +264,17 @@ def verify() -> bool:
             print(f'缺失 {name}')
             ok = False
             continue
-        im = Image.open(path)
-        if im.size != size or im.mode != 'RGBA':
-            print(f'异常 {name}: {im.size} {im.mode}，期望 {size} RGBA')
-            ok = False
-        else:
-            print(f'通过 {name} {size[0]}x{size[1]}')
+        with Image.open(path) as image:
+            if image.size != size or image.mode != 'RGBA':
+                print(f'异常 {name}: {image.size} {image.mode}，期望 {size} RGBA')
+                ok = False
+            else:
+                print(f'通过 {name} {size[0]}x{size[1]}')
 
     ico_path = SCRIPT_DIR / 'icon.ico'
     if ico_path.exists():
-        sizes = set(Image.open(ico_path).ico.sizes())
+        with Image.open(ico_path) as icon:
+            sizes = set(icon.ico.sizes())
         if sizes != set(ICO_SIZES):
             print(f'异常 icon.ico 尺寸集: {sorted(sizes)}')
             ok = False
@@ -150,12 +286,12 @@ def verify() -> bool:
 
     icns_path = SCRIPT_DIR / 'icon.icns'
     if icns_path.exists():
-        im = Image.open(icns_path)
-        if im.size != (MASTER_SIZE, MASTER_SIZE):
-            print(f'异常 icon.icns 最大尺寸: {im.size}')
-            ok = False
-        else:
-            print(f'通过 icon.icns 最大尺寸 {im.size[0]}')
+        with Image.open(icns_path) as image:
+            if image.size != (MASTER_SIZE, MASTER_SIZE):
+                print(f'异常 icon.icns 最大尺寸: {image.size}')
+                ok = False
+            else:
+                print(f'通过 icon.icns 最大尺寸 {image.size[0]}')
     else:
         print('缺失 icon.icns')
         ok = False
@@ -175,6 +311,24 @@ def verify() -> bool:
     else:
         print('通过 icon.svg 内嵌包装')
 
+    aibuddy_dir = SCRIPT_DIR / 'aibuddy'
+    for size in TRAY_SIZES:
+        suffix = '@2x' if size != TRAY_SIZES[0] else ''
+        name = f'iconTemplate{suffix}.png'
+        path = aibuddy_dir / name
+        if not path.exists():
+            print(f'缺失 aibuddy/{name}')
+            ok = False
+            continue
+
+        with Image.open(path) as image:
+            errors = verify_aibuddy_tray_glyph(image, size)
+        if errors:
+            print(f'异常 aibuddy/{name}: {"；".join(errors)}')
+            ok = False
+        else:
+            print(f'通过 aibuddy/{name} {size}x{size} Minimal Bot 托盘字形')
+
     return ok
 
 
@@ -187,15 +341,29 @@ def main() -> int:
     parser = argparse.ArgumentParser(description='从 logo.png 生成全平台图标产物')
     parser.add_argument('--source', default=str(SCRIPT_DIR / LOGO_SOURCE), help='品牌源图路径')
     parser.add_argument('--verify', action='store_true', help='只校验产物，不重新生成')
+    parser.add_argument(
+        '--aibuddy-tray-only',
+        action='store_true',
+        help='只生成 AIBuddy Minimal Bot 托盘字形',
+    )
+    parser.add_argument('--packager-icons-dir', help='生成 icon.png、icon.ico 和 icon.icns 到指定目录')
     args = parser.parse_args()
 
     if args.verify:
         return 0 if verify() else 1
 
+    if args.aibuddy_tray_only:
+        write_aibuddy_tray_glyphs(SCRIPT_DIR / 'aibuddy')
+        return 0
+
     source = Path(args.source)
     if not source.exists():
         print(f'源图不存在: {source}')
         return 1
+    if args.packager_icons_dir:
+        generate_packager_icons(source, Path(args.packager_icons_dir))
+        return 0
+
     generate(source)
     print('--- 校验 ---')
     return 0 if verify() else 1

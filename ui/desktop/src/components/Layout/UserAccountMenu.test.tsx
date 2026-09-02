@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
@@ -18,6 +18,10 @@ const messages = {
   'accountMenu.notLoggedIn': '未登录用户',
   'accountMenu.settings': '设置',
   'accountMenu.logout': '退出登录',
+  'accountMenu.currentBalance': '当前余额',
+  'accountMenu.dailyRemaining': '每日剩余',
+  'accountMenu.weeklyRemaining': '每周剩余',
+  'accountMenu.monthlyRemaining': '每月剩余',
   'balanceWidget.refresh': '刷新余额',
 };
 
@@ -43,12 +47,18 @@ function renderMenu() {
 describe('UserAccountMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv('APP_EDITION', 'heybuddy');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it('prefers the display name in the bottom account trigger', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 1_000,
@@ -69,6 +79,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '',
         userName: 'linye',
         quota: 1_000,
@@ -91,6 +102,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '',
         userName: '',
         quota: 1_000,
@@ -119,6 +131,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 5_000_000,
@@ -145,6 +158,7 @@ describe('UserAccountMenu', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
+        kind: 'balance',
         displayName: '林也',
         userName: 'linye',
         quota: 5_000_000,
@@ -180,6 +194,146 @@ describe('UserAccountMenu', () => {
 
     expect(mockRefresh).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('keeps the HeyBuddy trigger balance summary', () => {
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        kind: 'balance',
+        displayName: '林也',
+        userName: 'linye',
+        quota: 5_000_000,
+        usedQuota: 0,
+        requestCount: 1,
+      },
+      currency: DEFAULT_CURRENCY_CONFIG,
+      updatedAt: Date.now(),
+    });
+
+    renderMenu();
+
+    expect(screen.getByRole('button', { name: /林也/ })).toContainElement(
+      screen.getByTestId('balance-value')
+    );
+  });
+
+  it('renders an AIBuddy username-only trigger with the full name available', () => {
+    const accountName = 'aibuddy-account-with-a-name-too-long-for-the-sidebar';
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        kind: 'balance',
+        displayName: accountName,
+        userName: 'aibuddy',
+        quota: 5_000_000,
+        usedQuota: 0,
+        requestCount: 1,
+      },
+      currency: DEFAULT_CURRENCY_CONFIG,
+      updatedAt: Date.now(),
+    });
+
+    renderMenu();
+
+    expect(screen.getByRole('button', { name: accountName })).toBeInTheDocument();
+    expect(screen.getByTitle(accountName)).toHaveClass('truncate');
+    expect(screen.queryByTestId('balance-value')).toBeNull();
+    expect(screen.queryByText('$10')).toBeNull();
+  });
+
+  it('renders the AIBuddy metered balance as its own entitlement row', async () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        kind: 'balance',
+        displayName: 'AIBuddy user',
+        userName: 'aibuddy',
+        quota: 5_000_000,
+        usedQuota: 0,
+        requestCount: 1,
+      },
+      currency: DEFAULT_CURRENCY_CONFIG,
+      updatedAt: Date.now(),
+    });
+
+    renderMenu();
+    await userEvent.click(screen.getByRole('button', { name: 'AIBuddy user' }));
+
+    const summary = screen.getByTestId('account-menu-summary');
+    expect(within(summary).getByText('AIBuddy user')).toHaveClass('block');
+    const rows = within(summary).getAllByTestId('aibuddy-entitlement-row');
+    expect(rows).toHaveLength(1);
+    expect(within(rows[0]).getByText('当前余额')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('$10')).toBeInTheDocument();
+  });
+
+  it('renders only configured AIBuddy subscription entitlement periods', async () => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    mockBalanceState({
+      status: 'ready',
+      balance: {
+        kind: 'subscription',
+        displayName: 'AIBuddy subscriber',
+        userName: 'aibuddy',
+        groupName: 'TFlow Pro',
+        remainingUSD: { daily: 37.5, monthly: 100 },
+      },
+      currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+      updatedAt: Date.now(),
+    });
+
+    renderMenu();
+    await userEvent.click(screen.getByRole('button', { name: 'AIBuddy subscriber' }));
+
+    const summary = screen.getByTestId('account-menu-summary');
+    const rows = within(summary).getAllByTestId('aibuddy-entitlement-row');
+    expect(rows).toHaveLength(2);
+    expect(within(summary).getByText('每日剩余')).toBeInTheDocument();
+    expect(within(summary).getByText('每月剩余')).toBeInTheDocument();
+    expect(within(summary).queryByText('每周剩余')).toBeNull();
+    expect(within(summary).getByText('$37.5')).toBeInTheDocument();
+    expect(within(summary).getByText('$100')).toBeInTheDocument();
+  });
+
+  it('keeps AIBuddy refresh, settings, and logout actions operable', async () => {
+    const user = userEvent.setup();
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    mockBalanceState({ status: 'loading' }, true);
+
+    const firstMenu = renderMenu();
+    await user.click(screen.getByRole('button', { name: '未登录用户' }));
+
+    const refresh = screen.getByRole('menuitem', { name: '刷新余额' });
+    expect(refresh.querySelector('svg')).toHaveClass('animate-spin');
+    await user.click(refresh);
+    expect(mockRefresh).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('menuitem', { name: '设置' }));
+    expect(mockOpenSettings).toHaveBeenCalledTimes(1);
+
+    firstMenu.unmount();
+    renderMenu();
+    await user.click(screen.getByRole('button', { name: '未登录用户' }));
+    await user.click(screen.getByRole('menuitem', { name: '退出登录' }));
+    expect(mockLogout).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [{ status: 'loading' } satisfies BalanceState, 'balance-loading'],
+    [{ status: 'unauthorized' } satisfies BalanceState, 'balance-hint'],
+    [{ status: 'error', message: 'connection refused' } satisfies BalanceState, 'balance-hint'],
+  ])('keeps AIBuddy %s state visible in the popup', async (state, testId) => {
+    vi.stubEnv('APP_EDITION', 'aibuddy');
+    mockBalanceState(state);
+
+    renderMenu();
+    await userEvent.click(screen.getByRole('button', { name: '未登录用户' }));
+
+    expect(screen.getByTestId(testId)).toBeInTheDocument();
   });
 
   it('shows the localized refresh tooltip on summary icon hover', async () => {

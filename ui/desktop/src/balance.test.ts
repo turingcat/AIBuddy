@@ -2,10 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import {
   BalanceFetchError,
+  type BalanceData,
   fetchCurrencyWithCache,
   fetchStatusCurrency,
   fetchUserBalance,
   runBalanceFetch,
+  toSub2apiBalanceData,
   type CurrencyCacheState,
 } from './balance';
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
@@ -56,6 +58,7 @@ describe('fetchUserBalance（主进程余额查询）', () => {
     const balance = await fetchUserBalance('http://localhost:3001', 'pat-token', mockFetch);
 
     expect(balance).toEqual({
+      kind: 'balance',
       quota: 5000000,
       usedQuota: 100000,
       requestCount: 42,
@@ -74,7 +77,7 @@ describe('fetchUserBalance（主进程余额查询）', () => {
       jsonResponse({
         success: true,
         data: { quota: 1, used_quota: 0, request_count: 0 },
-      }),
+      })
     );
 
     const balance = await fetchUserBalance('http://localhost:3001', 'pat', mockFetch);
@@ -86,19 +89,23 @@ describe('fetchUserBalance（主进程余额查询）', () => {
   it('P2: HTTP 401（PAT 失效）归类为 unauthorized', async () => {
     mockFetch.mockResolvedValue(new Response('unauthorized', { status: 401 }));
 
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'unauthorized',
-      message: '登录已失效，请重新登录',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'unauthorized',
+        message: '登录已失效，请重新登录',
+      }
+    );
   });
 
   it('P3: 其他 HTTP 非 2xx 归类为 http 并带状态码', async () => {
     mockFetch.mockResolvedValue(new Response('oops', { status: 502 }));
 
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'http',
-      message: '余额服务不可用（HTTP 502）',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'http',
+        message: '余额服务不可用（HTTP 502）',
+      }
+    );
   });
 
   it('P4: HTTP 200 但响应非 JSON 归类为 bad-response', async () => {
@@ -106,25 +113,31 @@ describe('fetchUserBalance（主进程余额查询）', () => {
       new Response('<html>bad gateway</html>', {
         status: 200,
         headers: { 'Content-Type': 'text/html' },
-      }),
+      })
     );
 
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-      message: '余额服务响应格式异常',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+        message: '余额服务响应格式异常',
+      }
+    );
   });
 
   it('P5: 网络错误归类为 network；非 Error 异常值同样归为 network', async () => {
     mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'));
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'network',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'network',
+      }
+    );
 
     mockFetch.mockRejectedValueOnce('boom');
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'network',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'network',
+      }
+    );
   });
 
   it('P6: 服务超时（AbortSignal 触发 TimeoutError）归类为 timeout', async () => {
@@ -132,50 +145,60 @@ describe('fetchUserBalance（主进程余额查询）', () => {
       (_input: string, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
           init?.signal?.addEventListener('abort', () => reject(init.signal!.reason));
-        }),
+        })
     );
 
     await expect(
-      fetchUserBalance('http://localhost:3001', 'pat', hangFetch, 20),
+      fetchUserBalance('http://localhost:3001', 'pat', hangFetch, 20)
     ).rejects.toMatchObject({ kind: 'timeout', message: '余额服务响应超时，请稍后重试' });
   });
 
   it('P7: success=false 时抛出服务端 message；无 message 时用默认文案', async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse({ success: false, message: '令牌无效' }));
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-      message: '令牌无效',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+        message: '令牌无效',
+      }
+    );
 
     mockFetch.mockResolvedValueOnce(jsonResponse({ success: false }));
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-      message: '余额查询失败',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+        message: '余额查询失败',
+      }
+    );
   });
 
   it('P8: 数值字段缺失或非有限数时抛出数据异常', async () => {
     mockFetch.mockResolvedValueOnce(
-      jsonResponse({ success: true, data: { used_quota: 1, request_count: 1 } }),
+      jsonResponse({ success: true, data: { used_quota: 1, request_count: 1 } })
     );
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-      message: '余额服务响应数据异常',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+        message: '余额服务响应数据异常',
+      }
+    );
 
     mockFetch.mockResolvedValueOnce(
-      jsonResponse({ success: true, data: { quota: 1, used_quota: Number.NaN, request_count: 1 } }),
+      jsonResponse({ success: true, data: { quota: 1, used_quota: Number.NaN, request_count: 1 } })
     );
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+      }
+    );
 
     mockFetch.mockResolvedValueOnce(
-      jsonResponse({ success: true, data: { quota: 1, used_quota: 1, request_count: '42' } }),
+      jsonResponse({ success: true, data: { quota: 1, used_quota: 1, request_count: '42' } })
     );
-    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject({
-      kind: 'bad-response',
-    });
+    await expect(fetchUserBalance('http://localhost:3001', 'pat', mockFetch)).rejects.toMatchObject(
+      {
+        kind: 'bad-response',
+      }
+    );
   });
 });
 
@@ -191,7 +214,7 @@ describe('fetchStatusCurrency（货币配置查询）', () => {
       jsonResponse({
         success: true,
         data: { quota_per_unit: 300000, quota_display_type: 'CNY', usd_exchange_rate: 7.3 },
-      }),
+      })
     );
 
     const config = await fetchStatusCurrency('http://localhost:3001', mockFetch);
@@ -212,7 +235,7 @@ describe('fetchStatusCurrency（货币配置查询）', () => {
     mockFetch.mockResolvedValue(jsonResponse({ success: true }));
 
     expect(await fetchStatusCurrency('http://localhost:3001', mockFetch)).toEqual(
-      DEFAULT_CURRENCY_CONFIG,
+      DEFAULT_CURRENCY_CONFIG
     );
   });
 
@@ -250,7 +273,7 @@ describe('fetchCurrencyWithCache（货币配置缓存）', () => {
       'http://localhost:3001',
       mockFetch,
       1_499,
-      500,
+      500
     );
 
     expect(config).toBe(freshConfig);
@@ -259,7 +282,7 @@ describe('fetchCurrencyWithCache（货币配置缓存）', () => {
 
   it('P14: 恰好到期（now-fetchedAt=ttl）触发重拉并写回缓存', async () => {
     mockFetch.mockResolvedValue(
-      jsonResponse({ success: true, data: { quota_display_type: 'CNY' } }),
+      jsonResponse({ success: true, data: { quota_display_type: 'CNY' } })
     );
     const state: CurrencyCacheState = { config: DEFAULT_CURRENCY_CONFIG, fetchedAt: 1_000 };
 
@@ -268,7 +291,7 @@ describe('fetchCurrencyWithCache（货币配置缓存）', () => {
       'http://localhost:3001',
       mockFetch,
       1_500,
-      500,
+      500
     );
 
     expect(config).toEqual(freshConfig);
@@ -286,20 +309,18 @@ describe('fetchCurrencyWithCache（货币配置缓存）', () => {
       'http://localhost:3001',
       mockFetch,
       2_000,
-      500,
+      500
     );
 
     expect(config).toBe(freshConfig);
   });
 
   it('P16: 无缓存且拉取失败时抛出原始错误', async () => {
-    mockFetch.mockRejectedValue(
-      new BalanceFetchError('network', '无法连接余额服务，请检查网络'),
-    );
+    mockFetch.mockRejectedValue(new BalanceFetchError('network', '无法连接余额服务，请检查网络'));
     const state: CurrencyCacheState = { config: null, fetchedAt: 0 };
 
     await expect(
-      fetchCurrencyWithCache(state, 'http://localhost:3001', mockFetch, 1_000, 500),
+      fetchCurrencyWithCache(state, 'http://localhost:3001', mockFetch, 1_000, 500)
     ).rejects.toMatchObject({ kind: 'network' });
   });
 });
@@ -311,6 +332,7 @@ describe('runBalanceFetch（IPC result 模式包装）', () => {
     requestCount: 42,
     userName: 'oa_1',
     displayName: '张三',
+    kind: 'balance' as const,
   };
 
   it('P17: 成功时返回 {ok:true, balance, currency}', async () => {
@@ -344,5 +366,53 @@ describe('runBalanceFetch（IPC result 模式包装）', () => {
       throw 'boom';
     });
     expect(nonErrResult).toEqual({ ok: false, kind: 'network', message: '余额查询失败' });
+  });
+
+  it('preserves subscription period values unchanged in the IPC result', async () => {
+    const subscription: BalanceData = {
+      kind: 'subscription',
+      remainingUSD: { weekly: -1.25, monthly: 3.5 },
+      userName: 'alice',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+    };
+
+    await expect(
+      runBalanceFetch(async () => ({ balance: subscription, currency: DEFAULT_CURRENCY_CONFIG }))
+    ).resolves.toEqual({ ok: true, balance: subscription, currency: DEFAULT_CURRENCY_CONFIG });
+  });
+
+  it('maps a TFlow subscription entitlement without changing its remaining period values', () => {
+    const remainingUSD = { daily: -1.25, weekly: 2.5, monthly: 3.75 };
+
+    const balance = toSub2apiBalanceData({
+      kind: 'subscription',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+      remainingUSD,
+    });
+
+    expect(balance).toEqual({
+      kind: 'subscription',
+      userName: 'alice',
+      displayName: 'alice',
+      groupName: 'TFlow Pro',
+      remainingUSD,
+    });
+    if (balance.kind !== 'subscription') throw new Error('expected subscription balance');
+    expect(balance.remainingUSD).toBe(remainingUSD);
+  });
+
+  it('keeps the metered TFlow entitlement mapping unchanged', () => {
+    expect(toSub2apiBalanceData({ kind: 'balance', displayName: 'alice', balance: 12.34 })).toEqual(
+      {
+        kind: 'balance',
+        quota: 12.34,
+        usedQuota: 0,
+        requestCount: 0,
+        userName: 'alice',
+        displayName: 'alice',
+      }
+    );
   });
 });

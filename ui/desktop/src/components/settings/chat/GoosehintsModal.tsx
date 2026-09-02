@@ -20,12 +20,12 @@ const i18n = defineMessages({
   dialogDescription: {
     id: 'goosehintsModal.dialogDescription',
     defaultMessage:
-      'Provide additional context about your project to improve communication with HeyBuddy',
+      'Provide additional context about your project to improve communication with {appName}',
   },
   helpText1: {
     id: 'goosehintsModal.helpText1',
     defaultMessage:
-      '.goosehints is a text file used to provide additional context about your project and improve the communication with HeyBuddy.',
+      '.goosehints is a text file used to provide additional context about your project and improve the communication with {appName}.',
   },
   helpText2: {
     id: 'goosehintsModal.helpText2',
@@ -104,10 +104,7 @@ const HelpText = () => {
               variant="link"
               className="text-blue-500 hover:text-blue-600 p-0 h-auto"
               onClick={() =>
-                window.open(
-                  'https://goose-docs.ai/docs/guides/using-goosehints/',
-                  '_blank'
-                )
+                window.open('https://goose-docs.ai/docs/guides/using-goosehints/', '_blank')
               }
             >
               {intl.formatMessage(i18n.helpTextLink)}
@@ -148,8 +145,6 @@ const FileInfo = ({ filePath, found }: { filePath: string; found: boolean }) => 
   );
 };
 
-const getGoosehintsFile = async (filePath: string) => await window.electron.readFile(filePath);
-
 interface GoosehintsModalProps {
   directory: string;
   setIsGoosehintsModalOpen: (isOpen: boolean) => void;
@@ -167,23 +162,26 @@ export const GoosehintsModal = ({ directory, setIsGoosehintsModalOpen }: Goosehi
   useEffect(() => {
     const fetchGoosehintsFile = async () => {
       try {
-        const { file, error, found } = await getGoosehintsFile(goosehintsFilePath);
+        const { file, error, found } = await window.electron.readGoosehints();
         setGoosehintsFile(file);
         setGoosehintsFileFound(found);
-        setGoosehintsFileReadError(found && error ? error : '');
+        setGoosehintsFileReadError(error ?? '');
       } catch (error) {
         console.error('Error fetching .goosehints file:', error);
         setGoosehintsFileReadError(intl.formatMessage(i18n.failedToAccess));
       }
     };
     if (directory) fetchGoosehintsFile();
-  }, [directory, goosehintsFilePath, intl]);
+  }, [directory, intl]);
 
   const writeFile = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
     try {
-      await window.electron.writeFile(goosehintsFilePath, goosehintsFile);
+      const saved = await window.electron.writeGoosehints(goosehintsFile);
+      if (!saved) {
+        throw new Error('Unable to save .goosehints');
+      }
       setSaveSuccess(true);
       setGoosehintsFileFound(true);
       setTimeout(() => setSaveSuccess(false), 3000);

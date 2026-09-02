@@ -28,6 +28,7 @@ pub(crate) mod declarative_providers {
         inception,
         llama_swap,
         lmstudio,
+        lynkr,
         meta,
         minimax,
         mistral,
@@ -38,21 +39,26 @@ pub(crate) mod declarative_providers {
         ollama_cloud,
         omlx,
         opencode_go,
+        opencode_zen,
         orcarouter,
         ovhcloud,
         perplexity,
+        pleumrouter,
         routstr,
         sakana,
         saladcloud,
+        saygm,
         scaleway,
         tanzu,
         tensorix,
         together,
+        trustedrouter,
         venice,
         vercel_ai_gateway,
         zai,
         zhipu,
         heybuddy,
+        aibuddy,
     );
 }
 
@@ -148,6 +154,11 @@ pub struct DeclarativeProviderConfig {
     pub fast_model: Option<String>,
     #[serde(default)]
     pub preserves_thinking: bool,
+    /// Enables Z.AI's `clear_thinking` field, which Anthropic does not support.
+    #[serde(default)]
+    pub emit_clear_thinking: bool,
+    #[serde(default)]
+    pub setup: Option<goose_provider_types::canonical::catalog::ProviderSetupMetadata>,
 }
 
 fn default_requires_auth() -> bool {
@@ -381,6 +392,27 @@ mod tests {
         assert_eq!(config["api_key_env"], "HEYBUDDY_API_KEY");
         assert_eq!(config["base_url"], "${HEYBUDDY_BASE_URL}");
         assert_eq!(config["dynamic_models"], true);
+    }
+
+    #[test]
+    fn aibuddy_provider_is_bundled_and_valid() {
+        let json = crate::declarative::declarative_providers::aibuddy::JSON;
+        let config: serde_json::Value = serde_json::from_str(json).unwrap();
+        assert_eq!(config["name"], "aibuddy");
+        assert_eq!(config["engine"], "openai");
+        assert_eq!(config["api_key_env"], "AIBUDDY_API_KEY");
+        assert_eq!(config["base_url"], "${AIBUDDY_BASE_URL}");
+        assert_eq!(config["dynamic_models"], true);
+    }
+
+    #[test]
+    fn setup_metadata_rejects_unknown_fields() {
+        let mut definition: serde_json::Value = serde_json::from_str(crate::groq::JSON).unwrap();
+        definition["setup"]["description"] = json!("This field would be ignored");
+
+        let error = deserialize_provider_config(&definition.to_string()).unwrap_err();
+
+        assert!(error.to_string().contains("unknown field `description`"));
     }
 
     fn placeholder_var_names(template: &str) -> Vec<String> {

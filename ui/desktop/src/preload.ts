@@ -2,10 +2,13 @@ import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
 import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
 import type { OaLoginResult } from './oaLogin';
+import type { AIBuddyAuthResult } from './aibuddyAuthIpc';
+import type { AIBuddySettingsResult } from './sub2apiAuth';
 import type { BalanceResult } from './balance';
 import type { GooseApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
+import type { OpenExternalUrlResult } from './utils/urlSecurity';
 
 // Mapping from settings keys to their old localStorage keys for lazy migration
 const localStorageKeyMap: Partial<Record<SettingKey, string>> = {
@@ -81,11 +84,6 @@ interface FileResponse {
 
 const config = JSON.parse(process.argv.find((arg) => arg.startsWith('{')) || '{}');
 
-interface UpdaterEvent {
-  event: string;
-  data?: unknown;
-}
-
 export interface CreateChatWindowOptions {
   query?: string;
   dir?: string;
@@ -118,7 +116,9 @@ export type ElectronAPI = {
     error?: string;
   } | null>;
   getBinaryPath: (binaryName: string) => Promise<string>;
-  readFile: (directory: string) => Promise<FileResponse>;
+  selectRecipeFile: () => Promise<FileResponse | null>;
+  readGoosehints: () => Promise<FileResponse>;
+  writeGoosehints: (content: string) => Promise<boolean>;
   writeFile: (directory: string, content: string) => Promise<boolean>;
   ensureDirectory: (dirPath: string) => Promise<boolean>;
   listFiles: (dirPath: string, extension?: string) => Promise<string[]>;
@@ -156,17 +156,9 @@ export type ElectronAPI = {
     theme: string;
     tokensUpdated?: boolean;
   }) => void;
-  openExternal: (url: string) => Promise<void>;
-  // Update-related functions
+  openExternal: (url: string) => Promise<OpenExternalUrlResult>;
   getVersion: () => string;
-  checkForUpdates: () => Promise<{ updateInfo: unknown; error: string | null }>;
-  downloadUpdate: () => Promise<{ success: boolean; error: string | null }>;
-  installUpdate: () => void;
   restartApp: () => void;
-  onUpdaterEvent: (callback: (event: UpdaterEvent) => void) => void;
-  getUpdateState: () => Promise<{ updateAvailable: boolean; latestVersion?: string } | null>;
-  isUsingGitHubFallback: () => Promise<boolean>;
-  getAutoDownloadDisabled: () => Promise<boolean>;
   // Recipe warning functions
   closeWindow: () => void;
   hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
@@ -183,8 +175,27 @@ export type ElectronAPI = {
   setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
   clearLoginCredentials: () => Promise<void>;
   loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
+  getAIBuddyAuthSettings: () => Promise<AIBuddySettingsResult>;
+  loginViaAIBuddy: (
+    email: string,
+    password: string,
+    captchaProof: string
+  ) => Promise<AIBuddyAuthResult>;
+  completeAIBuddy2FA: (tempToken: string, totpCode: string) => Promise<AIBuddyAuthResult>;
+  provisionAIBuddyGroup: (pendingLoginId: string, groupId: string) => Promise<AIBuddyAuthResult>;
   getUserBalance: () => Promise<BalanceResult>;
-  listModelsViaApi: () => Promise<{ id: string; name: string; contextLimit: number | null; reasoning: boolean | null }[]>;
+  listModelsViaApi: () => Promise<
+    {
+      id: string;
+      name: string;
+      contextLimit: number | null;
+      reasoning: boolean | null;
+      providerId?: string;
+    }[]
+  >;
+  getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
+  listGitBranches: (dir: string) => Promise<string[]>;
+  switchGitBranch: (dir: string, branch: string) => Promise<{ success: boolean; error?: string }>;
 };
 
 type AppConfigAPI = {
@@ -220,7 +231,9 @@ const electronAPI: ElectronAPI = {
     ipcRenderer.invoke('select-file-or-directory', defaultPath),
   selectImportSessionFile: () => ipcRenderer.invoke('select-import-session-file'),
   getBinaryPath: (binaryName: string) => ipcRenderer.invoke('get-binary-path', binaryName),
-  readFile: (filePath: string) => ipcRenderer.invoke('read-file', filePath),
+  selectRecipeFile: () => ipcRenderer.invoke('select-recipe-file'),
+  readGoosehints: () => ipcRenderer.invoke('read-goosehints'),
+  writeGoosehints: (content: string) => ipcRenderer.invoke('write-goosehints', content),
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
   ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
@@ -300,35 +313,14 @@ const electronAPI: ElectronAPI = {
   }) => {
     ipcRenderer.send('broadcast-theme-change', themeData);
   },
-  openExternal: (url: string): Promise<void> => {
+  openExternal: (url: string): Promise<OpenExternalUrlResult> => {
     return ipcRenderer.invoke('open-external', url);
   },
   getVersion: (): string => {
     return config.GOOSE_VERSION || ipcRenderer.sendSync('get-app-version') || '';
   },
-  checkForUpdates: (): Promise<{ updateInfo: unknown; error: string | null }> => {
-    return ipcRenderer.invoke('check-for-updates');
-  },
-  downloadUpdate: (): Promise<{ success: boolean; error: string | null }> => {
-    return ipcRenderer.invoke('download-update');
-  },
-  installUpdate: (): void => {
-    ipcRenderer.invoke('install-update');
-  },
   restartApp: (): void => {
     ipcRenderer.send('restart-app');
-  },
-  onUpdaterEvent: (callback: (event: UpdaterEvent) => void): void => {
-    ipcRenderer.on('updater-event', (_event, data) => callback(data));
-  },
-  getUpdateState: (): Promise<{ updateAvailable: boolean; latestVersion?: string } | null> => {
-    return ipcRenderer.invoke('get-update-state');
-  },
-  isUsingGitHubFallback: (): Promise<boolean> => {
-    return ipcRenderer.invoke('is-using-github-fallback');
-  },
-  getAutoDownloadDisabled: (): Promise<boolean> => {
-    return ipcRenderer.invoke('get-auto-download-disabled');
   },
   closeWindow: () => ipcRenderer.send('close-window'),
   hasAcceptedRecipeBefore: (recipe: Recipe) =>
@@ -349,8 +341,19 @@ const electronAPI: ElectronAPI = {
   clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
   loginViaOA: (loginName: string, password: string) =>
     ipcRenderer.invoke('login-via-oa', loginName, password),
+  getAIBuddyAuthSettings: () => ipcRenderer.invoke('get-aibuddy-auth-settings'),
+  loginViaAIBuddy: (email: string, password: string, captchaProof: string) =>
+    ipcRenderer.invoke('login-via-aibuddy', email, password, captchaProof),
+  completeAIBuddy2FA: (tempToken: string, totpCode: string) =>
+    ipcRenderer.invoke('complete-aibuddy-2fa', tempToken, totpCode),
+  provisionAIBuddyGroup: (pendingLoginId: string, groupId: string) =>
+    ipcRenderer.invoke('provision-aibuddy-group', pendingLoginId, groupId),
   getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
   listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
+  getGitBranchInfo: (dir: string) => ipcRenderer.invoke('get-git-branch-info', dir),
+  listGitBranches: (dir: string) => ipcRenderer.invoke('list-git-branches', dir),
+  switchGitBranch: (dir: string, branch: string) =>
+    ipcRenderer.invoke('switch-git-branch', dir, branch),
 };
 
 function getAppLocale(): unknown {

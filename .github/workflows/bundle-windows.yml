@@ -74,7 +74,7 @@ jobs:
         run: bash scripts/set-cargo-version.sh "$VERSION"
 
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
           key: windows-msvc-desktop-${{ inputs.windows_variant }}
 
@@ -86,7 +86,7 @@ jobs:
 
       - name: Install CUDA toolkit
         if: ${{ inputs.windows_variant == 'cuda' }}
-        uses: Jimver/cuda-toolkit@3d45d157f327c09c04b50ee6ccdea2d9d017ec76  # v0.2.35
+        uses: Jimver/cuda-toolkit@b8bf9c6c28f8a92fbb04dcfcaee872e60c57462d  # v0.2.36
         with:
           cuda: '12.9.1'
           method: 'local'
@@ -244,6 +244,7 @@ jobs:
       - name: Build desktop UI with pnpm
         shell: bash
         env:
+          APP_EDITION: heybuddy
           ELECTRON_PLATFORM: win32
         run: |
           cd ui/desktop
@@ -254,13 +255,16 @@ jobs:
 
       - name: Prepare flat distribution
         shell: bash
+        env:
+          APP_EDITION: heybuddy
         run: |
           cd ui/desktop
-          mkdir -p ./out/HeyBuddy-win32-x64/resources/bin
-          cp -r src/bin/* out/HeyBuddy-win32-x64/resources/bin/
+          packaged="out/$(node -p "require('./scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').packagedDirName")"
+          mkdir -p "$packaged/resources/bin"
+          cp -r src/bin/* "$packaged/resources/bin/"
 
           mkdir -p ./dist-windows
-          cp -r ./out/HeyBuddy-win32-x64/* ./dist-windows/
+          cp -r "$packaged"/* ./dist-windows/
 
           ls -la ./dist-windows/
           ls -la ./dist-windows/resources/bin/
@@ -306,6 +310,7 @@ jobs:
       - name: Create Windows installer
         shell: pwsh
         env:
+          APP_EDITION: heybuddy
           INPUT_VERSION: ${{ inputs.version }}
         run: |
           $version = $env:INPUT_VERSION
@@ -313,27 +318,36 @@ jobs:
             $package = Get-Content "ui/desktop/package.json" -Raw | ConvertFrom-Json
             $version = $package.version
           }
-          $outputDir = Join-Path $env:GITHUB_WORKSPACE "installer-output"
+          $outputDir = $env:GITHUB_WORKSPACE
           New-Item -ItemType Directory -Force $outputDir | Out-Null
-          & $env:ISCC_PATH "/DMyAppVersion=$version" "/O$outputDir" "ui/desktop/heybuddy-setup.iss"
+          $distDir = Join-Path $env:GITHUB_WORKSPACE "ui\desktop\dist-windows"
+          $pkg = & node "ui/desktop/scripts/windows-package.js" $env:APP_EDITION $version $distDir $outputDir | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw "Failed to resolve Windows package definitions" }
+          & $env:ISCC_PATH @($pkg.isccArgs) "ui/desktop/desktop-setup.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
-          $installer = Join-Path $outputDir "HeyBuddy-Setup.exe"
+          $installer = Join-Path $outputDir $pkg.setupFileName
           if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
           Get-Item $installer
 
       - name: Create Windows zip package
+        id: package-windows-zip
         working-directory: ui/desktop/dist-windows
         shell: bash
         env:
+          APP_EDITION: heybuddy
           VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-        run: 7z a -tzip "$GITHUB_WORKSPACE/HeyBuddy-win32-x64${VARIANT_SUFFIX}.zip" ./*
+        run: |
+          portable_file_name="$(node -p "require('../scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').portableFileName")"
+          portable_file_name="${portable_file_name%.zip}${VARIANT_SUFFIX}.zip"
+          7z a -tzip "$GITHUB_WORKSPACE/$portable_file_name" ./*
+          echo "portable_file_name=$portable_file_name" >> "$GITHUB_OUTPUT"
 
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
           path: |
-            HeyBuddy-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
-            installer-output/HeyBuddy-Setup.exe
+            ${{ steps.package-windows-zip.outputs.portable_file_name }}
+            HeyBuddy-windows-x64-setup.exe
           if-no-files-found: error
           overwrite: true

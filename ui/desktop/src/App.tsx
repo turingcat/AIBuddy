@@ -1,18 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { IpcRendererEvent } from 'electron';
-import {
-  HashRouter,
-  Routes,
-  Route,
-  useNavigate,
-  useLocation,
-  useSearchParams,
-} from 'react-router';
+import { HashRouter, Routes, Route, useNavigate, useLocation, useSearchParams } from 'react-router';
 import { importNostrSessionFromDeepLink } from './sessionLinks';
 import { ErrorUI } from './components/ErrorBoundary';
 import { ExtensionInstallModal } from './components/ExtensionInstallModal';
 import RecipeParamsModalContainer from './components/RecipeParamsModalContainer';
-import { isRecipeParamsCancelled } from './acp/errors';
+import { isRecipeParamsCancelled, isRecipeParameterScopesUnsupported } from './acp/errors';
 import { toast, ToastContainer } from 'react-toastify';
 import AnnouncementModal from './components/AnnouncementModal';
 import OnboardingGuard from './components/onboarding/OnboardingGuard';
@@ -59,6 +52,7 @@ import { trackErrorWithContext } from './utils/analytics';
 import { AppEvents } from './constants/events';
 import { registerPlatformEventHandlers } from './utils/platform_events';
 import { reconnectAcpAfterSystemResume } from './acp/acpConnection';
+import { getAppProtocolPrefix } from './brand';
 
 function PageViewTracker() {
   usePageViewTracking();
@@ -81,7 +75,7 @@ export function resolveSessionInitialMessage(
   );
 }
 
-const PairRouteWrapper = ({
+export const PairRouteWrapper = ({
   activeSessions,
 }: {
   activeSessions: Array<{
@@ -141,6 +135,11 @@ const PairRouteWrapper = ({
           });
         } catch (error) {
           if (isRecipeParamsCancelled(error)) {
+            navigate('/');
+            return;
+          }
+          if (isRecipeParameterScopesUnsupported(error)) {
+            toast.error(error.message);
             navigate('/');
             return;
           }
@@ -421,7 +420,7 @@ export function AppInner() {
       const link = args[0] as string;
       window.electron.logInfo('Opening session share link');
 
-      if (!link.startsWith('goose://sessions/nostr')) {
+      if (!link.startsWith(`${getAppProtocolPrefix()}sessions/nostr`)) {
         toast.error('Unsupported session share link');
         navigate('/sessions');
         return;

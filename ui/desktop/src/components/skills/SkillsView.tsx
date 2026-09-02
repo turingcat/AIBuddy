@@ -48,7 +48,8 @@ const i18n = defineMessages({
   },
   skillsDescription: {
     id: 'skillsView.skillsDescription',
-    defaultMessage: 'View installed skills that extend HeyBuddy capabilities. {shortcut} to search.',
+    defaultMessage:
+      'View installed skills that extend {appName} capabilities. {shortcut} to search.',
   },
   searchSkillsPlaceholder: {
     id: 'skillsView.searchSkillsPlaceholder',

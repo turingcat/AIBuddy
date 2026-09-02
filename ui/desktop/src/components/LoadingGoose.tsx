@@ -16,23 +16,23 @@ const i18n = defineMessages({
   },
   thinking: {
     id: 'loadingGoose.thinking',
-    defaultMessage: 'HeyBuddy is thinking…',
+    defaultMessage: '{appName} is thinking…',
   },
   streaming: {
     id: 'loadingGoose.streaming',
-    defaultMessage: 'HeyBuddy is working on it…',
+    defaultMessage: '{appName} is working on it…',
   },
   waiting: {
     id: 'loadingGoose.waiting',
-    defaultMessage: 'HeyBuddy is waiting…',
+    defaultMessage: '{appName} is waiting…',
   },
   compacting: {
     id: 'loadingGoose.compacting',
-    defaultMessage: 'HeyBuddy is compacting the conversation...',
+    defaultMessage: '{appName} is compacting the conversation...',
   },
   idle: {
     id: 'loadingGoose.idle',
-    defaultMessage: 'HeyBuddy is working on it…',
+    defaultMessage: '{appName} is working on it…',
   },
   restartingAgent: {
     id: 'loadingGoose.restartingAgent',

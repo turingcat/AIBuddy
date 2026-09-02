@@ -110,4 +110,37 @@ describe('RecipeExtensionSelector', () => {
     expect(screen.getByText('Team Tools')).toBeInTheDocument();
     expect(screen.getByText('Internal team tools')).toBeInTheDocument();
   });
+
+  it('preserves static OAuth fields when selecting a configured extension', async () => {
+    const user = userEvent.setup();
+    const onExtensionsChange = vi.fn();
+    configContextMock.extensionsList = [
+      {
+        type: 'streamable_http',
+        name: 'google_workspace',
+        description: 'Google Workspace',
+        uri: 'https://example.com/mcp',
+        client_id: 'registered-client',
+        client_secret_key: 'GOOGLE_OAUTH_SECRET',
+        scopes: ['drive.readonly'],
+        enabled: true,
+      },
+    ];
+
+    renderWithIntl(
+      <RecipeExtensionSelector selectedExtensions={[]} onExtensionsChange={onExtensionsChange} />
+    );
+
+    await user.click(screen.getByTitle('HTTP: Google Workspace'));
+
+    expect(onExtensionsChange).toHaveBeenCalledWith([
+      expect.objectContaining({
+        type: 'streamable_http',
+        name: 'google_workspace',
+        client_id: 'registered-client',
+        client_secret_key: 'GOOGLE_OAUTH_SECRET',
+        scopes: ['drive.readonly'],
+      }),
+    ]);
+  });
 });

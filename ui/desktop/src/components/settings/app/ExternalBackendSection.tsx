@@ -15,7 +15,7 @@ const i18n = defineMessages({
   description: {
     id: 'externalBackendSection.description',
     defaultMessage:
-      'By default HeyBuddy starts a local backend. Use this to connect to an external ACP-compatible backend.',
+      'By default {appName} starts a local backend. Use this to connect to an external ACP-compatible backend.',
   },
   useExternalServer: {
     id: 'externalBackendSection.useExternalServer',
@@ -32,7 +32,20 @@ const i18n = defineMessages({
   serverUrlHelp: {
     id: 'externalBackendSection.serverUrlHelp',
     defaultMessage:
-      'Enter the HTTP(S) base URL. HeyBuddy checks /status and connects to /acp under this base.',
+      'Enter the HTTP(S) base URL. {appName} checks /status and connects to /acp under this base.',
+  },
+  workingDir: {
+    id: 'externalBackendSection.workingDir',
+    defaultMessage: 'Remote Working Directory (optional)',
+  },
+  workingDirPlaceholder: {
+    id: 'externalBackendSection.workingDirPlaceholder',
+    defaultMessage: '/home/goose/workspace',
+  },
+  workingDirHelp: {
+    id: 'externalBackendSection.workingDirHelp',
+    defaultMessage:
+      'Absolute path on the external backend. Leave blank to send the local working directory.',
   },
   secretKey: {
     id: 'externalBackendSection.secretKey',
@@ -61,7 +74,8 @@ const i18n = defineMessages({
   },
   restartNote: {
     id: 'externalBackendSection.restartNote',
-    defaultMessage: 'Changes apply to new chat windows. Restart HeyBuddy to update existing windows.',
+    defaultMessage:
+      'Changes apply to new chat windows. Restart {appName} to update existing windows.',
   },
   urlProtocolError: {
     id: 'externalBackendSection.urlProtocolError',
@@ -219,6 +233,24 @@ export default function ExternalBackendSection() {
                 )}
                 <p className="text-xs text-text-secondary">
                   {intl.formatMessage(i18n.serverUrlHelp)}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="external-working-dir" className="text-text-primary text-xs">
+                  {intl.formatMessage(i18n.workingDir)}
+                </label>
+                <Input
+                  id="external-working-dir"
+                  type="text"
+                  placeholder={intl.formatMessage(i18n.workingDirPlaceholder)}
+                  value={config.workingDir || ''}
+                  onChange={(e) => updateField('workingDir', e.target.value)}
+                  onBlur={() => saveConfig(config)}
+                  disabled={isSaving}
+                />
+                <p className="text-xs text-text-secondary">
+                  {intl.formatMessage(i18n.workingDirHelp)}
                 </p>
               </div>
 

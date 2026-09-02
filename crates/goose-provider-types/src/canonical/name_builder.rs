@@ -34,7 +34,7 @@ pub fn canonical_name(provider: &str, model: &str) -> String {
     format!("{}/{}", provider, model_base)
 }
 
-fn is_meta_provider(provider: &str) -> bool {
+pub(crate) fn is_meta_provider(provider: &str) -> bool {
     matches!(
         provider,
         "databricks" | "databricks_v2" | "tetrate" | "bedrock" | "azure" | "azure_foundry"
@@ -53,7 +53,9 @@ pub fn map_provider_name(provider: &str) -> &str {
         "zhipu" => "zhipuai",
         "novita" => "novita-ai",
         "opencode_go" => "opencode-go",
+        "opencode_zen" => "opencode",
         "ollama_cloud" => "ollama-cloud",
+        "kimi_code" => "kimi-for-coding",
         _ => provider,
     }
 }
@@ -348,6 +350,10 @@ mod tests {
             map_to_canonical_model("opencode_go", "kimi-k2.6", r),
             Some("opencode-go/kimi-k2.6".to_string())
         );
+        assert_eq!(
+            map_to_canonical_model("opencode_zen", "kimi-k3", r),
+            Some("opencode/kimi-k3".to_string())
+        );
 
         // === OpenRouter ===
         assert_eq!(
@@ -534,6 +540,16 @@ mod tests {
         assert_eq!(
             map_to_canonical_model("zhipu", "glm-5", r),
             Some("zhipuai/glm-5".to_string())
+        );
+
+        // === Kimi Code ===
+        assert_eq!(
+            map_to_canonical_model("kimi_code", "kimi-for-coding", r),
+            Some("kimi-for-coding/kimi-for-coding".to_string())
+        );
+        assert_eq!(
+            map_to_canonical_model("kimi_code", "kimi-for-coding-highspeed", r),
+            Some("kimi-for-coding/kimi-for-coding-highspeed".to_string())
         );
 
         // === GCP Vertex AI ===
