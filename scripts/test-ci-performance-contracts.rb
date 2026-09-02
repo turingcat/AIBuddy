@@ -7,6 +7,23 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   CI_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
+  MCP_CONFORMANCE_MATRIX = [
+    {
+      "spec-version" => "2025-11-25",
+      "conformance-version" => "0.1.16",
+      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml",
+    },
+    {
+      "spec-version" => "2025-11-25",
+      "conformance-version" => "0.2.0-alpha.10",
+      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml",
+    },
+    {
+      "spec-version" => "2026-07-28",
+      "conformance-version" => "0.2.0-alpha.10",
+      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml",
+    },
+  ].freeze
   CI_REQUIRED_CHECK_NAMES = {
     "rust-format" => "Check Rust Code Format",
     "rust-build-and-test" => "Build and Test Rust Project",
@@ -51,8 +68,39 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_mcp_conformance_cancels_superseded_pull_request_runs
     workflow = load_workflow("mcp-conformance.yml")
 
-    assert_equal PR_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
-    assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
+    assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
+    assert_equal "${{ github.event_name == 'pull_request' }}", workflow.dig("concurrency", "cancel-in-progress")
+  end
+
+  def test_mcp_conformance_uses_changes_job_instead_of_top_level_path_filters
+    workflow = load_workflow("mcp-conformance.yml")
+    changes = workflow.fetch("jobs").fetch("changes")
+    filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
+
+    %w[push pull_request merge_group schedule workflow_dispatch].each do |event_name|
+      assert_match(/^  #{event_name}:/, workflow_text("mcp-conformance.yml"),
+                   "mcp-conformance.yml must handle #{event_name} events")
+    end
+    refute_match(/^\s+paths(?:-ignore)?:/, workflow_text("mcp-conformance.yml"),
+                 "mcp-conformance.yml must create required checks for every pull request")
+    assert_equal "${{ steps.filter.outputs.code }}", changes.dig("outputs", "code")
+    assert_includes filter.dig("with", "filters"), "code:"
+    assert_includes filter.dig("with", "filters"), "!documentation/**"
+  end
+
+  def test_mcp_conformance_skips_docs_only_pull_requests_and_runs_all_other_events
+    workflow = load_workflow("mcp-conformance.yml")
+
+    %w[build conformance].each do |job_name|
+      assert_code_change_event_tier(workflow, job_name, requires_dependency_locks: false)
+    end
+  end
+
+  def test_mcp_conformance_preserves_the_existing_specification_matrix
+    workflow = load_workflow("mcp-conformance.yml")
+
+    assert_equal MCP_CONFORMANCE_MATRIX,
+                 workflow.dig("jobs", "conformance", "strategy", "matrix", "include")
   end
 
   def test_direct_cargo_commands_use_locked_rust_dependencies
