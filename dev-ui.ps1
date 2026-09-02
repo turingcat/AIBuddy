@@ -7,6 +7,7 @@
     可选：-RebuildBackend  先 cargo build（debug 增量）并复制 goose.exe 到 ui/desktop/src/bin 再启动（改过 Rust 代码后用）
           -NoBuild         绝不构建，二进制缺失时直接报错退出（纯前端迭代最快路径）
           -AuthApiBaseUrl  登录服务地址（默认生产 https://ai.linyeyun.cn；传空串则用源码默认 localhost:3001）
+          -Edition         品牌版本（默认 heybuddy；start-gui 的 validate:edition 要求显式设置）
 #>
 
 [CmdletBinding()]
@@ -17,6 +18,8 @@ param(
     [switch]$NoBuild,
     # 登录服务地址：经 vite define 烘焙进主进程（vite.main.config.mts），子进程继承
     [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn',
+    # 品牌版本：start-gui 的 validate:edition 校验要求 APP_EDITION 存在；vite 构建侧缺省同为 heybuddy
+    [string]$Edition = 'heybuddy',
     # HTTP 代理（cargo/pnpm 下载走代理；传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（首次 forge start 下载 electron 用）
@@ -58,6 +61,9 @@ if ($AuthApiBaseUrl) {
 } else {
     Write-Host '未设置登录服务地址，使用源码默认 http://localhost:3001'
 }
+
+$env:APP_EDITION = $Edition
+Write-Host "APP_EDITION 已设置：$Edition"
 
 if ($NodePath) {
     if (-not (Test-Path (Join-Path $NodePath 'node.exe'))) {
