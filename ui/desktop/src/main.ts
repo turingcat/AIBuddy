@@ -1412,7 +1412,7 @@ const createChat = async (
     }
   }
 
-  // HeyBuddy's react app uses HashRouter, so the path + search params follow a #/
+  // The renderer uses HashRouter, so the path and search parameters follow a #/.
   url.hash = `${appPath}?${searchParams.toString()}`;
   let formattedUrl = formatUrl(url);
   log.info('Opening URL: ', formattedUrl);

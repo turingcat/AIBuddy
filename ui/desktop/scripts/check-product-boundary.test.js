@@ -67,6 +67,20 @@ describe('findProductBoundaryViolations', () => {
     ]);
   });
 
+  it('rejects a HeyBuddy provider selection without rejecting Goose compatibility configuration', () => {
+    const root = createFixture();
+    writeFixture(
+      root,
+      'ui/desktop/src/gooseServeEnv.ts',
+      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };",
+    );
+    writeFixture(root, 'ui/desktop/scripts/start.sh', 'GOOSE_PROVIDER=heybuddy goose serve');
+
+    expect(findProductBoundaryViolations(root)).toEqual([
+      { file: 'ui/desktop/scripts/start.sh', pattern: 'HeyBuddy provider selection' },
+    ]);
+  });
+
   it('ignores historical design documents and generated output', () => {
     const root = createFixture();
     const legacyContent = [

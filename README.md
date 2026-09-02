@@ -26,6 +26,10 @@ The code lineage is **Goose -> HeyBuddy shared -> AIBuddy**. [Goose](https://git
 
 The CLI binary, crate names, environment variables, configuration files, and protocol compatibility surfaces retain the original `goose` naming where changing them would break compatibility.
 
+## Synchronization
+
+Routine AIBuddy updates fetch and merge `upstream/shared`, never `upstream/main`. The shared branch carries official Goose updates and reusable product-neutral engine, desktop, localization, and tooling changes. AIBuddy owns its product identity, authentication and service configuration, provider credentials and entitlements, data migration, and user-visible behavior. Run `cd ui/desktop && pnpm run check:product-boundary` after each shared merge.
+
 ## Get started
 
 Open [TFlow](https://tflow.online) to access AIBuddy.

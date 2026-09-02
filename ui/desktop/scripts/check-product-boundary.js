@@ -26,6 +26,10 @@ const PRODUCT_PATTERNS = [
     matches: (content) => /\bHEYBUDDY_(?:API_KEY|BASE_URL)\b/.test(content),
   },
   {
+    pattern: 'HeyBuddy provider selection',
+    matches: (content) => /\bGOOSE_PROVIDER\s*(?::|=)\s*['"]?heybuddy\b/i.test(content),
+  },
+  {
     pattern: 'OA login implementation or IPC identifier',
     matches: (content) => /\b(?:oaLogin|performOaLogin|runOaLogin|loginViaOA|OaLoginResult)\b/.test(content),
   },
