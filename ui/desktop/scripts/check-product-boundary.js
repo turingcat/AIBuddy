@@ -19,7 +19,19 @@ const IGNORED_DIRECTORIES = new Set([
 const PRODUCT_PATTERNS = [
   { pattern: 'ai.linyeyun.cn', matches: (content) => content.includes('ai.linyeyun.cn') },
   { pattern: 'HEYBUDDY_AUTH_API_BASE_URL', matches: (content) => content.includes('HEYBUDDY_AUTH_API_BASE_URL') },
-  { pattern: 'APP_EDITION conditional', matches: (content) => content.includes('APP_EDITION') },
+  {
+    pattern: 'HeyBuddy provider credential variable',
+    matches: (content) => /\bHEYBUDDY_(?:API_KEY|BASE_URL)\b/.test(content),
+  },
+  {
+    pattern: 'OA login implementation or IPC identifier',
+    matches: (content) => /\b(?:oaLogin|performOaLogin|runOaLogin|loginViaOA|OaLoginResult)\b/.test(content),
+  },
+  {
+    pattern: 'AIBuddy legacy migration identifier',
+    matches: (content) => /\b(?:migrateLegacyAIBuddyData|aibuddyDataMigration)\b/.test(content),
+  },
+  { pattern: 'APP_EDITION active usage', matches: isActiveEditionUsage },
 ];
 
 function isIgnoredPath(file) {
@@ -57,6 +69,22 @@ function listFiles(root) {
   return files.sort((left, right) => left.localeCompare(right));
 }
 
+function isActiveEditionUsage(content, file) {
+  if (!/\.(?:[cm]?[jt]sx?|json)$/.test(file)) {
+    return false;
+  }
+
+  const executableContent = content
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return /\bprocess\.env\.APP_EDITION\b|\$\{?APP_EDITION\}?/.test(executableContent);
+}
+
+function isDesktopConfigurationFile(file) {
+  const normalizedFile = file.replace(/\\/g, '/');
+  return /(^|\/)(package\.json|.*\.config\.[^.]+|.*\.env(?:\.[^.]+)?|.*\.d\.ts)$/.test(normalizedFile);
+}
+
 function desktopConfigurationFiles(repositoryRoot) {
   const desktopRoot = path.join(repositoryRoot, 'ui', 'desktop');
   if (!fs.existsSync(desktopRoot)) {
@@ -66,7 +94,7 @@ function desktopConfigurationFiles(repositoryRoot) {
   return fs.readdirSync(desktopRoot, { withFileTypes: true })
     .filter((entry) => entry.isFile())
     .map((entry) => path.join(desktopRoot, entry.name))
-    .filter((file) => /(^|\/)(package\.json|.*\.config\.[^.]+|.*\.env(?:\.[^.]+)?|.*\.d\.ts)$/.test(file))
+    .filter(isDesktopConfigurationFile)
     .sort((left, right) => left.localeCompare(right));
 }
 
@@ -92,7 +120,7 @@ function findProductBoundaryViolations(rootDir) {
     const relativeFile = path.relative(repositoryRoot, file).split(path.sep).join('/');
     const content = fs.readFileSync(file, 'utf8');
     const violations = PRODUCT_PATTERNS
-      .filter(({ matches }) => matches(content))
+      .filter(({ matches }) => matches(content, file))
       .map(({ pattern }) => ({ file: relativeFile, pattern }));
 
     if (relativeFile === 'crates/goose-providers/src/declarative/definitions/heybuddy.json') {
@@ -112,4 +140,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { findProductBoundaryViolations };
+module.exports = { findProductBoundaryViolations, isDesktopConfigurationFile };
