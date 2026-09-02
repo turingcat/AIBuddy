@@ -13,4 +13,6 @@ export enum AppEvents {
   SCROLL_CHAT_TO_BOTTOM = 'scroll-chat-to-bottom',
   HIDE_ALERT_POPOVER = 'hide-alert-popover',
   RESPONSE_STYLE_CHANGED = 'responseStyleChanged',
+  OPEN_RECHARGE_DIALOG = 'open-recharge-dialog',
+  BALANCE_REFRESH_REQUESTED = 'balance-refresh-requested',
 }

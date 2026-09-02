@@ -29,6 +29,9 @@
   "accountMenu.notLoggedIn": {
     "defaultMessage": "未登录用户"
   },
+  "accountMenu.recharge": {
+    "defaultMessage": "充值"
+  },
   "accountMenu.settings": {
     "defaultMessage": "设置"
   },
@@ -3079,6 +3082,72 @@
   },
   "recipeWarningModal.trustSource": {
     "defaultMessage": "只有在你信任此模板来源的情况下才应继续。"
+  },
+  "rechargeDialog.backToAmount": {
+    "defaultMessage": "返回重选金额"
+  },
+  "rechargeDialog.createFailed": {
+    "defaultMessage": "充值下单失败"
+  },
+  "rechargeDialog.customAmount": {
+    "defaultMessage": "自定义金额（整数元）"
+  },
+  "rechargeDialog.description": {
+    "defaultMessage": "使用微信支付为账户充值"
+  },
+  "rechargeDialog.expired": {
+    "defaultMessage": "二维码已过期"
+  },
+  "rechargeDialog.expiresIn": {
+    "defaultMessage": "{time} 后过期"
+  },
+  "rechargeDialog.loadFailed": {
+    "defaultMessage": "充值配置获取失败"
+  },
+  "rechargeDialog.loading": {
+    "defaultMessage": "正在获取充值配置…"
+  },
+  "rechargeDialog.minHint": {
+    "defaultMessage": "最低充值 {amount} 元"
+  },
+  "rechargeDialog.notEnabled": {
+    "defaultMessage": "当前站点暂未开通应用内充值"
+  },
+  "rechargeDialog.openWebTopup": {
+    "defaultMessage": "打开网页充值"
+  },
+  "rechargeDialog.orderExpired": {
+    "defaultMessage": "订单已过期，请重新下单"
+  },
+  "rechargeDialog.payAmount": {
+    "defaultMessage": "支付金额 ¥{amount}"
+  },
+  "rechargeDialog.payButton": {
+    "defaultMessage": "微信支付 ¥{amount}"
+  },
+  "rechargeDialog.payFailed": {
+    "defaultMessage": "支付失败，请重试"
+  },
+  "rechargeDialog.qrNote": {
+    "defaultMessage": "关闭弹窗不会取消订单，过期前均可继续支付"
+  },
+  "rechargeDialog.retry": {
+    "defaultMessage": "重试"
+  },
+  "rechargeDialog.scanHint": {
+    "defaultMessage": "请使用微信扫码支付"
+  },
+  "rechargeDialog.selectAmount": {
+    "defaultMessage": "选择充值金额（元）"
+  },
+  "rechargeDialog.success": {
+    "defaultMessage": "充值成功"
+  },
+  "rechargeDialog.title": {
+    "defaultMessage": "充值"
+  },
+  "rechargeDialog.unauthorized": {
+    "defaultMessage": "登录已失效，请重新登录"
   },
   "recipesView.addSchedule": {
     "defaultMessage": "添加定时任务"

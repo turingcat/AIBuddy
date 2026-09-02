@@ -5,6 +5,7 @@ import { importNostrSessionFromDeepLink } from './sessionLinks';
 import { ErrorUI } from './components/ErrorBoundary';
 import { ExtensionInstallModal } from './components/ExtensionInstallModal';
 import RecipeParamsModalContainer from './components/RecipeParamsModalContainer';
+import { RechargeDialog } from './components/recharge/RechargeDialog';
 import { isRecipeParamsCancelled, isRecipeParameterScopesUnsupported } from './acp/errors';
 import { toast, ToastContainer } from 'react-toastify';
 import AnnouncementModal from './components/AnnouncementModal';
@@ -625,6 +626,7 @@ export function AppInner() {
       />
       <ExtensionInstallModal addExtension={addExtension} setView={setView} />
       <RecipeParamsModalContainer />
+      <RechargeDialog />
       <div className="relative w-screen h-screen overflow-hidden bg-background-secondary flex flex-col">
         <div className="titlebar-drag-region" />
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>

@@ -123,5 +123,16 @@ export function useBalance(pollMs: number = DEFAULT_POLL_MS): {
       window.removeEventListener(AppEvents.SESSION_STATUS_UPDATE, handleSessionStatusUpdate);
   }, [fetchBalance]);
 
+  /**
+   * 监听余额刷新请求（充值成功等场景派发）：立即拉取一次。
+   * 派发方无需接触各处 useBalance 实例，事件即广播。
+   */
+  useEffect(() => {
+    const handleRefreshRequested = () => fetchBalance();
+    window.addEventListener(AppEvents.BALANCE_REFRESH_REQUESTED, handleRefreshRequested);
+    return () =>
+      window.removeEventListener(AppEvents.BALANCE_REFRESH_REQUESTED, handleRefreshRequested);
+  }, [fetchBalance]);
+
   return { state, refreshing, refresh: fetchBalance };
 }

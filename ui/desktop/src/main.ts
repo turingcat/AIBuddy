@@ -49,6 +49,15 @@ import {
   type BalanceResult,
   type CurrencyCacheState,
 } from './balance';
+import {
+  createWechatPayOrder,
+  fetchTopupInfo,
+  fetchWechatPayOrderStatus,
+  runRechargeFetch,
+  type TopupInfoResult,
+  type WechatPayOrderResult,
+  type WechatPayOrderStatusResult,
+} from './recharge';
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
@@ -2090,6 +2099,71 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
     return { balance, currency };
   });
 });
+
+// 微信充值走主进程 fetch new-api：PAT 调充值接口（topup/info 配置、
+// wechatpay/pay Native 下单、wechatpay/status 订单状态轮询），绕开 renderer CSP；
+// sub2api 站点没有这组接口，统一返回 feature-unavailable 由渲染进程隐藏入口
+// @author logic
+// @date 2026-09-02
+type RechargeAuth =
+  | { ok: true; pat: string }
+  | { ok: false; kind: 'not-logged-in' | 'no-pat' | 'feature-unavailable'; message: string };
+
+function resolveRechargePat(): RechargeAuth {
+  const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
+  if (!creds) {
+    return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
+  }
+  if (creds.siteKind === 'sub2api') {
+    return { ok: false, kind: 'feature-unavailable', message: '当前站点不支持应用内充值' };
+  }
+  if (!creds.pat) {
+    return { ok: false, kind: 'no-pat', message: '请重新登录后充值' };
+  }
+  return { ok: true, pat: creds.pat };
+}
+
+ipcMain.handle('get-topup-info', async (): Promise<TopupInfoResult> => {
+  const auth = resolveRechargePat();
+  if (!auth.ok) {
+    return { ok: false, kind: auth.kind, message: auth.message };
+  }
+  const result = await runRechargeFetch(() =>
+    fetchTopupInfo(authConfig.apiBaseUrl, auth.pat, net.fetch)
+  );
+  return result.ok ? { ok: true, info: result.data } : result;
+});
+
+ipcMain.handle(
+  'create-wechat-pay-order',
+  async (_event, amount: number): Promise<WechatPayOrderResult> => {
+    const auth = resolveRechargePat();
+    if (!auth.ok) {
+      return { ok: false, kind: auth.kind, message: auth.message };
+    }
+    const result = await runRechargeFetch(() =>
+      createWechatPayOrder(authConfig.apiBaseUrl, auth.pat, amount, net.fetch)
+    );
+    if (!result.ok) {
+      log.error(`[HeyBuddy] 微信充值下单失败 kind=${result.kind} amount=${amount}: ${result.message}`);
+    }
+    return result.ok ? { ok: true, order: result.data } : result;
+  }
+);
+
+ipcMain.handle(
+  'get-wechat-pay-order-status',
+  async (_event, tradeNo: string): Promise<WechatPayOrderStatusResult> => {
+    const auth = resolveRechargePat();
+    if (!auth.ok) {
+      return { ok: false, kind: auth.kind, message: auth.message };
+    }
+    const result = await runRechargeFetch(() =>
+      fetchWechatPayOrderStatus(authConfig.apiBaseUrl, auth.pat, tradeNo, net.fetch)
+    );
+    return result.ok ? { ok: true, status: result.data } : result;
+  }
+);
 
 // 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
 // @author logic
