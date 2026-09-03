@@ -141,6 +141,15 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes text, "cargo build --release --target x86_64-pc-windows-msvc"
   end
 
+  def test_windows_desktop_bundle_uses_package_command
+    commands = job_run_commands("bundle-windows.yml", "build-desktop-windows")
+
+    assert commands.any? { |command| command.include?("pnpm run package:windows") },
+           "Windows desktop bundle must use the package script"
+    refute commands.any? { |command| command.include?("pnpm run make") },
+           "Windows desktop bundle must not invoke Electron Forge makers"
+  end
+
   def test_mcp_conformance_cancels_superseded_pull_request_runs
     workflow = load_workflow("mcp-conformance.yml")
 

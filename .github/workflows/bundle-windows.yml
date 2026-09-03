@@ -218,7 +218,7 @@ jobs:
           pnpm install --frozen-lockfile
           node scripts/build-main.js
           node scripts/prepare-platform-binaries.js
-          pnpm run make --platform=win32 --arch=x64
+          pnpm run package:windows
 
       - name: Prepare flat distribution
         shell: bash
