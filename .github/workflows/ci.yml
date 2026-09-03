@@ -199,6 +199,9 @@ jobs:
           key: ci-tls-${{ matrix.tls-feature }}
           save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
 
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
       - name: Build and Test with ${{ matrix.tls-feature }}
         run: |
           gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
