@@ -43,7 +43,7 @@ export type RechargeErrorKind =
   | 'bad-request';
 
 // main 进程在请求之前判定的本地状态错误，与 HTTP 错误共用一个结果联合类型
-export type RechargeFailureKind = RechargeErrorKind | 'not-logged-in' | 'no-pat' | 'feature-unavailable';
+export type RechargeFailureKind = RechargeErrorKind | 'not-logged-in' | 'no-pat';
 
 export type TopupInfoResult =
   | { ok: true; info: TopupInfo }

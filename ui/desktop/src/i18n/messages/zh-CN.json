@@ -11,20 +11,11 @@
   "announcementModal.gotIt": {
     "defaultMessage": "知道了！"
   },
-  "accountMenu.currentBalance": {
-    "defaultMessage": "当前余额"
-  },
-  "accountMenu.dailyRemaining": {
-    "defaultMessage": "每日剩余"
-  },
   "accountMenu.logout": {
     "defaultMessage": "退出登录"
   },
   "accountMenu.logoutConfirmation": {
     "defaultMessage": "确定退出登录吗？"
-  },
-  "accountMenu.monthlyRemaining": {
-    "defaultMessage": "每月剩余"
   },
   "accountMenu.notLoggedIn": {
     "defaultMessage": "未登录用户"
@@ -34,9 +25,6 @@
   },
   "accountMenu.settings": {
     "defaultMessage": "设置"
-  },
-  "accountMenu.weeklyRemaining": {
-    "defaultMessage": "每周剩余"
   },
   "appLayout.collapseNavigation": {
     "defaultMessage": "收起导航栏"
@@ -89,9 +77,6 @@
   "appsView.title": {
     "defaultMessage": "应用"
   },
-  "balanceWidget.daily": {
-    "defaultMessage": "每日：{value}"
-  },
   "balanceWidget.loadFailed": {
     "defaultMessage": "余额加载失败"
   },
@@ -103,15 +88,6 @@
   },
   "balanceWidget.requests": {
     "defaultMessage": "请求数：{count}"
-  },
-  "balanceWidget.monthly": {
-    "defaultMessage": "每月：{value}"
-  },
-  "balanceWidget.subscriptionRemaining": {
-    "defaultMessage": "剩余 {value}"
-  },
-  "balanceWidget.weekly": {
-    "defaultMessage": "每周：{value}"
   },
   "balanceWidget.unauthorized": {
     "defaultMessage": "登录已失效，请重新登录"
@@ -1495,9 +1471,6 @@
   },
   "hub.assistantIdentity": {
     "defaultMessage": "，我是广林AI助手"
-  },
-  "hub.aibuddyIdentity": {
-    "defaultMessage": "，我是AIBuddy"
   },
   "hub.goodEvening": {
     "defaultMessage": "晚上好"

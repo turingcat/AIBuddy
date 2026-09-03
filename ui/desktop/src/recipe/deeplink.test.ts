@@ -12,16 +12,16 @@ vi.mock('../acp/recipe', () => ({
 
 const recipe = { title: 'T', description: 'D' } as Recipe;
 
-// Each edition registers only its own URL scheme with the OS, so emitting or
-// accepting the other edition's scheme would hand the user's recipe to the
-// wrong installed app.
-describe.each([
-  { edition: 'heybuddy', own: 'goose', foreign: 'aibuddy' },
-  { edition: 'aibuddy', own: 'aibuddy', foreign: 'goose' },
-])('recipe deeplinks for $edition', ({ edition, own, foreign }) => {
+// The app registers only its own URL scheme with the OS, so emitting or
+// accepting a foreign scheme would hand the user's recipe to the wrong
+// installed app.
+describe('recipe deeplinks for heybuddy', () => {
+  const own = 'goose';
+  const foreign = 'otherapp';
+
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('APP_EDITION', edition);
+    vi.stubEnv('APP_EDITION', 'heybuddy');
   });
 
   afterEach(() => {
@@ -38,7 +38,7 @@ describe.each([
     });
   });
 
-  it('rejects links on the other edition scheme before decoding them', async () => {
+  it('rejects links on a foreign scheme before decoding them', async () => {
     await expect(parseDeeplink(`${foreign}://recipe?config=ENCODED`)).resolves.toBeNull();
     expect(acpDecodeRecipe).not.toHaveBeenCalled();
   });

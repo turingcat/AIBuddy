@@ -1,8 +1,6 @@
 import React from 'react';
-import { AlertTriangle, ExternalLink } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import type { Message, SystemNotificationContent } from '../../types/message';
-import { WEB_PROTOCOLS } from '../../utils/urlSecurity';
-import { getAppEdition } from '../../brand';
 import { AppEvents } from '../../constants/events';
 import { defineMessages, useIntl } from '../../i18n';
 
@@ -21,50 +19,14 @@ interface CreditsExhaustedNotificationProps {
   notification: SystemNotificationContent;
 }
 
-function getValidatedTopUpUrl(data: unknown): string | null {
-  if (!data || typeof data !== 'object') {
-    return null;
-  }
-
-  const rawUrl = (data as Record<string, unknown>).top_up_url;
-  if (typeof rawUrl !== 'string') {
-    return null;
-  }
-
-  const url = rawUrl.trim();
-  if (!url) {
-    return null;
-  }
-
-  try {
-    const parsedUrl = new URL(url);
-    if (!WEB_PROTOCOLS.includes(parsedUrl.protocol)) {
-      return null;
-    }
-    return parsedUrl.toString();
-  } catch {
-    return null;
-  }
-}
-
 export const CreditsExhaustedNotification: React.FC<CreditsExhaustedNotificationProps> = ({
   notification,
 }) => {
   const intl = useIntl();
-  const topUpUrl = getValidatedTopUpUrl(notification.data);
-  // HeyBuddy 版走应用内微信充值弹窗（站点未开通时弹窗内再回退网页充值）；
-  // 其余版本保持打开外部充值链接
-  const useInAppRecharge = getAppEdition() === 'heybuddy';
-  const showTopUpButton = useInAppRecharge || topUpUrl !== null;
 
+  // 充值走应用内微信弹窗，站点未开通时弹窗内再回退网页充值
   const handleTopUp = () => {
-    if (useInAppRecharge) {
-      window.dispatchEvent(new CustomEvent(AppEvents.OPEN_RECHARGE_DIALOG));
-      return;
-    }
-    if (topUpUrl) {
-      window.electron.openExternal(topUpUrl);
-    }
+    window.dispatchEvent(new CustomEvent(AppEvents.OPEN_RECHARGE_DIALOG));
   };
 
   return (
@@ -78,15 +40,12 @@ export const CreditsExhaustedNotification: React.FC<CreditsExhaustedNotification
           <div className="text-sm text-yellow-800/80 dark:text-yellow-200/80 mt-1">
             {notification.msg}
           </div>
-          {showTopUpButton && (
-            <button
-              onClick={handleTopUp}
-              className="mt-3 inline-flex items-center gap-2 rounded-md bg-yellow-600 hover:bg-yellow-500 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 transition-colors"
-            >
-              {intl.formatMessage(i18n.addCredits)}
-              {!useInAppRecharge && <ExternalLink className="h-3.5 w-3.5" />}
-            </button>
-          )}
+          <button
+            onClick={handleTopUp}
+            className="mt-3 inline-flex items-center gap-2 rounded-md bg-yellow-600 hover:bg-yellow-500 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white text-sm font-medium px-4 py-2 transition-colors"
+          >
+            {intl.formatMessage(i18n.addCredits)}
+          </button>
         </div>
       </div>
     </div>

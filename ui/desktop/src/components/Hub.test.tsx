@@ -28,8 +28,8 @@ describe('Hub', () => {
     vi.unstubAllEnvs();
   });
 
-  const renderMorningHub = (edition: 'heybuddy' | 'aibuddy') => {
-    vi.stubEnv('APP_EDITION', edition);
+  const renderMorningHub = () => {
+    vi.stubEnv('APP_EDITION', 'heybuddy');
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 7, 27, 9, 0));
 
@@ -41,18 +41,12 @@ describe('Hub', () => {
   };
 
   it('adds the Guanglin assistant identity to the HeyBuddy morning greeting', () => {
-    renderMorningHub('heybuddy');
+    renderMorningHub();
 
     expect(screen.getByText('早上好，我是广林AI助手')).toBeInTheDocument();
     expect(screen.getByText('早上好，我是广林AI助手').parentElement).toHaveClass(
       'w-full',
       'max-w-4xl'
     );
-  });
-
-  it('adds the AIBuddy identity to the AIBuddy morning greeting', () => {
-    renderMorningHub('aibuddy');
-
-    expect(screen.getByText('早上好，我是AIBuddy')).toBeInTheDocument();
   });
 });

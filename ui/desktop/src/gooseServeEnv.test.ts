@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildHeyBuddyEnv, buildSiteRuntimeEnv } from './gooseServeEnv';
+import { buildHeyBuddyEnv } from './gooseServeEnv';
 
 /**
  * @author logic
@@ -17,21 +17,6 @@ describe('buildHeyBuddyEnv', () => {
 
   it('无凭证时返回空对象', () => {
     expect(buildHeyBuddyEnv(null)).toEqual({});
-  });
-
-  it('maps TFlow credentials to the isolated AIBuddy provider', () => {
-    expect(
-      buildSiteRuntimeEnv({
-        token: 'tflow-token',
-        baseUrl: 'https://tflow.online/v1',
-        apiKey: 'sk-aibuddy',
-        authKind: 'sub2api',
-      })
-    ).toEqual({
-      AIBUDDY_BASE_URL: 'https://tflow.online/v1',
-      AIBUDDY_API_KEY: 'sk-aibuddy',
-      GOOSE_PROVIDER: 'aibuddy',
-    });
   });
 
   it('注入 GOOSE_PROVIDER 强制用 heybuddy，且不泄漏 token', () => {

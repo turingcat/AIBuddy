@@ -9,16 +9,15 @@ vi.mock('../../../toasts', () => ({
   },
 }));
 
-describe.each([
-  { edition: 'heybuddy', scheme: 'goose', foreign: 'aibuddy' },
-  { edition: 'aibuddy', scheme: 'aibuddy', foreign: 'goose' },
-])('addExtensionFromDeepLink on $edition', ({ edition, scheme, foreign }) => {
+describe('addExtensionFromDeepLink on heybuddy', () => {
+  const scheme = 'goose';
+  const foreign = 'otherapp';
   const mockAddExtension = vi.fn().mockResolvedValue(undefined);
   const mockSetView = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('APP_EDITION', edition);
+    vi.stubEnv('APP_EDITION', 'heybuddy');
   });
 
   afterEach(() => {
@@ -26,8 +25,8 @@ describe.each([
   });
 
   // An extension deeplink runs a command on the user's machine, so a link
-  // addressed to the other edition must never be installed by this one.
-  it('rejects a deeplink on the other edition scheme', async () => {
+  // addressed to another app must never be installed by this one.
+  it('rejects a deeplink on a foreign scheme', async () => {
     vi.mocked(toastService.handleError).mockImplementationOnce(() => {
       throw new Error('Invalid protocol');
     });

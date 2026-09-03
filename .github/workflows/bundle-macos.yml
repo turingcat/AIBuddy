@@ -49,6 +49,10 @@ on:
         type: string
         default: ''
 
+concurrency:
+  group: bundle-macos-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
 name: "Bundle CLI and Desktop (macOS ARM64)"
 
 env:
@@ -121,7 +125,7 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: macos-arm64-deployment-target-12
+          key: bundle-macos-aarch64-apple-darwin-deployment-target-12
 
       - name: Build goose
         run: |
@@ -182,6 +186,7 @@ jobs:
     environment: ${{ inputs.environment || '' }}
     env:
       MACOSX_DEPLOYMENT_TARGET: "12.0"
+      ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
     permissions:
       contents: read
     outputs:
@@ -217,15 +222,34 @@ jobs:
           chmod +x ui/desktop/src/bin/goose
           ls -la ui/desktop/src/bin/
 
-      - name: Cache pnpm dependencies
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
-          path: |
-            ui/desktop/node_modules
-            .hermit/node/cache
-          key: macos-arm64-pnpm-cache-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
-            macos-arm64-pnpm-cache-v1-${{ runner.os }}-
+            pnpm-store-v1-${{ runner.os }}-
+
+      - name: Cache Electron downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ env.ELECTRON_CACHE }}
+          key: electron-cache-v1-${{ runner.os }}-arm64-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-cache-v1-${{ runner.os }}-arm64-
+
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
 
       - name: Install dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile

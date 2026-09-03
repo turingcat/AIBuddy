@@ -2,7 +2,10 @@ import brands from '../branding/brands.json';
 import { resolveAuthApiBaseUrl } from './authConfig';
 import type { AppEdition } from './brand';
 
-export function createMainViteConfig(environment: NodeJS.ProcessEnv, edition: AppEdition) {
+export function createMainViteConfig(
+  environment: Record<string, string | undefined>,
+  edition: AppEdition
+) {
   const brand = brands[edition];
   const authApiBaseUrl = resolveAuthApiBaseUrl(environment, edition, brand.authApiBaseUrl);
 

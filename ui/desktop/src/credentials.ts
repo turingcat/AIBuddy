@@ -29,7 +29,7 @@ export interface LoginCredentials {
   token: string;
   baseUrl: string;
   apiKey: string;
-  authKind?: 'oa' | 'sub2api';
+  authKind?: 'oa';
   /** 面板访问令牌（PAT）：登录网关下发，用于查询用户余额；旧登录数据可能没有 */
   pat?: string;
   /** 面板刷新令牌：access token 过期时换新，缺失则只能重新登录 */
@@ -177,7 +177,7 @@ function validateFields(data: unknown): LoginCredentials | null {
     typeof creds?.token === 'string' &&
     typeof creds?.baseUrl === 'string' &&
     typeof creds?.apiKey === 'string' &&
-    (creds.authKind === undefined || creds.authKind === 'oa' || creds.authKind === 'sub2api')
+    (creds.authKind === undefined || creds.authKind === 'oa')
   ) {
     return creds;
   }
@@ -194,7 +194,7 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
     return credentials;
   }
 
-  const siteKind: SiteKind = credentials.authKind === 'sub2api' ? 'sub2api' : 'oa';
+  const siteKind: SiteKind = 'oa';
   return {
     ...credentials,
     schemaVersion: 2,
@@ -206,7 +206,7 @@ function normalizeCredentials(credentials: LoginCredentials): LoginCredentials {
     },
     account: {},
     gateway: {
-      providerId: siteKind === 'sub2api' ? 'aibuddy' : 'heybuddy',
+      providerId: 'heybuddy',
       baseUrl: credentials.baseUrl,
       apiKey: credentials.apiKey,
       ...(credentials.groupId ? { groupId: credentials.groupId } : {}),

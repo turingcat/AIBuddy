@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom';
 
-// Production code refuses to run without an edition; give the suite a baseline
-// that `APP_EDITION=aibuddy pnpm test` can still override.
+// Production code refuses to run without an edition; give the suite a baseline.
 process.env.APP_EDITION = process.env.APP_EDITION ?? 'heybuddy';
 import { vi, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';

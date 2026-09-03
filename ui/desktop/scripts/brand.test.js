@@ -12,15 +12,6 @@ describe('authentication branding', () => {
       authApiBaseUrl: 'https://ai.linyeyun.cn',
     });
   });
-
-  it('resolves AIBuddy Sub2API authentication metadata', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(resolveBrand('aibuddy')).toMatchObject({
-      authMode: 'sub2api',
-      authApiBaseUrl: 'https://tflow.online',
-    });
-  });
 });
 
 describe('resolveBrand', () => {
@@ -42,29 +33,11 @@ describe('resolveBrand', () => {
     });
   });
 
-  it('resolves the complete AIBuddy identity', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(resolveBrand('aibuddy')).toEqual({
-      edition: 'aibuddy',
-      productName: 'AIBuddy',
-      bundleId: 'com.electron.aibuddy',
-      protocol: 'aibuddy',
-      protocolName: 'AIBuddyProtocol',
-      windowsAppId: '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}',
-      executableName: 'AIBuddy',
-      artifactStem: 'AIBuddy',
-      iconStem: 'aibuddy/icon',
-      authMode: 'sub2api',
-      authApiBaseUrl: 'https://tflow.online',
-    });
-  });
-
   it('rejects a missing edition', () => {
     const { resolveBrand } = require('./brand');
     vi.stubEnv('APP_EDITION', undefined);
 
-    expect(() => resolveBrand()).toThrow(/APP_EDITION.*heybuddy, aibuddy/);
+    expect(() => resolveBrand()).toThrow(/APP_EDITION.*heybuddy/);
 
     vi.unstubAllEnvs();
   });
@@ -72,7 +45,7 @@ describe('resolveBrand', () => {
   it('rejects an unsupported edition', () => {
     const { resolveBrand } = require('./brand');
 
-    expect(() => resolveBrand('goose')).toThrow(/goose.*heybuddy, aibuddy/);
+    expect(() => resolveBrand('goose')).toThrow(/goose.*heybuddy/);
   });
 
   it('returns immutable brand data', () => {
@@ -85,10 +58,10 @@ describe('resolveBrand', () => {
 describe('brand CLI', () => {
   it('prints one requested scalar field', () => {
     expect(
-      execFileSync(process.execPath, [brandScript, 'aibuddy', 'productName'], {
+      execFileSync(process.execPath, [brandScript, 'heybuddy', 'productName'], {
         encoding: 'utf8',
       })
-    ).toBe('AIBuddy\n');
+    ).toBe('HeyBuddy\n');
   });
 
   it('rejects an unknown field', () => {

@@ -1,7 +1,6 @@
 import { ChevronUp, CircleDollarSign, LogOut, RefreshCw, Settings, UserRound } from 'lucide-react';
 
 import { useBalance, type BalanceState } from '../../hooks/useBalance';
-import { getAppEdition } from '../../brand';
 import { AppEvents } from '../../constants/events';
 import { defineMessages, useIntl } from '../../i18n';
 import {
@@ -12,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
-import { AIBuddyEntitlementRows, BalanceStatus } from './BalanceWidget';
+import { BalanceStatus } from './BalanceWidget';
 
 const i18n = defineMessages({
   notLoggedIn: { id: 'accountMenu.notLoggedIn', defaultMessage: 'Not signed in' },
@@ -114,36 +113,8 @@ function HeyBuddyAccountSummary({
   );
 }
 
-function AIBuddyEntitlementSummary({
-  state,
-  accountName,
-  refreshing,
-  onRefresh,
-}: {
-  state: BalanceState;
-  accountName: string;
-  refreshing: boolean;
-  onRefresh: () => void;
-}) {
-  return (
-    <div className="flex min-w-0 items-start gap-2 px-2 py-2" data-testid="account-menu-summary">
-      <UserRound className="mt-0.5 size-4 shrink-0 text-text-secondary" />
-      <div className="min-w-0 flex-1">
-        <span className="block truncate font-medium" title={accountName}>
-          {accountName}
-        </span>
-        <div className="mt-1">
-          <AIBuddyEntitlementRows state={state} />
-        </div>
-      </div>
-      <BalanceRefreshMenuItem refreshing={refreshing} onRefresh={onRefresh} />
-    </div>
-  );
-}
-
 export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuProps) {
   const intl = useIntl();
-  const edition = getAppEdition();
   const { state, refreshing, refresh } = useBalance();
   const accountName = getAccountName(state, intl.formatMessage(i18n.notLoggedIn));
 
@@ -154,17 +125,10 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
         aria-label={accountName}
       >
         <UserRound className="size-4 shrink-0 text-text-secondary" />
-        <span
-          className="min-w-0 flex-1 truncate"
-          title={edition === 'aibuddy' ? accountName : undefined}
-        >
-          {accountName}
+        <span className="min-w-0 flex-1 truncate">{accountName}</span>
+        <span className="min-w-0 shrink-0 text-xs">
+          <BalanceStatus state={state} />
         </span>
-        {edition === 'heybuddy' ? (
-          <span className="min-w-0 shrink-0 text-xs">
-            <BalanceStatus state={state} />
-          </span>
-        ) : null}
         <ChevronUp className="size-4 shrink-0 text-text-secondary" />
       </DropdownMenuTrigger>
       <DropdownMenuContent
@@ -172,28 +136,17 @@ export function UserAccountMenu({ onOpenSettings, onLogout }: UserAccountMenuPro
         align="start"
         className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-0"
       >
-        {edition === 'aibuddy' ? (
-          <AIBuddyEntitlementSummary
-            state={state}
-            accountName={accountName}
-            refreshing={refreshing}
-            onRefresh={refresh}
-          />
-        ) : (
-          <HeyBuddyAccountSummary
-            state={state}
-            accountName={accountName}
-            refreshing={refreshing}
-            onRefresh={refresh}
-          />
-        )}
+        <HeyBuddyAccountSummary
+          state={state}
+          accountName={accountName}
+          refreshing={refreshing}
+          onRefresh={refresh}
+        />
         <DropdownMenuSeparator />
-        {edition === 'heybuddy' ? (
-          <DropdownMenuItem onSelect={openRechargeDialog} data-testid="account-menu-recharge-item">
-            <CircleDollarSign />
-            {intl.formatMessage(i18n.recharge)}
-          </DropdownMenuItem>
-        ) : null}
+        <DropdownMenuItem onSelect={openRechargeDialog} data-testid="account-menu-recharge-item">
+          <CircleDollarSign />
+          {intl.formatMessage(i18n.recharge)}
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={onOpenSettings}>
           <Settings />
           {intl.formatMessage(i18n.settings)}

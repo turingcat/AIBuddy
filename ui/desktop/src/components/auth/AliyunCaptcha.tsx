@@ -44,7 +44,9 @@ function loadScript(): Promise<void> {
     return Promise.resolve();
   }
 
-  const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${SCRIPT_SRC}"]`);
+  const existingScript = document.querySelector<
+    InstanceType<typeof globalThis.HTMLScriptElement>
+  >(`script[src="${SCRIPT_SRC}"]`);
   if (scriptPromise && existingScript) {
     return scriptPromise;
   }
@@ -352,7 +354,6 @@ const AliyunCaptcha = forwardRef<AliyunCaptchaHandle, AliyunCaptchaProps>(functi
       acquireOwnership,
       beginVerification,
       initialize,
-      onError,
       settlePending,
       stopPopupWatch,
       updateState,
