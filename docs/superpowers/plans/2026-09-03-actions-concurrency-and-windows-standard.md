@@ -124,7 +124,7 @@ concurrency:
   cancel-in-progress: true
 ```
 
-- [ ] **Step 3: Run the contract test and confirm only Windows standard-only assertions still fail**
+- [ ] **Step 3: Run the contract test and confirm only Windows-related assertions still fail**
 
 Run the Task 1 Ruby command.
 
