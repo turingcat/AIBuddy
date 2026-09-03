@@ -223,7 +223,7 @@ git add .github/workflows/bundle-windows.yml
 git commit -m "fix(ci): keep Windows bundles standard-only"
 ```
 
-### Task 4: Verify and Integrate
+### Task 4: Verify the Completed Branch
 
 **Files:**
 
@@ -235,7 +235,7 @@ git commit -m "fix(ci): keep Windows bundles standard-only"
 **Interfaces:**
 
 - Consumes: the completed workflow and contract commits.
-- Produces: a verified feature branch and a fast-forwarded remote `main` containing all AIBuddy removals and Actions optimizations.
+- Produces: a locally and remotely verified feature branch ready for whole-branch review and the finishing workflow.
 
 - [ ] **Step 1: Run formatting and diff checks**
 
@@ -276,35 +276,4 @@ Use `gh run watch <run-id> --repo turingcat/HeyBuddy --exit-status` for CI, macO
 
 Expected: each newest run completes successfully; superseded runs conclude `cancelled`.
 
-- [ ] **Step 5: Merge from a clean main worktree**
-
-```bash
-git fetch origin main
-git worktree add .worktrees/merge-actions-main origin/main
-cd .worktrees/merge-actions-main
-git switch -c merge-actions-main
-git merge --ff-only chore/optimize-github-actions
-```
-
-Expected: the merge is a fast-forward with no conflicts and the worktree is clean.
-
-- [ ] **Step 6: Re-run contracts and clippy on the merged result**
-
-Run the Task 3 contract commands plus:
-
-```bash
-source bin/activate-hermit
-cargo clippy --all-targets -- -D warnings
-git diff --check
-```
-
-Expected: every command exits 0.
-
-- [ ] **Step 7: Push and verify remote main**
-
-```bash
-git push origin HEAD:main
-git ls-remote origin refs/heads/main
-```
-
-Expected: remote `main` resolves to the verified feature SHA. Report the final SHA and Actions timing comparison.
+After this task's review and the required whole-branch review pass, use the `finishing-a-development-branch` workflow to merge from a clean `main` worktree, re-run contracts and clippy on the merged result, push `HEAD:main`, and verify the remote SHA. Report the final SHA and Actions timing comparison.
