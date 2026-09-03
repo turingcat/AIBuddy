@@ -200,7 +200,7 @@ async fn test_session_id_propagates_to_log_records() {
 
 #[tokio::test]
 async fn test_session_id_propagation_to_llm() {
-    let (_, capture, provider) = setup_mock_server().await;
+    let (_server, capture, provider) = setup_mock_server().await;
 
     make_request(provider.as_ref(), "integration-test-session-123").await;
 
@@ -212,7 +212,7 @@ async fn test_session_id_propagation_to_llm() {
 
 #[tokio::test]
 async fn test_session_id_always_present() {
-    let (_, capture, provider) = setup_mock_server().await;
+    let (_server, capture, provider) = setup_mock_server().await;
 
     make_request(provider.as_ref(), "test-session-id").await;
 
@@ -224,7 +224,7 @@ async fn test_session_id_always_present() {
 
 #[tokio::test]
 async fn test_session_id_matches_across_calls() {
-    let (_, capture, provider) = setup_mock_server().await;
+    let (_server, capture, provider) = setup_mock_server().await;
 
     let session_id = "consistent-session-456";
     make_request(provider.as_ref(), session_id).await;
@@ -239,7 +239,7 @@ async fn test_session_id_matches_across_calls() {
 
 #[tokio::test]
 async fn test_different_sessions_have_different_ids() {
-    let (_, capture, provider) = setup_mock_server().await;
+    let (_server, capture, provider) = setup_mock_server().await;
 
     let session_id_1 = "session-one";
     let session_id_2 = "session-two";
