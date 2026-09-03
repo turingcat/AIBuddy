@@ -486,6 +486,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       end
 
       refute_empty electron_cache, "#{workflow_name} must define ELECTRON_CACHE"
+      assert_equal "${{ github.workspace }}/.cache/electron", electron_cache,
+                   "#{workflow_name} must use a job-level expression context available before runner assignment"
       refute_nil electron_cache_step, "#{workflow_name} must cache ELECTRON_CACHE"
       electron_cache_key = electron_cache_step.dig("with", "key")
       assert_includes electron_cache_key, "runner.os", "#{workflow_name} Electron cache key must include the OS"

@@ -175,7 +175,7 @@ jobs:
     needs: build-goose-windows
     runs-on: ${{ inputs.windows_variant == 'cuda' && 'windows-2022' || 'windows-latest' }}
     env:
-      ELECTRON_CACHE: ${{ runner.temp }}/electron-cache
+      ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
