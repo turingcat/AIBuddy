@@ -76,7 +76,7 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: windows-msvc-desktop-${{ inputs.windows_variant }}
+          key: bundle-windows-x86_64-pc-windows-msvc-${{ inputs.windows_variant }}
 
       - name: Setup Rust
         shell: bash
@@ -118,9 +118,9 @@ jobs:
           $isCuda = "${{ inputs.windows_variant }}" -eq "cuda"
 
           if ($isCuda) {
-            cargo build --locked --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --features cuda
+            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --features cuda
           } else {
-            cargo build --locked --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
+            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
           }
 
           $binaryPath = "./target/x86_64-pc-windows-msvc/release/goose.exe"

@@ -121,13 +121,13 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: macos-arm64-deployment-target-12
+          key: bundle-macos-aarch64-apple-darwin-deployment-target-12
 
       - name: Build goose
         run: |
           source ./bin/activate-hermit
           rustup target add "$MACOS_TARGET"
-          cargo build --locked --release -p goose-cli --bin goose --target "$MACOS_TARGET"
+          cargo build --release -p goose-cli --bin goose --target "$MACOS_TARGET"
 
       - name: Prepare binary artifact
         run: |

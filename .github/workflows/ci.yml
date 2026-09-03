@@ -44,7 +44,7 @@ jobs:
     name: Validate Dependency Locks
     runs-on: ubuntu-latest
     needs: changes
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when change detection fails
         if: needs.changes.result != 'success'
@@ -70,7 +70,7 @@ jobs:
     name: Check Rust Code Format
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -90,7 +90,7 @@ jobs:
     name: Build and Test Rust Project
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -134,7 +134,7 @@ jobs:
     name: Check goose-sdk UniFFI
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -168,7 +168,7 @@ jobs:
     name: Build and Test TLS Backend (${{ matrix.tls-feature }})
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     strategy:
       fail-fast: false
       matrix:
@@ -215,7 +215,7 @@ jobs:
     name: Build and Test Roaming Feature
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -251,7 +251,7 @@ jobs:
     name: Build Rust Project on Windows
     runs-on: windows-latest
     needs: [changes, dependency-locks]
-    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -281,7 +281,7 @@ jobs:
     name: Check MSRV
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -327,7 +327,7 @@ jobs:
     name: Lint Rust Code
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -359,7 +359,7 @@ jobs:
     name: Check Generated Schemas are Up-to-Date
     runs-on: ubuntu-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -419,7 +419,7 @@ jobs:
     name: Test and Lint Electron Desktop App
     runs-on: macos-latest
     needs: [changes, dependency-locks]
-    if: always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
     steps:
       - name: Fail when dependency lock validation fails
         if: needs.dependency-locks.result != 'success'
@@ -458,7 +458,7 @@ jobs:
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
-    if: always()
+    if: cancelled() == false
     needs:
       - changes
       - dependency-locks

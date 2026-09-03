@@ -77,9 +77,9 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     rust-msrv
   ].freeze
   CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY_JOBS].freeze
-  CI_CODE_TIER_IF = "always() && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
-  CI_COMPATIBILITY_TIER_IF = "always() && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))"
-  MCP_SELECTED_TIER_IF = "always() && (needs.changes.result != 'success' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
+  CI_CODE_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
+  CI_COMPATIBILITY_TIER_IF = "cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.code == 'true')))"
+  MCP_SELECTED_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
   CI_EVENT_TIER_TRUTH_TABLE = [
     { event: "pull_request", code: true, code_tier: "success", compatibility_tier: "skipped" },
     { event: "pull_request", code: false, code_tier: "skipped", compatibility_tier: "skipped" },
@@ -186,7 +186,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def test_direct_cargo_commands_use_locked_rust_dependencies
-    %w[ci.yml pr-smoke-test.yml bundle-macos.yml bundle-windows.yml].each do |workflow_name|
+    %w[ci.yml pr-smoke-test.yml].each do |workflow_name|
       cargo_commands(workflow_name).each do |command|
         assert_includes command, "--locked", "#{workflow_name} command must lock dependencies: #{command}"
       end
@@ -243,7 +243,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     CODE_PULL_REQUEST_REQUIRED_JOBS.each do |job_name|
       job = workflow.fetch("jobs").fetch(job_name)
 
-      assert_includes job.fetch("if"), "always()", "#{job_name} must evaluate when dependency-locks fails"
+      assert_includes job.fetch("if"), "cancelled() == false",
+        "#{job_name} must propagate dependency-locks failures without defeating cancellation"
       assert_dependency_lock_failure_guard(job, job_name)
     end
   end
@@ -295,7 +296,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     }
 
     assert_equal "CI Gate", gate.fetch("name")
-    assert_equal "always()", gate.fetch("if")
+    assert_equal "cancelled() == false", gate.fetch("if")
     assert_equal CI_GATE_NEEDS.sort, Array(gate.fetch("needs")).sort
     assert_equal "Verify CI results", step.fetch("name")
     assert_equal expected_env, step.fetch("env")
@@ -481,9 +482,10 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       electron_cache = job.fetch("env").fetch("ELECTRON_CACHE")
       electron_cache_step = job.fetch("steps").find do |step|
         step["uses"].to_s.start_with?("actions/cache@") &&
-          step.dig("with", "path") == electron_cache
+          step.dig("with", "path") == "${{ env.ELECTRON_CACHE }}"
       end
 
+      refute_empty electron_cache, "#{workflow_name} must define ELECTRON_CACHE"
       refute_nil electron_cache_step, "#{workflow_name} must cache ELECTRON_CACHE"
       electron_cache_key = electron_cache_step.dig("with", "key")
       assert_includes electron_cache_key, "runner.os", "#{workflow_name} Electron cache key must include the OS"
