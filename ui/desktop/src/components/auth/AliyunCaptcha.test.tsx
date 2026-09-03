@@ -3,7 +3,7 @@ import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import AliyunCaptcha, { type AliyunCaptchaHandle } from './AliyunCaptcha';
 
-type CaptchaOptions = Parameters<NonNullable<Window['initAliyunCaptcha']>>[0];
+type CaptchaOptions = Parameters<NonNullable<(typeof window)['initAliyunCaptcha']>>[0];
 
 describe('AliyunCaptcha', () => {
   let initOptions: CaptchaOptions | undefined;
@@ -46,7 +46,9 @@ describe('AliyunCaptcha', () => {
     const first = render(
       <AliyunCaptcha sceneId="scene-failed" prefix="prefix-failed" region="sgp" />
     );
-    const failedScript = document.querySelector<HTMLScriptElement>(
+    const failedScript = document.querySelector<
+      InstanceType<typeof globalThis.HTMLScriptElement>
+    >(
       'script[src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"]'
     );
     expect(failedScript).not.toBeNull();
@@ -154,7 +156,9 @@ describe('AliyunCaptcha', () => {
     render(
       <AliyunCaptcha ref={ref} sceneId="scene-1" prefix="prefix-1" region="cn" onError={onError} />
     );
-    const failedScript = document.querySelector<HTMLScriptElement>(
+    const failedScript = document.querySelector<
+      InstanceType<typeof globalThis.HTMLScriptElement>
+    >(
       'script[src="https://o.alicdn.com/captcha-frontend/aliyunCaptcha/AliyunCaptcha.js"]'
     );
     expect(failedScript).not.toBeNull();
