@@ -241,6 +241,12 @@ jobs:
           restore-keys: |
             electron-cache-v1-${{ runner.os }}-arm64-
 
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+
       - name: Install dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
         working-directory: ui/desktop

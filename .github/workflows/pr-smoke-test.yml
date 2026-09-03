@@ -124,6 +124,12 @@ jobs:
           restore-keys: |
             pnpm-store-v1-${{ runner.os }}-
 
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+
       - name: Install Node.js Dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
         working-directory: ui/desktop
@@ -218,6 +224,12 @@ jobs:
           key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-store-v1-${{ runner.os }}-
+
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
 
       - name: Install Node.js Dependencies
         run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile

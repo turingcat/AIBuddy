@@ -498,6 +498,39 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
+  def test_pnpm_install_jobs_force_github_git_dependencies_to_https
+    {
+      "ci.yml" => %w[schema-check desktop-lint],
+      "pr-smoke-test.yml" => %w[smoke-tests smoke-tests-code-exec],
+      "bundle-macos.yml" => ["package-desktop"],
+      "bundle-windows.yml" => ["build-desktop-windows"],
+    }.each do |workflow_name, job_names|
+      workflow = load_workflow(workflow_name)
+
+      job_names.each do |job_name|
+        steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
+        rewrite_index = steps.index do |step|
+          step["name"] == "Force GitHub HTTPS npm git dependencies"
+        end
+        install_index = steps.index do |step|
+          step.fetch("run", "").include?("pnpm install --frozen-lockfile")
+        end
+
+        refute_nil rewrite_index, "#{workflow_name} #{job_name} must rewrite GitHub SSH dependencies"
+        refute_nil install_index, "#{workflow_name} #{job_name} must install pnpm dependencies"
+        assert_operator rewrite_index, :<, install_index,
+                        "#{workflow_name} #{job_name} must rewrite GitHub URLs before pnpm install"
+
+        rewrite = steps.fetch(rewrite_index).fetch("run")
+        %w[ssh://git@github.com/ git@github.com: git+ssh://git@github.com/].each do |ssh_prefix|
+          assert_includes rewrite, "--add", "#{workflow_name} #{job_name} must retain every rewrite rule"
+          assert_includes rewrite, ssh_prefix,
+                          "#{workflow_name} #{job_name} must rewrite #{ssh_prefix}"
+        end
+      end
+    end
+  end
+
   def test_schema_check_installs_the_ui_workspace_once
     schema_check = load_workflow("ci.yml").fetch("jobs").fetch("schema-check")
     pnpm_install_steps = schema_check.fetch("steps").select do |step|
