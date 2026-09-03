@@ -18,14 +18,6 @@ on:
         required: false
         type: boolean
         default: false
-      windows_variant:
-        description: 'Windows artifact variant: standard or cuda'
-        required: false
-        type: choice
-        options:
-          - standard
-          - cuda
-        default: 'standard'
   workflow_call:
     inputs:
       version:
@@ -47,11 +39,10 @@ on:
         required: false
         type: string
         default: ''
-      windows_variant:
-        description: 'Windows artifact variant: standard or cuda'
-        required: false
-        type: string
-        default: 'standard'
+
+concurrency:
+  group: bundle-windows-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -59,7 +50,7 @@ permissions:
 jobs:
   build-goose-windows:
     name: Build Goose (Windows)
-    runs-on: ${{ inputs.windows_variant == 'cuda' && 'windows-2022' || 'windows-latest' }}
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -76,7 +67,7 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: bundle-windows-x86_64-pc-windows-msvc-${{ inputs.windows_variant }}
+          key: bundle-windows-x86_64-pc-windows-msvc
 
       - name: Setup Rust
         shell: bash
@@ -84,44 +75,10 @@ jobs:
           rustup show
           rustup target add x86_64-pc-windows-msvc
 
-      - name: Install CUDA toolkit
-        if: ${{ inputs.windows_variant == 'cuda' }}
-        uses: Jimver/cuda-toolkit@b8bf9c6c28f8a92fbb04dcfcaee872e60c57462d  # v0.2.36
-        with:
-          cuda: '12.9.1'
-          method: 'local'
-          log-file-suffix: 'bundle-windows-cuda.txt'
-
-      - name: Set up MSVC developer environment
-        if: ${{ inputs.windows_variant == 'cuda' }}
-        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1.13.0
-        with:
-          arch: amd64
-
-      - name: Verify CUDA toolchain
-        if: ${{ inputs.windows_variant == 'cuda' }}
-        shell: pwsh
-        env:
-          CUDA_COMPUTE_CAP: "80"
-        run: |
-          Write-Output "CUDA_PATH=$env:CUDA_PATH"
-          Write-Output "CUDA_COMPUTE_CAP=$env:CUDA_COMPUTE_CAP"
-          where.exe cl
-          where.exe nvcc
-          nvcc -V
-
       - name: Build Windows executable
         shell: pwsh
-        env:
-          CUDA_COMPUTE_CAP: ${{ inputs.windows_variant == 'cuda' && '80' || '' }}
         run: |
-          $isCuda = "${{ inputs.windows_variant }}" -eq "cuda"
-
-          if ($isCuda) {
-            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --features cuda
-          } else {
-            cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
-          }
+          cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
 
           $binaryPath = "./target/x86_64-pc-windows-msvc/release/goose.exe"
           if (-not (Test-Path $binaryPath)) {
@@ -134,7 +91,7 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: internal-goose-x86_64-pc-windows-msvc
           path: target/x86_64-pc-windows-msvc/release/goose.exe
           if-no-files-found: error
           retention-days: 1
@@ -144,28 +101,26 @@ jobs:
     name: Package CLI (Windows)
     if: ${{ inputs.package_cli }}
     needs: build-goose-windows
-    runs-on: ${{ inputs.windows_variant == 'cuda' && 'windows-2022' || 'windows-latest' }}
+    runs-on: windows-latest
     steps:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: internal-goose-x86_64-pc-windows-msvc
           path: package
 
       - name: Package CLI
         shell: bash
-        env:
-          VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
         run: |
           mkdir -p goose-package
           cp package/goose.exe goose-package/
-          7z a -tzip "goose-x86_64-pc-windows-msvc${VARIANT_SUFFIX}.zip" goose-package/
+          7z a -tzip "goose-x86_64-pc-windows-msvc.zip" goose-package/
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: goose-x86_64-pc-windows-msvc${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
-          path: goose-x86_64-pc-windows-msvc${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}.zip
+          name: goose-x86_64-pc-windows-msvc.zip
+          path: goose-x86_64-pc-windows-msvc.zip
           if-no-files-found: error
           overwrite: true
 
@@ -173,7 +128,7 @@ jobs:
     name: Build Desktop (Windows)
     if: ${{ inputs.package_desktop }}
     needs: build-goose-windows
-    runs-on: ${{ inputs.windows_variant == 'cuda' && 'windows-2022' || 'windows-latest' }}
+    runs-on: windows-latest
     env:
       ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
     steps:
@@ -223,7 +178,7 @@ jobs:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: internal-goose-x86_64-pc-windows-msvc
           path: backend
 
       - name: Prepare Windows binary
@@ -284,7 +239,7 @@ jobs:
       - name: Upload unsigned distribution
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-windows-unsigned${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: internal-windows-unsigned
           path: ui/desktop/dist-windows/
           if-no-files-found: error
           retention-days: 1
@@ -304,7 +259,7 @@ jobs:
       - name: Download unsigned distribution
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-windows-unsigned${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: internal-windows-unsigned
           path: ui/desktop/dist-windows
 
       - name: Set up Inno Setup
@@ -347,17 +302,15 @@ jobs:
         shell: bash
         env:
           APP_EDITION: heybuddy
-          VARIANT_SUFFIX: ${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
         run: |
           portable_file_name="$(node -p "require('../scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').portableFileName")"
-          portable_file_name="${portable_file_name%.zip}${VARIANT_SUFFIX}.zip"
           7z a -tzip "$GITHUB_WORKSPACE/$portable_file_name" ./*
           echo "portable_file_name=$portable_file_name" >> "$GITHUB_OUTPUT"
 
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: Goose-win32-x64${{ inputs.windows_variant == 'cuda' && '-cuda' || '' }}
+          name: Goose-win32-x64
           path: |
             ${{ steps.package-windows-zip.outputs.portable_file_name }}
             HeyBuddy-windows-x64-setup.exe
