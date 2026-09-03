@@ -246,12 +246,12 @@ jobs:
             fi
           fi
 
-      - name: Force GitHub HTTPS for npm git dependencies
+      - name: Force GitHub HTTPS npm git dependencies
         shell: bash
         run: |
-          git config --global url."https://github.com/".insteadOf "ssh://git@github.com/"
-          git config --global url."https://github.com/".insteadOf "git@github.com:"
-          git config --global url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
 
       - name: Build desktop UI with pnpm
         shell: bash
