@@ -7,7 +7,11 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
   JUSTFILE = "Justfile"
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
-  CI_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
+  CI_CONCURRENCY_GROUP = "ci-${{ github.event.pull_request.number || github.ref }}"
+  BUNDLE_CONCURRENCY_GROUPS = {
+    "bundle-macos.yml" => "bundle-macos-${{ inputs.ref || github.ref }}",
+    "bundle-windows.yml" => "bundle-windows-${{ inputs.ref || github.ref }}",
+  }.freeze
   MCP_CONFORMANCE_MATRIX = [
     {
       "spec-version" => "2025-11-25",
@@ -105,7 +109,35 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     workflow = load_workflow("ci.yml")
 
     assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
-    assert_equal "${{ github.event_name == 'pull_request' }}", workflow.dig("concurrency", "cancel-in-progress")
+    assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
+  end
+
+  def test_ci_cancels_superseded_runs_for_the_same_source
+    workflow = load_workflow("ci.yml")
+
+    assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
+    assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
+  end
+
+  def test_bundle_workflows_cancel_only_the_same_platform_and_source
+    BUNDLE_CONCURRENCY_GROUPS.each do |workflow_name, expected_group|
+      workflow = load_workflow(workflow_name)
+
+      assert_equal expected_group, workflow.dig("concurrency", "group")
+      assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
+    end
+  end
+
+  def test_windows_bundle_is_standard_only
+    workflow = load_workflow("bundle-windows.yml")
+    text = workflow_text("bundle-windows.yml")
+
+    workflow.fetch("jobs").each_value do |job|
+      assert_equal "windows-latest", job.fetch("runs-on")
+    end
+    refute_match(/windows_variant/i, text)
+    refute_match(/cuda/i, text)
+    assert_includes text, "cargo build --release --target x86_64-pc-windows-msvc"
   end
 
   def test_mcp_conformance_cancels_superseded_pull_request_runs
@@ -679,12 +711,11 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_standard_cache_context(entries)
     assert_cache_context(entries, :msrv, /msrv/i)
     assert_cache_context(entries, :target, /aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
-    assert_cache_context(entries, :cuda, /inputs\.windows_variant/)
   end
 
   def assert_standard_cache_context(entries)
     context_entries = entries.select { |entry| cache_context?(entry, :standard) }
-    incompatible_contexts = /msrv|aarch64-apple-darwin|x86_64-pc-windows-msvc|inputs\.windows_variant/i
+    incompatible_contexts = /msrv|aarch64-apple-darwin|x86_64-pc-windows-msvc/i
 
     refute_empty context_entries, "Rust cache must cover the standard compiler context"
     context_entries.each do |entry|
@@ -708,13 +739,11 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     case context
     when :standard
-      default_rust_toolchain?(entry) && cargo_build_or_test?(job) && !msrv_job?(job) && !target_job?(job) && !cuda_job?(job)
+      default_rust_toolchain?(entry) && cargo_build_or_test?(job) && !msrv_job?(job) && !target_job?(job)
     when :msrv
       msrv_job?(job)
     when :target
       target_job?(job)
-    when :cuda
-      cuda_job?(job)
     end
   end
 
@@ -734,10 +763,6 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def target_job?(job)
     job.match?(/rustup target add|--target/) && job.match?(/aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
-  end
-
-  def cuda_job?(job)
-    job.match?(/cuda-toolkit|--features cuda|windows_variant.*cuda/i)
   end
 
   def job_yaml(entry)
