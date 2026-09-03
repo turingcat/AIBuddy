@@ -49,6 +49,10 @@ on:
         type: string
         default: ''
 
+concurrency:
+  group: bundle-macos-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
 name: "Bundle CLI and Desktop (macOS ARM64)"
 
 env:
