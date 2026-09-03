@@ -453,7 +453,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_v8_marker_repair_runs_after_cache_restore_and_before_builds
     workflow = load_workflow("ci.yml")
 
-    %w[rust-build-and-test rust-msrv rust-lint].each do |job_name|
+    %w[rust-build-and-test rust-build-and-test-tls rust-msrv rust-lint].each do |job_name|
       steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
       cache_index = steps.index { |step| step["uses"].to_s.start_with?("Swatinem/rust-cache@") }
       repair_index = steps.index { |step| step["run"] == ".github/scripts/repair-v8-prebuilt.sh" }
