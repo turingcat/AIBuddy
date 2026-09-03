@@ -8,6 +8,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   JUSTFILE = "Justfile"
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   CI_CONCURRENCY_GROUP = "ci-${{ github.event.pull_request.number || github.ref }}"
+  MCP_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}"
   BUNDLE_CONCURRENCY_GROUPS = {
     "bundle-macos.yml" => "bundle-macos-${{ inputs.ref || github.ref }}",
     "bundle-windows.yml" => "bundle-windows-${{ inputs.ref || github.ref }}",
@@ -143,7 +144,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_mcp_conformance_cancels_superseded_pull_request_runs
     workflow = load_workflow("mcp-conformance.yml")
 
-    assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
+    assert_equal MCP_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
     assert_equal "${{ github.event_name == 'pull_request' }}", workflow.dig("concurrency", "cancel-in-progress")
   end
 
