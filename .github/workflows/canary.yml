@@ -48,6 +48,7 @@ jobs:
         with:
           name: download_cli.sh
           path: download_cli.sh
+          retention-days: 7
 
   # ------------------------------------------------------------
   # 3) Bundle CLI and Desktop (macOS ARM64)
@@ -61,6 +62,7 @@ jobs:
       version: ${{ needs.prepare-version.outputs.version }}
       package_cli: true
       package_desktop: true
+      artifact_retention_days: 7
       signing: false
 
   # ------------------------------------------------------------
@@ -75,6 +77,7 @@ jobs:
       version: ${{ needs.prepare-version.outputs.version }}
       package_cli: true
       package_desktop: true
+      artifact_retention_days: 7
 
   # ------------------------------------
   # 5) Create/Update GitHub Release

@@ -16,6 +16,11 @@ on:
         required: false
         default: false
         type: boolean
+      artifact_retention_days:
+        description: 'Days to retain final build artifacts'
+        required: false
+        default: 7
+        type: number
   workflow_call:
     inputs:
       version:
@@ -48,6 +53,11 @@ on:
         required: false
         type: string
         default: ''
+      artifact_retention_days:
+        description: 'Days to retain final build artifacts'
+        required: false
+        default: 7
+        type: number
 
 concurrency:
   group: bundle-macos-${{ inputs.ref || github.ref }}
@@ -176,6 +186,7 @@ jobs:
             dist/goose-aarch64-apple-darwin.tar.bz2
             dist/goose-aarch64-apple-darwin.tar.gz
           if-no-files-found: error
+          retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
 
   package-desktop:
@@ -312,6 +323,7 @@ jobs:
           name: Goose-darwin-arm64
           path: ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.zip
           if-no-files-found: error
+          retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
 
       - name: Quick launch test (macOS)

@@ -189,6 +189,7 @@ jobs:
           path: |
             ${{ env.ARTIFACT_BZ2 }}
             ${{ env.ARTIFACT_GZ }}
+          retention-days: 7
 
       - name: Prepare internal Goose binary
         if: ${{ inputs.package_desktop && matrix.target-suffix == 'unknown-linux-gnu' }}
