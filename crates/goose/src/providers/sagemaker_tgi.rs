@@ -62,9 +62,7 @@ impl SageMakerTgiProvider {
         set_aws_env_vars(config.all_values());
         set_aws_env_vars(config.all_secrets());
 
-        // AWS SDK 的 UA 无法替换，只能经 app_name 追加产品标识（形如 "... app/HeyBuddy-1.0.6"）
-        // @author: logic
-        // @date: 2026-09-03
+        // The AWS SDK only supports appending the product identifier through app_name.
         let aws_config = aws_config::from_env()
             .http_client(ReqwestHttpClient::new())
             .app_name(

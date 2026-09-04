@@ -19,20 +19,12 @@ use url::Host;
 pub const DEFAULT_PROVIDER_TIMEOUT_SECS: u64 = 600;
 pub const DEFAULT_CONNECT_TIMEOUT_SECS: u64 = 30;
 
-/// 模型 API 请求的产品 User-Agent（产品名 + workspace 产品版本）
-/// @author: logic
-/// @date: 2026-09-03
-pub const PRODUCT_USER_AGENT: &str = concat!("HeyBuddy/", env!("HEYBUDDY_PRODUCT_VERSION"));
-/// AWS SDK app_name。AppName 字符集不允许 '/'（aws-types 校验），故用 '-' 连接版本，
-/// SDK 最终 UA 形如 "... app/HeyBuddy-1.0.6"
-/// @author: logic
-/// @date: 2026-09-03
-pub const PRODUCT_AWS_APP_NAME: &str = concat!("HeyBuddy-", env!("HEYBUDDY_PRODUCT_VERSION"));
+/// Product User-Agent for model API requests.
+pub const PRODUCT_USER_AGENT: &str = concat!("AIBuddy/", env!("AIBUDDY_PRODUCT_VERSION"));
+/// AWS app names cannot include '/', so use a hyphenated form of the product version.
+pub const PRODUCT_AWS_APP_NAME: &str = concat!("AIBuddy-", env!("AIBUDDY_PRODUCT_VERSION"));
 
-/// provider 直连 reqwest client 的统一构造（产品 UA + 标准超时）。
-/// 走不了 ApiClient 的模型请求路径应复用本函数，保证 UA 单源；测试同源复用。
-/// @author: logic
-/// @date: 2026-09-03
+/// Builds a direct provider client with the product User-Agent and standard timeouts.
 pub fn provider_reqwest_builder() -> reqwest::ClientBuilder {
     Client::builder()
         .user_agent(PRODUCT_USER_AGENT)
@@ -1115,8 +1107,8 @@ mod tests {
         client.request("/test").response_get().await.unwrap();
         let user_agent = rx.await.unwrap();
 
-        assert!(user_agent.starts_with("HeyBuddy/"), "got: {user_agent}");
-        let version = user_agent.strip_prefix("HeyBuddy/").unwrap();
+        assert!(user_agent.starts_with("AIBuddy/"), "got: {user_agent}");
+        let version = user_agent.strip_prefix("AIBuddy/").unwrap();
         assert!(!version.is_empty());
     }
 
@@ -1136,12 +1128,11 @@ mod tests {
     #[test]
     fn product_user_agent_constants_are_well_formed() {
         let version = PRODUCT_USER_AGENT
-            .strip_prefix("HeyBuddy/")
-            .expect("product user agent should start with HeyBuddy/");
+            .strip_prefix("AIBuddy/")
+            .expect("product user agent should start with AIBuddy/");
         assert!(!version.is_empty());
 
-        // AWS AppName 字符集仅允许字母数字与 !#$%&'*+-.^_`|~（aws-types 校验），
-        // '/' 非法，因此该常量必须用 '-' 连接版本
+        // AWS AppName permits alphanumerics and !#$%&'*+-.^_`|~, but not '/'.
         assert!(
             PRODUCT_AWS_APP_NAME
                 .chars()
@@ -1150,10 +1141,7 @@ mod tests {
         );
     }
 
-    // 守护 build.rs：注入的必须是 workspace 根 manifest 的产品版本，
-    // 而不是回退值 CARGO_PKG_VERSION（0.1.0-alpha.6）或误读的其他 version 行
-    // @author: logic
-    // @date: 2026-09-03
+    // Guard against build.rs falling back to the crate version or another version field.
     #[test]
     fn product_user_agent_matches_workspace_manifest_version() {
         let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.toml");
@@ -1176,7 +1164,7 @@ mod tests {
         assert_eq!(
             PRODUCT_USER_AGENT,
             format!(
-                "HeyBuddy/{}",
+                "AIBuddy/{}",
                 version.expect("workspace root manifest should define [workspace.package].version")
             )
         );
