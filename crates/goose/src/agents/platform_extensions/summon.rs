@@ -2995,6 +2995,7 @@ You review code."#;
     }
 
     #[tokio::test]
+    #[serial]
     async fn test_resolve_provider_reuses_unregistered_parent_provider() {
         let temp_dir = TempDir::new().unwrap();
         let parent_provider: Arc<dyn crate::providers::base::Provider> = Arc::new(

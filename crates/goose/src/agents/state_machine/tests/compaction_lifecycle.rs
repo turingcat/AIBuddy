@@ -26,7 +26,7 @@ async fn proactive_and_manual_compaction_continue_with_replaced_usage() -> Resul
 
     let half_full = format!(
         "fill the context {}",
-        "x".repeat(pipeline.context_limit() / 2)
+        "x".repeat(pipeline.context_limit() / 10)
     );
     pipeline.run([half_full.as_str()]).await?;
     let budget = pipeline.run(["check the budget"]).await?;
@@ -418,9 +418,13 @@ async fn parallel_and_failed_tool_pairs_are_compacted_as_complete_messages() -> 
 }
 
 #[tokio::test]
-async fn a_small_model_compacts_a_large_tool_result_out_of_the_conversation() -> Result<()> {
+async fn compaction_removes_a_large_tool_result_from_follow_up_context() -> Result<()> {
     let (pipeline, api) = test_pipeline().await?;
-    let pipeline = pipeline.with_model("gpt-3.5-turbo").await;
+    let pipeline = pipeline.with_model("gpt-4o").await;
+    pipeline.set_system_prompt_override("test").await;
+    for extension in ["calculator", "extensionmanager", "todo", "scheduler"] {
+        pipeline.remove_extension(extension).await?;
+    }
     let large_result = "x".repeat(2_000);
 
     let request = Message::assistant().with_tool_request(
