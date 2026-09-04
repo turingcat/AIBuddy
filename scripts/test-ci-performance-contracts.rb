@@ -6,6 +6,19 @@ require "yaml"
 class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
   JUSTFILE = "Justfile"
+  PHASE_2_WORKFLOWS = %w[
+    build-cli-linux.yml
+    bundle-macos.yml
+    bundle-windows.yml
+    canary.yml
+    ci.yml
+    docs-update-cli-ref.yml
+    mcp-conformance.yml
+    model-toolcall-conformance.yml
+    pr-smoke-test.yml
+    release-branches.yml
+    release.yml
+  ].freeze
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   CI_CONCURRENCY_GROUP = "ci-${{ github.event.pull_request.number || github.ref }}"
   MCP_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
@@ -125,8 +138,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     rust-build-windows
     rust-msrv
   ].freeze
-CI_WORKFLOW_CONTRACTS_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflow-config == 'true')"
-CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY_JOBS, "workflow-contracts"].freeze
+  CI_WORKFLOW_CONTRACTS_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflow-config == 'true')"
+  CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY_JOBS, "workflow-contracts"].freeze
   CI_DEPENDENCY_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.windows == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_RUST_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_DESKTOP_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.workflow-config == 'true')"
@@ -443,8 +456,8 @@ CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY
       "RUST_LINT_RESULT" => "${{ needs.rust-lint.result }}",
       "SCHEMA_RESULT" => "${{ needs.schema-check.result }}",
       "GDK_API_DOCS_RESULT" => "${{ needs.gdk-api-docs-check.result }}",
-        "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
-        "WORKFLOW_CONTRACTS_RESULT" => "${{ needs.workflow-contracts.result }}",
+      "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
+      "WORKFLOW_CONTRACTS_RESULT" => "${{ needs.workflow-contracts.result }}",
     }
 
     assert_equal "CI Gate", gate.fetch("name")
@@ -501,6 +514,15 @@ CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY
           assert_equal false, step.dig("with", "cache"),
             "#{workflow_name} #{job_name} must disable setup-rust-toolchain caching"
         end
+      end
+    end
+  end
+
+  def test_phase_two_workflows_pin_external_actions_to_commit_shas
+    PHASE_2_WORKFLOWS.each do |workflow_name|
+      external_action_references(load_workflow(workflow_name)).each do |reference|
+        assert_match(/@[0-9a-f]{40}\z/, reference,
+                     "#{workflow_name} must pin #{reference} to a full commit SHA")
       end
     end
   end
@@ -805,6 +827,22 @@ CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY
     assert_equal 7, upload.dig("with", "retention-days")
   end
 
+  def test_linux_cli_workflow_declares_desktop_transfer_input_without_packaging_desktop
+    workflow = load_workflow("build-cli-linux.yml")
+
+    %w[workflow_dispatch workflow_call].each do |trigger|
+      inputs = workflow.fetch(true).fetch(trigger).to_h.fetch("inputs", {})
+      assert inputs.key?("package_desktop"), "#{trigger} must declare package_desktop"
+      input = inputs.fetch("package_desktop", {})
+
+      assert_equal "boolean", input.fetch("type"), "#{trigger} package_desktop input type"
+      assert_equal false, input.fetch("default"), "#{trigger} must default to CLI-only builds"
+    end
+
+    refute workflow.fetch("jobs").keys.any? { |job_name| job_name.include?("desktop") },
+           "build-cli-linux.yml must not restore Linux desktop packaging"
+  end
+
   def test_release_install_script_artifacts_expire_after_seven_days
     %w[release.yml canary.yml].each do |workflow_name|
       upload = load_workflow(workflow_name).dig("jobs", "install-script", "steps").find do |step|
@@ -856,6 +894,23 @@ CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY
 
   def job_run_commands(workflow_name, job_name)
     load_workflow(workflow_name).dig("jobs", job_name, "steps").map { |step| step["run"] }.compact
+  end
+
+  def external_action_references(node)
+    case node
+    when Hash
+      node.flat_map do |key, value|
+        if key == "uses" && value.is_a?(String) && !value.start_with?("./")
+          [value]
+        else
+          external_action_references(value)
+        end
+      end
+    when Array
+      node.flat_map { |value| external_action_references(value) }
+    else
+      []
+    end
   end
 
   def just_recipe(recipe_name)

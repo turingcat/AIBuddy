@@ -1,5 +1,11 @@
 on:
   workflow_dispatch:
+    inputs:
+      package_desktop:
+        description: "Upload internal CLI binaries for desktop packaging"
+        required: false
+        default: false
+        type: boolean
   workflow_call:
     inputs:
       version:
@@ -10,6 +16,11 @@ on:
         type: string
         required: false
         default: ""
+      package_desktop:
+        description: "Upload internal CLI binaries for desktop packaging"
+        required: false
+        default: false
+        type: boolean
 
 name: "Build CLI for Linux"
 
