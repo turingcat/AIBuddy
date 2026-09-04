@@ -103,3 +103,10 @@ gooseselftest/
 /exts/
 .worktrees/
 .gstack/
+
+# Local agent tooling and package caches
+/.claude/
+/.codex/
+/.serena/
+/.superpowers/brainstorm/
+/.pnpm-store/
