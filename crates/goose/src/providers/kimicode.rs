@@ -18,7 +18,7 @@ use uuid::Uuid;
 use super::api_client::RequestBuilderDecorator;
 use super::base::{
     ConfigKey, MessageStream, Provider, ProviderDef, ProviderMetadata,
-    DEFAULT_CONNECT_TIMEOUT_SECS, DEFAULT_PROVIDER_TIMEOUT_SECS,
+    DEFAULT_PROVIDER_TIMEOUT_SECS,
 };
 use super::formats::anthropic::{create_request, response_to_streaming_message};
 use super::oauth_device_flow::{
@@ -173,10 +173,7 @@ impl KimiCodeProvider {
     pub async fn from_env(
         _tls_config: Option<crate::providers::api_client::TlsConfig>,
     ) -> Result<Self> {
-        let client = Client::builder()
-            .connect_timeout(StdDuration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
-            .read_timeout(StdDuration::from_secs(DEFAULT_PROVIDER_TIMEOUT_SECS))
-            .build()?;
+        let client = goose_providers::provider_reqwest_builder().build()?;
         let device_id = Self::get_or_create_device_id().await?;
         Ok(Self {
             client,
