@@ -1,7 +1,7 @@
 {
   "name": "goose-app",
   "productName": "HeyBuddy",
-  "version": "1.0.2",
+  "version": "1.0.6",
   "description": "HeyBuddy App",
   "engines": {
     "node": "^24.10.0",
