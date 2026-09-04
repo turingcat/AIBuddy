@@ -18,7 +18,7 @@ use crate::conversation::message::Message;
 use crate::providers::api_client::RequestBuilderDecorator;
 use crate::providers::base::{
     ConfigKey, MessageStream, Provider, ProviderDef, ProviderMetadata,
-    DEFAULT_CONNECT_TIMEOUT_SECS, DEFAULT_PROVIDER_TIMEOUT_SECS,
+    DEFAULT_PROVIDER_TIMEOUT_SECS,
 };
 use goose_providers::model::ModelConfig;
 
@@ -180,10 +180,7 @@ impl GcpVertexAIProvider {
         let location = Self::determine_location(config)?;
         let host = Self::build_host_url(&location);
 
-        let client = Client::builder()
-            .connect_timeout(Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
-            .read_timeout(Duration::from_secs(DEFAULT_PROVIDER_TIMEOUT_SECS))
-            .build()?;
+        let client = goose_providers::provider_reqwest_builder().build()?;
 
         let auth = GcpAuth::new().await?;
 

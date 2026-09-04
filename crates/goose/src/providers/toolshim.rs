@@ -602,6 +602,7 @@ impl LocalInterpreter {
 impl OllamaInterpreter {
     pub fn new() -> Result<Self, ProviderError> {
         let client = Client::builder()
+            .user_agent(goose_providers::PRODUCT_USER_AGENT)
             .timeout(Duration::from_secs(DEFAULT_PROVIDER_TIMEOUT_SECS))
             .build()
             .expect("Failed to create HTTP client");

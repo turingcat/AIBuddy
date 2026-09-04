@@ -20,3 +20,5 @@ pub mod openai_compatible;
 pub use declarative::declarative_providers::*;
 
 pub mod snowflake;
+
+pub use api_client::{provider_reqwest_builder, PRODUCT_AWS_APP_NAME, PRODUCT_USER_AGENT};

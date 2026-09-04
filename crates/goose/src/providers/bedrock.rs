@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::base::{
     model_info_for_provider_model, ConfigKey, MessageStream, ModelInfo, Provider, ProviderDef,
-    ProviderMetadata, DEFAULT_CONNECT_TIMEOUT_SECS, DEFAULT_PROVIDER_TIMEOUT_SECS,
+    ProviderMetadata, DEFAULT_PROVIDER_TIMEOUT_SECS,
 };
 use super::openai_compatible::{handle_status, stream_responses_compat};
 use super::retry::{ProviderRetry, RetryConfig};
@@ -240,8 +240,15 @@ impl BedrockProvider {
         };
 
         // Use load_defaults() which supports AWS SSO, profiles, and environment variables
+        // AWS SDK 的 UA 无法替换，只能经 app_name 追加产品标识（形如 "... app/HeyBuddy-1.0.6"）
+        // @author: logic
+        // @date: 2026-09-03
         let mut loader = aws_config::defaults(aws_config::BehaviorVersion::latest())
-            .http_client(ReqwestHttpClient::new());
+            .http_client(ReqwestHttpClient::new())
+            .app_name(
+                aws_config::AppName::new(goose_providers::PRODUCT_AWS_APP_NAME)
+                    .expect("product app name is statically valid"),
+            );
 
         if let Ok(profile_name) = config.get_param::<String>("AWS_PROFILE") {
             if !profile_name.is_empty() {
@@ -291,12 +298,7 @@ impl BedrockProvider {
             name: BEDROCK_PROVIDER_NAME.to_string(),
             region: resolved_region,
             bearer_token,
-            http_client: reqwest::Client::builder()
-                .connect_timeout(std::time::Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
-                .read_timeout(std::time::Duration::from_secs(
-                    DEFAULT_PROVIDER_TIMEOUT_SECS,
-                ))
-                .build()?,
+            http_client: goose_providers::provider_reqwest_builder().build()?,
             mantle_base_url: None,
         })
     }
@@ -1078,7 +1080,7 @@ mod tests {
                 name: "aws_bedrock".to_string(),
                 region: None,
                 bearer_token: None,
-                http_client: reqwest::Client::new(),
+                http_client: goose_providers::provider_reqwest_builder().build().unwrap(),
                 mantle_base_url: None,
             },
             ModelConfig {
@@ -1094,6 +1096,12 @@ mod tests {
                 request_headers: None,
             },
         )
+    }
+
+    #[test]
+    fn aws_app_name_constant_is_accepted_by_sdk() {
+        aws_config::AppName::new(goose_providers::PRODUCT_AWS_APP_NAME)
+            .expect("product AWS app name should satisfy the SDK AppName charset");
     }
 
     #[test]
@@ -1280,6 +1288,7 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/openai/v1/responses"))
             .and(header("authorization", "Bearer test-token"))
+            .and(header("user-agent", goose_providers::PRODUCT_USER_AGENT))
             .respond_with(ResponseTemplate::new(200).set_body_raw(sse_body, "text/event-stream"))
             .mount(&server)
             .await;
@@ -1296,7 +1305,7 @@ mod tests {
             name: "aws_bedrock".to_string(),
             region: Some("us-east-1".to_string()),
             bearer_token: Some("test-token".to_string()),
-            http_client: reqwest::Client::new(),
+            http_client: goose_providers::provider_reqwest_builder().build().unwrap(),
             mantle_base_url: Some(format!("{}/openai/v1/responses", server.uri())),
         };
 
@@ -1344,6 +1353,7 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/openai/v1/responses"))
             .and(header("authorization", "Bearer test-token"))
+            .and(header("user-agent", goose_providers::PRODUCT_USER_AGENT))
             .respond_with(ResponseTemplate::new(200).set_body_raw(sse_body, "text/event-stream"))
             .mount(&server)
             .await;
@@ -1360,7 +1370,7 @@ mod tests {
             name: "aws_bedrock".to_string(),
             region: Some("us-east-1".to_string()),
             bearer_token: Some("test-token".to_string()),
-            http_client: reqwest::Client::new(),
+            http_client: goose_providers::provider_reqwest_builder().build().unwrap(),
             mantle_base_url: Some(format!("{}/openai/v1/responses", server.uri())),
         };
 
@@ -1841,6 +1851,7 @@ mod tests {
         Mock::given(method("POST"))
             .and(path("/openai/v1/responses"))
             .and(header("authorization", "Bearer test-token"))
+            .and(header("user-agent", goose_providers::PRODUCT_USER_AGENT))
             .respond_with(ResponseTemplate::new(200).set_body_raw(sse_body, "text/event-stream"))
             .mount(&server)
             .await;
@@ -1857,7 +1868,7 @@ mod tests {
             name: "aws_bedrock".to_string(),
             region: Some("us-east-1".to_string()),
             bearer_token: Some("test-token".to_string()),
-            http_client: reqwest::Client::new(),
+            http_client: goose_providers::provider_reqwest_builder().build().unwrap(),
             mantle_base_url: Some(format!("{}/openai/v1/responses", server.uri())),
         };
 
