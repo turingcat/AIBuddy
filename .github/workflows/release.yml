@@ -35,6 +35,7 @@ jobs:
         with:
           name: download_cli.sh
           path: download_cli.sh
+          retention-days: 7
 
   # ------------------------------------------------------------
   # 2) Bundle CLI and Desktop (macOS ARM64)
@@ -46,6 +47,7 @@ jobs:
     with:
       package_cli: true
       package_desktop: true
+      artifact_retention_days: 7
       signing: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' }}
       environment: ${{ startsWith(github.ref, 'refs/tags/') && vars.ENABLE_MAC_RELEASE_SIGNING == 'true' && 'signing' || '' }}
     secrets: inherit
@@ -60,6 +62,7 @@ jobs:
     with:
       package_cli: true
       package_desktop: true
+      artifact_retention_days: 7
 
   # ------------------------------------
   # 4) Create/Update GitHub Release

@@ -12,6 +12,7 @@ jobs:
     with:
       package_cli: false
       package_desktop: true
+      artifact_retention_days: 14
 
   comment-on-pr:
     needs: bundle-desktop
