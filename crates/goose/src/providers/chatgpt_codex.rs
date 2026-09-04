@@ -416,6 +416,8 @@ async fn get_jwks(state: &ChatGptCodexAuthState) -> Result<JwkSet> {
 }
 
 fn parse_jwt_claims_with_jwks(token: &str, jwks: &JwkSet) -> Result<JwtClaims> {
+    crate::install_jwt_crypto_provider();
+
     let header = decode_header(token)?;
     let kid = header
         .kid
@@ -1392,6 +1394,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_parse_jwt_claims_verified_with_issuer() {
+        crate::install_jwt_crypto_provider();
+
         let server = MockServer::start().await;
         let jwks_uri = format!("{}/jwks", server.uri());
         Mock::given(method("GET"))

@@ -3,6 +3,15 @@
 #[cfg(all(feature = "rustls-tls", feature = "native-tls"))]
 compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
 
+pub(crate) fn install_jwt_crypto_provider() {
+    #[cfg(feature = "rustls-tls")]
+    let provider = &jsonwebtoken::crypto::aws_lc::DEFAULT_PROVIDER;
+    #[cfg(not(feature = "rustls-tls"))]
+    let provider = &jsonwebtoken::crypto::rust_crypto::DEFAULT_PROVIDER;
+
+    let _ = provider.install_default();
+}
+
 pub mod acp;
 pub use goose_sdk_types::{custom_notifications, custom_requests};
 pub mod action_required_manager;
