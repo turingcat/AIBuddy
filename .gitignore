@@ -107,6 +107,7 @@ gooseselftest/
 # Local agent tooling and package caches
 /.claude/
 /.codex/
-/.serena/
+/.serena/cache/
+/.serena/project.local.yml
 /.superpowers/brainstorm/
 /.pnpm-store/
