@@ -176,7 +176,7 @@ function Build-GooseBinary {
 
     Write-Host "首次编译依赖较多，可能耗时较长，请耐心等待..."
     # 禁用 local-inference 以跳过 llama.cpp 的 C++ 编译（本地无需本地推理，且其构建依赖易缺失）
-    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,tui,aws-providers,nostr,otel,rustls-tls,system-keyring,update
+    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
     if ($LASTEXITCODE -ne 0) { throw "cargo build 失败" }
 
     $gooseExe = Join-Path $ProjectRoot 'target\x86_64-pc-windows-msvc\release\goose.exe'
@@ -201,7 +201,7 @@ function Build-GooseBinary {
 
 # 安装依赖并用 electron-forge 打包 win32 x64 桌面应用
 function Build-DesktopApp {
-    Write-Step "构建桌面 UI（electron-forge make, win32 x64）"
+    Write-Step "构建桌面 UI（electron-forge package, win32 x64）"
     $desktopDir = Join-Path $ProjectRoot 'ui\desktop'
     Set-Location $desktopDir
 
@@ -215,8 +215,12 @@ function Build-DesktopApp {
     & node scripts\prepare-platform-binaries.js
     if ($LASTEXITCODE -ne 0) { throw "prepare-platform-binaries.js 失败" }
 
-    & pnpm run make --platform=win32 --arch=x64
-    if ($LASTEXITCODE -ne 0) { throw "electron-forge make 失败" }
+    # 用 electron-forge package 而非 make：forge.config.ts 的 makers 已精简为仅 darwin
+    # （Windows 产物由 Package-Distribution 以 7z + Inno Setup 生成），make 找不到 win32 target 会失败
+    # @author: logic
+    # @date: 2026-09-03
+    & pnpm run package:windows
+    if ($LASTEXITCODE -ne 0) { throw "electron-forge package 失败" }
 }
 
 # 整理 dist-windows 目录，打包便携版 zip 与 Inno 安装包到项目根
@@ -234,7 +238,7 @@ function Package-Distribution {
 
     $outDir = Join-Path $desktopDir "out\$($pkg.packagedDirName)"
     if (-not (Test-Path $outDir)) {
-        throw "未找到构建输出目录：$outDir（请确认 electron-forge make 成功）"
+        throw "未找到构建输出目录：$outDir（请确认 electron-forge package 成功）"
     }
 
     # 将 src/bin 注入到应用的 resources/bin
