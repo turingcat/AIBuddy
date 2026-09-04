@@ -19,6 +19,27 @@ use url::Host;
 pub const DEFAULT_PROVIDER_TIMEOUT_SECS: u64 = 600;
 pub const DEFAULT_CONNECT_TIMEOUT_SECS: u64 = 30;
 
+/// 模型 API 请求的产品 User-Agent（产品名 + workspace 产品版本）
+/// @author: logic
+/// @date: 2026-09-03
+pub const PRODUCT_USER_AGENT: &str = concat!("HeyBuddy/", env!("HEYBUDDY_PRODUCT_VERSION"));
+/// AWS SDK app_name。AppName 字符集不允许 '/'（aws-types 校验），故用 '-' 连接版本，
+/// SDK 最终 UA 形如 "... app/HeyBuddy-1.0.6"
+/// @author: logic
+/// @date: 2026-09-03
+pub const PRODUCT_AWS_APP_NAME: &str = concat!("HeyBuddy-", env!("HEYBUDDY_PRODUCT_VERSION"));
+
+/// provider 直连 reqwest client 的统一构造（产品 UA + 标准超时）。
+/// 走不了 ApiClient 的模型请求路径应复用本函数，保证 UA 单源；测试同源复用。
+/// @author: logic
+/// @date: 2026-09-03
+pub fn provider_reqwest_builder() -> reqwest::ClientBuilder {
+    Client::builder()
+        .user_agent(PRODUCT_USER_AGENT)
+        .connect_timeout(Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
+        .read_timeout(Duration::from_secs(DEFAULT_PROVIDER_TIMEOUT_SECS))
+}
+
 pub type RequestBuilderDecorator =
     Arc<dyn Fn(reqwest::RequestBuilder) -> Result<reqwest::RequestBuilder> + Send + Sync>;
 
@@ -307,6 +328,7 @@ impl ApiClient {
 
     fn client_builder(timeout: Duration) -> reqwest::ClientBuilder {
         Client::builder()
+            .user_agent(PRODUCT_USER_AGENT)
             .connect_timeout(Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
             .read_timeout(timeout)
     }
@@ -1047,6 +1069,132 @@ mod tests {
             .request("/test")
             .model_headers(&model_config)
             .is_err());
+    }
+
+    async fn spawn_user_agent_server() -> (SocketAddr, tokio::sync::oneshot::Receiver<String>) {
+        let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let addr = listener.local_addr().unwrap();
+        let (tx, rx) = tokio::sync::oneshot::channel();
+        tokio::spawn(async move {
+            let Ok((mut sock, _)) = listener.accept().await else {
+                return;
+            };
+            let mut buf = Vec::new();
+            let mut chunk = [0u8; 4096];
+            loop {
+                let n = sock.read(&mut chunk).await.unwrap_or(0);
+                if n == 0 {
+                    break;
+                }
+                buf.extend_from_slice(&chunk[..n]);
+                if buf.windows(4).any(|w| w == b"\r\n\r\n") {
+                    break;
+                }
+            }
+            let head = String::from_utf8_lossy(&buf);
+            let user_agent = head
+                .lines()
+                .find(|line| line.to_ascii_lowercase().starts_with("user-agent:"))
+                .and_then(|line| line.split_once(':'))
+                .map(|(_, value)| value.trim().to_string())
+                .unwrap_or_default();
+            let _ = tx.send(user_agent);
+            let _ = sock
+                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\n\r\nok")
+                .await;
+        });
+        (addr, rx)
+    }
+
+    #[tokio::test]
+    async fn default_user_agent_is_product_name_and_version() {
+        let (addr, rx) = spawn_user_agent_server().await;
+        let client =
+            ApiClient::new_with_tls(format!("http://{addr}"), AuthMethod::NoAuth, None).unwrap();
+
+        client.request("/test").response_get().await.unwrap();
+        let user_agent = rx.await.unwrap();
+
+        assert!(user_agent.starts_with("HeyBuddy/"), "got: {user_agent}");
+        let version = user_agent.strip_prefix("HeyBuddy/").unwrap();
+        assert!(!version.is_empty());
+    }
+
+    #[tokio::test]
+    async fn explicit_user_agent_overrides_default() {
+        let (addr, rx) = spawn_user_agent_server().await;
+        let client = ApiClient::new_with_tls(format!("http://{addr}"), AuthMethod::NoAuth, None)
+            .unwrap()
+            .with_header("User-Agent", "custom-agent/9.9")
+            .unwrap();
+
+        client.request("/test").response_get().await.unwrap();
+        let user_agent = rx.await.unwrap();
+        assert_eq!(user_agent, "custom-agent/9.9");
+    }
+
+    #[test]
+    fn product_user_agent_constants_are_well_formed() {
+        let version = PRODUCT_USER_AGENT
+            .strip_prefix("HeyBuddy/")
+            .expect("product user agent should start with HeyBuddy/");
+        assert!(!version.is_empty());
+
+        // AWS AppName 字符集仅允许字母数字与 !#$%&'*+-.^_`|~（aws-types 校验），
+        // '/' 非法，因此该常量必须用 '-' 连接版本
+        assert!(
+            PRODUCT_AWS_APP_NAME
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || "!#$%&'*+-.^_`|~".contains(c)),
+            "got: {PRODUCT_AWS_APP_NAME}"
+        );
+    }
+
+    // 守护 build.rs：注入的必须是 workspace 根 manifest 的产品版本，
+    // 而不是回退值 CARGO_PKG_VERSION（0.1.0-alpha.6）或误读的其他 version 行
+    // @author: logic
+    // @date: 2026-09-03
+    #[test]
+    fn product_user_agent_matches_workspace_manifest_version() {
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../Cargo.toml");
+        let mut version = None;
+        let mut in_workspace_package = false;
+        for line in std::fs::read_to_string(manifest).unwrap().lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with('[') {
+                in_workspace_package = trimmed == "[workspace.package]";
+                continue;
+            }
+            if in_workspace_package {
+                if let Some(v) = trimmed.strip_prefix("version = \"") {
+                    version = v.strip_suffix('"').map(str::to_string);
+                    break;
+                }
+            }
+        }
+
+        assert_eq!(
+            PRODUCT_USER_AGENT,
+            format!(
+                "HeyBuddy/{}",
+                version.expect("workspace root manifest should define [workspace.package].version")
+            )
+        );
+    }
+
+    #[tokio::test]
+    async fn provider_reqwest_builder_sends_product_user_agent() {
+        let (addr, rx) = spawn_user_agent_server().await;
+        let client = provider_reqwest_builder().build().unwrap();
+
+        client
+            .get(format!("http://{addr}/test"))
+            .send()
+            .await
+            .unwrap();
+        let user_agent = rx.await.unwrap();
+
+        assert_eq!(user_agent, PRODUCT_USER_AGENT);
     }
 
     #[test]

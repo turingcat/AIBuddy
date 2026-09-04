@@ -3,7 +3,7 @@ use crate::conversation::message::{Message, MessageContent};
 use crate::providers::api_client::{AuthProvider, RequestBuilderDecorator};
 use crate::providers::base::{
     ConfigKey, MessageStream, Provider, ProviderDef, ProviderMetadata,
-    DEFAULT_CONNECT_TIMEOUT_SECS, DEFAULT_PROVIDER_TIMEOUT_SECS,
+    DEFAULT_PROVIDER_TIMEOUT_SECS,
 };
 use crate::providers::openai_compatible::handle_status;
 use crate::providers::private_file::write_private_file;
@@ -924,11 +924,7 @@ impl ChatGptCodexProvider {
             );
         }
 
-        let client = reqwest::Client::builder()
-            .connect_timeout(std::time::Duration::from_secs(DEFAULT_CONNECT_TIMEOUT_SECS))
-            .read_timeout(std::time::Duration::from_secs(
-                DEFAULT_PROVIDER_TIMEOUT_SECS,
-            ))
+        let client = goose_providers::provider_reqwest_builder()
             .build()
             .map_err(|e| ProviderError::ExecutionError(e.to_string()))?;
         let request = client

@@ -82,7 +82,6 @@ impl SnowflakeProvider {
         if let Some(request_builder) = request_builder {
             api_client = api_client.with_request_builder(request_builder);
         }
-        let api_client = api_client.with_header("User-Agent", "goose")?;
 
         Ok(Self {
             api_client,
@@ -351,5 +350,55 @@ impl Provider for SnowflakeProvider {
             message,
             provider_usage,
         ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wiremock::matchers::{header, method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
+
+    // new() 会把 host 改写为 *.snowflakecomputing.com，无法指向 mock server，
+    // 故字面量构造以直连 wiremock
+    // @author: logic
+    // @date: 2026-09-03
+    fn provider_with_mock_base_url(base_url: String) -> SnowflakeProvider {
+        SnowflakeProvider {
+            api_client: ApiClient::new_with_tls(
+                base_url,
+                AuthMethod::BearerToken("test-token".to_string()),
+                None,
+            )
+            .unwrap(),
+            image_format: ImageFormat::OpenAi,
+            name: SNOWFLAKE_PROVIDER_NAME.to_string(),
+        }
+    }
+
+    #[tokio::test]
+    async fn post_sends_product_user_agent() {
+        let server = MockServer::start().await;
+
+        let sse_body = [
+            r#"data: {"choices":[{"delta":{"content_list":[{"type":"text","text":"ok"}]}}]}"#,
+            "data: [DONE]",
+        ]
+        .join("\n");
+
+        Mock::given(method("POST"))
+            .and(path("/api/v2/cortex/inference:complete"))
+            .and(header("user-agent", crate::api_client::PRODUCT_USER_AGENT))
+            .respond_with(ResponseTemplate::new(200).set_body_raw(sse_body, "text/event-stream"))
+            .mount(&server)
+            .await;
+
+        let provider = provider_with_mock_base_url(server.uri());
+        let response = provider
+            .post(&ModelConfig::new("claude-sonnet-4-5"), &json!({}))
+            .await
+            .unwrap();
+
+        assert_eq!(response["content"].as_str().unwrap(), "ok");
     }
 }
