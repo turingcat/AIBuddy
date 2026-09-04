@@ -40,6 +40,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     "rust-lint" => "Lint Rust Code",
     "schema-check" => "Check Generated Schemas are Up-to-Date",
     "desktop-lint" => "Test and Lint Electron Desktop App",
+    "workflow-contracts" => "Verify Workflow Contracts",
     "ci-gate" => "CI Gate",
   }.freeze
   CODE_PULL_REQUEST_REQUIRED_JOBS = %w[
@@ -104,12 +105,14 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "rust-toolchain.toml",
       ".cargo/**",
       "crates/**",
+      "build-windows.ps1",
     ],
     "workflow-config" => [
       ".github/actions/**",
       ".github/scripts/**",
       ".github/workflows/**",
       "scripts/test-ci-performance-contracts.rb",
+      "build-windows.ps1",
       "bin/**",
       "Justfile",
     ],
@@ -122,7 +125,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     rust-build-windows
     rust-msrv
   ].freeze
-  CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY_JOBS].freeze
+CI_WORKFLOW_CONTRACTS_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflow-config == 'true')"
+CI_GATE_NEEDS = [*CI_ALWAYS_REQUIRED_JOBS, *CI_CODE_TIER_JOBS, *CI_COMPATIBILITY_JOBS, "workflow-contracts"].freeze
   CI_DEPENDENCY_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.windows == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_RUST_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_DESKTOP_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.workflow-config == 'true')"
@@ -333,6 +337,16 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_category_event_tier(workflow, "schema-check", CI_SCHEMA_TIER_IF)
   end
 
+  def test_workflow_contracts_run_on_workflow_configuration_changes
+    workflow = load_workflow("ci.yml")
+    job = workflow.fetch("jobs").fetch("workflow-contracts")
+
+    assert_equal ["changes"], Array(job.fetch("needs"))
+    assert_equal CI_WORKFLOW_CONTRACTS_TIER_IF, job.fetch("if")
+    assert_includes job_run_commands("ci.yml", "workflow-contracts").join("\n"),
+                    "ruby scripts/test-ci-performance-contracts.rb"
+  end
+
   def test_desktop_lint_and_unit_tests_run_on_ubuntu
     desktop = load_workflow("ci.yml").fetch("jobs").fetch("desktop-lint")
 
@@ -429,7 +443,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "RUST_LINT_RESULT" => "${{ needs.rust-lint.result }}",
       "SCHEMA_RESULT" => "${{ needs.schema-check.result }}",
       "GDK_API_DOCS_RESULT" => "${{ needs.gdk-api-docs-check.result }}",
-      "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
+        "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
+        "WORKFLOW_CONTRACTS_RESULT" => "${{ needs.workflow-contracts.result }}",
     }
 
     assert_equal "CI Gate", gate.fetch("name")
@@ -440,6 +455,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes run, 'if [[ "$actual" != "$expected" ]]'
     assert_includes run, 'require_result changes "$CHANGES_RESULT" success'
     assert_includes run, 'require_result gdk-api-docs-check "$GDK_API_DOCS_RESULT" success'
+    assert_includes run, 'require_result workflow-contracts "$WORKFLOW_CONTRACTS_RESULT" "$workflow_contracts_tier_result"'
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$DESKTOP_CHANGED" == "true" || "$SCHEMA_CHANGED" == "true" || "$WINDOWS_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$DESKTOP_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'

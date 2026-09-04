@@ -71,11 +71,13 @@ jobs:
               - 'rust-toolchain.toml'
               - '.cargo/**'
               - 'crates/**'
+              - 'build-windows.ps1'
             workflow-config:
               - '.github/actions/**'
               - '.github/scripts/**'
               - '.github/workflows/**'
               - 'scripts/test-ci-performance-contracts.rb'
+              - 'build-windows.ps1'
               - 'bin/**'
               - 'Justfile'
 
@@ -532,6 +534,20 @@ jobs:
         run: source ../../bin/activate-hermit && pnpm run test:run
         working-directory: ui/desktop
 
+  workflow-contracts:
+    name: Verify Workflow Contracts
+    runs-on: ubuntu-latest
+    needs: changes
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify Workflow Contracts
+        run: ruby scripts/test-ci-performance-contracts.rb
+
   ci-gate:
     name: CI Gate
     runs-on: ubuntu-latest
@@ -549,6 +565,7 @@ jobs:
       - schema-check
       - gdk-api-docs-check
       - desktop-lint
+      - workflow-contracts
     steps:
       - name: Verify CI results
         env:
@@ -570,6 +587,7 @@ jobs:
           SCHEMA_RESULT: ${{ needs.schema-check.result }}
           GDK_API_DOCS_RESULT: ${{ needs.gdk-api-docs-check.result }}
           DESKTOP_LINT_RESULT: ${{ needs.desktop-lint.result }}
+          WORKFLOW_CONTRACTS_RESULT: ${{ needs.workflow-contracts.result }}
         run: |
           set -euo pipefail
 
@@ -594,6 +612,12 @@ jobs:
 
           require_result changes "$CHANGES_RESULT" success
           require_result gdk-api-docs-check "$GDK_API_DOCS_RESULT" success
+
+          workflow_contracts_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            workflow_contracts_tier_result=success
+          fi
+          require_result workflow-contracts "$WORKFLOW_CONTRACTS_RESULT" "$workflow_contracts_tier_result"
 
           dependency_tier_result=skipped
           if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$DESKTOP_CHANGED" == "true" || "$SCHEMA_CHANGED" == "true" || "$WINDOWS_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
