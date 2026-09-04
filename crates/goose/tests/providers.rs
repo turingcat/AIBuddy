@@ -13,7 +13,6 @@ use goose::providers::base::Provider;
 #[cfg(feature = "aws-providers")]
 use goose::providers::bedrock::BEDROCK_DEFAULT_MODEL;
 use goose::providers::claude_code::CLAUDE_CODE_DEFAULT_MODEL;
-use goose::providers::codex::CODEX_DEFAULT_MODEL;
 use goose::providers::create_with_named_model;
 use goose::providers::google::GOOGLE_DEFAULT_MODEL;
 use goose::providers::litellm::LITELLM_DEFAULT_MODEL;
@@ -935,36 +934,38 @@ async fn test_xai_provider() -> Result<()> {
         .await
 }
 
-#[test]
-fn test_claude_code_provider() -> Result<()> {
+fn run_agentic_provider_on_large_stack(config: ProviderTestConfig) -> Result<()> {
     std::thread::Builder::new()
         .stack_size(8 * 1024 * 1024)
-        .spawn(|| {
+        .spawn(move || {
             tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
                 .unwrap()
-                .block_on(async {
-                    ProviderTestConfig::with_agentic_provider(
-                        "claude-code",
-                        CLAUDE_CODE_DEFAULT_MODEL,
-                        "claude",
-                    )
-                    .model_switch_name("sonnet")
-                    .run()
-                    .await
-                })
+                .block_on(config.run())
         })?
         .join()
-        .map_err(|_| anyhow::anyhow!("claude-code provider test thread panicked"))?
+        .map_err(|_| anyhow::anyhow!("agentic provider test thread panicked"))?
 }
 
-#[tokio::test]
-async fn test_codex_provider() -> Result<()> {
-    ProviderTestConfig::with_agentic_provider("codex", CODEX_DEFAULT_MODEL, "codex")
-        .test_permissions(false)
-        .run()
-        .await
+#[test]
+fn test_claude_code_provider() -> Result<()> {
+    run_agentic_provider_on_large_stack(
+        ProviderTestConfig::with_agentic_provider(
+            "claude-code",
+            CLAUDE_CODE_DEFAULT_MODEL,
+            "claude",
+        )
+        .model_switch_name("sonnet"),
+    )
+}
+
+#[test]
+fn test_codex_provider() -> Result<()> {
+    run_agentic_provider_on_large_stack(
+        ProviderTestConfig::with_agentic_provider("codex", ACP_CURRENT_MODEL, "codex")
+            .test_permissions(false),
+    )
 }
 
 // Requires: npm install -g @agentclientprotocol/claude-agent-acp
