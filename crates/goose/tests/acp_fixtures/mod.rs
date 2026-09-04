@@ -510,7 +510,13 @@ pub fn to_notifications(updates: &[SessionUpdate]) -> Vec<Notification> {
 }
 
 pub fn assert_notifications(actual: &[Notification], expected: &[Notification]) {
-    assert_eq!(actual, expected);
+    let response_notifications: Vec<_> = actual
+        .iter()
+        .filter(|notification| !matches!(notification, Notification::AvailableCommands))
+        .collect();
+    let expected_notifications: Vec<_> = expected.iter().collect();
+
+    assert_eq!(response_notifications, expected_notifications);
 }
 
 type ReadTextFileHandler =

@@ -935,12 +935,28 @@ async fn test_xai_provider() -> Result<()> {
         .await
 }
 
-#[tokio::test]
-async fn test_claude_code_provider() -> Result<()> {
-    ProviderTestConfig::with_agentic_provider("claude-code", CLAUDE_CODE_DEFAULT_MODEL, "claude")
-        .model_switch_name("sonnet")
-        .run()
-        .await
+#[test]
+fn test_claude_code_provider() -> Result<()> {
+    std::thread::Builder::new()
+        .stack_size(8 * 1024 * 1024)
+        .spawn(|| {
+            tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap()
+                .block_on(async {
+                    ProviderTestConfig::with_agentic_provider(
+                        "claude-code",
+                        CLAUDE_CODE_DEFAULT_MODEL,
+                        "claude",
+                    )
+                    .model_switch_name("sonnet")
+                    .run()
+                    .await
+                })
+        })?
+        .join()
+        .map_err(|_| anyhow::anyhow!("claude-code provider test thread panicked"))?
 }
 
 #[tokio::test]
