@@ -41,25 +41,37 @@ function plistFor(brand) {
   };
 }
 
+// The verifier exists to catch a package built under the wrong identity, so the
+// negative cases check a tree carrying a foreign product name.
+const foreignBrand = {
+  edition: 'otherapp',
+  productName: 'OtherApp',
+  bundleId: 'com.electron.otherapp',
+  protocol: 'otherapp',
+  protocolName: 'OtherAppProtocol',
+  executableName: 'OtherApp',
+  artifactStem: 'OtherApp',
+};
+
 describe('verifyPackageTree', () => {
-  it.each(['heybuddy', 'aibuddy'])('accepts a complete %s macOS tree', (edition) => {
-    const brand = resolveBrand(edition);
+  it('accepts a complete macOS tree', () => {
+    const brand = resolveBrand('heybuddy');
     const root = makeDarwinTree(tempRoot(`${brand.artifactStem}-darwin-arm64`), brand.productName);
 
     expect(verifyPackageTree(brand, 'darwin', root)).toEqual([]);
   });
 
-  it.each(['heybuddy', 'aibuddy'])('accepts a complete %s Windows tree', (edition) => {
-    const brand = resolveBrand(edition);
+  it('accepts a complete Windows tree', () => {
+    const brand = resolveBrand('heybuddy');
     const root = makeWin32Tree(tempRoot(`${brand.productName}-win32-x64`), brand.productName);
 
     expect(verifyPackageTree(brand, 'win32', root)).toEqual([]);
   });
 
   // A swapped identity is the failure this whole verifier exists to catch: the
-  // build succeeds and only the name inside the bundle betrays the wrong edition.
-  it('rejects an AIBuddy tree checked against HeyBuddy', () => {
-    const root = makeDarwinTree(tempRoot('AIBuddy-darwin-arm64'), 'AIBuddy');
+  // build succeeds and only the name inside the bundle betrays the wrong product.
+  it('rejects a foreign tree checked against HeyBuddy', () => {
+    const root = makeDarwinTree(tempRoot('OtherApp-darwin-arm64'), foreignBrand.productName);
 
     expect(verifyPackageTree(resolveBrand('heybuddy'), 'darwin', root)).toEqual([
       expect.stringContaining('HeyBuddy.app/Contents/MacOS/HeyBuddy'),
@@ -68,11 +80,12 @@ describe('verifyPackageTree', () => {
     ]);
   });
 
-  it('rejects a Windows directory named for another edition', () => {
-    const root = makeWin32Tree(tempRoot('HeyBuddy-win32-x64'), 'AIBuddy');
+  it('rejects a Windows directory named for another product', () => {
+    const brand = resolveBrand('heybuddy');
+    const root = makeWin32Tree(tempRoot('OtherApp-win32-x64'), brand.productName);
 
-    expect(verifyPackageTree(resolveBrand('aibuddy'), 'win32', root)).toEqual([
-      expect.stringContaining('AIBuddy-win32-x64'),
+    expect(verifyPackageTree(brand, 'win32', root)).toEqual([
+      expect.stringContaining('HeyBuddy-win32-x64'),
     ]);
   });
 
@@ -93,14 +106,14 @@ describe('verifyPackageTree', () => {
 });
 
 describe('verifyInfoPlist', () => {
-  it.each(['heybuddy', 'aibuddy'])('accepts the %s bundle identity', (edition) => {
-    const brand = resolveBrand(edition);
+  it('accepts the HeyBuddy bundle identity', () => {
+    const brand = resolveBrand('heybuddy');
 
     expect(verifyInfoPlist(brand, plistFor(brand))).toEqual([]);
   });
 
-  it('rejects the other edition bundle id', () => {
-    const plist = plistFor(resolveBrand('aibuddy'));
+  it('rejects a foreign bundle id', () => {
+    const plist = plistFor(foreignBrand);
 
     expect(verifyInfoPlist(resolveBrand('heybuddy'), plist)).toEqual([
       expect.stringContaining('com.electron.heybuddy'),
@@ -120,15 +133,16 @@ describe('verifyInfoPlist', () => {
 describe('verifyPackage', () => {
   it('reports every problem at once', () => {
     const brand = resolveBrand('heybuddy');
-    const root = makeDarwinTree(tempRoot('AIBuddy-darwin-arm64'), 'AIBuddy');
+    const root = makeDarwinTree(tempRoot('OtherApp-darwin-arm64'), foreignBrand.productName);
 
-    expect(() => verifyPackage(brand, 'darwin', root, () => plistFor(resolveBrand('aibuddy'))))
-      .toThrow(/HeyBuddy\.app/);
+    expect(() => verifyPackage(brand, 'darwin', root, () => plistFor(foreignBrand))).toThrow(
+      /HeyBuddy\.app/
+    );
   });
 
   it('passes a consistent package', () => {
-    const brand = resolveBrand('aibuddy');
-    const root = makeDarwinTree(tempRoot('AIBuddy-darwin-arm64'), brand.productName);
+    const brand = resolveBrand('heybuddy');
+    const root = makeDarwinTree(tempRoot('HeyBuddy-darwin-arm64'), brand.productName);
 
     expect(() => verifyPackage(brand, 'darwin', root, () => plistFor(brand))).not.toThrow();
   });

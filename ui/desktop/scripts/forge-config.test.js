@@ -41,16 +41,4 @@ describe('Forge brand identity', () => {
       windowsIcon: 'src/images/icon.ico',
     });
   });
-
-  it('configures AIBuddy package identity', () => {
-    expect(loadForgeIdentity('aibuddy')).toEqual({
-      name: 'AIBuddy',
-      executableName: 'AIBuddy',
-      appBundleId: 'com.electron.aibuddy',
-      protocolName: 'AIBuddyProtocol',
-      protocol: 'aibuddy',
-      icon: 'src/images/aibuddy/icon.icns',
-      windowsIcon: 'src/images/aibuddy/icon.ico',
-    });
-  });
 });

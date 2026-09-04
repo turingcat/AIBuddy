@@ -2,12 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import {
   BalanceFetchError,
-  type BalanceData,
   fetchCurrencyWithCache,
   fetchStatusCurrency,
   fetchUserBalance,
   runBalanceFetch,
-  toSub2apiBalanceData,
   type CurrencyCacheState,
 } from './balance';
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
@@ -366,53 +364,5 @@ describe('runBalanceFetch（IPC result 模式包装）', () => {
       throw 'boom';
     });
     expect(nonErrResult).toEqual({ ok: false, kind: 'network', message: '余额查询失败' });
-  });
-
-  it('preserves subscription period values unchanged in the IPC result', async () => {
-    const subscription: BalanceData = {
-      kind: 'subscription',
-      remainingUSD: { weekly: -1.25, monthly: 3.5 },
-      userName: 'alice',
-      displayName: 'alice',
-      groupName: 'TFlow Pro',
-    };
-
-    await expect(
-      runBalanceFetch(async () => ({ balance: subscription, currency: DEFAULT_CURRENCY_CONFIG }))
-    ).resolves.toEqual({ ok: true, balance: subscription, currency: DEFAULT_CURRENCY_CONFIG });
-  });
-
-  it('maps a TFlow subscription entitlement without changing its remaining period values', () => {
-    const remainingUSD = { daily: -1.25, weekly: 2.5, monthly: 3.75 };
-
-    const balance = toSub2apiBalanceData({
-      kind: 'subscription',
-      displayName: 'alice',
-      groupName: 'TFlow Pro',
-      remainingUSD,
-    });
-
-    expect(balance).toEqual({
-      kind: 'subscription',
-      userName: 'alice',
-      displayName: 'alice',
-      groupName: 'TFlow Pro',
-      remainingUSD,
-    });
-    if (balance.kind !== 'subscription') throw new Error('expected subscription balance');
-    expect(balance.remainingUSD).toBe(remainingUSD);
-  });
-
-  it('keeps the metered TFlow entitlement mapping unchanged', () => {
-    expect(toSub2apiBalanceData({ kind: 'balance', displayName: 'alice', balance: 12.34 })).toEqual(
-      {
-        kind: 'balance',
-        quota: 12.34,
-        usedQuota: 0,
-        requestCount: 0,
-        userName: 'alice',
-        displayName: 'alice',
-      }
-    );
   });
 });

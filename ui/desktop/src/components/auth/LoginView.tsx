@@ -1,17 +1,11 @@
 import { useState } from 'react';
-import { getAppEdition } from '../../brand';
 import { login } from '../../login';
 import { Goose } from '../icons/Goose';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
-import AIBuddyLoginForm from './AIBuddyLoginForm';
 
 export default function LoginView() {
-  if (getAppEdition() === 'aibuddy') {
-    return <AIBuddyLoginForm />;
-  }
-
   return <HeyBuddyLoginForm />;
 }
 

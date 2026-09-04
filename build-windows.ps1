@@ -10,7 +10,7 @@
 [CmdletBinding()]
 param(
     # 构建版本（品牌标识取自 ui/desktop/branding/brands.json）
-    [ValidateSet('heybuddy', 'aibuddy')]
+    [ValidateSet('heybuddy')]
     [string]$Edition = 'heybuddy',
     # HTTP 代理（默认本机代理，cargo/pnpm 下载走代理；其他环境用 -Proxy 覆盖，传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',

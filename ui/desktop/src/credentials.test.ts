@@ -91,15 +91,15 @@ describe('credentials 读写', () => {
   it('decodeCredentialsFile 读取旧明文但不重写源文件', () => {
     const plaintext = JSON.stringify({
       token: 'plain-token',
-      baseUrl: 'https://tflow.online/v1',
-      apiKey: 'sk-aibuddy',
-      authKind: 'sub2api',
+      baseUrl: 'https://ai.linyeyun.cn/v1',
+      apiKey: 'sk-oa',
+      authKind: 'oa',
     });
     fs.writeFileSync(tmpFile, plaintext);
 
     expect(decodeCredentialsFile(tmpFile, base64Codec)).toMatchObject({
       token: 'plain-token',
-      siteKind: 'sub2api',
+      siteKind: 'oa',
     });
     expect(fs.readFileSync(tmpFile, 'utf8')).toBe(plaintext);
   });
@@ -124,52 +124,15 @@ describe('credentials 读写', () => {
     expect(typeof envelope.blob).toBe('string');
   });
 
-  it('sub2api authKind 加密往返后保留', () => {
-    const creds = {
-      token: 'access-token',
-      baseUrl: 'https://tflow.online/v1',
-      apiKey: 'sk-aibuddy',
-      authKind: 'sub2api' as const,
-    };
-
-    writeCredentials(tmpFile, creds, base64Codec);
-
-    expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
-  });
-
-  it('migrates a legacy TFlow credential into a normalized site record', () => {
-    fs.writeFileSync(
-      tmpFile,
-      JSON.stringify({
-        token: 'access-token',
-        baseUrl: 'https://tflow.online/v1',
-        apiKey: 'sk-aibuddy',
-        authKind: 'sub2api',
-      })
-    );
-
-    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
-      schemaVersion: 2,
-      siteKind: 'sub2api',
-      session: { accessToken: 'access-token' },
-      account: {},
-      gateway: {
-        providerId: 'aibuddy',
-        baseUrl: 'https://tflow.online/v1',
-        apiKey: 'sk-aibuddy',
-      },
-    });
-  });
-
-  // 余额取数按 gateway.groupId 判断该账号走计量余额还是订阅日限额，归一化不能把它丢掉
+  // 余额取数按 gateway.groupId 判断该账号的计费分组，归一化不能把它丢掉
   it('surfaces the key group on the normalized gateway record', () => {
     fs.writeFileSync(
       tmpFile,
       JSON.stringify({
         token: 'access-token',
-        baseUrl: 'https://tflow.online/v1',
-        apiKey: 'sk-aibuddy',
-        authKind: 'sub2api',
+        baseUrl: 'https://ai.linyeyun.cn/v1',
+        apiKey: 'sk-oa',
+        authKind: 'oa',
         groupId: '42',
       })
     );
@@ -265,12 +228,12 @@ describe('withRefreshedSession', () => {
     const refreshed = withRefreshedSession(
       {
         schemaVersion: 2,
-        siteKind: 'sub2api',
+        siteKind: 'oa',
         token: 'old-access',
         refreshToken: 'old-refresh',
-        baseUrl: 'https://tflow.online/v1',
+        baseUrl: 'https://ai.linyeyun.cn/v1',
         apiKey: 'sk-secret',
-        authKind: 'sub2api',
+        authKind: 'oa',
         groupId: 'team-a',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
       },
@@ -291,7 +254,7 @@ describe('withRefreshedSession', () => {
       {
         token: 'old-access',
         refreshToken: 'old-refresh',
-        baseUrl: 'https://tflow.online/v1',
+        baseUrl: 'https://ai.linyeyun.cn/v1',
         apiKey: 'sk-secret',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
       },

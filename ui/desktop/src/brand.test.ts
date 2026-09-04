@@ -24,25 +24,14 @@ describe('brand', () => {
     expect(getAppProtocolPrefix()).toBe('goose://');
   });
 
-  it('exposes AIBuddy identity', () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
-
-    expect(getAppEdition()).toBe('aibuddy');
-    expect(getAppDisplayName()).toBe('AIBuddy');
-    expect(getAppIconStem()).toBe('aibuddy/icon');
-    expect(getAppTrayIconStem()).toBe('aibuddy/iconTemplate');
-    expect(getAppProtocol()).toBe('aibuddy');
-    expect(getAppProtocolPrefix()).toBe('aibuddy://');
-  });
-
-  // Resolving per call, not once at import, is what lets a single process run
-  // both editions; a cached module-level constant would leak across tests.
+  // Resolving per call, not once at import, keeps a stale module-level constant
+  // from leaking a previously read edition across tests.
   it('re-resolves the edition on every call', () => {
     vi.stubEnv('APP_EDITION', 'heybuddy');
     expect(getAppProtocol()).toBe('goose');
 
-    vi.stubEnv('APP_EDITION', 'aibuddy');
-    expect(getAppProtocol()).toBe('aibuddy');
+    vi.stubEnv('APP_EDITION', 'goose');
+    expect(() => getAppProtocol()).toThrow(/Invalid APP_EDITION/);
   });
 
   it.each([undefined, '', 'goose', 'HEYBUDDY'])('rejects the unsupported edition %o', (edition) => {
