@@ -189,14 +189,19 @@ class WorkflowPerformanceContractsTest < Minitest::Test
         "name" => "x32",
         "electron_arch" => "ia32",
         "rust_target" => "i686-pc-windows-msvc",
+        "cargo_features" => "local-inference,aws-providers,nostr,otel,rustls-tls,system-keyring,update",
       },
       {
         "name" => "x64",
         "electron_arch" => "x64",
         "rust_target" => "x86_64-pc-windows-msvc",
+        "cargo_features" => "",
       },
     ], architectures
     assert_includes text, "cargo build --release --target $env:RUST_TARGET"
+    assert_includes text, '--no-default-features'
+    assert_includes text, '$env:CARGO_FEATURES'
+    refute_includes architectures.first.fetch("cargo_features"), "code-mode"
   end
 
   def test_windows_desktop_bundle_uses_package_command

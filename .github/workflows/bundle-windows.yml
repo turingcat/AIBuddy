@@ -68,9 +68,11 @@ jobs:
           - name: x32
             electron_arch: ia32
             rust_target: i686-pc-windows-msvc
+            cargo_features: local-inference,aws-providers,nostr,otel,rustls-tls,system-keyring,update
           - name: x64
             electron_arch: x64
             rust_target: x86_64-pc-windows-msvc
+            cargo_features: ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -99,8 +101,13 @@ jobs:
         shell: pwsh
         env:
           RUST_TARGET: ${{ matrix.rust_target }}
+          CARGO_FEATURES: ${{ matrix.cargo_features }}
         run: |
-          cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose
+          if ($env:CARGO_FEATURES) {
+            cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
+          } else {
+            cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose
+          }
 
           $binaryPath = "./target/$env:RUST_TARGET/release/goose.exe"
           if (-not (Test-Path $binaryPath)) {
