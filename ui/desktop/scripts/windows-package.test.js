@@ -17,8 +17,11 @@ function definitionMap(args) {
 }
 
 describe('buildInnoDefinitions', () => {
-  it('builds AIBuddy Inno definitions', () => {
-    const args = buildInnoDefinitions(resolveBrand(), '1.2.3', 'dist', 'out');
+  it.each([
+    ['x32', 'x86compatible', '0'],
+    ['x64', 'x64compatible', '1'],
+  ])('builds AIBuddy %s Inno definitions', (architecture, allowed, installIn64BitMode) => {
+    const args = buildInnoDefinitions(resolveBrand(), architecture, '1.2.3', 'dist', 'out');
 
     expect(args.every((arg) => arg.startsWith('/D'))).toBe(true);
     expect(definitionMap(args)).toEqual({
@@ -28,12 +31,14 @@ describe('buildInnoDefinitions', () => {
       MyAppExeName: 'AIBuddy.exe',
       SourceDir: 'dist',
       OutputDir: 'out',
-      OutputBaseFilename: 'AIBuddy-windows-x64-setup',
+      OutputBaseFilename: `AIBuddy-windows-${architecture}-setup`,
+      MyArchitecturesAllowed: allowed,
+      MyInstallIn64BitMode: installIn64BitMode,
     });
   });
 
   it.each(['', '1.0', 'v1.0.1', '1.0.1-rc.1', '1.0.1.2.3'])('rejects invalid version %j', (version) => {
-    expect(() => buildInnoDefinitions(resolveBrand(), version, 'src', 'out')).toThrow(/version/i);
+    expect(() => buildInnoDefinitions(resolveBrand(), 'x64', version, 'src', 'out')).toThrow(/version/i);
   });
 
   it.each(['sourceDir', 'outputDir'])('rejects a missing %s', (missing) => {
@@ -41,31 +46,45 @@ describe('buildInnoDefinitions', () => {
     directories[missing] = '';
 
     expect(() =>
-      buildInnoDefinitions(resolveBrand(), '1.0.1', directories.sourceDir, directories.outputDir)
+      buildInnoDefinitions(resolveBrand(), 'x64', '1.0.1', directories.sourceDir, directories.outputDir)
     ).toThrow(/directory/i);
+  });
+
+  it('rejects unsupported Windows architectures', () => {
+    expect(() => buildInnoDefinitions(resolveBrand(), 'arm64', '1.0.1', 'src', 'out')).toThrow(
+      /architecture/i
+    );
   });
 });
 
 describe('release artifact names', () => {
-  it('uses the AIBuddy artifact stem', () => {
+  it.each(['x32', 'x64'])('uses the AIBuddy %s artifact stem', (architecture) => {
     const brand = resolveBrand();
 
-    expect(setupFileName(brand)).toBe('AIBuddy-windows-x64-setup.exe');
-    expect(portableArchiveName(brand)).toBe('AIBuddy-windows-x64-portable.zip');
+    expect(setupFileName(brand, architecture)).toBe(`AIBuddy-windows-${architecture}-setup.exe`);
+    expect(portableArchiveName(brand, architecture)).toBe(
+      `AIBuddy-windows-${architecture}-portable.zip`
+    );
   });
 });
 
 describe('resolveWindowsPackage', () => {
-  it('describes the AIBuddy package consumed by the PowerShell build', () => {
-    expect(resolveWindowsPackage('1.0.1', 'C:\\build\\dist', 'C:\\artifacts')).toEqual({
+  it.each([
+    ['x32', 'ia32'],
+    ['x64', 'x64'],
+  ])('describes the AIBuddy %s package consumed by automation', (architecture, electronArch) => {
+    expect(resolveWindowsPackage(architecture, '1.0.1', 'C:\\build\\dist', 'C:\\artifacts')).toEqual({
+      architecture,
+      electronArch,
       productName: 'AIBuddy',
       appId: '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}',
       executableName: 'AIBuddy.exe',
-      packagedDirName: 'AIBuddy-win32-x64',
-      setupFileName: 'AIBuddy-windows-x64-setup.exe',
-      portableFileName: 'AIBuddy-windows-x64-portable.zip',
+      packagedDirName: `AIBuddy-win32-${electronArch}`,
+      setupFileName: `AIBuddy-windows-${architecture}-setup.exe`,
+      portableFileName: `AIBuddy-windows-${architecture}-portable.zip`,
       isccArgs: buildInnoDefinitions(
         resolveBrand(),
+        architecture,
         '1.0.1',
         'C:\\build\\dist',
         'C:\\artifacts'
@@ -102,7 +121,7 @@ describe('Windows packaging automation contracts', () => {
 
     expect(upload.with.path.trim().split(/\r?\n/)).toEqual([
       '${{ steps.package-windows-zip.outputs.portable_file_name }}',
-      'AIBuddy-windows-x64-setup.exe',
+      '${{ steps.package-windows-installer.outputs.setup_file_name }}',
     ]);
     expect(upload.with['if-no-files-found']).toBe('error');
     expect(upload.with.overwrite).toBe(true);

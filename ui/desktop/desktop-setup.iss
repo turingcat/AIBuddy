@@ -28,6 +28,12 @@
 #ifndef OutputBaseFilename
   #error OutputBaseFilename must be passed on the ISCC command line
 #endif
+#ifndef MyArchitecturesAllowed
+  #error MyArchitecturesAllowed must be passed on the ISCC command line
+#endif
+#ifndef MyInstallIn64BitMode
+  #error MyInstallIn64BitMode must be passed on the ISCC command line
+#endif
 
 [Setup]
 ; AppId 一经发布不可更改（Inno 依据它识别同一应用做升级安装），每个版本各用一个
@@ -47,7 +53,10 @@ OutputBaseFilename={#OutputBaseFilename}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+ArchitecturesAllowed={#MyArchitecturesAllowed}
+#if MyInstallIn64BitMode == 1
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 PrivilegesRequired=admin
 ; 升级/卸载时自动关闭正在运行的应用（含其 goose serve 子进程）
 CloseApplications=yes

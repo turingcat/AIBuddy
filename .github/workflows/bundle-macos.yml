@@ -6,16 +6,6 @@ on:
         required: false
         default: false
         type: boolean
-      package_cli:
-        description: 'Whether to package and upload the CLI artifact'
-        required: false
-        default: false
-        type: boolean
-      package_desktop:
-        description: 'Whether to package and upload the Desktop artifact'
-        required: false
-        default: false
-        type: boolean
       artifact_retention_days:
         description: 'Days to retain final build artifacts'
         required: false
@@ -30,16 +20,6 @@ on:
         type: string
       signing:
         description: 'Whether to perform signing and notarization'
-        required: false
-        default: false
-        type: boolean
-      package_cli:
-        description: 'Whether to package and upload the CLI artifact'
-        required: false
-        default: false
-        type: boolean
-      package_desktop:
-        description: 'Whether to package and upload the Desktop artifact'
         required: false
         default: false
         type: boolean
@@ -63,7 +43,7 @@ concurrency:
   group: bundle-macos-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
 
-name: "Bundle CLI and Desktop (macOS ARM64)"
+name: "Bundle Desktop (macOS ARM64)"
 
 env:
   MACOS_TARGET: aarch64-apple-darwin
@@ -86,8 +66,6 @@ jobs:
           INPUT_REF: ${{ inputs.ref }}
           INPUT_VERSION: ${{ inputs.version }}
           INPUT_SIGNING: ${{ inputs.signing }}
-          INPUT_PACKAGE_CLI: ${{ inputs.package_cli }}
-          INPUT_PACKAGE_DESKTOP: ${{ inputs.package_desktop }}
         run: |
           echo "=== Workflow Information ==="
           echo "Workflow: ${WORKFLOW_NAME}"
@@ -100,8 +78,6 @@ jobs:
           echo "Version: ${INPUT_VERSION:-not set}"
           echo "Target: ${MACOS_TARGET}"
           echo "Signing: ${INPUT_SIGNING:-false}"
-          echo "Package CLI: ${INPUT_PACKAGE_CLI:-false}"
-          echo "Package Desktop: ${INPUT_PACKAGE_DESKTOP:-false}"
 
       - name: Check initial disk space
         run: df -h
@@ -157,41 +133,8 @@ jobs:
           retention-days: 1
           overwrite: true
 
-  package-cli:
-    name: Package CLI (macOS ARM64)
-    if: ${{ inputs.package_cli }}
-    needs: build-goose
-    runs-on: ubuntu-latest
-    permissions: {}
-    steps:
-      - name: Download binary artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
-        with:
-          name: internal-goose-aarch64-apple-darwin
-          path: package
-
-      - name: Package CLI
-        run: |
-          mv "package/internal-goose-${MACOS_TARGET}" package/goose
-          chmod +x package/goose
-          mkdir -p dist
-          tar -cjf "dist/goose-${MACOS_TARGET}.tar.bz2" -C package .
-          tar -czf "dist/goose-${MACOS_TARGET}.tar.gz" -C package .
-
-      - name: Upload CLI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
-        with:
-          name: goose-aarch64-apple-darwin
-          path: |
-            dist/goose-aarch64-apple-darwin.tar.bz2
-            dist/goose-aarch64-apple-darwin.tar.gz
-          if-no-files-found: error
-          retention-days: ${{ inputs.artifact_retention_days }}
-          overwrite: true
-
   package-desktop:
     name: Package Desktop (macOS ARM64)
-    if: ${{ inputs.package_desktop }}
     needs: build-goose
     runs-on: macos-latest
     environment: ${{ inputs.environment || '' }}
@@ -317,7 +260,7 @@ jobs:
         id: upload-app-bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: Goose-darwin-arm64
+          name: AIBuddy-macos-arm64
           path: ui/desktop/out/AIBuddy-darwin-arm64/AIBuddy.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}

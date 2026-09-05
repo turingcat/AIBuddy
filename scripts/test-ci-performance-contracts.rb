@@ -7,7 +7,6 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
   JUSTFILE = "Justfile"
   PHASE_2_WORKFLOWS = %w[
-    build-cli-linux.yml
     bundle-macos.yml
     bundle-windows.yml
     canary.yml
@@ -190,23 +189,38 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
-  def test_windows_bundle_is_standard_only
+  def test_windows_bundle_builds_only_x32_and_x64_desktop_packages
     workflow = load_workflow("bundle-windows.yml")
     text = workflow_text("bundle-windows.yml")
+    expected_matrix = [
+      {
+        "artifact_arch" => "x32",
+        "electron_arch" => "ia32",
+        "rust_target" => "i686-pc-windows-msvc",
+      },
+      {
+        "artifact_arch" => "x64",
+        "electron_arch" => "x64",
+        "rust_target" => "x86_64-pc-windows-msvc",
+      },
+    ]
 
     assert_equal "windows-latest", workflow.dig("jobs", "build-goose-windows", "runs-on")
-    assert_equal "ubuntu-latest", workflow.dig("jobs", "package-cli-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "build-desktop-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "package-desktop-windows", "runs-on")
-    refute_match(/windows_variant/i, text)
+    %w[build-goose-windows build-desktop-windows package-desktop-windows].each do |job_name|
+      assert_equal expected_matrix, workflow.dig("jobs", job_name, "strategy", "matrix", "include")
+    end
+    refute workflow.fetch("jobs").key?("package-cli-windows")
+    refute_match(/package_cli|package-cli|Package CLI/i, text)
+    refute_match(/package_desktop/i, text)
     refute_match(/cuda/i, text)
-    assert_includes text, "cargo build --release --target x86_64-pc-windows-msvc"
   end
 
   def test_windows_desktop_bundle_uses_package_command
     commands = job_run_commands("bundle-windows.yml", "build-desktop-windows")
 
-    assert commands.any? { |command| command.include?("pnpm run package:windows") },
+    assert commands.any? { |command| command.include?('pnpm run package:windows -- --arch="${ELECTRON_ARCH}"') },
            "Windows desktop bundle must use the package script"
     refute commands.any? { |command| command.include?("pnpm run make") },
            "Windows desktop bundle must not invoke Electron Forge makers"
@@ -698,7 +712,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_bundle_jobs_cache_electron_downloads_with_platform_specific_keys
     {
       "bundle-macos.yml" => ["package-desktop", "arm64"],
-      "bundle-windows.yml" => ["build-desktop-windows", "x64"],
+      "bundle-windows.yml" => ["build-desktop-windows", "${{ matrix.electron_arch }}"],
     }.each do |workflow_name, (job_name, architecture)|
       job = load_workflow(workflow_name).fetch("jobs").fetch(job_name)
       electron_cache = job.fetch("env").fetch("ELECTRON_CACHE")
@@ -764,22 +778,24 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "schema check must install from the UI workspace root"
   end
 
-  def test_release_workflows_retain_macos_arm64_and_windows_x64_targets
+  def test_release_workflows_retain_macos_arm64_and_windows_x32_x64_targets
     macos_workflow = load_workflow("bundle-macos.yml")
-    windows_commands = cargo_commands("bundle-windows.yml")
+    windows_matrix = load_workflow("bundle-windows.yml")
+      .dig("jobs", "build-goose-windows", "strategy", "matrix", "include")
 
     assert_equal "aarch64-apple-darwin", macos_workflow.dig("env", "MACOS_TARGET"),
                  "bundle-macos.yml must retain the macOS ARM64 release target"
     assert cargo_commands("bundle-macos.yml").any? { |command| command.include?("--target \"$MACOS_TARGET\"") },
            "bundle-macos.yml must build with the macOS ARM64 release target"
-    assert windows_commands.any? { |command| command.include?("--target x86_64-pc-windows-msvc") },
-           "bundle-windows.yml must retain the Windows x64 release target"
+    assert_equal %w[i686-pc-windows-msvc x86_64-pc-windows-msvc],
+                 windows_matrix.map { |entry| entry.fetch("rust_target") }
+    assert_equal %w[ia32 x64], windows_matrix.map { |entry| entry.fetch("electron_arch") }
   end
 
   def test_bundle_workflows_bound_final_artifact_retention
     {
-      "bundle-macos.yml" => %w[package-cli package-desktop],
-      "bundle-windows.yml" => %w[package-cli-windows package-desktop-windows],
+      "bundle-macos.yml" => %w[package-desktop],
+      "bundle-windows.yml" => %w[package-desktop-windows],
     }.each do |workflow_name, job_names|
       workflow = load_workflow(workflow_name)
 
@@ -802,9 +818,10 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def test_release_candidate_keeps_artifacts_for_fourteen_days
-    caller = load_workflow("release-branches.yml").dig("jobs", "bundle-desktop", "with")
-
-    assert_equal 14, caller.fetch("artifact_retention_days")
+    workflow = load_workflow("release-branches.yml")
+    %w[bundle-macos-arm64 bundle-windows].each do |job_name|
+      assert_equal 14, workflow.dig("jobs", job_name, "with", "artifact_retention_days")
+    end
   end
 
   def test_release_and_canary_bundle_artifacts_default_to_seven_days
@@ -819,45 +836,23 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
-  def test_linux_final_cli_artifacts_expire_after_seven_days
-    upload = load_workflow("build-cli-linux.yml").dig("jobs", "build-cli-linux", "steps").find do |step|
-      step["name"] == "Upload CLI artifact"
-    end
+  def test_release_automation_has_no_linux_or_cli_packaging
+    refute File.exist?(File.join(WORKFLOW_DIRECTORY, "build-cli-linux.yml"))
 
-    assert_equal 7, upload.dig("with", "retention-days")
-  end
-
-  def test_linux_cli_workflow_declares_desktop_transfer_input_without_packaging_desktop
-    workflow = load_workflow("build-cli-linux.yml")
-
-    %w[workflow_dispatch workflow_call].each do |trigger|
-      inputs = workflow.fetch(true).fetch(trigger).to_h.fetch("inputs", {})
-      assert inputs.key?("package_desktop"), "#{trigger} must declare package_desktop"
-      input = inputs.fetch("package_desktop", {})
-
-      assert_equal "boolean", input.fetch("type"), "#{trigger} package_desktop input type"
-      assert_equal false, input.fetch("default"), "#{trigger} must default to CLI-only builds"
-    end
-
-    refute workflow.fetch("jobs").keys.any? { |job_name| job_name.include?("desktop") },
-           "build-cli-linux.yml must not restore Linux desktop packaging"
-  end
-
-  def test_release_install_script_artifacts_expire_after_seven_days
-    %w[release.yml canary.yml].each do |workflow_name|
-      upload = load_workflow(workflow_name).dig("jobs", "install-script", "steps").find do |step|
-        step["uses"].to_s.start_with?("actions/upload-artifact@")
-      end
-
-      assert_equal 7, upload.dig("with", "retention-days"), "#{workflow_name} install script retention"
+    %w[bundle-macos.yml bundle-windows.yml release.yml canary.yml publish-existing-release.yml release-branches.yml].each do |workflow_name|
+      text = workflow_text(workflow_name)
+      refute_match(/package_cli|package-cli|Package CLI/i, text, "#{workflow_name} packages a CLI")
+      refute_includes text, "download_cli.sh", "#{workflow_name} publishes the CLI installer"
     end
   end
 
   def test_internal_transfer_artifacts_expire_after_one_day
     {
       "bundle-macos.yml" => ["internal-goose-aarch64-apple-darwin"],
-      "bundle-windows.yml" => ["internal-goose-x86_64-pc-windows-msvc", "internal-windows-unsigned"],
-      "build-cli-linux.yml" => ["internal-goose-${{ matrix.architecture }}-${{ matrix.target-suffix }}${{ matrix.variant == 'vulkan' && '-vulkan' || '' }}"],
+      "bundle-windows.yml" => [
+        "internal-goose-${{ matrix.artifact_arch }}",
+        "internal-windows-unsigned-${{ matrix.artifact_arch }}",
+      ],
     }.each do |workflow_name, artifact_names|
       uploads = load_workflow(workflow_name).fetch("jobs").values.flat_map do |job|
         job.fetch("steps", []).select { |step| step["uses"].to_s.start_with?("actions/upload-artifact@") }
@@ -1005,7 +1000,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def rust_cache_entries
-    %w[ci.yml mcp-conformance.yml pr-smoke-test.yml model-toolcall-conformance.yml bundle-macos.yml bundle-windows.yml build-cli-linux.yml].flat_map do |workflow_name|
+    %w[ci.yml mcp-conformance.yml pr-smoke-test.yml model-toolcall-conformance.yml bundle-macos.yml bundle-windows.yml].flat_map do |workflow_name|
       workflow = load_workflow(workflow_name)
 
       workflow.fetch("jobs").flat_map do |job_name, job|
@@ -1026,7 +1021,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def assert_semantic_rust_cache_contexts(entries)
     assert_standard_cache_context(entries)
     assert_cache_context(entries, :msrv, /msrv/i)
-    assert_cache_context(entries, :target, /aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+    assert_cache_context(entries, :target, /aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|MACOS_TARGET|matrix.rust_target/)
   end
 
   def assert_standard_cache_context(entries)

@@ -228,7 +228,7 @@ function Package-Distribution {
     # 版本产物名与 Inno 定义统一由 windows-package.js 生成，避免脚本内硬编码品牌
     $version = (Get-Content (Join-Path $desktopDir 'package.json') -Raw | ConvertFrom-Json).version
     $distDir = Join-Path $desktopDir 'dist-windows'
- $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $version $distDir $ProjectRoot
+    $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') x64 $version $distDir $ProjectRoot
     if ($LASTEXITCODE -ne 0) { throw "解析 Windows 打包参数失败" }
     $pkg = $pkgJson | ConvertFrom-Json
 

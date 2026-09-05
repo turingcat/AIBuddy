@@ -4,6 +4,7 @@ require "yaml"
 
 workflow_paths = {
   bundle_macos: ".github/workflows/bundle-macos.yml",
+  bundle_windows: ".github/workflows/bundle-windows.yml",
   release: ".github/workflows/release.yml",
   canary: ".github/workflows/canary.yml",
   recovery: ".github/workflows/publish-existing-release.yml",
@@ -49,6 +50,19 @@ release_consumers.each do |workflow|
     abort "release consumer missing #{artifact_glob}" unless workflow.include?(artifact_glob)
   end
   abort "release consumer retains HeyBuddy artifact names" if workflow.include?("HeyBuddy")
+  abort "release consumer retains CLI install artifacts" if workflow.include?("download_cli.sh")
+end
+
+abort "Linux packaging workflow still exists" if File.exist?(".github/workflows/build-cli-linux.yml")
+workflows.each do |name, workflow|
+  if workflow.match?(/package_cli|package-cli|Package CLI/i)
+    abort "#{name} workflow still packages CLI artifacts"
+  end
+end
+
+windows = workflows.fetch(:bundle_windows)
+%w[i686-pc-windows-msvc x86_64-pc-windows-msvc electron_arch:\ ia32 electron_arch:\ x64].each do |fragment|
+  abort "Windows workflow missing #{fragment}" unless windows.include?(fragment.gsub("\\ ", " "))
 end
 
 recovery = workflows.fetch(:recovery)

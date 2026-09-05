@@ -18,7 +18,6 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "Justfile",
             "ui/desktop/package.json",
             "documentation/src/components/MacDesktopInstallButtons.js",
-            "download_cli.sh",
             "crates/goose-cli/src/commands/update.rs",
             "crates/goose-sdk/scripts/maven-resource-prefix.sh",
             "crates/goose-sdk/scripts/prepare-maven-package.sh",
@@ -63,12 +62,19 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("inputs.target", workflow)
         self.assertIn("aarch64-apple-darwin", workflow)
 
-    def test_windows_builds_only_target_x64(self) -> None:
+    def test_windows_builds_only_x32_and_x64_desktop_targets(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
+        self.assertIn("i686-pc-windows-msvc", workflow)
         self.assertIn("x86_64-pc-windows-msvc", workflow)
-        self.assertIn("--platform=win32 --arch=x64", workflow)
+        self.assertIn("electron_arch: ia32", workflow)
+        self.assertIn("electron_arch: x64", workflow)
+        self.assertIn('pnpm run package:windows -- --arch="${ELECTRON_ARCH}"', workflow)
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
+
+    def test_package_manager_allows_windows_ia32_dependencies(self) -> None:
+        workspace = (ROOT / "ui/pnpm-workspace.yaml").read_text(encoding="utf-8")
+        self.assertIn("ia32", workspace)
 
     def test_windows_workflow_uses_edition_aware_portable_name(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
