@@ -23,7 +23,7 @@ function HeyBuddyLoginForm() {
     try {
       const creds = await login(account, password);
       await window.electron.setLoginCredentials(creds);
-      window.electron.restartApp();
+      await window.electron.refreshAuthSession();
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败');
     } finally {

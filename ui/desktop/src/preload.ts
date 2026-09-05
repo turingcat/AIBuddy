@@ -162,6 +162,7 @@ export type ElectronAPI = {
   openExternal: (url: string) => Promise<OpenExternalUrlResult>;
   getVersion: () => string;
   restartApp: () => void;
+  refreshAuthSession: () => Promise<void>;
   // Recipe warning functions
   closeWindow: () => void;
   hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
@@ -320,6 +321,7 @@ const electronAPI: ElectronAPI = {
   restartApp: (): void => {
     ipcRenderer.send('restart-app');
   },
+  refreshAuthSession: () => ipcRenderer.invoke('refresh-auth-session'),
   closeWindow: () => ipcRenderer.send('close-window'),
   hasAcceptedRecipeBefore: (recipe: Recipe) =>
     ipcRenderer.invoke('has-accepted-recipe-before', recipe),

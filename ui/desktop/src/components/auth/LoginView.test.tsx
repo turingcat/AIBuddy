@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 vi.mock('../../acp/providers', () => ({ acpListProviderDetails: vi.fn().mockResolvedValue([]) }));
 
 const setLoginCredentials = vi.fn();
-const restartApp = vi.fn();
+const refreshAuthSession = vi.fn();
 
 vi.mock('../../login', () => ({
   login: vi.fn().mockResolvedValue({
@@ -23,7 +23,7 @@ describe('LoginView', () => {
   beforeEach(() => {
     vi.stubEnv('APP_EDITION', 'heybuddy');
     window.electron.setLoginCredentials = setLoginCredentials;
-    window.electron.restartApp = restartApp;
+    window.electron.refreshAuthSession = refreshAuthSession;
   });
 
   afterEach(() => {
@@ -59,7 +59,7 @@ describe('LoginView', () => {
         baseUrl: 'http://localhost:3001/v1',
         apiKey: 'sk-sample-key',
       });
-      expect(restartApp).toHaveBeenCalledOnce();
+      expect(refreshAuthSession).toHaveBeenCalledOnce();
     });
   });
 

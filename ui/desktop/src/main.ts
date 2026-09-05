@@ -58,6 +58,7 @@ import { startGooseServe } from './gooseServe';
 import { buildHeyBuddyEnv } from './gooseServeEnv';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
+import { createAuthSessionTransition } from './authSessionTransition';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
 import { expandTilde, sanitizeGoosePathRoot } from './utils/pathUtils';
 import log from './utils/logger';
@@ -3039,6 +3040,17 @@ async function appMain() {
     if (window) {
       window.reload();
     }
+  });
+
+  const refreshAuthSession = createAuthSessionTransition({
+    listWindows: () => BrowserWindow.getAllWindows(),
+    cleanupBackends: () => gooseServeLeases.cleanupAll(),
+    createReplacementWindow: () => createNewWindow(app),
+  });
+
+  ipcMain.handle('refresh-auth-session', (event) => {
+    requireRegularRendererWindow(event);
+    return refreshAuthSession();
   });
 
   ipcMain.on('open-in-chrome', (_event, url) => {
