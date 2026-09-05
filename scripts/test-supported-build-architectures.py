@@ -63,17 +63,39 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("inputs.target", workflow)
         self.assertIn("aarch64-apple-darwin", workflow)
 
-    def test_windows_builds_only_target_x64(self) -> None:
+    def test_windows_builds_x32_and_x64_desktop_targets(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
+        package = json.loads((ROOT / "ui/desktop/package.json").read_text(encoding="utf-8"))
+
+        self.assertIn("i686-pc-windows-msvc", workflow)
         self.assertIn("x86_64-pc-windows-msvc", workflow)
-        self.assertIn("--platform=win32 --arch=x64", workflow)
+        self.assertIn("electron_arch: ia32", workflow)
+        self.assertIn("electron_arch: x64", workflow)
+        self.assertIn("--arch=\"$ELECTRON_ARCH\"", workflow)
+        self.assertIn("WINDOWS_ARCH: ${{ matrix.name }}", workflow)
+        self.assertIn("internal-goose-${{ matrix.rust_target }}", workflow)
+        self.assertIn("internal-windows-unsigned-${{ matrix.name }}", workflow)
+        self.assertIn("Goose-win32-${{ matrix.name }}", workflow)
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
+        self.assertNotIn("--arch=x64", package["scripts"]["package:windows"])
 
-    def test_windows_workflow_uses_edition_aware_portable_name(self) -> None:
+    def test_windows_cli_remains_x64_only(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
-        self.assertIn("portableFileName", workflow)
-        self.assertIn("steps.package-windows-zip.outputs.portable_file_name", workflow)
+
+        package_cli_job = workflow.split("  package-cli-windows:", 1)[1].split(
+            "  build-desktop-windows:", 1
+        )[0]
+        self.assertIn("internal-goose-x86_64-pc-windows-msvc", package_cli_job)
+        self.assertNotIn("internal-goose-i686-pc-windows-msvc", package_cli_job)
+
+    def test_windows_workflow_publishes_installers_without_portable_archives(self) -> None:
+        workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
+
+        self.assertIn("HeyBuddy-windows-${{ matrix.name }}-setup.exe", workflow)
+        self.assertNotIn("portableFileName", workflow)
+        self.assertNotIn("portable.zip", workflow)
+        self.assertNotIn("7z a", workflow)
         self.assertNotIn("HeyBuddy-win32-x64", workflow)
 
     def test_intel_native_package_was_removed(self) -> None:

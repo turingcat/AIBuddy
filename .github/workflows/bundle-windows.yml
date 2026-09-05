@@ -59,8 +59,18 @@ permissions:
 
 jobs:
   build-goose-windows:
-    name: Build Goose (Windows)
+    name: Build Goose (Windows ${{ matrix.name }})
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: x32
+            electron_arch: ia32
+            rust_target: i686-pc-windows-msvc
+          - name: x64
+            electron_arch: x64
+            rust_target: x86_64-pc-windows-msvc
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -77,23 +87,25 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
-          key: bundle-windows-x86_64-pc-windows-msvc
+          key: bundle-windows-${{ matrix.rust_target }}
 
       - name: Setup Rust
         shell: bash
         run: |
           rustup show
-          rustup target add x86_64-pc-windows-msvc
+          rustup target add "${{ matrix.rust_target }}"
 
       - name: Build Windows executable
         shell: pwsh
+        env:
+          RUST_TARGET: ${{ matrix.rust_target }}
         run: |
-          cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose
+          cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose
 
-          $binaryPath = "./target/x86_64-pc-windows-msvc/release/goose.exe"
+          $binaryPath = "./target/$env:RUST_TARGET/release/goose.exe"
           if (-not (Test-Path $binaryPath)) {
             Write-Error "Windows binary not found: $binaryPath"
-            Get-ChildItem ./target/x86_64-pc-windows-msvc/release/ -ErrorAction SilentlyContinue
+            Get-ChildItem "./target/$env:RUST_TARGET/release/" -ErrorAction SilentlyContinue
             exit 1
           }
           Get-Item $binaryPath
@@ -101,8 +113,8 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc
-          path: target/x86_64-pc-windows-msvc/release/goose.exe
+          name: internal-goose-${{ matrix.rust_target }}
+          path: target/${{ matrix.rust_target }}/release/goose.exe
           if-no-files-found: error
           retention-days: 1
           overwrite: true
@@ -135,10 +147,20 @@ jobs:
           overwrite: true
 
   build-desktop-windows:
-    name: Build Desktop (Windows)
+    name: Build Desktop (Windows ${{ matrix.name }})
     if: ${{ inputs.package_desktop }}
     needs: build-goose-windows
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: x32
+            electron_arch: ia32
+            rust_target: i686-pc-windows-msvc
+          - name: x64
+            electron_arch: x64
+            rust_target: x86_64-pc-windows-msvc
     env:
       ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
     steps:
@@ -181,14 +203,14 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ env.ELECTRON_CACHE }}
-          key: electron-cache-v1-${{ runner.os }}-x64-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          key: electron-cache-v1-${{ runner.os }}-${{ matrix.electron_arch }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
-            electron-cache-v1-${{ runner.os }}-x64-
+            electron-cache-v1-${{ runner.os }}-${{ matrix.electron_arch }}-
 
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc
+          name: internal-goose-${{ matrix.rust_target }}
           path: backend
 
       - name: Prepare Windows binary
@@ -223,43 +245,56 @@ jobs:
         env:
           APP_EDITION: heybuddy
           ELECTRON_PLATFORM: win32
+          ELECTRON_ARCH: ${{ matrix.electron_arch }}
+          WINDOWS_ARCH: ${{ matrix.name }}
         run: |
           cd ui/desktop
           pnpm install --frozen-lockfile
           node scripts/build-main.js
           node scripts/prepare-platform-binaries.js
-          pnpm run package:windows
+          pnpm run package:windows -- --arch="$ELECTRON_ARCH"
 
       - name: Prepare flat distribution
         shell: bash
         env:
           APP_EDITION: heybuddy
+          WINDOWS_ARCH: ${{ matrix.name }}
         run: |
           cd ui/desktop
           packaged="out/$(node -p "require('./scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').packagedDirName")"
           mkdir -p "$packaged/resources/bin"
           cp -r src/bin/* "$packaged/resources/bin/"
 
-          mkdir -p ./dist-windows
-          cp -r "$packaged"/* ./dist-windows/
+          mkdir -p "./dist-windows-${WINDOWS_ARCH}"
+          cp -r "$packaged"/* "./dist-windows-${WINDOWS_ARCH}/"
 
-          ls -la ./dist-windows/
-          ls -la ./dist-windows/resources/bin/
+          ls -la "./dist-windows-${WINDOWS_ARCH}/"
+          ls -la "./dist-windows-${WINDOWS_ARCH}/resources/bin/"
 
       - name: Upload unsigned distribution
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-windows-unsigned
-          path: ui/desktop/dist-windows/
+          name: internal-windows-unsigned-${{ matrix.name }}
+          path: ui/desktop/dist-windows-${{ matrix.name }}/
           if-no-files-found: error
           retention-days: 1
           overwrite: true
 
   package-desktop-windows:
-    name: Package Desktop (Windows)
+    name: Package Desktop (Windows ${{ matrix.name }})
     needs: build-desktop-windows
     if: ${{ inputs.package_desktop }}
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: x32
+            electron_arch: ia32
+            rust_target: i686-pc-windows-msvc
+          - name: x64
+            electron_arch: x64
+            rust_target: x86_64-pc-windows-msvc
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -269,8 +304,8 @@ jobs:
       - name: Download unsigned distribution
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-windows-unsigned
-          path: ui/desktop/dist-windows
+          name: internal-windows-unsigned-${{ matrix.name }}
+          path: ui/desktop/dist-windows-${{ matrix.name }}
 
       - name: Set up Inno Setup
         shell: pwsh
@@ -289,6 +324,7 @@ jobs:
         env:
           APP_EDITION: heybuddy
           INPUT_VERSION: ${{ inputs.version }}
+          WINDOWS_ARCH: ${{ matrix.name }}
         run: |
           $version = $env:INPUT_VERSION
           if (-not $version) {
@@ -297,8 +333,8 @@ jobs:
           }
           $outputDir = $env:GITHUB_WORKSPACE
           New-Item -ItemType Directory -Force $outputDir | Out-Null
-          $distDir = Join-Path $env:GITHUB_WORKSPACE "ui\desktop\dist-windows"
-          $pkg = & node "ui/desktop/scripts/windows-package.js" $env:APP_EDITION $version $distDir $outputDir | ConvertFrom-Json
+          $distDir = Join-Path $env:GITHUB_WORKSPACE "ui\desktop\dist-windows-$env:WINDOWS_ARCH"
+          $pkg = & node "ui/desktop/scripts/windows-package.js" $env:APP_EDITION $version $distDir $outputDir $env:WINDOWS_ARCH | ConvertFrom-Json
           if ($LASTEXITCODE -ne 0) { throw "Failed to resolve Windows package definitions" }
           & $env:ISCC_PATH @($pkg.isccArgs) "ui/desktop/desktop-setup.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
@@ -306,24 +342,11 @@ jobs:
           if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
           Get-Item $installer
 
-      - name: Create Windows zip package
-        id: package-windows-zip
-        working-directory: ui/desktop/dist-windows
-        shell: bash
-        env:
-          APP_EDITION: heybuddy
-        run: |
-          portable_file_name="$(node -p "require('../scripts/windows-package').resolveWindowsPackage(process.env.APP_EDITION, '0.0.0', '.', '.').portableFileName")"
-          7z a -tzip "$GITHUB_WORKSPACE/$portable_file_name" ./*
-          echo "portable_file_name=$portable_file_name" >> "$GITHUB_OUTPUT"
-
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: Goose-win32-x64
-          path: |
-            ${{ steps.package-windows-zip.outputs.portable_file_name }}
-            HeyBuddy-windows-x64-setup.exe
+          name: Goose-win32-${{ matrix.name }}
+          path: HeyBuddy-windows-${{ matrix.name }}-setup.exe
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true

@@ -47,7 +47,7 @@
     "i18n:validate-zh-CN": "node scripts/i18n-validate-locale.js zh-CN",
     "i18n:validate-locale": "node scripts/i18n-validate-locale.js",
     "validate:node": "node scripts/check-node-version.js",
-    "package:windows": "pnpm run validate:node && pnpm run validate:edition && pnpm run build-goose-sdk && pnpm run i18n:compile && electron-forge package --platform=win32 --arch=x64",
+    "package:windows": "pnpm run validate:node && pnpm run validate:edition && pnpm run build-goose-sdk && pnpm run i18n:compile && electron-forge package --platform=win32",
     "verify:package": "node scripts/verify-package.js"
   },
   "dependencies": {
