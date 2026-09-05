@@ -4,16 +4,30 @@ const https = require('https');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { resolveWindowsArchitecture } = require('./windows-architecture');
 
 // Paths
 const srcBinDir = path.join(__dirname, '..', 'src', 'bin');
 const platformWinDir = path.join(__dirname, '..', 'src', 'platform', 'windows', 'bin');
 const uvVersion = '0.11.11';
-const uvDownloadUrl = `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-x86_64-pc-windows-msvc.zip`;
-const uvBinaryHashes = {
-    'uv.exe': 'b1645e948603c12dd741987d0c072471195e18dd299b42334477ceac694f0af8',
-    'uvx.exe': '0305c488dc29c16df1483c02a902d21a6798b0744f8e9eb34271d6b3e4bf6e2a',
-};
+const uvBinaryHashes = Object.freeze({
+    'i686-pc-windows-msvc': Object.freeze({
+        'uv.exe': 'cddbdecdf0f488c7d11085d44436a3bf87a40777b1cfebdc0cbca83cb3ebbe85',
+        'uvx.exe': 'b19c9ef61e0caa1a1092fbafb887b4ba4ef6951b15565ad6cd087124598da09a',
+    }),
+    'x86_64-pc-windows-msvc': Object.freeze({
+        'uv.exe': 'b1645e948603c12dd741987d0c072471195e18dd299b42334477ceac694f0af8',
+        'uvx.exe': '0305c488dc29c16df1483c02a902d21a6798b0744f8e9eb34271d6b3e4bf6e2a',
+    }),
+});
+
+function windowsUvRelease(architecture) {
+    const windowsArchitecture = resolveWindowsArchitecture(architecture);
+    return {
+        url: `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${windowsArchitecture.uvTarget}.zip`,
+        hashes: uvBinaryHashes[windowsArchitecture.uvTarget],
+    };
+}
 
 // Platform-specific file patterns
 const windowsFiles = [
@@ -107,8 +121,9 @@ function extractZip(zipPath, destDir) {
     execFileSync('unzip', ['-q', zipPath, '-d', destDir], { stdio: 'inherit' });
 }
 
-async function ensureWindowsUvBinaries() {
-    const allPresent = Object.entries(uvBinaryHashes).every(([name, expectedHash]) =>
+async function ensureWindowsUvBinaries(architecture) {
+    const release = windowsUvRelease(architecture);
+    const allPresent = Object.entries(release.hashes).every(([name, expectedHash]) =>
         hasExpectedHash(path.join(srcBinDir, name), expectedHash)
     );
 
@@ -123,11 +138,11 @@ async function ensureWindowsUvBinaries() {
     fs.mkdirSync(extractDir, { recursive: true });
 
     try {
-        console.log(`Downloading uv ${uvVersion} from ${uvDownloadUrl}`);
-        await downloadFile(uvDownloadUrl, zipPath);
+        console.log(`Downloading uv ${uvVersion} from ${release.url}`);
+        await downloadFile(release.url, zipPath);
         extractZip(zipPath, extractDir);
 
-        for (const [name, expectedHash] of Object.entries(uvBinaryHashes)) {
+        for (const [name, expectedHash] of Object.entries(release.hashes)) {
             const extractedPath = path.join(extractDir, name);
             if (!fs.existsSync(extractedPath)) {
                 throw new Error(`Downloaded uv archive did not contain ${name}`);
@@ -237,7 +252,7 @@ async function copyPlatformFiles(targetPlatform) {
             }
         });
 
-        await ensureWindowsUvBinaries();
+        await ensureWindowsUvBinaries(process.env.WINDOWS_ARCH);
     }
 }
 
@@ -264,4 +279,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { preparePlatformBinaries };
+module.exports = { preparePlatformBinaries, windowsUvRelease };
