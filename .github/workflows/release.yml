@@ -111,7 +111,7 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
-            HeyBuddy*.exe
+            HeyBuddy-windows-*-setup.exe
             download_cli.sh
 
       # Create/update the versioned release
@@ -124,7 +124,7 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
-            HeyBuddy*.exe
+            HeyBuddy-windows-*-setup.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true
@@ -142,11 +142,18 @@ jobs:
             goose-*.tar.gz
             goose-*.zip
             HeyBuddy*.zip
-            HeyBuddy*.exe
+            HeyBuddy-windows-*-setup.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true
           prerelease: false
+
+      - name: Upload Windows installers to COS
+        shell: bash
+        env:
+          TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+        run: bash .github/scripts/upload-windows-installers-to-cos.sh
 
       - name: Upload macOS update manifest
         if: ${{ env.ENABLE_MAC_NATIVE_AUTO_UPDATE == 'true' }}

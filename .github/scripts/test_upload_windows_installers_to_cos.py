@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+
+import json
+import os
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / ".github/scripts/upload-windows-installers-to-cos.sh"
+INSTALLERS = (
+    "HeyBuddy-windows-x32-setup.exe",
+    "HeyBuddy-windows-x64-setup.exe",
+)
+
+
+class UploadWindowsInstallersToCosTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp_dir.cleanup)
+        self.directory = Path(self.temp_dir.name)
+        self.capture = self.directory / "coscli-calls.jsonl"
+        self.coscli = self.directory / "coscli"
+        self.coscli.write_text(
+            """#!/usr/bin/env python3
+import json
+import os
+import sys
+
+with open(os.environ["COSCLI_CAPTURE"], "a", encoding="utf-8") as capture:
+    capture.write(json.dumps(sys.argv[1:]) + "\\n")
+
+fail_on = os.environ.get("COSCLI_FAIL_ON")
+if fail_on and any(fail_on in argument for argument in sys.argv[1:]):
+    raise SystemExit(9)
+""",
+            encoding="utf-8",
+        )
+        self.coscli.chmod(0o755)
+
+    def run_script(self, *, create_installers=INSTALLERS, extra_env=None):
+        for installer in create_installers:
+            (self.directory / installer).write_bytes(b"installer")
+
+        env = os.environ.copy()
+        env.update(
+            {
+                "COSCLI_BIN": str(self.coscli),
+                "COSCLI_CAPTURE": str(self.capture),
+                "TENCENT_CLOUD_SECRET_ID": "test-secret-id",
+                "TENCENT_CLOUD_SECRET_KEY": "test-secret-key",
+            }
+        )
+        if extra_env:
+            env.update(extra_env)
+
+        return subprocess.run(
+            ["bash", str(SCRIPT)],
+            cwd=self.directory,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+    def calls(self):
+        if not self.capture.exists():
+            return []
+        return [json.loads(line) for line in self.capture.read_text(encoding="utf-8").splitlines()]
+
+    def test_uploads_only_the_two_stable_installer_objects(self) -> None:
+        result = self.run_script()
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = self.calls()
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(
+            [call[-1] for call in calls],
+            [
+                "cos://heybuddy-1252724067/heybuddy/stable/HeyBuddy-windows-x32-setup.exe",
+                "cos://heybuddy-1252724067/heybuddy/stable/HeyBuddy-windows-x64-setup.exe",
+            ],
+        )
+        for call, installer in zip(calls, INSTALLERS, strict=True):
+            self.assertIn("cp", call)
+            self.assertIn(installer, call)
+            self.assertIn("heybuddy-1252724067.cos.ap-guangzhou.myqcloud.com", call)
+            self.assertIn("--customized", call)
+            self.assertFalse(any("acl" in argument.lower() for argument in call))
+            self.assertFalse(any("grant-" in argument.lower() for argument in call))
+
+    def test_rejects_missing_credentials_before_uploading(self) -> None:
+        result = self.run_script(extra_env={"TENCENT_CLOUD_SECRET_KEY": ""})
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.calls(), [])
+
+    def test_rejects_missing_installer_before_uploading(self) -> None:
+        result = self.run_script(create_installers=(INSTALLERS[0],))
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.calls(), [])
+
+    def test_propagates_coscli_upload_failures(self) -> None:
+        result = self.run_script(extra_env={"COSCLI_FAIL_ON": INSTALLERS[1]})
+
+        self.assertEqual(result.returncode, 9)
+        self.assertEqual(len(self.calls()), 2)
+
+
+class CosReleaseWorkflowTest(unittest.TestCase):
+    def test_tagged_release_uploads_to_cos_after_github_release(self) -> None:
+        workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+
+        upload_step = workflow.index("- name: Upload Windows installers to COS")
+        self.assertGreater(upload_step, workflow.index("- name: Release stable"))
+        self.assertIn("bash .github/scripts/upload-windows-installers-to-cos.sh", workflow)
+        self.assertIn(
+            "TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}", workflow
+        )
+        self.assertIn(
+            "TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}", workflow
+        )
+        self.assertIn("HeyBuddy-windows-*-setup.exe", workflow)
+
+    def test_recovery_release_restores_the_same_cos_objects(self) -> None:
+        workflow = (ROOT / ".github/workflows/publish-existing-release.yml").read_text(
+            encoding="utf-8"
+        )
+
+        upload_step = workflow.index("- name: Upload Windows installers to COS")
+        self.assertGreater(upload_step, workflow.index("- name: Publish versioned release"))
+        self.assertIn("bash .github/scripts/upload-windows-installers-to-cos.sh", workflow)
+        self.assertIn("HeyBuddy-windows-*-setup.exe", workflow)
+
+    def test_release_workflows_do_not_manage_cos_access(self) -> None:
+        workflows = "\n".join(
+            (ROOT / path).read_text(encoding="utf-8")
+            for path in (
+                ".github/workflows/release.yml",
+                ".github/workflows/publish-existing-release.yml",
+            )
+        ).lower()
+
+        self.assertNotIn("public-read", workflows)
+        self.assertNotIn("grant-read", workflows)
+        self.assertNotIn("put-object-acl", workflows)
+
+
+if __name__ == "__main__":
+    unittest.main()
