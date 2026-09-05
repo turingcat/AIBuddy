@@ -68,7 +68,7 @@ jobs:
           - name: x32
             electron_arch: ia32
             rust_target: i686-pc-windows-msvc
-            cargo_features: aws-providers,nostr,otel,rustls-tls,system-keyring,update
+            cargo_features: aws-providers,nostr,otel,rustls-tls,system-keyring
           - name: x64
             electron_arch: x64
             rust_target: x86_64-pc-windows-msvc
