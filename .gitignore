@@ -102,3 +102,4 @@ gooseselftest/
 /ui/desktop/dist-windows/
 /exts/
 .worktrees/
+.gstack/
