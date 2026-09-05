@@ -105,7 +105,8 @@ jobs:
             goose-*.tar.bz2
             goose-*.tar.gz
             goose-*.zip
-            HeyBuddy*.zip
+            AIBuddy*.zip
+            AIBuddy*.exe
             download_cli.sh
 
       # Create/update the canary release
@@ -119,7 +120,8 @@ jobs:
             goose-*.tar.bz2
             goose-*.tar.gz
             goose-*.zip
-            HeyBuddy*.zip
+            AIBuddy*.zip
+            AIBuddy*.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true

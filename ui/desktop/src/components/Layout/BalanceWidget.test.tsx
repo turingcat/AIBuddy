@@ -1,32 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactNode } from 'react';
 import { IntlProvider } from 'react-intl';
-
-import { BalanceWidget } from './BalanceWidget';
+import {
+  AIBuddyEntitlementRows,
+  BalanceRefreshButton,
+  BalanceStatus,
+  BalanceWidget,
+} from './BalanceWidget';
 import type { BalanceResult } from '../../balance';
-import zhCatalog from '../../i18n/messages/zh-CN.json';
 import { DEFAULT_CURRENCY_CONFIG } from '../../quotaFormat';
-
-/**
- * @author logic
- * @date 2026-08-24
- * BalanceWidget 组件单测：mock window.electron.getUserBalance，
- * IntlProvider locale=en 直接展示 defaultMessage。
- *
- * 路径分析（BalanceWidget，V(G)=6）：
- *   W1 ready（余额 + Tooltip 明细）/ W1b ready（订阅日额度）/ W2 loading / W3 no-pat / W4 unauthorized /
- *   W5 error（提示 + message 详情）/ W6 not-logged-in 不渲染 / W7 点击刷新按钮再次拉取。
- */
 
 const electronMock = window.electron as unknown as {
   getUserBalance: ReturnType<typeof vi.fn>;
 };
-const zhMessages = Object.fromEntries(
-  Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])
-);
 
-// jsdom 缺少 ResizeObserver，Radix Tooltip 内容挂载时依赖它，补最小 stub
 class ResizeObserverStub {
   observe() {}
   unobserve() {}
@@ -34,187 +23,149 @@ class ResizeObserverStub {
 }
 global.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
 
-function okResult(): BalanceResult {
-  return {
-    ok: true,
-    balance: {
-      kind: 'balance',
-      quota: 5000000,
-      usedQuota: 100000,
-      requestCount: 42,
-      userName: 'oa_1',
-      displayName: '张三',
-    },
-    currency: DEFAULT_CURRENCY_CONFIG,
-  };
-}
-
-function renderWidget(locale = 'en', messages: Record<string, string> = {}) {
+function renderWidget() {
   return render(
-    <IntlProvider locale={locale} messages={messages} onError={() => {}}>
+    <IntlProvider locale="en" onError={() => {}}>
       <BalanceWidget />
     </IntlProvider>
   );
 }
 
-describe('BalanceWidget（侧边栏余额组件）', () => {
+function renderBalanceNode(node: ReactNode) {
+  return render(
+    <IntlProvider locale="en" onError={() => {}}>
+      {node}
+    </IntlProvider>
+  );
+}
+
+function meteredBalance(): BalanceResult {
+  return {
+    ok: true,
+    balance: {
+      kind: 'balance',
+      quota: 5_000_000,
+      usedQuota: 100_000,
+      requestCount: 42,
+      userName: 'aibuddy',
+      displayName: 'AIBuddy user',
+    },
+    currency: DEFAULT_CURRENCY_CONFIG,
+  };
+}
+
+describe('BalanceWidget', () => {
   beforeEach(() => {
-    vi.stubEnv('APP_EDITION', 'heybuddy');
     electronMock.getUserBalance = vi.fn();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it('AIBuddy renders the shared account balance widget', async () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
-
+  it('renders metered AIBuddy balance as a TFlow entitlement row', async () => {
+    electronMock.getUserBalance.mockResolvedValue(meteredBalance());
     renderWidget();
 
-    expect(await screen.findByTestId('balance-widget')).toBeInTheDocument();
-    expect(electronMock.getUserBalance).toHaveBeenCalled();
+    const row = await screen.findByTestId('aibuddy-entitlement-row');
+    expect(row).toHaveTextContent('Current balance');
+    expect(row).toHaveTextContent('$10');
+    expect(screen.queryByTestId('balance-value')).toBeNull();
   });
 
-  it('W1: ready 时显示格式化余额，悬浮展示已用/请求数/更新时间', async () => {
-    electronMock.getUserBalance.mockResolvedValue(okResult());
-    renderWidget();
-
-    const value = await screen.findByTestId('balance-value');
-    // 5000000 quota / 500000 = $10（USD 默认配置）
-    expect(value).toHaveTextContent('$10');
-
-    await userEvent.hover(value);
-    await waitFor(() => {
-      // Radix 会同时渲染可见内容与无障碍隐藏副本，故用 getAllByText
-      expect(screen.getAllByText(/Used: \$0\.2/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Requests: 42/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Updated /).length).toBeGreaterThan(0);
-    });
-  });
-
-  it('W1b: 订阅计费时显示服务端周期剩余额度', async () => {
+  it('renders only configured subscription periods', async () => {
     electronMock.getUserBalance.mockResolvedValue({
       ok: true,
       balance: {
         kind: 'subscription',
-        remainingUSD: { daily: 37.5, weekly: -1.25, monthly: 100 },
-        userName: 'alice',
-        displayName: 'alice',
         groupName: 'Codex Max',
-      },
-      currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
-    } as BalanceResult);
-    renderWidget();
-
-    const value = await screen.findByTestId('balance-value');
-    expect(value).toHaveTextContent('$37.5 remaining');
-
-    await userEvent.hover(value);
-    await waitFor(() => {
-      expect(screen.getAllByText(/Codex Max/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Daily: \$37\.5/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Weekly: -\$1\.25/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/Monthly: \$100/).length).toBeGreaterThan(0);
-    });
-  });
-
-  it('W1c: 在中文区域设置中使用订阅额度翻译，而非英文回退', async () => {
-    electronMock.getUserBalance.mockResolvedValue({
-      ok: true,
-      balance: {
-        kind: 'subscription',
-        remainingUSD: { daily: 37.5, weekly: -1.25, monthly: 100 },
-        userName: 'alice',
-        displayName: 'alice',
-        groupName: 'Codex Max',
+        remainingUSD: { daily: 37.5, monthly: 100 },
+        userName: 'aibuddy',
+        displayName: 'AIBuddy user',
       },
       currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
     } satisfies BalanceResult);
-
-    renderWidget('zh-CN', zhMessages);
-
-    const value = await screen.findByTestId('balance-value');
-    expect(value).toHaveTextContent('剩余 $37.5');
-    await userEvent.hover(value);
-    await waitFor(() => {
-      expect(screen.getAllByText(/每日：\$37\.5/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/每周：-\$1\.25/).length).toBeGreaterThan(0);
-      expect(screen.getAllByText(/每月：\$100/).length).toBeGreaterThan(0);
-    });
-  });
-
-  it('W2: loading 时显示占位符', async () => {
-    electronMock.getUserBalance.mockReturnValue(new Promise(() => {}));
     renderWidget();
 
+    const rows = await screen.findAllByTestId('aibuddy-entitlement-row');
+    expect(rows).toHaveLength(2);
+    expect(within(rows[0]).getByText('Daily remaining')).toBeInTheDocument();
+    expect(within(rows[0]).getByText('$37.5')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('Monthly remaining')).toBeInTheDocument();
+    expect(within(rows[1]).getByText('$100')).toBeInTheDocument();
+  });
+
+  it('renders the loading state', () => {
+    electronMock.getUserBalance.mockReturnValue(new Promise(() => {}));
+    renderWidget();
     expect(screen.getByTestId('balance-loading')).toBeInTheDocument();
   });
 
-  it('W3: no-pat 时显示重新登录提示', async () => {
-    electronMock.getUserBalance.mockResolvedValue({
-      ok: false,
-      kind: 'no-pat',
-      message: '请重新登录后查看余额',
-    } as BalanceResult);
-    renderWidget();
-
-    expect(await screen.findByTestId('balance-hint')).toHaveTextContent('Re-login to view balance');
-  });
-
-  it('W4: unauthorized 时显示登录失效提示', async () => {
-    electronMock.getUserBalance.mockResolvedValue({
-      ok: false,
-      kind: 'unauthorized',
-      message: '登录已失效，请重新登录',
-    } as BalanceResult);
-    renderWidget();
-
-    expect(await screen.findByTestId('balance-hint')).toHaveTextContent(
-      'Login expired, please re-login'
+  it('renders compact metered and subscription balance states', () => {
+    const view = renderBalanceNode(
+      <BalanceStatus
+        state={{
+          status: 'ready',
+          balance: (meteredBalance() as Extract<BalanceResult, { ok: true }>).balance,
+          currency: DEFAULT_CURRENCY_CONFIG,
+          updatedAt: 1_700_000_000_000,
+        }}
+      />
     );
+    expect(screen.getByTestId('balance-value')).toHaveTextContent('$10');
+
+    view.rerender(
+      <IntlProvider locale="en" onError={() => {}}>
+        <BalanceStatus
+          state={{
+            status: 'ready',
+            balance: {
+              kind: 'subscription',
+              groupName: 'Codex Max',
+              remainingUSD: {},
+              userName: 'aibuddy',
+              displayName: 'AIBuddy user',
+            },
+            currency: { ...DEFAULT_CURRENCY_CONFIG, quotaPerUnit: 1 },
+            updatedAt: 1_700_000_000_000,
+          }}
+        />
+      </IntlProvider>
+    );
+    expect(screen.getByTestId('balance-value')).toHaveTextContent('-- remaining');
   });
 
-  it('W5: 其他错误时显示加载失败提示，悬浮可见具体原因', async () => {
-    electronMock.getUserBalance.mockResolvedValue({
-      ok: false,
-      kind: 'network',
-      message: '无法连接余额服务，请检查网络',
-    } as BalanceResult);
-    renderWidget();
-
-    const hint = await screen.findByTestId('balance-hint');
-    expect(hint).toHaveTextContent('Balance load failed');
-
-    await userEvent.hover(hint);
-    await waitFor(() => {
-      expect(screen.getAllByText(/无法连接余额服务，请检查网络/).length).toBeGreaterThan(0);
-    });
+  it.each([
+    [{ status: 'unauthorized' } as const, 'Login expired, please re-login'],
+    [{ status: 'error', message: 'gateway unavailable' } as const, 'Balance load failed'],
+  ])('renders %s as an actionable balance hint', (state, message) => {
+    renderBalanceNode(<AIBuddyEntitlementRows state={state} />);
+    expect(screen.getByTestId('balance-hint')).toHaveTextContent(message);
   });
 
-  it('W6: not-logged-in 时组件整体不渲染', async () => {
+  it('shows and invokes the refreshing control', async () => {
+    const onRefresh = vi.fn();
+    renderBalanceNode(<BalanceRefreshButton refreshing onRefresh={onRefresh} />);
+
+    expect(screen.getByTestId('balance-refresh').querySelector('svg')).toHaveClass('animate-spin');
+    await userEvent.click(screen.getByTestId('balance-refresh'));
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not render when signed out', async () => {
     electronMock.getUserBalance.mockResolvedValue({
       ok: false,
       kind: 'not-logged-in',
-      message: '尚未登录',
     } as BalanceResult);
     renderWidget();
 
-    await waitFor(() => {
-      expect(screen.queryByTestId('balance-widget')).toBeNull();
-    });
+    await waitFor(() => expect(screen.queryByTestId('balance-widget')).toBeNull());
   });
 
-  it('W7: 点击刷新按钮再次拉取余额', async () => {
-    electronMock.getUserBalance.mockResolvedValue(okResult());
+  it('refreshes the AIBuddy entitlement', async () => {
+    electronMock.getUserBalance.mockResolvedValue(meteredBalance());
     renderWidget();
-    await screen.findByTestId('balance-value');
+    await screen.findByTestId('aibuddy-entitlement-row');
     const callsAfterMount = electronMock.getUserBalance.mock.calls.length;
 
     await userEvent.click(screen.getByTestId('balance-refresh'));
 
-    await waitFor(() => {
-      expect(electronMock.getUserBalance.mock.calls.length).toBeGreaterThan(callsAfterMount);
-    });
+    expect(electronMock.getUserBalance.mock.calls.length).toBeGreaterThan(callsAfterMount);
   });
 });

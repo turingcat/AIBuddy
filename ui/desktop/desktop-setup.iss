@@ -1,4 +1,4 @@
-; 桌面版 Windows 安装包脚本（Inno Setup），HeyBuddy / AIBuddy 共用
+; AIBuddy Windows installer script (Inno Setup)
 ; 取代 electron-forge 的 maker-squirrel：Squirrel 的 Update.exe 在安装收尾阶段
 ; 会从 GitHub 下载卸载图标，网络受限环境下安装窗口会滞留约 85 秒；
 ; Inno Setup 全程零网络请求，且安装图标/快捷方式/卸载项完全可控。
@@ -37,11 +37,11 @@ AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
-; 安装/卸载图标直接用应用可执行文件内嵌图标（即 src/images/icon.ico 打进 exe 的图标）
+; 安装/卸载图标直接用应用可执行文件内嵌图标（即 AIBuddy icon.ico 打进 exe 的图标）
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 ; 安装器自身图标（资源管理器中看到的 Setup.exe 图标）
-SetupIconFile=src\images\icon.ico
+SetupIconFile=src\images\aibuddy\icon.ico
 OutputDir={#OutputDir}
 OutputBaseFilename={#OutputBaseFilename}
 Compression=lzma2/max

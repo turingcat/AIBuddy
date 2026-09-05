@@ -1,56 +1,115 @@
 const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
 const path = require('node:path');
 
 const desktopRoot = path.join(__dirname, '..');
+const forgeConfigPath = path.join(desktopRoot, 'forge.config.ts');
+const forgeEnvKeys = [
+  'GITHUB_OWNER',
+  'GITHUB_REPO',
+  'WINDOWS_CERTIFICATE_FILE',
+  'WINDOW_SIGNING_ROLE',
+];
 
-function loadForgeIdentity(edition) {
+function loadForgeIdentity(env = process.env) {
   const output = execFileSync(
     process.execPath,
     [
       '-e',
       `const config = require('./forge.config.ts');
-       const protocol = config.packagerConfig.protocols[0];
-       process.stdout.write(JSON.stringify({
-         name: config.packagerConfig.name,
-         executableName: config.packagerConfig.executableName,
-         appBundleId: config.packagerConfig.appBundleId,
-         protocolName: protocol.name,
-          protocol: protocol.schemes[0],
+        process.stdout.write(JSON.stringify({
+          name: config.packagerConfig.name,
+          executableName: config.packagerConfig.executableName,
+          appBundleId: config.packagerConfig.appBundleId,
+          protocols: config.packagerConfig.protocols,
+          extraResource: config.packagerConfig.extraResource,
           icon: config.packagerConfig.icon,
-          windowsIcon: config.packagerConfig.win32.icon
-       }));`,
+  windowsIcon: config.packagerConfig.win32.icon,
+  publisherRepo: config.publishers[0].config.repository.name
+}));`,
     ],
-    {
-      cwd: desktopRoot,
-      encoding: 'utf8',
-      env: { ...process.env, APP_EDITION: edition },
-    }
+    { cwd: desktopRoot, encoding: 'utf8', env }
   );
+
   return JSON.parse(output);
 }
 
-describe('Forge brand identity', () => {
-  it('configures HeyBuddy package identity', () => {
-    expect(loadForgeIdentity('heybuddy')).toEqual({
-      name: 'HeyBuddy',
-      executableName: 'HeyBuddy',
-      appBundleId: 'com.electron.heybuddy',
-      protocolName: 'GooseProtocol',
-      protocol: 'goose',
-      icon: 'src/images/icon.icns',
-      windowsIcon: 'src/images/icon.ico',
-    });
-  });
+function loadForgeConfigInProcess(env) {
+  const previousEnv = Object.fromEntries(forgeEnvKeys.map((key) => [key, process.env[key]]));
 
-  it('configures AIBuddy package identity', () => {
-    expect(loadForgeIdentity('aibuddy')).toEqual({
+  try {
+    for (const key of forgeEnvKeys) {
+      if (env[key] === undefined) delete process.env[key];
+      else process.env[key] = env[key];
+    }
+
+    delete require.cache[require.resolve(forgeConfigPath)];
+    return require(forgeConfigPath);
+  } finally {
+    delete require.cache[require.resolve(forgeConfigPath)];
+    for (const key of forgeEnvKeys) {
+      if (previousEnv[key] === undefined) delete process.env[key];
+      else process.env[key] = previousEnv[key];
+    }
+  }
+}
+
+describe('Forge brand identity', () => {
+  it('configures the fixed AIBuddy package identity', () => {
+    const { publisherRepo: _publisherRepo, ...identity } = loadForgeIdentity();
+
+    expect(identity).toEqual({
       name: 'AIBuddy',
       executableName: 'AIBuddy',
       appBundleId: 'com.electron.aibuddy',
-      protocolName: 'AIBuddyProtocol',
-      protocol: 'aibuddy',
+      protocols: [
+        { name: 'AIBuddyProtocol', schemes: ['aibuddy'] },
+        { name: 'GooseNostrProtocol', schemes: ['goose'] },
+      ],
+      extraResource: ['src/bin', 'src/images/aibuddy'],
       icon: 'src/images/aibuddy/icon.icns',
       windowsIcon: 'src/images/aibuddy/icon.ico',
     });
+  });
+
+  it('uses the AIBuddy repository fallback when no override is configured', () => {
+    const env = { ...process.env };
+    delete env.GITHUB_REPO;
+
+    expect(loadForgeIdentity(env).publisherRepo).toBe('AIBuddy');
+  });
+
+  it('loads fallback publisher configuration in the current process', () => {
+    const env = { ...process.env };
+    delete env.GITHUB_REPO;
+
+    const config = loadForgeConfigInProcess(env);
+
+    expect(config.publishers[0].config.repository.name).toBe('AIBuddy');
+  });
+
+  it('uses explicit publishing and Windows signing environment values', () => {
+    const config = loadForgeConfigInProcess({
+      ...process.env,
+      GITHUB_OWNER: 'aaif-goose',
+      GITHUB_REPO: 'desktop-release',
+      WINDOWS_CERTIFICATE_FILE: '/tmp/aibuddy.pfx',
+      WINDOW_SIGNING_ROLE: 'release-role',
+    });
+
+    expect(config.publishers[0].config).toMatchObject({
+      repository: { name: 'desktop-release', owner: 'aaif-goose' },
+    });
+    expect(config.packagerConfig.win32).toMatchObject({
+      certificateFile: '/tmp/aibuddy.pfx',
+      signingRole: 'release-role',
+    });
+  });
+
+  it('uses AIBuddy as the desktop document title', () => {
+    const html = fs.readFileSync(path.join(desktopRoot, 'index.html'), 'utf8');
+    const parsed = new DOMParser().parseFromString(html, 'text/html');
+
+    expect(parsed.title).toBe('AIBuddy');
   });
 });

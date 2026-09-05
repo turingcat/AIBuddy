@@ -42,8 +42,8 @@ jobs:
             
                * Download the file
                * Unzip
-               * run `xattr -r -d com.apple.quarantine '/path/to/HeyBuddy.app'`
-               * optionally run `codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist '/path/to/HeyBuddy.app'`
+               * run `xattr -r -d com.apple.quarantine '/path/to/AIBuddy.app'`
+               * optionally run `codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist '/path/to/AIBuddy.app'`
                * start the app
             
             The signing step is only needed if you do something that uses mac entitlements like speech to text

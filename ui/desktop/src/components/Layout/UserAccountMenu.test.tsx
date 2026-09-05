@@ -47,7 +47,6 @@ function renderMenu() {
 describe('UserAccountMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('APP_EDITION', 'heybuddy');
   });
 
   afterEach(() => {
@@ -174,7 +173,7 @@ describe('UserAccountMenu', () => {
 
     const summary = screen.getByTestId('account-menu-summary');
     expect(within(summary).getByText('林也')).toBeInTheDocument();
-    expect(within(summary).getByTestId('balance-value')).toBeInTheDocument();
+    expect(within(summary).getByTestId('aibuddy-entitlement-row')).toHaveTextContent('$10');
     expect(within(summary).getByRole('menuitem', { name: '刷新余额' })).toBeInTheDocument();
   });
 
@@ -196,7 +195,7 @@ describe('UserAccountMenu', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 
-  it('keeps the HeyBuddy trigger balance summary', () => {
+  it('keeps entitlement details out of the account trigger', () => {
     mockBalanceState({
       status: 'ready',
       balance: {
@@ -213,14 +212,13 @@ describe('UserAccountMenu', () => {
 
     renderMenu();
 
-    expect(screen.getByRole('button', { name: /林也/ })).toContainElement(
-      screen.getByTestId('balance-value')
+    expect(screen.getByRole('button', { name: /林也/ })).not.toContainElement(
+      screen.queryByTestId('balance-value')
     );
   });
 
   it('renders an AIBuddy username-only trigger with the full name available', () => {
     const accountName = 'aibuddy-account-with-a-name-too-long-for-the-sidebar';
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     mockBalanceState({
       status: 'ready',
       balance: {
@@ -244,7 +242,6 @@ describe('UserAccountMenu', () => {
   });
 
   it('renders the AIBuddy metered balance as its own entitlement row', async () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     mockBalanceState({
       status: 'ready',
       balance: {
@@ -271,7 +268,6 @@ describe('UserAccountMenu', () => {
   });
 
   it('renders only configured AIBuddy subscription entitlement periods', async () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     mockBalanceState({
       status: 'ready',
       balance: {
@@ -300,7 +296,6 @@ describe('UserAccountMenu', () => {
 
   it('keeps AIBuddy refresh, settings, and logout actions operable', async () => {
     const user = userEvent.setup();
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     mockBalanceState({ status: 'loading' }, true);
 
     const firstMenu = renderMenu();
@@ -327,7 +322,6 @@ describe('UserAccountMenu', () => {
     [{ status: 'unauthorized' } satisfies BalanceState, 'balance-hint'],
     [{ status: 'error', message: 'connection refused' } satisfies BalanceState, 'balance-hint'],
   ])('keeps AIBuddy %s state visible in the popup', async (state, testId) => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
     mockBalanceState(state);
 
     renderMenu();

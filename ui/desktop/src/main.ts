@@ -29,39 +29,18 @@ import 'dotenv/config';
 import { checkBackendStatus } from './backendStatus';
 import { authConfig } from './authConfig';
 import { registerAIBuddyAuthIpc } from './aibuddyAuthIpc';
+import { registerAIBuddyRuntimeIpc } from './aibuddyRuntimeIpc';
 import { withSub2apiSession } from './sub2apiAuth';
-import { performOaLogin, runOaLogin } from './oaLogin';
-import {
-  readCredentials,
-  writeCredentials,
-  withRefreshedSession,
-  clearCredentials,
-  type LoginCredentials,
-} from './credentials';
+import { readCredentials, writeCredentials, clearCredentials } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
-import { migrateLegacyAIBuddyData } from './aibuddyDataMigration';
-import {
-  fetchCurrencyWithCache,
-  fetchUserBalance,
-  runBalanceFetch,
-  toSub2apiBalanceData,
-  BalanceFetchError,
-  type BalanceResult,
-  type CurrencyCacheState,
-} from './balance';
-import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { startGooseServe } from './gooseServe';
-import { buildSiteRuntimeEnv } from './gooseServeEnv';
-import {
-  fetchSub2apiEntitlement,
-  fetchSub2apiModels,
-  Sub2apiUnauthorizedError,
-} from './siteRuntime/sub2apiAdapter';
+import { buildGooseServeEnv } from './gooseServeEnv';
+import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
-import { expandTilde, sanitizeGoosePathRoot } from './utils/pathUtils';
+import { expandTilde } from './utils/pathUtils';
 import log from './utils/logger';
 import { ensureWinShims } from './utils/winShims';
 import { addRecentDir, loadRecentDirs } from './utils/recentDirs';
@@ -75,13 +54,17 @@ import windowStateKeeper from 'electron-window-state';
 import { setTrayRef } from './utils/tray';
 import { translateMenuLabel } from './menuLabels';
 import {
-  getAppEdition,
   getAppDisplayName,
   getAppIconStem,
-  getAppProtocol,
   getAppProtocolPrefix,
   getAppTrayIconStem,
 } from './brand';
+import { packagedAibuddyAssetPath } from './appAssets';
+import {
+  findInboundProtocolUrl,
+  getInboundProtocolSchemes,
+  parseInboundProtocolUrl,
+} from './protocolRouting';
 import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
@@ -131,7 +114,7 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const {
-  userDataDir: USER_DATA_DIR,
+  goosePathRoot: GOOSE_PATH_ROOT,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
   startupLogsDir: STARTUP_LOGS_DIR,
@@ -341,21 +324,6 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
   callback(verifyBackendCertificate(parsed.hostname, certificate.fingerprint));
 });
 
-if (getAppEdition() === 'aibuddy') {
-  app.whenReady().then(() => {
-    try {
-      migrateLegacyAIBuddyData({
-        edition: 'aibuddy',
-        legacyUserDataDir: path.join(path.dirname(USER_DATA_DIR), 'HeyBuddy'),
-        targetUserDataDir: USER_DATA_DIR,
-        codec: getCredentialsCodec(),
-      });
-    } catch (error) {
-      log.error(`AIBuddy legacy data migration failed: ${error}`);
-    }
-  });
-}
-
 app.whenReady().then(() => {
   appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
 });
@@ -379,31 +347,31 @@ if (process.env.ENABLE_PLAYWRIGHT) {
 
 // In development mode, force registration as the default protocol client
 // In production, register normally
+const inboundProtocolSchemes = getInboundProtocolSchemes();
+
 if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
   // Development mode - force registration
   console.log(
-    `[Main] Development mode: Forcing protocol registration for ${getAppProtocolPrefix()}`
+    `[Main] Development mode: Forcing protocol registration for ${inboundProtocolSchemes.join(', ')}`
   );
-  app.setAsDefaultProtocolClient(getAppProtocol());
+  for (const protocol of inboundProtocolSchemes) app.setAsDefaultProtocolClient(protocol);
 
   if (process.platform === 'darwin') {
     try {
       // Reset the default handler to ensure dev version takes precedence
-      spawn(
-        'open',
-        ['-a', process.execPath, '--args', '--reset-protocol-handler', getAppProtocol()],
-        {
+      for (const protocol of inboundProtocolSchemes) {
+        spawn('open', ['-a', process.execPath, '--args', '--reset-protocol-handler', protocol], {
           detached: true,
           stdio: 'ignore',
-        }
-      );
+        });
+      }
     } catch {
       console.warn('[Main] Could not reset protocol handler');
     }
   }
 } else {
   // Production mode - normal registration
-  app.setAsDefaultProtocolClient(getAppProtocol());
+  for (const protocol of inboundProtocolSchemes) app.setAsDefaultProtocolClient(protocol);
 }
 
 // Apply single instance lock on Windows and Linux where it's needed for deep links
@@ -417,9 +385,9 @@ if (process.platform !== 'darwin') {
     app.quit();
   } else {
     app.on('second-instance', (_event, commandLine) => {
-      const protocolUrl = commandLine.find((arg) => arg.startsWith(getAppProtocolPrefix()));
-      if (protocolUrl) {
-        const parsedUrl = new URL(protocolUrl);
+      const protocolRoute = findInboundProtocolUrl(commandLine);
+      if (protocolRoute) {
+        const { url: protocolUrl, parsedUrl } = protocolRoute;
         // If it's a bot/recipe URL, handle it directly by creating a new window
         if (parsedUrl.hostname === 'bot' || parsedUrl.hostname === 'recipe') {
           app.whenReady().then(async () => {
@@ -475,7 +443,7 @@ if (process.platform !== 'darwin') {
           mainWindow.restore();
         }
         mainWindow.focus();
-      } else if (!protocolUrl) {
+      } else {
         app.whenReady().then(async () => {
           const recentDirs = loadRecentDirs();
           const openDir = recentDirs.length > 0 ? recentDirs[0] : null;
@@ -486,16 +454,10 @@ if (process.platform !== 'darwin') {
   }
 
   // Handle protocol URLs on Windows and Linux startup
-  const protocolUrl = process.argv.find((arg) => arg.startsWith(getAppProtocolPrefix()));
-  if (protocolUrl) {
+  const protocolRoute = findInboundProtocolUrl(process.argv);
+  if (protocolRoute) {
     app.whenReady().then(async () => {
-      let parsedUrl: URL;
-      try {
-        parsedUrl = new URL(protocolUrl);
-      } catch (error) {
-        log.warn('[Main] Ignoring invalid startup protocol URL:', errorMessage(error));
-        return;
-      }
+      const { url: protocolUrl, parsedUrl } = protocolRoute;
 
       openUrlHandledLaunch = true;
       try {
@@ -663,9 +625,14 @@ async function processProtocolUrl(url: string, parsedUrl: URL, window: BrowserWi
 
 let windowDeeplinkURL: string | null = null;
 
-app.on('open-url', async (_event, url) => {
-  if (process.platform !== 'win32') {
-    const parsedUrl = new URL(url);
+app.on('open-url', async (_event, incomingUrl) => {
+  if (process.platform === 'darwin') {
+    const protocolRoute = parseInboundProtocolUrl(incomingUrl);
+    if (!protocolRoute) {
+      log.warn('[Main] Ignoring unsupported open-url route');
+      return;
+    }
+    const { url, parsedUrl } = protocolRoute;
 
     log.info(
       '[Main] Received open-url event:',
@@ -943,7 +910,7 @@ const getExternalBackendForCsp = (settings: Settings) => {
 let appConfig = {
   GOOSE_DEFAULT_PROVIDER: defaultProvider,
   GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PATH_ROOT: sanitizeGoosePathRoot(process.env),
+  GOOSE_PATH_ROOT,
   GOOSE_WORKING_DIR: '',
   // Whether the window is bound to an external backend (fixed at window
   // creation via gooseServeLeases) and which URL it is bound to.
@@ -1163,8 +1130,9 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const siteRuntimeEnv = buildSiteRuntimeEnv(
-      readCredentials(CREDENTIALS_FILE, getCredentialsCodec())
+    const siteRuntimeEnv = buildGooseServeEnv(
+      readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
+      GOOSE_PATH_ROOT
     );
     let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
     try {
@@ -1172,10 +1140,7 @@ const createChat = async (
         serverSecret,
         dir: workingDir,
         tls: true,
-        env: {
-          GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
-          ...siteRuntimeEnv,
-        },
+        env: { ...siteRuntimeEnv, GOOSE_PATH_ROOT },
         loginShellPath,
         isPackaged: app.isPackaged,
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
@@ -1260,7 +1225,11 @@ const createChat = async (
           ? `${windowIconStem}.icns`
           : `${windowIconStem}.png`;
     const windowIcon = [
-      path.join(process.resourcesPath, 'images', windowIconName),
+      packagedAibuddyAssetPath(
+        process.resourcesPath,
+        windowIconStem,
+        path.extname(windowIconName).slice(1)
+      ),
       path.join(process.cwd(), 'src', 'images', windowIconName),
       path.join(__dirname, '..', 'images', windowIconName),
     ].find((p) => fsSync.existsSync(p));
@@ -1451,7 +1420,7 @@ const createChat = async (
     }
   }
 
-  // HeyBuddy's react app uses HashRouter, so the path + search params follow a #/
+  // The renderer uses HashRouter, so the path and search parameters follow a #/.
   url.hash = `${appPath}?${searchParams.toString()}`;
   let formattedUrl = formatUrl(url);
   log.info('Opening URL: ', formattedUrl);
@@ -1641,7 +1610,7 @@ const createTray = () => {
 
   const trayIconName = `${getAppTrayIconStem()}.png`;
   const possiblePaths = [
-    path.join(process.resourcesPath, 'images', trayIconName),
+    packagedAibuddyAssetPath(process.resourcesPath, getAppTrayIconStem(), 'png'),
     path.join(process.cwd(), 'src', 'images', trayIconName),
     path.join(__dirname, '..', 'images', trayIconName),
     path.join(__dirname, 'images', trayIconName),
@@ -1999,21 +1968,12 @@ ipcMain.handle(
   'is-logged-in',
   () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()) !== null
 );
-ipcMain.handle('set-login-credentials', (_event, creds: LoginCredentials) => {
+ipcMain.handle('set-login-credentials', (_event, creds: unknown) => {
   writeCredentials(CREDENTIALS_FILE, creds, getCredentialsCodec());
 });
 ipcMain.handle('clear-login-credentials', () => {
   clearCredentials(CREDENTIALS_FILE);
 });
-
-// 登录走主进程 fetch：绕开 renderer 的 CSP（connect-src 白名单 + upgrade-insecure-requests）
-// 请求与错误处理逻辑在 oaLogin.ts（可单测）；以 result 模式返回而非抛异常，
-// 避免 Electron 给 IPC 异常加 "Error invoking remote method" 前缀
-// @author logic
-// @date 2026-08-12
-ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
-);
 
 registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
@@ -2023,110 +1983,16 @@ registerAIBuddyAuthIpc(ipcMain, {
     writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
 });
 
-// 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
-// /api/status 的货币显示配置带 1 小时模块级缓存；currency 拉取失败且无缓存时
-// 降级默认换算配置，余额照常返回
-// @author logic
-// @date 2026-08-24
-const currencyCache: CurrencyCacheState = { config: null, fetchedAt: 0 };
-
-ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
-  const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
-  if (!creds) {
-    return { ok: false, kind: 'not-logged-in', message: '尚未登录' };
-  }
-  if (creds.siteKind === 'sub2api') {
-    const refreshToken = creds.session?.refreshToken ?? creds.refreshToken;
-    return runBalanceFetch(async () => {
-      const entitlement = await withSub2apiSession(
-        authConfig.apiBaseUrl,
-        {
-          accessToken: creds.session?.accessToken ?? creds.token,
-          ...(refreshToken ? { refreshToken } : {}),
-        },
-        net.fetch,
-        (refreshed) =>
-          writeCredentials(
-            CREDENTIALS_FILE,
-            withRefreshedSession(creds, refreshed),
-            getCredentialsCodec()
-          ),
-        (accessToken) =>
-          fetchSub2apiEntitlement(
-            authConfig.apiBaseUrl,
-            accessToken,
-            creds.gateway?.groupId ?? creds.groupId,
-            net.fetch
-          )
-      ).catch((error) => {
-        if (error instanceof Sub2apiUnauthorizedError) {
-          throw new BalanceFetchError('unauthorized', error.message);
-        }
-        throw error;
-      });
-      return {
-        balance: toSub2apiBalanceData(entitlement),
-        currency: {
-          quotaPerUnit: 1,
-          quotaDisplayType: 'USD',
-          usdExchangeRate: 1,
-          customCurrencySymbol: '$',
-          customCurrencyExchangeRate: 1,
-        },
-      };
-    });
-  }
-  const pat = creds.pat;
-  if (!pat) {
-    return { ok: false, kind: 'no-pat', message: '请重新登录后查看余额' };
-  }
-  return runBalanceFetch(async () => {
-    const [balance, currency] = await Promise.all([
-      fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
-      fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
-        () => DEFAULT_CURRENCY_CONFIG
-      ),
-    ]);
-    return { balance, currency };
-  });
-});
-
-// 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
-// @author logic
-// @date 2026-08-12
-ipcMain.handle('list-models-via-api', async () => {
-  const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
-  if (!creds) return [];
-  try {
-    if (creds.siteKind === 'sub2api') {
-      return (
-        await fetchSub2apiModels(
-          creds.gateway?.baseUrl ?? creds.baseUrl,
-          creds.gateway?.apiKey ?? creds.apiKey,
-          net.fetch
-        )
-      ).map((model) => ({
-        id: model.id,
-        name: model.id,
-        contextLimit: null,
-        reasoning: null,
-        providerId: model.providerId,
-      }));
-    }
-    const res = await net.fetch(`${creds.baseUrl}/models`, {
-      headers: { Authorization: `Bearer ${creds.apiKey}` },
-    });
-    const body = await res.json();
-    return (body.data ?? []).map((m: { id: string }) => ({
-      id: m.id,
-      name: m.id,
-      contextLimit: null,
-      reasoning: null,
-    }));
-  } catch (e) {
-    log.error(`[HeyBuddy] list-models-via-api failed: ${e}`);
-    return [];
-  }
+registerAIBuddyRuntimeIpc(ipcMain, {
+  apiBaseUrl: authConfig.apiBaseUrl,
+  fetchImpl: net.fetch,
+  readCredentials: () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
+  writeCredentials: (credentials) =>
+    writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
+  withSession: withSub2apiSession,
+  fetchEntitlement: fetchSub2apiEntitlement,
+  fetchModels: fetchSub2apiModels,
+  logger: log,
 });
 
 ipcMain.handle('get-secret-key', (event) => {

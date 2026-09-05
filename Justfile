@@ -105,12 +105,12 @@ debug-ui-main-process:
 
 # Package the desktop app locally for testing (macOS)
 # Applies ad-hoc code signing with entitlements (needed for mic access, etc.)
-package-ui edition="heybuddy":
+package-ui:
     @just release-binary
-    @BUNDLE_NAME="$(node ui/desktop/scripts/brand.js "{{edition}}" productName)"; echo "Packaging $BUNDLE_NAME desktop app..."
-    cd ui/desktop && pnpm install && APP_EDITION="{{edition}}" pnpm run package:macos
+    @BUNDLE_NAME="$(node ui/desktop/scripts/brand.js productName)"; echo "Packaging $BUNDLE_NAME desktop app..."
+    cd ui/desktop && pnpm install && pnpm run package:macos
     @echo "Signing with entitlements..."
-    @BUNDLE_NAME="$(node ui/desktop/scripts/brand.js "{{edition}}" productName)"; APP_PATH="ui/desktop/out/${BUNDLE_NAME}-darwin-arm64/${BUNDLE_NAME}.app"; codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist "$APP_PATH"; echo "Done! Launch with: open $APP_PATH"
+    @BUNDLE_NAME="$(node ui/desktop/scripts/brand.js productName)"; APP_PATH="ui/desktop/out/${BUNDLE_NAME}-darwin-arm64/${BUNDLE_NAME}.app"; codesign --force --deep --sign - --entitlements ui/desktop/entitlements.plist "$APP_PATH"; echo "Done! Launch with: open $APP_PATH"
 
 # Run UI with latest (Windows version)
 run-ui-windows:

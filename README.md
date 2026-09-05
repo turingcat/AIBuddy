@@ -1,43 +1,52 @@
 <div align="center">
 
-# HeyBuddy
+# AIBuddy
 
-_your native open source AI agent — desktop app, CLI, and API — for code, workflows, and everything in between_
+_your native AI agent - desktop app, CLI, and API - for code, workflows, and everything in between_
 
 <p align="center">
   <a href="https://opensource.org/licenses/Apache-2.0"
-    ><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"></a>
+    ><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"
+  /></a>
 </p>
 
 </div>
 
+AIBuddy is a general-purpose AI agent that runs on your machine. Use it for research, writing, automation, data analysis, software development, and other day-to-day work.
 
-HeyBuddy is a general-purpose AI agent that runs on your machine. Not just for code — use it for research, writing, automation, data analysis, or anything you need to get done.
+It includes a native desktop app for macOS, Linux, and Windows, a CLI for terminal workflows, and an API for embedding agent capabilities. The core is built in Rust for performance and portability.
 
-A native desktop app for macOS, Linux, and Windows. A full CLI for terminal workflows. An API to embed it anywhere. Built in Rust for performance and portability.
+AIBuddy works with providers including Anthropic, OpenAI, Google, Ollama, OpenRouter, Azure, and Bedrock. It supports API keys and existing Claude, ChatGPT, or Gemini subscriptions through [ACP](https://goose-docs.ai/docs/guides/acp-providers), plus extensions built on the open [Model Context Protocol](https://modelcontextprotocol.io/) standard.
 
-HeyBuddy works with 15+ providers — Anthropic, OpenAI, Google, Ollama, OpenRouter, Azure, Bedrock, and more. Use API keys or your existing Claude, ChatGPT, or Gemini subscriptions via [ACP](https://goose-docs.ai/docs/guides/acp-providers). Connect to 70+ extensions via the [Model Context Protocol](https://modelcontextprotocol.io/) open standard.
+Product accounts and authentication are provided through [TFlow](https://tflow.online). Credentials and service configuration are managed by the application and are not documented in this repository.
 
-HeyBuddy is a private fork of [goose](https://github.com/aaif-goose/goose), an open source project of the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. The CLI binary, environment variables, and underlying engine keep the original `goose` naming; only the desktop app's branding and interface have been renamed.
+## Project lineage
 
-# Get started
+The code lineage is **Goose -> HeyBuddy shared -> AIBuddy**. [Goose](https://github.com/aaif-goose/goose) is the upstream open source agent framework from the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. HeyBuddy is the shared fork layer from which this repository inherited compatibility code. AIBuddy is the active product and the only product identity exposed by this app.
 
-**[Download the desktop app](https://goose-docs.ai/docs/getting-started/installation)** for macOS, Linux, and Windows.
+The CLI binary, crate names, environment variables, configuration files, and protocol compatibility surfaces retain the original `goose` naming where changing them would break compatibility.
 
-Or install the CLI:
+## Synchronization
+
+Routine AIBuddy updates fetch and merge `upstream/shared`, never `upstream/main`. The shared branch carries official Goose updates and reusable product-neutral engine, desktop, localization, tooling, and generic user-visible behavior. AIBuddy owns product-specific identity, service and authentication configuration, provider credentials and entitlements, data migration and data boundaries, and user-visible product behavior. Run `cd ui/desktop && pnpm run check:product-boundary` after each shared merge.
+
+## Get started
+
+Open [TFlow](https://tflow.online) to access AIBuddy.
+
+The compatible Goose CLI can still be installed with the upstream installer:
 
 ```bash
 curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
 ```
 
-# Quick links
+## Quick links
+
 - [Quickstart](https://goose-docs.ai/docs/quickstart)
 - [Installation](https://goose-docs.ai/docs/getting-started/installation)
 - [Tutorials](https://goose-docs.ai/docs/category/tutorials)
 - [Documentation](https://goose-docs.ai/docs/category/getting-started)
 - [Governance](https://github.com/aaif-goose/goose/blob/main/GOVERNANCE.md)
-- [Custom Distributions](https://github.com/aaif-goose/goose/blob/main/CUSTOM_DISTROS.md) — build your own goose distro with preconfigured providers, extensions, and branding
-
-## Need help?
-- [Diagnostics & Reporting](https://goose-docs.ai/docs/troubleshooting/diagnostics-and-reporting)
-- [Known Issues](https://goose-docs.ai/docs/troubleshooting/known-issues)
+- [Custom distributions](https://github.com/aaif-goose/goose/blob/main/CUSTOM_DISTROS.md)
+- [Diagnostics and reporting](https://goose-docs.ai/docs/troubleshooting/diagnostics-and-reporting)
+- [Known issues](https://goose-docs.ai/docs/troubleshooting/known-issues)

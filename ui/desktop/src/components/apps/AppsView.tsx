@@ -103,7 +103,7 @@ export default function AppsView() {
     const loadCachedApps = async () => {
       try {
         const cachedApps = await listMcpApps();
-        // Only show apps from the "apps" extension (vibe coded apps built by HeyBuddy)
+        // Only show apps from the "apps" extension.
         setApps(cachedApps.filter((a) => a.mcpServers?.includes('apps')));
       } catch (err) {
         console.warn('Failed to load cached apps:', err);
@@ -248,7 +248,7 @@ export default function AppsView() {
       await importMcpApp(text);
 
       const cachedApps = await listMcpApps();
-      // Only show apps from the "apps" extension (vibe coded apps built by HeyBuddy)
+      // Only show apps from the "apps" extension.
       setApps(cachedApps.filter((a) => a.mcpServers?.includes('apps')));
       setError(null);
     } catch (err) {

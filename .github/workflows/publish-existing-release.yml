@@ -58,13 +58,13 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ inputs.release_tag }}
-          name: HeyBuddy ${{ inputs.release_tag }}
+          name: AIBuddy ${{ inputs.release_tag }}
           artifacts: |
             goose-*.tar.bz2
             goose-*.tar.gz
             goose-*.zip
-            HeyBuddy*.zip
-            HeyBuddy*.exe
+            AIBuddy*.zip
+            AIBuddy*.exe
             download_cli.sh
           allowUpdates: true
           omitBody: true

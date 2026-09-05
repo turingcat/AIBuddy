@@ -3,49 +3,11 @@ const path = require('node:path');
 
 const brandScript = path.join(__dirname, 'brand.js');
 
-describe('authentication branding', () => {
-  it('resolves HeyBuddy OA authentication metadata', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(resolveBrand('heybuddy')).toMatchObject({
-      authMode: 'oa',
-      authApiBaseUrl: 'https://ai.linyeyun.cn',
-    });
-  });
-
-  it('resolves AIBuddy Sub2API authentication metadata', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(resolveBrand('aibuddy')).toMatchObject({
-      authMode: 'sub2api',
-      authApiBaseUrl: 'https://tflow.online',
-    });
-  });
-});
-
 describe('resolveBrand', () => {
-  it('resolves the complete HeyBuddy identity', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(resolveBrand('heybuddy')).toEqual({
-      edition: 'heybuddy',
-      productName: 'HeyBuddy',
-      bundleId: 'com.electron.heybuddy',
-      protocol: 'goose',
-      protocolName: 'GooseProtocol',
-      windowsAppId: '{FDA43817-EFCC-42D0-AB69-D414B629E300}',
-      executableName: 'HeyBuddy',
-      artifactStem: 'HeyBuddy',
-      iconStem: 'icon',
-      authMode: 'oa',
-      authApiBaseUrl: 'https://ai.linyeyun.cn',
-    });
-  });
-
   it('resolves the complete AIBuddy identity', () => {
     const { resolveBrand } = require('./brand');
 
-    expect(resolveBrand('aibuddy')).toEqual({
+    expect(resolveBrand()).toEqual({
       edition: 'aibuddy',
       productName: 'AIBuddy',
       bundleId: 'com.electron.aibuddy',
@@ -60,43 +22,37 @@ describe('resolveBrand', () => {
     });
   });
 
-  it('rejects a missing edition', () => {
+  it('does not use APP_EDITION', () => {
     const { resolveBrand } = require('./brand');
-    vi.stubEnv('APP_EDITION', undefined);
+    const previousEdition = process.env.APP_EDITION;
+    process.env.APP_EDITION = 'heybuddy';
 
-    expect(() => resolveBrand()).toThrow(/APP_EDITION.*heybuddy, aibuddy/);
+    expect(resolveBrand().productName).toBe('AIBuddy');
 
-    vi.unstubAllEnvs();
-  });
-
-  it('rejects an unsupported edition', () => {
-    const { resolveBrand } = require('./brand');
-
-    expect(() => resolveBrand('goose')).toThrow(/goose.*heybuddy, aibuddy/);
+    if (previousEdition === undefined) {
+      delete process.env.APP_EDITION;
+    } else {
+      process.env.APP_EDITION = previousEdition;
+    }
   });
 
   it('returns immutable brand data', () => {
     const { resolveBrand } = require('./brand');
 
-    expect(Object.isFrozen(resolveBrand('heybuddy'))).toBe(true);
+    expect(Object.isFrozen(resolveBrand())).toBe(true);
   });
 });
 
 describe('brand CLI', () => {
-  it('prints one requested scalar field', () => {
-    expect(
-      execFileSync(process.execPath, [brandScript, 'aibuddy', 'productName'], {
-        encoding: 'utf8',
-      })
-    ).toBe('AIBuddy\n');
+  it('prints one requested scalar field without an edition argument', () => {
+    expect(execFileSync(process.execPath, [brandScript, 'artifactStem'], { encoding: 'utf8' })).toBe(
+      'AIBuddy\n'
+    );
   });
 
-  it('rejects an unknown field', () => {
+  it('rejects unknown fields', () => {
     expect(() =>
-      execFileSync(process.execPath, [brandScript, 'heybuddy', 'missing'], {
-        encoding: 'utf8',
-        stdio: 'pipe',
-      })
+      execFileSync(process.execPath, [brandScript, 'missing'], { encoding: 'utf8', stdio: 'pipe' })
     ).toThrow();
   });
 });

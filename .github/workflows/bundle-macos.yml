@@ -278,7 +278,6 @@ jobs:
 
       - name: Build App
         env:
-          APP_EDITION: heybuddy
           APPLE_ID: ${{ inputs.signing && secrets.APPLE_ID || '' }}
           APPLE_ID_PASSWORD: ${{ inputs.signing && secrets.APPLE_ID_PASSWORD || '' }}
           APPLE_TEAM_ID: ${{ inputs.signing && secrets.APPLE_TEAM_ID || '' }}
@@ -298,10 +297,8 @@ jobs:
           fi
         working-directory: ui/desktop
 
-      - name: Verify macOS updater resources
-        env:
-          APP_PATH: out/HeyBuddy-darwin-arm64/HeyBuddy.app
-        run: node scripts/verify-mac-update-resources.js "$APP_PATH"
+      - name: Verify macOS package
+        run: pnpm run verify:package -- darwin out/AIBuddy-darwin-arm64
         working-directory: ui/desktop
 
       - name: Clean up signing keychain
@@ -321,24 +318,24 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: Goose-darwin-arm64
-          path: ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.zip
+          path: ui/desktop/out/AIBuddy-darwin-arm64/AIBuddy.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
 
       - name: Quick launch test (macOS)
         env:
-          APP_PATH: ui/desktop/out/HeyBuddy-darwin-arm64/HeyBuddy.app
+          APP_PATH: ui/desktop/out/AIBuddy-darwin-arm64/AIBuddy.app
         run: |
           xattr -cr "$APP_PATH"
-          echo "Opening HeyBuddy.app..."
+          echo "Opening AIBuddy.app..."
           open -g "$APP_PATH"
           sleep 5
 
-          if pgrep -f "HeyBuddy.app/Contents/MacOS/HeyBuddy" > /dev/null; then
+          if pgrep -f "AIBuddy.app/Contents/MacOS/AIBuddy" > /dev/null; then
             echo "App appears to be running."
           else
             echo "App did not stay open. Possible crash or startup error."
             exit 1
           fi
-          pkill -f "HeyBuddy.app/Contents/MacOS/HeyBuddy"
+          pkill -f "AIBuddy.app/Contents/MacOS/AIBuddy"

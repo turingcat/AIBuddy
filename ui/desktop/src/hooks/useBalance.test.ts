@@ -24,14 +24,14 @@ import { AppEvents } from '../constants/events';
  *   M7 streaming→loading / M8 error→idle / M9 多会话独立（全局单状态会漏检的回归）。
  * 路径分析（useBalance，V(G)=8）：
  *   H1 loading→ready / H2 定时轮询持续拉取 / H3 手动 refresh /
- *   H4 no-pat / H5 not-logged-in / H6 unauthorized / H7 其他错误 message /
+ *   H4 not-logged-in / H5 unauthorized / H6 其他错误 message /
  *   H8 invoke 意外抛异常 / H9 卸载后停止轮询 / H10 慢响应竞态丢弃旧结果 /
  *   H12 事件边沿触发刷新（接线）/ H15 卸载移除事件监听 / H16 事件与轮询互不干扰。
  * 条件矩阵：
  *   | 原子条件 | 取真用例 | 取假用例 |
  *   | result.ok | H1 | H4-H7 |
  *   | seq === seqRef.current（非竞态） | H1-H8 | H10 |
- *   | kind ∈ {no-pat, not-logged-in, unauthorized} | H4/H5/H6 | H7 |
+ *   | kind ∈ {not-logged-in, unauthorized} | H4/H5 | H6 |
  *   | Map 命中（非首见会话） | M2-M8 | M1 |
  *   | previous === 'streaming' | M3/M9 | M2/M4-M8 |
  *   | streamState === 'idle' | M3/M4/M5/M8/M9 | M2/M6/M7 |
@@ -81,7 +81,7 @@ function dispatchStatus(sessionId: string, streamState: SessionStreamState) {
     window.dispatchEvent(
       new CustomEvent(AppEvents.SESSION_STATUS_UPDATE, {
         detail: { sessionId, streamState, messageCount: 1 },
-      }),
+      })
     );
   });
 }
@@ -146,10 +146,9 @@ describe('useBalance（余额轮询 hook）', () => {
   });
 
   it.each([
-    ['no-pat', { status: 'no-pat' }],
     ['not-logged-in', { status: 'not-logged-in' }],
     ['unauthorized', { status: 'unauthorized' }],
-  ] as const)('H4-H6: kind=%s 映射为对应状态', async (kind, expected) => {
+  ] as const)('H4-H5: kind=%s 映射为对应状态', async (kind, expected) => {
     electronMock.getUserBalance.mockResolvedValue({
       ok: false,
       kind,
@@ -160,6 +159,19 @@ describe('useBalance（余额轮询 hook）', () => {
     await flush();
 
     expect(result.current.state).toEqual(expected);
+  });
+
+  it('maps an unsupported failure payload to the generic error state', async () => {
+    electronMock.getUserBalance.mockResolvedValue({
+      ok: false,
+      kind: 'removed-auth-kind',
+      message: 'legacy failure',
+    } as unknown as BalanceResult);
+
+    const { result } = renderHook(() => useBalance());
+    await flush();
+
+    expect(result.current.state).toEqual({ status: 'error', message: 'legacy failure' });
   });
 
   it('H7: 其他失败 kind 进入 error 并保留 message', async () => {

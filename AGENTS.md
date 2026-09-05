@@ -1,15 +1,21 @@
 # AGENTS Instructions
 
-goose is an AI agent framework in Rust with CLI and Electron desktop interfaces.
+AIBuddy is an AI agent framework in Rust with CLI and Electron desktop interfaces.
 
 ## Development Standards
 
-These standards apply to all code changes in the HeyBuddy fork.
+These standards apply to all code changes in AIBuddy.
 
 ### Branching
 
 - Any new feature must be developed on a **new branch**, not committed directly to `main`.
 - A feature branch may only be merged into `main` after it has been **fully tested and verified**.
+
+### Upstream Synchronization
+
+Normal AIBuddy updates must use a synchronization branch that fetches and merges `upstream/shared`; never merge `upstream/main` directly. The shared branch is limited to official Goose updates and product-neutral engine, desktop, localization, and tooling work. AIBuddy owns its product name and assets, authentication and service configuration, provider credentials and entitlements, data migration, and user-visible identity.
+
+After a shared merge, run `cd ui/desktop && pnpm run check:product-boundary` before the normal review and verification workflow. Split mixed changes in HeyBuddy before they reach `shared`; exceptional cherry-picks from `upstream/main` require the same product-boundary review.
 
 ### Testing
 

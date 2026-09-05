@@ -428,7 +428,7 @@ export default function AppSettingsSection() {
             <Button
               onClick={() => {
                 window.open(
-                  'https://github.com/aaif-goose/goose/issues/new?template=bug_report.md',
+                  'https://github.com/turingcat/AIBuddy/issues/new?template=bug_report.md',
                   '_blank'
                 );
               }}
@@ -440,7 +440,7 @@ export default function AppSettingsSection() {
             <Button
               onClick={() => {
                 window.open(
-                  'https://github.com/aaif-goose/goose/issues/new?template=feature_request.md',
+                  'https://github.com/turingcat/AIBuddy/issues/new?template=feature_request.md',
                   '_blank'
                 );
               }}
@@ -475,7 +475,7 @@ export default function AppSettingsSection() {
       <Card className="rounded-lg">
         <CardHeader className="pb-0">
           <CardTitle className="mb-1">账户</CardTitle>
-          <CardDescription>退出当前登录的 HeyBuddy 账号</CardDescription>
+          <CardDescription>退出当前登录的 AIBuddy 账号</CardDescription>
         </CardHeader>
         <CardContent className="pt-4 px-4">
           <Button variant="secondary" size="sm" onClick={() => logout(intl)}>

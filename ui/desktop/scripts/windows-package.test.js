@@ -1,89 +1,63 @@
+const { execFileSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
 const {
   buildInnoDefinitions,
   portableArchiveName,
-  setupFileName,
   resolveWindowsPackage,
+  setupFileName,
 } = require('./windows-package');
 const { resolveBrand } = require('./brand');
 
 function definitionMap(args) {
-  return Object.fromEntries(
-    args.map((arg) => {
-      const [name, ...rest] = arg.replace(/^\/D/, '').split('=');
-      return [name, rest.join('=')];
-    })
-  );
+  return Object.fromEntries(args.map((arg) => {
+    const [name, ...rest] = arg.replace(/^\/D/, '').split('=');
+    return [name, rest.join('=')];
+  }));
 }
 
 describe('buildInnoDefinitions', () => {
-  it.each([
-    ['heybuddy', 'HeyBuddy', '{FDA43817-EFCC-42D0-AB69-D414B629E300}'],
-    ['aibuddy', 'AIBuddy', '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}'],
-  ])('carries the %s identity into the installer', (edition, productName, appId) => {
-    const args = buildInnoDefinitions(
-      resolveBrand(edition),
-      '1.0.1',
-      'C:\\build\\dist',
-      'C:\\artifacts'
-    );
+  it('builds AIBuddy Inno definitions', () => {
+    const args = buildInnoDefinitions(resolveBrand(), '1.2.3', 'dist', 'out');
 
     expect(args.every((arg) => arg.startsWith('/D'))).toBe(true);
     expect(definitionMap(args)).toEqual({
-      MyAppName: productName,
-      MyAppVersion: '1.0.1',
-      MyAppId: appId,
-      MyAppExeName: `${productName}.exe`,
-      SourceDir: 'C:\\build\\dist',
-      OutputDir: 'C:\\artifacts',
-      OutputBaseFilename: `${productName}-windows-x64-setup`,
+      MyAppName: 'AIBuddy',
+      MyAppVersion: '1.2.3',
+      MyAppId: '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}',
+      MyAppExeName: 'AIBuddy.exe',
+      SourceDir: 'dist',
+      OutputDir: 'out',
+      OutputBaseFilename: 'AIBuddy-windows-x64-setup',
     });
   });
 
-  // Each edition upgrades in place off its own AppId; sharing one would let
-  // installing AIBuddy silently uninstall HeyBuddy.
-  it('gives each edition a distinct AppId', () => {
-    const [heybuddy, aibuddy] = ['heybuddy', 'aibuddy'].map(
-      (edition) =>
-        definitionMap(buildInnoDefinitions(resolveBrand(edition), '1.0.1', 'src', 'out')).MyAppId
-    );
-
-    expect(heybuddy).not.toBe(aibuddy);
+  it.each(['', '1.0', 'v1.0.1', '1.0.1-rc.1', '1.0.1.2.3'])('rejects invalid version %j', (version) => {
+    expect(() => buildInnoDefinitions(resolveBrand(), version, 'src', 'out')).toThrow(/version/i);
   });
 
-  it.each(['', '1.0', 'v1.0.1', '1.0.1-rc.1', '1.0.1; shutdown'])(
-    'rejects the malformed version %j',
-    (version) => {
-      expect(() =>
-        buildInnoDefinitions(resolveBrand('heybuddy'), version, 'src', 'out')
-      ).toThrow(/version/i);
-    }
-  );
+  it.each(['sourceDir', 'outputDir'])('rejects a missing %s', (missing) => {
+    const directories = { sourceDir: 'src', outputDir: 'out' };
+    directories[missing] = '';
 
-  it.each(['src', 'out'])('rejects a missing %s directory', (missing) => {
-    const dirs = { src: 'C:\\build\\dist', out: 'C:\\artifacts' };
-    dirs[missing] = '';
     expect(() =>
-      buildInnoDefinitions(resolveBrand('heybuddy'), '1.0.1', dirs.src, dirs.out)
-    ).toThrow(/director/i);
+      buildInnoDefinitions(resolveBrand(), '1.0.1', directories.sourceDir, directories.outputDir)
+    ).toThrow(/directory/i);
   });
 });
 
 describe('release artifact names', () => {
-  it.each([
-    ['heybuddy', 'HeyBuddy'],
-    ['aibuddy', 'AIBuddy'],
-  ])('names the %s artifacts after the edition', (edition, productName) => {
-    const brand = resolveBrand(edition);
+  it('uses the AIBuddy artifact stem', () => {
+    const brand = resolveBrand();
 
-    expect(setupFileName(brand)).toBe(`${productName}-windows-x64-setup.exe`);
-    expect(portableArchiveName(brand)).toBe(`${productName}-windows-x64-portable.zip`);
+    expect(setupFileName(brand)).toBe('AIBuddy-windows-x64-setup.exe');
+    expect(portableArchiveName(brand)).toBe('AIBuddy-windows-x64-portable.zip');
   });
 });
 
 describe('resolveWindowsPackage', () => {
-  it('describes the package the PowerShell build consumes', () => {
-    expect(resolveWindowsPackage('aibuddy', '1.0.1', 'C:\\build\\dist', 'C:\\artifacts')).toEqual({
-      edition: 'aibuddy',
+  it('describes the AIBuddy package consumed by the PowerShell build', () => {
+    expect(resolveWindowsPackage('1.0.1', 'C:\\build\\dist', 'C:\\artifacts')).toEqual({
       productName: 'AIBuddy',
       appId: '{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}',
       executableName: 'AIBuddy.exe',
@@ -91,23 +65,53 @@ describe('resolveWindowsPackage', () => {
       setupFileName: 'AIBuddy-windows-x64-setup.exe',
       portableFileName: 'AIBuddy-windows-x64-portable.zip',
       isccArgs: buildInnoDefinitions(
-        resolveBrand('aibuddy'),
+        resolveBrand(),
         '1.0.1',
         'C:\\build\\dist',
         'C:\\artifacts'
       ),
     });
   });
+});
 
-  it.each(['', 'goose', 'HEYBUDDY'])('rejects the edition %j', (edition) => {
-    expect(() => resolveWindowsPackage(edition, '1.0.1', 'src', 'out')).toThrow(/APP_EDITION/);
+describe('Windows packaging automation contracts', () => {
+  const repositoryRoot = path.resolve(__dirname, '../../..');
+
+  it('keeps the Windows bundle workflow parseable', () => {
+    expect(() =>
+      execFileSync('ruby', ['-e', "require 'yaml'; YAML.load_file(ARGV.fetch(0))", '.github/workflows/bundle-windows.yml'], {
+        cwd: repositoryRoot,
+        stdio: 'pipe',
+      })
+    ).not.toThrow();
   });
 
-  it('falls back to APP_EDITION when the CLI omits the edition', () => {
-    vi.stubEnv('APP_EDITION', 'aibuddy');
+  it('keeps AIBuddy upload artifacts inside the upload action options', () => {
+    const output = execFileSync(
+      'ruby',
+      [
+        '-rjson',
+        '-ryaml',
+        '-e',
+        "workflow = YAML.load_file(ARGV.fetch(0)); step = workflow['jobs']['package-desktop-windows']['steps'].find { |entry| entry['name'] == 'Upload Windows build' }; puts JSON.generate(step)",
+        '.github/workflows/bundle-windows.yml',
+      ],
+      { cwd: repositoryRoot, encoding: 'utf8' }
+    );
+    const upload = JSON.parse(output);
 
-    expect(resolveWindowsPackage(undefined, '1.0.1', 'src', 'out').edition).toBe('aibuddy');
+    expect(upload.with.path.trim().split(/\r?\n/)).toEqual([
+      '${{ steps.package-windows-zip.outputs.portable_file_name }}',
+      'AIBuddy-windows-x64-setup.exe',
+    ]);
+    expect(upload.with['if-no-files-found']).toBe('error');
+    expect(upload.with.overwrite).toBe(true);
+  });
 
-    vi.unstubAllEnvs();
+  it('does not apply the removed edition validator to the proxy parameter', () => {
+    const script = fs.readFileSync(path.join(repositoryRoot, 'build-windows.ps1'), 'utf8');
+
+    expect(script).not.toMatch(/\[ValidateSet\('heybuddy', 'aibuddy'\)\]/);
+    expect(script).not.toMatch(/build-windows\.ps1\s+-Edition/);
   });
 });

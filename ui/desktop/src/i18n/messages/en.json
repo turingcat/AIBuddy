@@ -179,9 +179,6 @@
   "balanceWidget.monthly": {
     "defaultMessage": "Monthly: {value}"
   },
-  "balanceWidget.noPat": {
-    "defaultMessage": "Re-login to view balance"
-  },
   "balanceWidget.refresh": {
     "defaultMessage": "Refresh balance"
   },
@@ -1510,9 +1507,6 @@
   },
   "hub.aibuddyIdentity": {
     "defaultMessage": ", I'm AIBuddy"
-  },
-  "hub.assistantIdentity": {
-    "defaultMessage": ", I'm Guanglin AI Assistant"
   },
   "hub.goodAfternoon": {
     "defaultMessage": "Good afternoon"
@@ -3901,9 +3895,6 @@
   },
   "sessions.importNostr.description": {
     "defaultMessage": "Paste a {appName} Nostr share link to fetch, decrypt, and import the session."
-  },
-  "sessions.importNostr.placeholder": {
-    "defaultMessage": "{protocol}://sessions/nostr?nevent=...&key=..."
   },
   "sessions.importNostr.title": {
     "defaultMessage": "Import Nostr Session"

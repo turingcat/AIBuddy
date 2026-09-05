@@ -3,6 +3,7 @@ import * as path from 'path';
 import log from './logger';
 import { loadRecentDirs } from './recentDirs';
 import { getAppDisplayName, getAppTrayIconStem } from '../brand';
+import { packagedAibuddyAssetPath } from '../appAssets';
 
 function showAllWindows() {
   const windows = BrowserWindow.getAllWindows();
@@ -34,15 +35,15 @@ function showAllWindows() {
 }
 
 export function setTrayRef(tray: Tray) {
-  const imagesDir = app.isPackaged
-    ? path.join(process.resourcesPath, 'images')
-    : path.join(process.cwd(), 'src', 'images');
+  const trayIconPath = app.isPackaged
+    ? packagedAibuddyAssetPath(process.resourcesPath, getAppTrayIconStem(), 'png')
+    : path.join(process.cwd(), 'src', 'images', `${getAppTrayIconStem()}.png`);
 
   // 托盘取 22/44px 的 *Template 单色字形，不能用 1024px 的彩色应用图标：
   // macOS 会把满幅彩色位图压成实心剪影，菜单栏上只剩一个白色方块
   // @author logic
   // @date 2026-08-14
-  tray.setImage(nativeImage.createFromPath(path.join(imagesDir, `${getAppTrayIconStem()}.png`)));
+  tray.setImage(nativeImage.createFromPath(trayIconPath));
   tray.setToolTip(getAppDisplayName());
   tray.setContextMenu(
     Menu.buildFromTemplate([

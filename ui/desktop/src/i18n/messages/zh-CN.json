@@ -92,9 +92,6 @@
   "balanceWidget.loadFailed": {
     "defaultMessage": "余额加载失败"
   },
-  "balanceWidget.noPat": {
-    "defaultMessage": "重新登录后可查看余额"
-  },
   "balanceWidget.refresh": {
     "defaultMessage": "刷新余额"
   },
@@ -1489,9 +1486,6 @@
   },
   "hub.goodAfternoon": {
     "defaultMessage": "下午好"
-  },
-  "hub.assistantIdentity": {
-    "defaultMessage": "，我是广林AI助手"
   },
   "hub.aibuddyIdentity": {
     "defaultMessage": "，我是AIBuddy"
@@ -3853,9 +3847,6 @@
   },
   "sessions.importNostr.description": {
     "defaultMessage": "粘贴 {appName} Nostr 分享链接以获取、解密并导入会话。"
-  },
-  "sessions.importNostr.placeholder": {
-    "defaultMessage": "{protocol}://sessions/nostr?nevent=...&key=..."
   },
   "sessions.importNostr.title": {
     "defaultMessage": "导入 Nostr 会话"

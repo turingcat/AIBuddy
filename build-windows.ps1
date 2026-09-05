@@ -4,14 +4,11 @@
     Windows 桌面一键构建脚本
     复刻 .github/workflows/bundle-windows.yml 的 standard 变体（不含代码签名）
     产物：ui/desktop/dist-windows/、项目根 <版本>-windows-x64-portable.zip 与 <版本>-windows-x64-setup.exe
-    运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1 -Edition heybuddy
+  运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\build-windows.ps1
 #>
 
 [CmdletBinding()]
 param(
-    # 构建版本（品牌标识取自 ui/desktop/branding/brands.json）
-    [ValidateSet('heybuddy', 'aibuddy')]
-    [string]$Edition = 'heybuddy',
     # HTTP 代理（默认本机代理，cargo/pnpm 下载走代理；其他环境用 -Proxy 覆盖，传空串则不走代理）
     [string]$Proxy = 'http://127.0.0.1:10809',
     # electron 二进制镜像（@electron/get 不读 HTTPS_PROXY，直连 GitHub 拉校验文件会卡死）
@@ -19,7 +16,7 @@ param(
     # node 目录（默认本机 node 24.10.0，规避 node 24.16 与 electron-packager 的 packaging 静默退出 bug）
     [string]$NodePath = 'C:\soft\node-v24.10.0-win-x64',
     # 登录服务生产地址：烘焙进安装包主进程（开发模式 just run-ui 不经此脚本，仍默认 localhost:3001）
-    [string]$AuthApiBaseUrl = 'https://ai.linyeyun.cn',
+    [string]$AuthApiBaseUrl = 'https://tflow.online',
     # 目标版本号：留空则自动 patch+1（如 1.45.0 -> 1.45.1）；指定后直接写入该版本（对齐 CI bundle-windows 的 version 输入）
     [string]$Version = '',
     # 跳过版本递增：构建失败重试时使用，避免版本跳号；与 -Version 互斥
@@ -45,7 +42,7 @@ if ($ElectronMirror) {
 }
 
 # 登录服务地址：vite 构建时经 define 烘焙进主进程产物，子进程（build-main.js / forge make）继承
-$env:HEYBUDDY_AUTH_API_BASE_URL = $AuthApiBaseUrl
+$env:AIBUDDY_AUTH_API_BASE_URL = $AuthApiBaseUrl
 Write-Host "登录服务地址已设置：$AuthApiBaseUrl"
 
 # 使用指定 node（前置到 PATH），并用其 corepack 准备 pnpm
@@ -61,8 +58,7 @@ if ($NodePath) {
 }
 
 # 版本标识：forge / vite / 安装包脚本均按此解析品牌，子进程继承
-$env:APP_EDITION = $Edition
-Write-Host "构建版本：$Edition"
+Write-Host "构建版本：AIBuddy"
 
 # 切换到项目根目录（脚本所在目录）
 $ProjectRoot = $PSScriptRoot
@@ -232,7 +228,7 @@ function Package-Distribution {
     # 版本产物名与 Inno 定义统一由 windows-package.js 生成，避免脚本内硬编码品牌
     $version = (Get-Content (Join-Path $desktopDir 'package.json') -Raw | ConvertFrom-Json).version
     $distDir = Join-Path $desktopDir 'dist-windows'
-    $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $Edition $version $distDir $ProjectRoot
+ $pkgJson = & node (Join-Path $desktopDir 'scripts\windows-package.js') $version $distDir $ProjectRoot
     if ($LASTEXITCODE -ne 0) { throw "解析 Windows 打包参数失败" }
     $pkg = $pkgJson | ConvertFrom-Json
 

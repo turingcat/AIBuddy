@@ -3,12 +3,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  decodeCredentialsFile,
   readCredentials,
   writeCredentials,
   withRefreshedSession,
   clearCredentials,
   type CredentialsCodec,
+  type LoginCredentials,
 } from './credentials';
 
 /**
@@ -57,13 +57,24 @@ describe('credentials 读写', () => {
   });
 
   it('write 后 read 能读回（identity 回退）', () => {
-    const creds = { token: 't', baseUrl: 'https://gw', apiKey: 'k' };
+    const creds = {
+      token: 't',
+      baseUrl: 'https://gw',
+      apiKey: 'k',
+      authKind: 'sub2api' as const,
+    };
     writeCredentials(tmpFile, creds, identityCodec);
     expect(readCredentials(tmpFile, identityCodec)).toMatchObject(creds);
   });
 
   it('含 pat 时 write/read 往返保留（加密 codec）', () => {
-    const creds = { token: 't', baseUrl: 'u', apiKey: 'k', pat: 'pat-x' };
+    const creds = {
+      token: 't',
+      baseUrl: 'u',
+      apiKey: 'k',
+      authKind: 'sub2api' as const,
+      pat: 'pat-x',
+    };
     writeCredentials(tmpFile, creds, base64Codec);
     expect(readCredentials(tmpFile, base64Codec)).toMatchObject(creds);
   });
@@ -71,7 +82,13 @@ describe('credentials 读写', () => {
   it('加密写入后文件不含明文凭证', () => {
     writeCredentials(
       tmpFile,
-      { token: 'secret-token', baseUrl: 'https://gw', apiKey: 'secret-key', pat: 'secret-pat' },
+      {
+        token: 'secret-token',
+        baseUrl: 'https://gw',
+        apiKey: 'secret-key',
+        authKind: 'sub2api',
+        pat: 'secret-pat',
+      },
       base64Codec
     );
     const raw = fs.readFileSync(tmpFile, 'utf8');
@@ -82,30 +99,25 @@ describe('credentials 读写', () => {
   });
 
   it('旧登录文件（明文）无 pat 字段时仍可读', () => {
-    fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' })
+    );
     const creds = readCredentials(tmpFile, identityCodec);
     expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     expect(creds?.pat).toBeUndefined();
   });
 
-  it('decodeCredentialsFile 读取旧明文但不重写源文件', () => {
-    const plaintext = JSON.stringify({
-      token: 'plain-token',
-      baseUrl: 'https://tflow.online/v1',
-      apiKey: 'sk-aibuddy',
-      authKind: 'sub2api',
-    });
-    fs.writeFileSync(tmpFile, plaintext);
-
-    expect(decodeCredentialsFile(tmpFile, base64Codec)).toMatchObject({
-      token: 'plain-token',
-      siteKind: 'sub2api',
-    });
-    expect(fs.readFileSync(tmpFile, 'utf8')).toBe(plaintext);
-  });
-
   it('旧明文文件用加密 codec 读取时自动迁移为 v:1 信封', () => {
-    fs.writeFileSync(tmpFile, JSON.stringify({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' }));
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        token: 'plain-token',
+        baseUrl: 'u',
+        apiKey: 'k',
+        authKind: 'sub2api',
+      })
+    );
     const creds = readCredentials(tmpFile, base64Codec);
     expect(creds).toMatchObject({ token: 'plain-token', baseUrl: 'u', apiKey: 'k' });
     const raw = fs.readFileSync(tmpFile, 'utf8');
@@ -116,7 +128,10 @@ describe('credentials 读写', () => {
   });
 
   it('旧明文文件用 identity codec 读取时重写为信封结构', () => {
-    fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' })
+    );
     const creds = readCredentials(tmpFile, identityCodec);
     expect(creds).toMatchObject({ token: 't', baseUrl: 'u', apiKey: 'k' });
     const envelope = JSON.parse(fs.readFileSync(tmpFile, 'utf8'));
@@ -179,14 +194,59 @@ describe('credentials 读写', () => {
     });
   });
 
-  it('旧版凭证没有 authKind 时仍然有效', () => {
+  it('rejects legacy credentials without an AIBuddy discriminator', () => {
     fs.writeFileSync(tmpFile, JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k' }));
 
-    expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
-      token: 'legacy',
-      baseUrl: 'u',
-      apiKey: 'k',
-    });
+    expect(readCredentials(tmpFile, identityCodec)).toBeNull();
+  });
+
+  it('rejects legacy OA credentials', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({ token: 'legacy', baseUrl: 'u', apiKey: 'k', authKind: 'oa' })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toBeNull();
+  });
+
+  it('rejects canonical credentials for the removed HeyBuddy provider', () => {
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({
+        schemaVersion: 2,
+        siteKind: 'oa',
+        session: { accessToken: 'legacy' },
+        account: {},
+        gateway: { providerId: 'heybuddy', baseUrl: 'u', apiKey: 'k' },
+        token: 'legacy',
+        baseUrl: 'u',
+        apiKey: 'k',
+      })
+    );
+
+    expect(readCredentials(tmpFile, identityCodec)).toBeNull();
+  });
+
+  it.each([
+    ['unmarked', { token: 't', baseUrl: 'u', apiKey: 'k' }],
+    ['OA', { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'oa' }],
+    [
+      'HeyBuddy',
+      {
+        schemaVersion: 2,
+        siteKind: 'oa',
+        session: { accessToken: 't' },
+        gateway: { providerId: 'heybuddy', baseUrl: 'u', apiKey: 'k' },
+        token: 't',
+        baseUrl: 'u',
+        apiKey: 'k',
+      },
+    ],
+  ])('write rejects %s credentials before creating a file', (_name, credentials) => {
+    expect(() => writeCredentials(tmpFile, credentials as LoginCredentials, identityCodec)).toThrow(
+      'Invalid AIBuddy credentials'
+    );
+    expect(fs.existsSync(tmpFile)).toBe(false);
   });
 
   it('v:1 信封 blob 解密失败时返回 null', () => {
@@ -217,14 +277,21 @@ describe('credentials 读写', () => {
 
   // Windows 上 Unix 权限位不生效，仅在 Linux/macOS 校验 0o600
   it.skipIf(process.platform === 'win32')('write 后文件权限为 0o600', () => {
-    writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k' }, identityCodec);
+    writeCredentials(
+      tmpFile,
+      { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' },
+      identityCodec
+    );
     const mode = fs.statSync(tmpFile).mode & 0o777;
     expect(mode).toBe(0o600);
   });
 
   // 迁移写入失败（只读文件）不应阻断读取，凭证仍返回
   it.skipIf(process.platform === 'win32')('旧明文迁移写入失败时读取不中断', () => {
-    fs.writeFileSync(tmpFile, JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k' }));
+    fs.writeFileSync(
+      tmpFile,
+      JSON.stringify({ token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' })
+    );
     fs.chmodSync(tmpFile, 0o400);
     try {
       expect(readCredentials(tmpFile, identityCodec)).toMatchObject({
@@ -238,7 +305,11 @@ describe('credentials 读写', () => {
   });
 
   it('clear 删除文件', () => {
-    writeCredentials(tmpFile, { token: 't', baseUrl: 'u', apiKey: 'k' }, identityCodec);
+    writeCredentials(
+      tmpFile,
+      { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'sub2api' },
+      identityCodec
+    );
     clearCredentials(tmpFile);
     expect(fs.existsSync(tmpFile)).toBe(false);
   });
@@ -273,6 +344,13 @@ describe('withRefreshedSession', () => {
         authKind: 'sub2api',
         groupId: 'team-a',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+        account: {},
+        gateway: {
+          providerId: 'aibuddy',
+          baseUrl: 'https://tflow.online/v1',
+          apiKey: 'sk-secret',
+          groupId: 'team-a',
+        },
       },
       { accessToken: 'new-access', refreshToken: 'new-refresh' }
     );
@@ -289,11 +367,19 @@ describe('withRefreshedSession', () => {
   it('面板未下发新 refresh token 时沿用原有的', () => {
     const refreshed = withRefreshedSession(
       {
+        schemaVersion: 2,
+        siteKind: 'sub2api',
         token: 'old-access',
         refreshToken: 'old-refresh',
         baseUrl: 'https://tflow.online/v1',
         apiKey: 'sk-secret',
         session: { accessToken: 'old-access', refreshToken: 'old-refresh' },
+        account: {},
+        gateway: {
+          providerId: 'aibuddy',
+          baseUrl: 'https://tflow.online/v1',
+          apiKey: 'sk-secret',
+        },
       },
       { accessToken: 'new-access' }
     );

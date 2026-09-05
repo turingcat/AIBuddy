@@ -12,7 +12,7 @@ import { IntlTestWrapper } from '../../../i18n/test-utils';
 vi.mock('../../../acp/providers', () => ({
   acpListProviderDetails: vi.fn().mockResolvedValue([]),
   acpReadDefaults: vi.fn().mockResolvedValue({
-    providerId: 'heybuddy',
+    providerId: 'aibuddy',
     modelId: 'glm-5.2',
   }),
 }));
@@ -20,9 +20,9 @@ vi.mock('../../../acp/providers', () => ({
 vi.mock('../../ModelAndProviderContext', () => ({
   useModelAndProvider: () => ({
     currentModel: 'glm-5.2',
-    currentProvider: 'heybuddy',
+    currentProvider: 'aibuddy',
     getCurrentModelDisplayName: vi.fn().mockResolvedValue('glm-5.2'),
-    getCurrentProviderDisplayName: vi.fn().mockResolvedValue('HeyBuddy'),
+    getCurrentProviderDisplayName: vi.fn().mockResolvedValue('AIBuddy'),
   }),
   modelAndProviderMessages: {
     unknownProviderTitle: { id: 'x', defaultMessage: 'x' },
@@ -42,8 +42,6 @@ const renderSection = () =>
 describe('ModelsSection Reset Provider 隐藏', () => {
   it('不渲染 Reset Provider 按钮', () => {
     renderSection();
-    expect(
-      screen.queryByRole('button', { name: /Reset Provider/i })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Reset Provider/i })).not.toBeInTheDocument();
   });
 });
