@@ -16,12 +16,13 @@ function definitionMap(args) {
 }
 
 describe('buildInnoDefinitions', () => {
-  it('carries the HeyBuddy identity into the installer', () => {
+  it('carries the HeyBuddy x64 identity into the installer', () => {
     const args = buildInnoDefinitions(
       resolveBrand('heybuddy'),
       '1.0.1',
       'C:\\build\\dist',
-      'C:\\artifacts'
+      'C:\\artifacts',
+      'x64'
     );
 
     expect(args.every((arg) => arg.startsWith('/D'))).toBe(true);
@@ -33,6 +34,22 @@ describe('buildInnoDefinitions', () => {
       SourceDir: 'C:\\build\\dist',
       OutputDir: 'C:\\artifacts',
       OutputBaseFilename: 'HeyBuddy-windows-x64-setup',
+      MyAppArch: 'x64',
+    });
+  });
+
+  it('carries the x32 architecture into the installer', () => {
+    const args = buildInnoDefinitions(
+      resolveBrand('heybuddy'),
+      '1.0.1',
+      'C:\\build\\dist',
+      'C:\\artifacts',
+      'x32'
+    );
+
+    expect(definitionMap(args)).toMatchObject({
+      OutputBaseFilename: 'HeyBuddy-windows-x32-setup',
+      MyAppArch: 'x32',
     });
   });
 
@@ -55,29 +72,41 @@ describe('buildInnoDefinitions', () => {
 });
 
 describe('release artifact names', () => {
-  it('names the artifacts after the edition', () => {
+  it('names the installers after the edition and architecture', () => {
     const brand = resolveBrand('heybuddy');
 
-    expect(setupFileName(brand)).toBe('HeyBuddy-windows-x64-setup.exe');
-    expect(portableArchiveName(brand)).toBe('HeyBuddy-windows-x64-portable.zip');
+    expect(setupFileName(brand, 'x32')).toBe('HeyBuddy-windows-x32-setup.exe');
+    expect(setupFileName(brand, 'x64')).toBe('HeyBuddy-windows-x64-setup.exe');
+    expect(portableArchiveName).toBeUndefined();
   });
 });
 
 describe('resolveWindowsPackage', () => {
-  it('describes the package the PowerShell build consumes', () => {
-    expect(resolveWindowsPackage('heybuddy', '1.0.1', 'C:\\build\\dist', 'C:\\artifacts')).toEqual({
+  it('describes the x32 package the PowerShell build consumes', () => {
+    expect(
+      resolveWindowsPackage(
+        'heybuddy',
+        '1.0.1',
+        'C:\\build\\dist',
+        'C:\\artifacts',
+        'x32'
+      )
+    ).toEqual({
       edition: 'heybuddy',
       productName: 'HeyBuddy',
       appId: '{FDA43817-EFCC-42D0-AB69-D414B629E300}',
       executableName: 'HeyBuddy.exe',
-      packagedDirName: 'HeyBuddy-win32-x64',
-      setupFileName: 'HeyBuddy-windows-x64-setup.exe',
-      portableFileName: 'HeyBuddy-windows-x64-portable.zip',
+      architecture: 'x32',
+      electronArch: 'ia32',
+      rustTarget: 'i686-pc-windows-msvc',
+      packagedDirName: 'HeyBuddy-win32-ia32',
+      setupFileName: 'HeyBuddy-windows-x32-setup.exe',
       isccArgs: buildInnoDefinitions(
         resolveBrand('heybuddy'),
         '1.0.1',
         'C:\\build\\dist',
-        'C:\\artifacts'
+        'C:\\artifacts',
+        'x32'
       ),
     });
   });

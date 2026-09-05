@@ -1,10 +1,11 @@
 const { resolveBrand } = require('./brand');
+const { resolveWindowsArchitecture } = require('./windows-architecture');
 
 // Inno Setup's AppVersion only accepts a plain numeric release; a suffix or a
 // stray quote would either fail ISCC or leak into the /D command line.
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(\.\d+)?$/;
 
-function buildInnoDefinitions(brand, version, sourceDir, outputDir) {
+function buildInnoDefinitions(brand, version, sourceDir, outputDir, architecture) {
   if (!VERSION_PATTERN.test(version)) {
     throw new Error(`Invalid installer version ${JSON.stringify(version)}; expected x.y.z`);
   }
@@ -14,6 +15,7 @@ function buildInnoDefinitions(brand, version, sourceDir, outputDir) {
   if (!outputDir) {
     throw new Error('Missing installer output directory');
   }
+  const windowsArchitecture = resolveWindowsArchitecture(architecture);
 
   return Object.entries({
     MyAppName: brand.productName,
@@ -22,30 +24,37 @@ function buildInnoDefinitions(brand, version, sourceDir, outputDir) {
     MyAppExeName: `${brand.executableName}.exe`,
     SourceDir: sourceDir,
     OutputDir: outputDir,
-    OutputBaseFilename: `${brand.artifactStem}-windows-x64-setup`,
+    OutputBaseFilename: `${brand.artifactStem}-windows-${windowsArchitecture.name}-setup`,
+    MyAppArch: windowsArchitecture.name,
   }).map(([name, value]) => `/D${name}=${value}`);
 }
 
-function setupFileName(brand) {
-  return `${brand.artifactStem}-windows-x64-setup.exe`;
+function setupFileName(brand, architecture) {
+  const windowsArchitecture = resolveWindowsArchitecture(architecture);
+  return `${brand.artifactStem}-windows-${windowsArchitecture.name}-setup.exe`;
 }
 
-function portableArchiveName(brand) {
-  return `${brand.artifactStem}-windows-x64-portable.zip`;
-}
-
-function resolveWindowsPackage(edition, version, sourceDir, outputDir) {
+function resolveWindowsPackage(edition, version, sourceDir, outputDir, architecture) {
   const brand = resolveBrand(edition);
+  const windowsArchitecture = resolveWindowsArchitecture(architecture);
 
   return {
     edition: brand.edition,
     productName: brand.productName,
     appId: brand.windowsAppId,
     executableName: `${brand.executableName}.exe`,
-    packagedDirName: `${brand.productName}-win32-x64`,
-    setupFileName: setupFileName(brand),
-    portableFileName: portableArchiveName(brand),
-    isccArgs: buildInnoDefinitions(brand, version, sourceDir, outputDir),
+    architecture: windowsArchitecture.name,
+    electronArch: windowsArchitecture.electronArch,
+    rustTarget: windowsArchitecture.rustTarget,
+    packagedDirName: `${brand.productName}-win32-${windowsArchitecture.electronArch}`,
+    setupFileName: setupFileName(brand, windowsArchitecture.name),
+    isccArgs: buildInnoDefinitions(
+      brand,
+      version,
+      sourceDir,
+      outputDir,
+      windowsArchitecture.name
+    ),
   };
 }
 
@@ -61,6 +70,5 @@ if (require.main === module) {
 module.exports = {
   buildInnoDefinitions,
   setupFileName,
-  portableArchiveName,
   resolveWindowsPackage,
 };
