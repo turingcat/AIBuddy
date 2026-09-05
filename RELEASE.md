@@ -15,6 +15,8 @@ These are typically done once per week. The process has two automated phases:
 From there:
 - Test locally if you can (`just run-ui`)
 - Cherry-pick any last-minute fixes into the release branch if needed
+- Manually trigger the `CI` workflow (`workflow_dispatch`) on the release branch — `rust-msrv` and
+  `rust-build-windows` only run this way, not on every push, so this is the only place they get checked
 - Download and test the .zip from the release PR
 - When ready, follow the instructions on the release PR to tag and release
 
@@ -22,7 +24,7 @@ To trigger the release, find [the corresponding PR](https://github.com/aaif-goos
 
 ## Patch version releases
 
-When a minor release is tagged, automation immediately creates the next patch release branch (e.g. `release/1.25.1` from `release/1.25.0`) with the version already bumped and a release PR open. Cherry-pick fixes into this branch, then tag when ready.
+When a minor release is tagged, automation immediately creates the next patch release branch (e.g. `release/1.25.1` from `release/1.25.0`) with the version already bumped and a release PR open. Cherry-pick fixes into this branch, then manually trigger the `CI` workflow (`workflow_dispatch`) to run the MSRV and Windows cross-compilation checks before tagging.
 
 To trigger the release, find [the corresponding PR](https://github.com/aaif-goose/goose/pulls?q=is%3Apr+%22chore%28release%29%22+%22%28patch%29%22+author%3Aapp%2Fgithub-actions+) and follow the instructions in the PR description.
 

@@ -8,8 +8,7 @@ These standards apply to all code changes in the HeyBuddy fork.
 
 ### Branching
 
-- Any new feature must be developed on a **new branch**, not committed directly to `main`.
-- A feature branch may only be merged into `main` after it has been **fully tested and verified**.
+- Changes may be committed directly to `main`, provided they are **fully tested and verified** before pushing.
 
 ### Testing
 
