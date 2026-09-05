@@ -176,6 +176,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_windows_bundle_is_standard_only
     workflow = load_workflow("bundle-windows.yml")
     text = workflow_text("bundle-windows.yml")
+    architectures = workflow.dig("jobs", "build-goose-windows", "strategy", "matrix", "include")
 
     assert_equal "windows-latest", workflow.dig("jobs", "build-goose-windows", "runs-on")
     assert_equal "ubuntu-latest", workflow.dig("jobs", "package-cli-windows", "runs-on")
@@ -183,7 +184,19 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_equal "windows-latest", workflow.dig("jobs", "package-desktop-windows", "runs-on")
     refute_match(/windows_variant/i, text)
     refute_match(/cuda/i, text)
-    assert_includes text, "cargo build --release --target x86_64-pc-windows-msvc"
+    assert_equal [
+      {
+        "name" => "x32",
+        "electron_arch" => "ia32",
+        "rust_target" => "i686-pc-windows-msvc",
+      },
+      {
+        "name" => "x64",
+        "electron_arch" => "x64",
+        "rust_target" => "x86_64-pc-windows-msvc",
+      },
+    ], architectures
+    assert_includes text, "cargo build --release --target $env:RUST_TARGET"
   end
 
   def test_windows_desktop_bundle_uses_package_command
@@ -660,7 +673,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_bundle_jobs_cache_electron_downloads_with_platform_specific_keys
     {
       "bundle-macos.yml" => ["package-desktop", "arm64"],
-      "bundle-windows.yml" => ["build-desktop-windows", "x64"],
+      "bundle-windows.yml" => ["build-desktop-windows", "matrix.electron_arch"],
     }.each do |workflow_name, (job_name, architecture)|
       job = load_workflow(workflow_name).fetch("jobs").fetch(job_name)
       electron_cache = job.fetch("env").fetch("ELECTRON_CACHE")
@@ -726,16 +739,21 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "schema check must install from the UI workspace root"
   end
 
-  def test_release_workflows_retain_macos_arm64_and_windows_x64_targets
+  def test_release_workflows_retain_macos_arm64_and_both_windows_targets
     macos_workflow = load_workflow("bundle-macos.yml")
+    windows_workflow = load_workflow("bundle-windows.yml")
     windows_commands = cargo_commands("bundle-windows.yml")
+    windows_targets = windows_workflow.dig(
+      "jobs", "build-goose-windows", "strategy", "matrix", "include"
+    ).map { |entry| entry.fetch("rust_target") }
 
     assert_equal "aarch64-apple-darwin", macos_workflow.dig("env", "MACOS_TARGET"),
                  "bundle-macos.yml must retain the macOS ARM64 release target"
     assert cargo_commands("bundle-macos.yml").any? { |command| command.include?("--target \"$MACOS_TARGET\"") },
            "bundle-macos.yml must build with the macOS ARM64 release target"
-    assert windows_commands.any? { |command| command.include?("--target x86_64-pc-windows-msvc") },
-           "bundle-windows.yml must retain the Windows x64 release target"
+    assert_equal %w[i686-pc-windows-msvc x86_64-pc-windows-msvc], windows_targets
+    assert windows_commands.any? { |command| command.include?("--target $env:RUST_TARGET") },
+           "bundle-windows.yml must build the selected Windows matrix target"
   end
 
   def test_bundle_workflows_bound_final_artifact_retention
@@ -802,7 +820,10 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_internal_transfer_artifacts_expire_after_one_day
     {
       "bundle-macos.yml" => ["internal-goose-aarch64-apple-darwin"],
-      "bundle-windows.yml" => ["internal-goose-x86_64-pc-windows-msvc", "internal-windows-unsigned"],
+      "bundle-windows.yml" => [
+        "internal-goose-${{ matrix.rust_target }}",
+        "internal-windows-unsigned-${{ matrix.name }}",
+      ],
       "build-cli-linux.yml" => ["internal-goose-${{ matrix.architecture }}-${{ matrix.target-suffix }}${{ matrix.variant == 'vulkan' && '-vulkan' || '' }}"],
     }.each do |workflow_name, artifact_names|
       uploads = load_workflow(workflow_name).fetch("jobs").values.flat_map do |job|
@@ -955,12 +976,16 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def assert_semantic_rust_cache_contexts(entries)
     assert_standard_cache_context(entries)
     assert_cache_context(entries, :msrv, /msrv/i)
-    assert_cache_context(entries, :target, /aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+    assert_cache_context(
+      entries,
+      :target,
+      /aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|MACOS_TARGET|matrix\.rust_target/
+    )
   end
 
   def assert_standard_cache_context(entries)
     context_entries = entries.select { |entry| cache_context?(entry, :standard) }
-    incompatible_contexts = /msrv|aarch64-apple-darwin|x86_64-pc-windows-msvc/i
+    incompatible_contexts = /msrv|aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|matrix\.rust_target/i
 
     refute_empty context_entries, "Rust cache must cover the standard compiler context"
     context_entries.each do |entry|
@@ -1007,7 +1032,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def target_job?(job)
-    job.match?(/rustup target add|--target/) && job.match?(/aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+    job.match?(/rustup target add|--target/) &&
+      job.match?(/aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|MACOS_TARGET|matrix\.rust_target/)
   end
 
   def job_yaml(entry)
