@@ -195,7 +195,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
         "name" => "x64",
         "electron_arch" => "x64",
         "rust_target" => "x86_64-pc-windows-msvc",
-        "cargo_features" => "",
+        "cargo_features" => "code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update",
       },
     ], architectures
     assert_includes text, "cargo build --release --target $env:RUST_TARGET"
@@ -203,6 +203,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes text, '$env:CARGO_FEATURES'
     refute_includes architectures.first.fetch("cargo_features"), "code-mode"
     refute_includes architectures.first.fetch("cargo_features"), "local-inference"
+    assert_includes architectures.last.fetch("cargo_features"), "code-mode"
+    refute_includes architectures.last.fetch("cargo_features"), "local-inference"
   end
 
   def test_windows_desktop_bundle_uses_package_command
