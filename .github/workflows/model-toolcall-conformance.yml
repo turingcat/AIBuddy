@@ -29,8 +29,6 @@ jobs:
   openrouter-toolcalls:
     name: OpenRouter Tool Calls
     runs-on: ubuntu-latest
-    # Only meaningful on the upstream repo, which holds the provider secrets.
-    if: github.repository == 'aaif-goose/goose'
     timeout-minutes: 60
     steps:
       - name: Checkout Code

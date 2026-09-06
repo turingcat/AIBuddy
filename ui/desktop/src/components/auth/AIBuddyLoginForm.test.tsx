@@ -14,6 +14,7 @@ const getAIBuddyAuthSettings = vi.fn<() => Promise<AIBuddySettingsResult>>();
 const loginViaAIBuddy = vi.fn();
 const completeAIBuddy2FA = vi.fn();
 const provisionAIBuddyGroup = vi.fn();
+const refreshAuthSession = vi.fn();
 const restartApp = vi.fn();
 
 vi.mock('../../acp/providers', () => ({ acpSaveDefaults: saveDefaults }));
@@ -52,6 +53,7 @@ describe('AIBuddyLoginForm', () => {
     loginViaAIBuddy.mockReset();
     completeAIBuddy2FA.mockReset();
     provisionAIBuddyGroup.mockReset();
+    refreshAuthSession.mockReset();
     restartApp.mockReset();
     saveDefaults.mockReset();
     saveDefaults.mockResolvedValue(undefined);
@@ -59,6 +61,7 @@ describe('AIBuddyLoginForm', () => {
     window.electron.loginViaAIBuddy = loginViaAIBuddy;
     window.electron.completeAIBuddy2FA = completeAIBuddy2FA;
     window.electron.provisionAIBuddyGroup = provisionAIBuddyGroup;
+    window.electron.refreshAuthSession = refreshAuthSession;
     window.electron.restartApp = restartApp;
   });
 
@@ -81,10 +84,10 @@ describe('AIBuddyLoginForm', () => {
 
     expect(await screen.findByRole('heading', { name: /choose group/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/group/i)).toHaveValue('team-a');
-    expect(restartApp).not.toHaveBeenCalled();
+    expect(refreshAuthSession).not.toHaveBeenCalled();
   });
 
-  it('provisions the selected opaque login and restarts without touching agent defaults', async () => {
+  it('provisions the selected opaque login and refreshes the session without touching agent defaults', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'select-group',
@@ -103,25 +106,57 @@ describe('AIBuddyLoginForm', () => {
 
     await waitFor(() => {
       expect(provisionAIBuddyGroup).toHaveBeenCalledWith('opaque-pending-id', 'team-b');
-      expect(restartApp).toHaveBeenCalledOnce();
+      expect(refreshAuthSession).toHaveBeenCalledOnce();
     });
   });
 
   // 登录时运行中的后端还没有 AIBUDDY_* 环境变量，此刻写默认 provider 会被后端以
-  // invalid_params 拒绝，登录界面只会显示 "Invalid params"。默认模型必须留到重启之后。
-  it('restarts without writing agent defaults while the provider is still unconfigured', async () => {
+  // invalid_params 拒绝，登录界面只会显示 "Invalid params"。默认模型必须留到刷新认证会话之后。
+  it('refreshes the session without writing agent defaults while the provider is still unconfigured', async () => {
     loginViaAIBuddy.mockResolvedValue(authenticated());
     render(<AIBuddyLoginForm />);
 
     await submitAccountLogin();
 
     await waitFor(() => {
-      expect(restartApp).toHaveBeenCalledOnce();
+      expect(refreshAuthSession).toHaveBeenCalledOnce();
     });
     expect(saveDefaults).not.toHaveBeenCalled();
+    expect(restartApp).not.toHaveBeenCalled();
   });
 
-  it('completes TOTP authentication and restarts into the provisioned session', async () => {
+  it('waits for session refresh before allowing another submission', async () => {
+    loginViaAIBuddy.mockResolvedValue(authenticated());
+    let completeRefresh!: () => void;
+    refreshAuthSession.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          completeRefresh = resolve;
+        })
+    );
+    render(<AIBuddyLoginForm />);
+
+    await submitAccountLogin();
+    expect(refreshAuthSession).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: /login/i })).toBeDisabled();
+    expect(restartApp).not.toHaveBeenCalled();
+
+    completeRefresh();
+    await waitFor(() => expect(screen.getByRole('button', { name: /login/i })).toBeEnabled());
+  });
+
+  it('shows session refresh errors without relaunching the app', async () => {
+    loginViaAIBuddy.mockResolvedValue(authenticated());
+    refreshAuthSession.mockRejectedValueOnce(new Error('Session refresh failed'));
+    render(<AIBuddyLoginForm />);
+
+    await submitAccountLogin();
+    expect(await screen.findByRole('alert')).toHaveTextContent('Session refresh failed');
+    expect(screen.getByRole('button', { name: /login/i })).toBeEnabled();
+    expect(restartApp).not.toHaveBeenCalled();
+  });
+
+  it('completes TOTP authentication and refreshes into the provisioned session', async () => {
     loginViaAIBuddy.mockResolvedValue({
       ok: true,
       step: 'totp-required',
@@ -137,7 +172,7 @@ describe('AIBuddyLoginForm', () => {
 
     await waitFor(() => {
       expect(completeAIBuddy2FA).toHaveBeenCalledWith('temporary-token', '123456');
-      expect(restartApp).toHaveBeenCalledOnce();
+      expect(refreshAuthSession).toHaveBeenCalledOnce();
     });
   });
 

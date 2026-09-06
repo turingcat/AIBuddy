@@ -1,4 +1,5 @@
 const { resolveBrand } = require('./brand');
+const { resolveWindowsArchitecture } = require('./windows-architecture');
 
 // Inno Setup's AppVersion only accepts a plain numeric release; a suffix or a
 // stray quote would either fail ISCC or leak into the /D command line.
@@ -6,7 +7,7 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+(\.\d+)?$/;
 const WINDOWS_ARCHITECTURES = {
   x32: {
     electronArch: 'ia32',
-    innoAllowed: 'x86compatible',
+    innoAllowed: 'x86compatible and not x64compatible',
     installIn64BitMode: '0',
   },
   x64: {
@@ -19,9 +20,11 @@ const WINDOWS_ARCHITECTURES = {
 function resolveArchitecture(architecture) {
   const resolved = WINDOWS_ARCHITECTURES[architecture];
   if (!resolved) {
-    throw new Error(`Unsupported Windows architecture ${JSON.stringify(architecture)}; expected x32 or x64`);
+    throw new Error(
+      `Unsupported Windows architecture ${JSON.stringify(architecture)}; expected x32 or x64`
+    );
   }
-  return resolved;
+  return { ...resolved, rustTarget: resolveWindowsArchitecture(architecture).rustTarget };
 }
 
 function buildInnoDefinitions(brand, architecture, version, sourceDir, outputDir) {
@@ -65,6 +68,7 @@ function resolveWindowsPackage(architecture, version, sourceDir, outputDir) {
   return {
     architecture,
     electronArch: architectureConfig.electronArch,
+    rustTarget: architectureConfig.rustTarget,
     productName: brand.productName,
     appId: brand.windowsAppId,
     executableName: `${brand.executableName}.exe`,

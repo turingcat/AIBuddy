@@ -9,11 +9,11 @@ vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
 vi.mock('../../GooseSidebar/ThemeSelector', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();
-const restartApp = vi.fn();
+const refreshAuthSession = vi.fn();
 
 const electronMock = {
   clearLoginCredentials,
-  restartApp,
+  refreshAuthSession,
   getSetting: vi.fn().mockResolvedValue(undefined),
   getMenuBarIconState: vi.fn().mockResolvedValue(true),
   getWakelockState: vi.fn().mockResolvedValue(true),
@@ -160,13 +160,13 @@ describe('AppSettingsSection 退出登录', () => {
     );
   });
 
-  it('确认退出后清凭证并重启应用', async () => {
+  it('确认退出后清凭证并刷新认证会话', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     renderWith(<AppSettingsSection />);
     await userEvent.click(screen.getByRole('button', { name: /退出登录/ }));
     await waitFor(() => {
       expect(clearLoginCredentials).toHaveBeenCalled();
-      expect(restartApp).toHaveBeenCalled();
+      expect(refreshAuthSession).toHaveBeenCalled();
     });
   });
 
@@ -179,11 +179,11 @@ describe('AppSettingsSection 退出登录', () => {
     expect(screen.queryByText('Updates')).not.toBeInTheDocument();
   });
 
-  it('取消确认则不清凭证、不重启', async () => {
+  it('取消确认则不清凭证、不刷新认证会话', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     renderWith(<AppSettingsSection />);
     await userEvent.click(screen.getByRole('button', { name: /退出登录/ }));
     expect(clearLoginCredentials).not.toHaveBeenCalled();
-    expect(restartApp).not.toHaveBeenCalled();
+    expect(refreshAuthSession).not.toHaveBeenCalled();
   });
 });

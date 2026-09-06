@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require "yaml"
+require "open3"
 
 workflow_paths = {
   bundle_macos: ".github/workflows/bundle-macos.yml",
@@ -46,8 +47,11 @@ end
 
 release_consumers = workflows.values_at(:release, :canary, :recovery)
 release_consumers.each do |workflow|
-  ["AIBuddy*.zip", "AIBuddy*.exe"].each do |artifact_glob|
+  ["AIBuddy*.zip"].each do |artifact_glob|
     abort "release consumer missing #{artifact_glob}" unless workflow.include?(artifact_glob)
+  end
+  unless workflow.include?("AIBuddy*.exe") || workflow.include?("AIBuddy-windows-*-setup.exe")
+    abort "release consumer missing AIBuddy Windows installers"
   end
   abort "release consumer retains HeyBuddy artifact names" if workflow.include?("HeyBuddy")
   abort "release consumer retains CLI install artifacts" if workflow.include?("download_cli.sh")
@@ -71,7 +75,6 @@ required_recovery_fragments = [
   "release_tag:",
   "source_run_id:",
   "run-id: ${{ inputs.source_run_id }}",
-  "pattern: '!internal-*'",
   "merge-multiple: true",
   "tag: ${{ inputs.release_tag }}",
   "name: AIBuddy ${{ inputs.release_tag }}",
@@ -79,6 +82,37 @@ required_recovery_fragments = [
 required_recovery_fragments.each do |fragment|
   abort "recovery workflow missing #{fragment}" unless recovery.include?(fragment)
 end
+
+recovery_steps = YAML.load(recovery).fetch("jobs").fetch("publish").fetch("steps")
+download = recovery_steps.find { |step| step["uses"].to_s.start_with?("actions/download-artifact@") }
+abort "recovery must exclude internal artifacts" unless download.dig("with", "pattern") == "!internal-*"
+
+{ release: "release", recovery: "publish" }.each do |name, job_id|
+  job = YAML.load(workflows.fetch(name)).fetch("jobs").fetch(job_id)
+  abort "stable publication must be serialized" unless job.fetch("concurrency") == {
+    "group" => "publish-aibuddy-stable", "cancel-in-progress" => false,
+  }
+  steps = job.fetch("steps")
+  upload = steps.find { |step| step["name"] == "Upload Windows installers to COS" }
+  abort "release must upload AIBuddy Windows installers to COS" unless upload &&
+    upload["run"] == "bash .github/scripts/upload-windows-installers-to-cos.sh"
+  checkout = steps.find { |step| step["uses"].to_s.start_with?("actions/checkout@") }
+  abort "release scripts need credential-free checkout" unless checkout.dig("with", "persist-credentials") == false
+end
+
+release_job = YAML.load(workflows.fetch(:release)).fetch("jobs").fetch("release")
+abort "COS publication must wait for desktop builds" unless release_job.fetch("needs").sort ==
+  %w[bundle-macos-arm64 bundle-windows].sort
+abort "branch builds must not publish stable" unless release_job.fetch("if") == "startsWith(github.ref, 'refs/tags/')"
+version_check = release_job.fetch("steps").first.fetch("run")
+{ "v1.2.3" => true, "v1.2.3-rc.1" => false, "v1.2.3+build" => false,
+  "stable" => false, "release/1.2.3" => false, "" => false }.each do |tag, expected|
+  _, status = Open3.capture2e({ "GITHUB_REF_NAME" => tag }, "bash", "-c", version_check)
+  abort "unexpected stable publication eligibility for #{tag.inspect}" unless status.success? == expected
+end
+
+azure = YAML.load_file("azure-pipelines.yml")
+abort "Azure pipeline must remain manual-only" unless azure["trigger"] == "none" && azure["pr"] == "none"
 
 release_branches = workflows.fetch(:release_branches)
 abort "release candidate instructions missing AIBuddy.app" unless release_branches.include?("AIBuddy.app")

@@ -4,38 +4,36 @@ const https = require('https');
 const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
+const { resolveWindowsArchitecture } = require('./windows-architecture');
 
 // Paths
 const srcBinDir = path.join(__dirname, '..', 'src', 'bin');
 const platformWinDir = path.join(__dirname, '..', 'src', 'platform', 'windows', 'bin');
 const uvVersion = '0.11.11';
-const windowsUvReleases = {
-    ia32: {
-        target: 'i686-pc-windows-msvc',
-        hashes: {
-            'uv.exe': 'cddbdecdf0f488c7d11085d44436a3bf87a40777b1cfebdc0cbca83cb3ebbe85',
-            'uvx.exe': 'b19c9ef61e0caa1a1092fbafb887b4ba4ef6951b15565ad6cd087124598da09a',
-        },
-    },
-    x64: {
-        target: 'x86_64-pc-windows-msvc',
-        hashes: {
-            'uv.exe': 'b1645e948603c12dd741987d0c072471195e18dd299b42334477ceac694f0af8',
-            'uvx.exe': '0305c488dc29c16df1483c02a902d21a6798b0744f8e9eb34271d6b3e4bf6e2a',
-        },
-    },
-};
+const uvBinaryHashes = Object.freeze({
+    'i686-pc-windows-msvc': Object.freeze({
+        'uv.exe': 'cddbdecdf0f488c7d11085d44436a3bf87a40777b1cfebdc0cbca83cb3ebbe85',
+        'uvx.exe': 'b19c9ef61e0caa1a1092fbafb887b4ba4ef6951b15565ad6cd087124598da09a',
+    }),
+    'x86_64-pc-windows-msvc': Object.freeze({
+        'uv.exe': 'b1645e948603c12dd741987d0c072471195e18dd299b42334477ceac694f0af8',
+        'uvx.exe': '0305c488dc29c16df1483c02a902d21a6798b0744f8e9eb34271d6b3e4bf6e2a',
+    }),
+});
 
-function resolveWindowsUvRelease(electronArch) {
-    const release = windowsUvReleases[electronArch];
-    if (!release) {
-        throw new Error(`Unsupported Windows Electron architecture ${JSON.stringify(electronArch)}`);
-    }
+function windowsUvRelease(architecture) {
+    const windowsArchitecture = resolveWindowsArchitecture(architecture);
     return {
-        target: release.target,
-        url: `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${release.target}.zip`,
-        hashes: release.hashes,
+        url: `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${windowsArchitecture.uvTarget}.zip`,
+        target: windowsArchitecture.uvTarget,
+        hashes: uvBinaryHashes[windowsArchitecture.uvTarget],
     };
+}
+
+function resolveWindowsUvRelease(
+    electronArch = process.env.ELECTRON_ARCH || process.env.WINDOWS_ARCH || process.arch
+) {
+    return windowsUvRelease(electronArch === 'ia32' ? 'x32' : electronArch);
 }
 
 // Platform-specific file patterns
@@ -130,8 +128,8 @@ function extractZip(zipPath, destDir) {
     execFileSync('unzip', ['-q', zipPath, '-d', destDir], { stdio: 'inherit' });
 }
 
-async function ensureWindowsUvBinaries(electronArch) {
-    const release = resolveWindowsUvRelease(electronArch);
+async function ensureWindowsUvBinaries(architecture) {
+    const release = resolveWindowsUvRelease(architecture);
     const allPresent = Object.entries(release.hashes).every(([name, expectedHash]) =>
         hasExpectedHash(path.join(srcBinDir, name), expectedHash)
     );
@@ -147,7 +145,7 @@ async function ensureWindowsUvBinaries(electronArch) {
     fs.mkdirSync(extractDir, { recursive: true });
 
     try {
-        console.log(`Downloading uv ${uvVersion} for ${electronArch} from ${release.url}`);
+        console.log(`Downloading uv ${uvVersion} from ${release.url}`);
         await downloadFile(release.url, zipPath);
         extractZip(zipPath, extractDir);
 
@@ -221,7 +219,7 @@ function cleanBinDirectory(targetPlatform) {
 }
 
 // Helper function to copy platform-specific files
-async function copyPlatformFiles(targetPlatform, targetArchitecture) {
+async function copyPlatformFiles(targetPlatform) {
     if (targetPlatform === 'win32') {
         console.log('Copying Windows-specific files...');
         
@@ -261,19 +259,18 @@ async function copyPlatformFiles(targetPlatform, targetArchitecture) {
             }
         });
 
-        await ensureWindowsUvBinaries(targetArchitecture);
+        await ensureWindowsUvBinaries();
     }
 }
 
 // Main function
 async function preparePlatformBinaries() {
     const targetPlatform = process.env.ELECTRON_PLATFORM || process.platform;
-    const targetArchitecture = process.env.ELECTRON_ARCH || process.arch;
     
     console.log(`Preparing binaries for platform: ${targetPlatform}`);
     
     // First copy platform-specific files if needed
-    await copyPlatformFiles(targetPlatform, targetArchitecture);
+    await copyPlatformFiles(targetPlatform);
     
     // Then clean up cross-platform files
     cleanBinDirectory(targetPlatform);
@@ -289,4 +286,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { preparePlatformBinaries, resolveWindowsUvRelease };
+module.exports = { preparePlatformBinaries, windowsUvRelease, resolveWindowsUvRelease };

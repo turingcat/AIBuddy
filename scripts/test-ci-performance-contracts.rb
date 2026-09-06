@@ -2,6 +2,7 @@
 
 require "minitest/autorun"
 require "yaml"
+require "open3"
 
 class WorkflowPerformanceContractsTest < Minitest::Test
   WORKFLOW_DIRECTORY = ".github/workflows"
@@ -45,7 +46,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   CI_REQUIRED_CHECK_NAMES = {
     "rust-format" => "Check Rust Code Format",
     "rust-build-and-test" => "Build and Test Rust Project",
-    "rust-compatibility" => "Check Rust Compatibility Features",
+    "rust-compat-uniffi" => "Check UniFFI Feature (goose-sdk)",
+    "rust-compat-roaming" => "Build and Test Roaming Feature (goose-cli)",
     "rust-build-and-test-tls" => "Build and Test TLS Backends",
     "rust-build-windows" => "Build Rust Project on Windows",
     "rust-msrv" => "Check MSRV",
@@ -65,7 +67,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   RUST_CACHE_IDENTITIES = {
     "ci.yml" => {
       "rust-build-and-test" => "ci-default-tests",
-      "rust-compatibility" => "ci-compatibility",
+      "rust-compat-uniffi" => "ci-compat-uniffi",
+      "rust-compat-roaming" => "ci-compat-roaming",
       "rust-build-and-test-tls" => "ci-tls",
       "rust-build-windows" => "ci-windows-x86_64-pc-windows-msvc",
       "rust-msrv" => "ci-msrv-${{ steps.msrv.outputs.msrv }}",
@@ -119,6 +122,14 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "crates/**",
       "build-windows.ps1",
     ],
+    "uniffi" => %w[Cargo.toml Cargo.lock rust-toolchain.toml .cargo/** crates/goose-sdk/** crates/goose-sdk-types/** crates/goose-providers/** crates/goose-context-management/**],
+    "roaming" => %w[
+      Cargo.toml Cargo.lock rust-toolchain.toml .cargo/**
+      crates/goose-roaming/** crates/goose-cli/** crates/goose/**
+      crates/goose-mcp/** crates/goose-providers/** crates/goose-context-management/**
+      crates/goose-download-manager/** crates/goose-sdk-types/** crates/goose-agent/**
+      crates/goose-acp-macros/** crates/goose-provider-types/** crates/goose-local-inference/**
+    ],
     "workflow-config" => [
       ".github/actions/**",
       ".github/scripts/**",
@@ -133,7 +144,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   CI_FAST_JOBS = CODE_PULL_REQUEST_REQUIRED_JOBS
   CI_CODE_TIER_JOBS = ["dependency-locks", *CI_FAST_JOBS, "schema-check", "desktop-lint"].freeze
   CI_COMPATIBILITY_JOBS = %w[
-    rust-compatibility
+    rust-compat-uniffi
+    rust-compat-roaming
     rust-build-windows
     rust-msrv
   ].freeze
@@ -143,8 +155,9 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   CI_RUST_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_DESKTOP_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.workflow-config == 'true')"
   CI_SCHEMA_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.workflow-config == 'true')"
-  CI_RUST_COMPATIBILITY_TIER_IF = "cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')))"
-  CI_WINDOWS_TIER_IF = "cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.windows == 'true' || needs.changes.outputs.workflow-config == 'true')))"
+  CI_UNIFFI_TIER_IF = "cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.uniffi == 'true' || needs.changes.outputs.workflow-config == 'true')))"
+  CI_ROAMING_TIER_IF = "cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.roaming == 'true' || needs.changes.outputs.workflow-config == 'true')))"
+  CI_RELEASE_TIER_IF = "cancelled() == false && github.event_name == 'workflow_dispatch'"
   MCP_SELECTED_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
   CI_EVENT_TIER_TRUTH_TABLE = [
     { event: "pull_request", selected: true, fast: "success", compatibility: "skipped" },
@@ -209,8 +222,18 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_equal "windows-latest", workflow.dig("jobs", "build-desktop-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "package-desktop-windows", "runs-on")
     %w[build-goose-windows build-desktop-windows package-desktop-windows].each do |job_name|
-      assert_equal expected_matrix, workflow.dig("jobs", job_name, "strategy", "matrix", "include")
+      matrix = workflow.dig("jobs", job_name, "strategy", "matrix", "include")
+      expected = expected_matrix
+      if job_name == "build-goose-windows"
+        features = %w[aws-providers,nostr,otel,rustls-tls,system-keyring code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update]
+        expected = expected_matrix.zip(features).map { |entry, value| entry.merge("cargo_features" => value) }
+      end
+      assert_equal expected, matrix
     end
+    build = workflow.dig("jobs", "build-goose-windows", "steps").find { |step| step["run"].to_s.include?("cargo build") }
+    assert_equal "${{ matrix.cargo_features }}", build.dig("env", "CARGO_FEATURES")
+    assert_includes build.fetch("run"), "--no-default-features --features $env:CARGO_FEATURES"
+    refute_match(/local-inference/, text)
     refute workflow.fetch("jobs").key?("package-cli-windows")
     refute_match(/package_cli|package-cli|Package CLI/i, text)
     refute_match(/package_desktop/i, text)
@@ -392,27 +415,58 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     end
   end
 
-  def test_compatibility_jobs_run_only_for_complete_non_pull_request_coverage
+  def test_compatibility_jobs_use_independent_non_pull_request_filters
     workflow = load_workflow("ci.yml")
-
-    %w[rust-compatibility rust-msrv].each do |job_name|
-      assert_non_pull_request_event_tier(workflow, job_name, CI_RUST_COMPATIBILITY_TIER_IF)
+    assert_non_pull_request_event_tier(workflow, "rust-compat-uniffi", CI_UNIFFI_TIER_IF)
+    assert_non_pull_request_event_tier(workflow, "rust-compat-roaming", CI_ROAMING_TIER_IF)
+    %w[rust-msrv rust-build-windows].each do |job_name|
+      assert_non_pull_request_event_tier(workflow, job_name, CI_RELEASE_TIER_IF)
     end
-    assert_non_pull_request_event_tier(workflow, "rust-build-windows", CI_WINDOWS_TIER_IF)
   end
 
-  def test_rust_compatibility_consolidates_uniffi_and_roaming
+  def test_rust_compatibility_splits_uniffi_and_roaming
     jobs = load_workflow("ci.yml").fetch("jobs")
-    commands = job_run_commands("ci.yml", "rust-compatibility").join("\n")
+    refute jobs.key?("rust-compatibility")
+    uniffi = job_run_commands("ci.yml", "rust-compat-uniffi").join("\n")
+    roaming = job_run_commands("ci.yml", "rust-compat-roaming").join("\n")
+    assert_includes uniffi, "cargo check -p goose-sdk --features uniffi --locked"
+    assert_includes uniffi, "cargo test -p goose-sdk --features uniffi --locked"
+    refute_includes uniffi, "--features roaming"
+    assert_includes roaming, "cargo test --locked -p goose-roaming"
+    assert_includes roaming, "cargo build --locked -p goose-cli --features roaming"
+    assert_includes roaming, "cargo test --locked -p goose-cli --features roaming --test roam_acp_client"
+    refute_includes roaming, "--features uniffi"
+  end
 
-    assert jobs.key?("rust-compatibility")
-    refute jobs.key?("goose-sdk-uniffi")
-    refute jobs.key?("rust-build-and-test-roaming")
-    assert_includes commands, "cargo check -p goose-sdk --features uniffi --locked"
-    assert_includes commands, "cargo test -p goose-sdk --features uniffi --locked"
-    assert_includes commands, "cargo test --locked -p goose-roaming"
-    assert_includes commands, "cargo build --locked -p goose-cli --features roaming"
-    assert_includes commands, "cargo test --locked -p goose-cli --features roaming --test roam_acp_client"
+  def test_roaming_schedules_core_and_transitive_only_changes
+    workflow = load_workflow("ci.yml")
+    filter = workflow.dig("jobs", "changes", "steps").find { |step| step["id"] == "filter" }
+    paths = YAML.safe_load(filter.dig("with", "filters")).fetch("roaming")
+    dependencies = %w[
+      goose goose-cli goose-roaming goose-mcp goose-providers goose-context-management
+      goose-download-manager goose-sdk-types goose-agent goose-acp-macros
+      goose-provider-types goose-local-inference
+    ]
+    cases = dependencies.to_h { |crate| ["crates/#{crate}/src/lib.rs", true] }
+    cases["crates/goose/src/agents/agent.rs"] = true
+    %w[goose-sdk goose-server goose-test goose-test-support].each do |crate|
+      cases["crates/#{crate}/src/lib.rs"] = false
+    end
+    cases.each do |path, relevant|
+      changed = paths.any? { |pattern| File.fnmatch?(pattern, path, File::FNM_DOTMATCH) }
+      assert_equal relevant, changed, "roaming filter for #{path}"
+      %w[pull_request push merge_group workflow_dispatch].each do |event|
+        condition = workflow.dig("jobs", "rust-compat-roaming", "if")
+          .gsub("cancelled()", "false")
+          .gsub("github.event_name", "'#{event}'")
+          .gsub("needs.changes.result", "'success'")
+          .gsub("needs.changes.outputs.roaming", "'#{changed}'")
+          .gsub("needs.changes.outputs.workflow-config", "'false'")
+        output, status = Open3.capture2e("bash", "-c", "[[ #{condition} ]]")
+        expected = event == "workflow_dispatch" || (event != "pull_request" && relevant)
+        assert_equal expected, status.success?, "#{event} with only #{path}: #{output}"
+      end
+    end
   end
 
   def test_tls_backends_share_one_job_and_target_directory
@@ -427,17 +481,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes native_step.fetch("run"), "--features native-tls,code-mode"
   end
 
-  def test_windows_uses_check_on_main_and_full_build_for_complete_tiers
+  def test_windows_full_build_is_manual_only
     job = load_workflow("ci.yml").dig("jobs", "rust-build-windows")
-    check_step = job.fetch("steps").find { |step| step["name"] == "Check Windows CLI" }
-    build_step = job.fetch("steps").find { |step| step["name"] == "Build Windows CLI" }
-
-    refute_nil check_step
-    assert_equal "github.event_name == 'push'", check_step.fetch("if")
-    assert_includes check_step.fetch("run"), "cargo check --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc"
-    refute_nil build_step
-    assert_equal "github.event_name == 'merge_group' || github.event_name == 'workflow_dispatch'", build_step.fetch("if")
-    assert_includes build_step.fetch("run"), "cargo build --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc"
+    assert_equal CI_RELEASE_TIER_IF, job.fetch("if")
+    refute job.fetch("steps").any? { |step| step["name"] == "Check Windows CLI" }
+    build = job.fetch("steps").find { |step| step["name"] == "Build Windows CLI" }
+    refute build.key?("if")
+    assert_includes build.fetch("run"), "cargo build --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc"
   end
 
   def test_ci_required_check_names_remain_stable
@@ -458,12 +508,15 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "DESKTOP_CHANGED" => "${{ needs.changes.outputs.desktop }}",
       "SCHEMA_CHANGED" => "${{ needs.changes.outputs.schema }}",
       "WINDOWS_CHANGED" => "${{ needs.changes.outputs.windows }}",
+      "UNIFFI_CHANGED" => "${{ needs.changes.outputs.uniffi }}",
+      "ROAMING_CHANGED" => "${{ needs.changes.outputs.roaming }}",
       "WORKFLOW_CONFIG_CHANGED" => "${{ needs.changes.outputs.workflow-config }}",
       "CHANGES_RESULT" => "${{ needs.changes.result }}",
       "DEPENDENCY_LOCKS_RESULT" => "${{ needs.dependency-locks.result }}",
       "RUST_FORMAT_RESULT" => "${{ needs.rust-format.result }}",
       "RUST_BUILD_AND_TEST_RESULT" => "${{ needs.rust-build-and-test.result }}",
-      "RUST_COMPATIBILITY_RESULT" => "${{ needs.rust-compatibility.result }}",
+      "RUST_COMPAT_UNIFFI_RESULT" => "${{ needs.rust-compat-uniffi.result }}",
+      "RUST_COMPAT_ROAMING_RESULT" => "${{ needs.rust-compat-roaming.result }}",
       "TLS_RESULT" => "${{ needs.rust-build-and-test-tls.result }}",
       "WINDOWS_RESULT" => "${{ needs.rust-build-windows.result }}",
       "MSRV_RESULT" => "${{ needs.rust-msrv.result }}",
@@ -487,7 +540,6 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$DESKTOP_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'
     assert_includes run, 'if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$SCHEMA_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]'
-    assert_includes run, '( "$CHANGES_RESULT" != "success" || "$WINDOWS_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" )'
 
     {
       "dependency-locks" => "DEPENDENCY_LOCKS_RESULT",
@@ -506,14 +558,63 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     assert_includes run, 'require_result schema-check "$SCHEMA_RESULT" "$schema_tier_result"'
     assert_includes run, 'require_result desktop-lint "$DESKTOP_LINT_RESULT" "$desktop_tier_result"'
-    assert_includes run, 'require_result rust-compatibility "$RUST_COMPATIBILITY_RESULT" "$rust_compatibility_tier_result"'
-    assert_includes run, 'require_result rust-msrv "$MSRV_RESULT" "$rust_compatibility_tier_result"'
-    assert_includes run, 'require_result rust-build-windows "$WINDOWS_RESULT" "$windows_tier_result"'
+    assert_includes run, 'require_result rust-compat-uniffi "$RUST_COMPAT_UNIFFI_RESULT" "$rust_compat_uniffi_tier_result"'
+    assert_includes run, 'require_result rust-compat-roaming "$RUST_COMPAT_ROAMING_RESULT" "$rust_compat_roaming_tier_result"'
+    assert_includes run, 'require_result rust-msrv "$MSRV_RESULT" "$release_gate_tier_result"'
+    assert_includes run, 'require_result rust-build-windows "$WINDOWS_RESULT" "$release_gate_tier_result"'
 
     CI_EVENT_TIER_TRUTH_TABLE.each do |row|
       assert_equal row.values_at(:fast, :compatibility),
         ci_tier_results(row[:event], row[:selected]),
         "CI tier mismatch for #{row[:event]} with selected=#{row[:selected]}"
+    end
+  end
+
+  def test_ci_gate_executes_event_and_category_contracts
+    step = load_workflow("ci.yml").dig("jobs", "ci-gate", "steps").first
+    categories = %w[rust desktop schema windows uniffi roaming workflow-config]
+    scenarios = [[], *categories.map { |category| [category] }, categories]
+    %w[pull_request push merge_group workflow_dispatch].each do |event|
+      scenarios.each do |changed|
+        manual = event == "workflow_dispatch"
+        config = changed.include?("workflow-config")
+        selected = ->(category) { manual || config || changed.include?(category) }
+        expected = {
+          "changes" => true,
+          "gdk-api-docs-check" => true,
+          "dependency-locks" => manual || config || (changed & %w[rust desktop schema windows]).any?,
+          "rust-format" => selected.call("rust"),
+          "rust-build-and-test" => selected.call("rust"),
+          "rust-build-and-test-tls" => selected.call("rust"),
+          "rust-lint" => selected.call("rust"),
+          "schema-check" => selected.call("schema"),
+          "desktop-lint" => selected.call("desktop"),
+          "rust-compat-uniffi" => manual || (event != "pull_request" && selected.call("uniffi")),
+          "rust-compat-roaming" => manual || (event != "pull_request" && selected.call("roaming")),
+          "rust-build-windows" => manual,
+          "rust-msrv" => manual,
+          "workflow-contracts" => manual || config,
+        }.transform_values { |required| required ? "success" : "skipped" }
+        env = step.fetch("env").to_h do |key, expression|
+          value = if key == "EVENT_NAME"
+            event
+          elsif key.end_with?("_CHANGED")
+            changed.include?(expression.match(/outputs\.([\w-]+)/)[1]).to_s
+          else
+            expected.fetch(expression.match(/needs\.([\w-]+)\.result/)[1])
+          end
+          [key, value]
+        end
+        output, status = Open3.capture2e(env, "bash", "-c", step.fetch("run"))
+        assert status.success?, "#{event} #{changed.inspect}: #{output}"
+        env.each do |key, value|
+          next unless key.end_with?("_RESULT")
+
+          invalid = value == "success" ? "failure" : "success"
+          output, status = Open3.capture2e(env.merge(key => invalid), "bash", "-c", step.fetch("run"))
+          refute status.success?, "#{event} #{changed.inspect} accepted #{key}=#{invalid}: #{output}"
+        end
+      end
     end
   end
 
@@ -1026,7 +1127,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def assert_standard_cache_context(entries)
     context_entries = entries.select { |entry| cache_context?(entry, :standard) }
-    incompatible_contexts = /msrv|aarch64-apple-darwin|x86_64-pc-windows-msvc/i
+    incompatible_contexts = /msrv|aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|matrix\.rust_target/i
 
     refute_empty context_entries, "Rust cache must cover the standard compiler context"
     context_entries.each do |entry|
@@ -1073,7 +1174,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def target_job?(job)
-    job.match?(/rustup target add|--target/) && job.match?(/aarch64-apple-darwin|x86_64-pc-windows-msvc|MACOS_TARGET/)
+    job.match?(/rustup target add|--target/) &&
+      job.match?(/aarch64-apple-darwin|i686-pc-windows-msvc|x86_64-pc-windows-msvc|MACOS_TARGET|matrix\.rust_target/)
   end
 
   def job_yaml(entry)
