@@ -75,6 +75,9 @@ steps:
 
       $binary = "target\$env:RUST_TARGET\release\goose.exe"
       if (-not (Test-Path $binary)) { throw "Windows binary not found: $binary" }
+      if (Test-Path "ui\desktop\src\bin") {
+        Remove-Item "ui\desktop\src\bin" -Recurse -Force
+      }
       New-Item -ItemType Directory -Force "ui\desktop\src\bin" | Out-Null
       Copy-Item $binary "ui\desktop\src\bin\goose.exe" -Force
 
