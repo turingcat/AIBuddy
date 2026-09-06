@@ -76,6 +76,19 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
 
+    def test_azure_builds_x32_and_x64_desktop_serially(self) -> None:
+        pipeline = (ROOT / "azure-pipelines.yml").read_text(encoding="utf-8-sig")
+        self.assertIn("i686-pc-windows-msvc", pipeline)
+        self.assertIn("x86_64-pc-windows-msvc", pipeline)
+        self.assertIn("ELECTRON_ARCH: ia32", pipeline)
+        self.assertIn("ELECTRON_ARCH: x64", pipeline)
+        self.assertIn("maxParallel: 1", pipeline)
+        self.assertIn("pnpm run package:windows", pipeline)
+        self.assertIn("desktop-setup.iss", pipeline)
+        self.assertIn("PublishPipelineArtifact@1", pipeline)
+        self.assertNotIn("portableFileName", pipeline)
+        self.assertNotIn("gh workflow run", pipeline)
+
     def test_package_manager_allows_windows_ia32_dependencies(self) -> None:
         workspace = (ROOT / "ui/pnpm-workspace.yaml").read_text(encoding="utf-8")
         self.assertIn("ia32", workspace)

@@ -111,8 +111,25 @@ version_check = release_job.fetch("steps").first.fetch("run")
   abort "unexpected stable publication eligibility for #{tag.inspect}" unless status.success? == expected
 end
 
-azure = YAML.load_file("azure-pipelines.yml")
+azure_path = "azure-pipelines.yml"
+azure = YAML.load_file(azure_path)
+azure_text = File.read(azure_path)
+
 abort "Azure pipeline must remain manual-only" unless azure["trigger"] == "none" && azure["pr"] == "none"
+abort "Azure matrix must be serial" unless azure.dig("strategy", "maxParallel") == 1
+
+[
+  "i686-pc-windows-msvc",
+  "x86_64-pc-windows-msvc",
+  "ELECTRON_ARCH: ia32",
+  "ELECTRON_ARCH: x64",
+  "AIBuddy-windows-$(ARTIFACT_ARCH)-setup",
+].each do |fragment|
+  abort "Azure pipeline missing #{fragment}" unless azure_text.include?(fragment)
+end
+
+abort "Azure pipeline must not create portable ZIPs" if azure_text.include?("portableFileName") || azure_text.match?(/7z\s+a\s+-tzip/)
+abort "Azure pipeline must not dispatch GitHub Actions" if azure_text.include?("gh workflow run") || azure_text.include?("workflow_dispatch")
 
 release_branches = workflows.fetch(:release_branches)
 abort "release candidate instructions missing AIBuddy.app" unless release_branches.include?("AIBuddy.app")
