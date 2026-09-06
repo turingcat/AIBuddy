@@ -49,8 +49,9 @@ def normalize_powershell_value(value: str, aliases: dict[str, str]) -> str:
     return normalized.lower()
 
 
-def powershell_aliases(scripts: list[str]) -> dict[str, str]:
+def powershell_copy_destinations(scripts: list[str]) -> list[str]:
     aliases: dict[str, str] = {}
+    destinations = []
     for script in scripts:
         for line in script.splitlines():
             assignment = re.match(
@@ -61,65 +62,86 @@ def powershell_aliases(scripts: list[str]) -> dict[str, str]:
                 aliases[assignment.group(1).lower()] = normalize_powershell_value(
                     assignment.group(2), aliases
                 )
-    return aliases
+                continue
 
+            command = re.match(r"(?i)^\s*(?:Copy-Item|Move-Item)\b(.*)", line)
+            if command is None:
+                continue
 
-def powershell_copy_destinations(
-    script: str, aliases: dict[str, str]
-) -> list[str]:
-    destinations = []
-    for line in script.splitlines():
-        command = re.match(r"(?i)^\s*(?:Copy-Item|Move-Item)\b(.*)", line)
-        if command is None:
-            continue
-
-        arguments = command.group(1)
-        named = re.search(
-            r'(?i)-Destination\s+("[^"]*"|\'[^\']*\'|\$[A-Za-z_]\w*)',
-            arguments,
-        )
-        if named:
-            destination = named.group(1)
-        else:
-            tokens = [
-                token
-                for token in re.findall(r'"[^"]*"|\'[^\']*\'|\S+', arguments)
-                if not token.startswith("-")
-            ]
-            destination = tokens[1] if len(tokens) > 1 else None
-        if destination:
-            destinations.append(normalize_powershell_value(destination, aliases))
+            arguments = command.group(1)
+            named = re.search(
+                r'(?i)-Destination\s+("[^"]*"|\'[^\']*\'|\$[A-Za-z_]\w*)',
+                arguments,
+            )
+            if named:
+                destination = named.group(1)
+            else:
+                tokens = [
+                    token
+                    for token in re.findall(r'"[^"]*"|\'[^\']*\'|\S+', arguments)
+                    if not token.startswith("-")
+                ]
+                destination = tokens[1] if len(tokens) > 1 else None
+            if destination:
+                destinations.append(normalize_powershell_value(destination, aliases))
     return destinations
 
 
 def uses_approved_runtime_copy(script: str) -> bool:
     normalized = script.replace("\\", "/")
-    return bool(
-        re.search(
-            r'(?im)^\s*\$srcBin\s*=\s*Join-Path\s+'
-            r'\$env:BUILD_SOURCESDIRECTORY\s+["\']ui/desktop/src/bin["\']\s*$',
-            normalized,
-        )
-        and re.search(
-            r'(?im)^\s*\$resourcesBin\s*=\s*Join-Path\s+'
-            r'\$packaged\s+["\']resources/bin["\']\s*$',
-            normalized,
-        )
-        and re.search(
-            r'(?im)^\s*Copy-Item\s+-Path\s+["\']\$srcBin/\*["\']\s+'
+    src_bin_approved = False
+    packaged_approved = False
+    resources_bin_approved = False
+
+    for line in normalized.splitlines():
+        if re.match(r"(?i)^\s*\$srcBin\s*=", line):
+            src_bin_approved = bool(
+                re.match(
+                    r'(?i)^\s*\$srcBin\s*=\s*Join-Path\s+'
+                    r'\$env:BUILD_SOURCESDIRECTORY\s+["\']ui/desktop/src/bin["\']\s*$',
+                    line,
+                )
+            )
+        elif re.match(r"(?i)^\s*\$packaged\s*=", line):
+            packaged_approved = bool(
+                re.match(
+                    r'(?i)^\s*\$packaged\s*=\s*Join-Path\s+["\']out["\']\s+'
+                    r'\(\s*&\s+node\s+-p\s+.*resolveWindowsPackage\('
+                    r'\s*process\.argv\[1\]\s*,[^)]*\)\.packagedDirName["\']\s+'
+                    r'\$env:ARTIFACT_ARCH\s*\)\s*$',
+                    line,
+                )
+            )
+        elif re.match(r"(?i)^\s*\$resourcesBin\s*=", line):
+            resources_bin_approved = packaged_approved and bool(
+                re.match(
+                    r'(?i)^\s*\$resourcesBin\s*=\s*Join-Path\s+'
+                    r'\$packaged\s+["\']resources/bin["\']\s*$',
+                    line,
+                )
+            )
+        elif re.match(
+            r'(?i)^\s*Copy-Item\s+-Path\s+["\']\$srcBin/\*["\']\s+'
             r'-Destination\s+\$resourcesBin\s+-Recurse\s+-Force\s*$',
-            normalized,
-        )
-    )
+            line,
+        ):
+            return src_bin_approved and resources_bin_approved
+
+    return False
 
 
 def uses_approved_installer_validation(script: str) -> bool:
+    validation = re.search(
+        r"(?is)if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*"
+        r"-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*"
+        r"\{(?P<body>[^}]*)\}",
+        script,
+    )
     return bool(
-        re.search(
-            r"(?is)if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*"
-            r"-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*"
-            r"\{[^}]*throw",
-            script,
+        validation
+        and re.search(
+            r"(?i)(?:\A|[;\r\n])\s*throw(?:\s|\(|;|\Z)",
+            validation["body"],
         )
     )
 
@@ -146,6 +168,59 @@ def forbidden_publication_or_archive_steps(steps: list[dict]) -> list[dict]:
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
+    def test_runtime_copy_requires_architecture_aware_packaged_directory(self) -> None:
+        approved = r'''
+$srcBin = Join-Path $env:BUILD_SOURCESDIRECTORY "ui\desktop\src\bin"
+$packaged = Join-Path "out" (& node -p "require('./scripts/windows-package').resolveWindowsPackage(process.argv[1], '0.0.0', '.', '.').packagedDirName" $env:ARTIFACT_ARCH)
+$resourcesBin = Join-Path $packaged "resources\bin"
+Copy-Item -Path "$srcBin\*" -Destination $resourcesBin -Recurse -Force
+'''
+        unrelated_packaged = approved.replace(
+            '$packaged = Join-Path "out" (& node -p '
+            '"require(\'./scripts/windows-package\').resolveWindowsPackage('
+            "process.argv[1], '0.0.0', '.', '.').packagedDirName\" "
+            "$env:ARTIFACT_ARCH)",
+            '$packaged = "C:\\unrelated"',
+        )
+
+        self.assertTrue(uses_approved_runtime_copy(approved))
+        self.assertFalse(uses_approved_runtime_copy(unrelated_packaged))
+
+    def test_installer_validation_requires_a_throw_statement(self) -> None:
+        validation = r'''
+if (-not (Test-Path $installer) -or (Get-Item $installer).Length -eq 0) {
+  throw "Installer missing or empty: $installer"
+}
+'''
+        mutations = {
+            "comment": validation.replace(
+                '  throw "Installer missing or empty: $installer"',
+                '  # throw "Installer missing or empty: $installer"',
+            ),
+            "string": validation.replace(
+                '  throw "Installer missing or empty: $installer"',
+                '  "throw Installer missing or empty: $installer"',
+            ),
+        }
+
+        self.assertTrue(uses_approved_installer_validation(validation))
+        for name, mutation in mutations.items():
+            with self.subTest(mutation=name):
+                self.assertFalse(uses_approved_installer_validation(mutation))
+
+    def test_staging_aliases_are_resolved_at_copy_time(self) -> None:
+        script = r'''
+$outputDir = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY "AIBuddy-windows-$env:ARTIFACT_ARCH-setup"
+$destination = $outputDir
+Copy-Item "payload" $destination
+$destination = "C:\safe"
+'''
+
+        destinations = powershell_copy_destinations([script])
+        self.assertTrue(
+            any("artifactstagingdirectory" in value for value in destinations)
+        )
+
     def test_macos_builds_only_target_arm64(self) -> None:
         build_files = [
             ".github/workflows/bundle-macos.yml",
@@ -374,17 +449,12 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
         steps = pipeline.get("steps", [])
         scripts = powershell_scripts(pipeline)
-        aliases = powershell_aliases(scripts)
         self.assertFalse(
             any(
                 "artifactstagingdirectory" in destination
                 or "$outputdir" in destination
                 or "aibuddy-windows-$env:artifact_arch-setup" in destination
-                for script in scripts
-                for destination in powershell_copy_destinations(
-                    script,
-                    aliases,
-                )
+                for destination in powershell_copy_destinations(scripts)
             ),
             "Azure pipeline must not copy standalone payloads into setup staging",
         )

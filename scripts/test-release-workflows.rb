@@ -16,44 +16,58 @@ def normalize_powershell_value(value, aliases)
   normalized.downcase
 end
 
-def powershell_aliases(scripts)
+def powershell_copy_destinations(scripts)
   aliases = {}
+  destinations = []
   scripts.each do |script|
     script.lines.each do |line|
       assignment = line.match(/^\s*\$([A-Za-z_]\w*)\s*=\s*(.+?)\s*$/)
-      next unless assignment
+      if assignment
+        aliases[assignment[1].downcase] = normalize_powershell_value(assignment[2], aliases)
+        next
+      end
 
-      aliases[assignment[1].downcase] = normalize_powershell_value(assignment[2], aliases)
+      command = line.strip.match(/\A(?:Copy-Item|Move-Item)\b(.*)/i)
+      next unless command
+
+      arguments = command[1]
+      named = arguments.match(/-Destination\s+("[^"]*"|'[^']*'|\$[A-Za-z_]\w*)/i)
+      destination = if named
+        named[1]
+      else
+        arguments.scan(/"[^"]*"|'[^']*'|\S+/).reject { |token| token.start_with?("-") }[1]
+      end
+      destinations << normalize_powershell_value(destination, aliases) if destination
     end
   end
-  aliases
-end
-
-def powershell_copy_destinations(script, aliases)
-  script.lines.filter_map do |line|
-    command = line.strip.match(/\A(?:Copy-Item|Move-Item)\b(.*)/i)
-    next unless command
-
-    arguments = command[1]
-    named = arguments.match(/-Destination\s+("[^"]*"|'[^']*'|\$[A-Za-z_]\w*)/i)
-    destination = if named
-      named[1]
-    else
-      arguments.scan(/"[^"]*"|'[^']*'|\S+/).reject { |token| token.start_with?("-") }[1]
-    end
-    normalize_powershell_value(destination, aliases) if destination
-  end
+  destinations
 end
 
 def approved_runtime_copy?(script)
   normalized = script.tr("\\", "/")
-  normalized.match?(/^\s*\$srcBin\s*=\s*Join-Path\s+\$env:BUILD_SOURCESDIRECTORY\s+["']ui\/desktop\/src\/bin["']\s*$/i) &&
-    normalized.match?(/^\s*\$resourcesBin\s*=\s*Join-Path\s+\$packaged\s+["']resources\/bin["']\s*$/i) &&
-    normalized.match?(/^\s*Copy-Item\s+-Path\s+["']\$srcBin\/\*["']\s+-Destination\s+\$resourcesBin\s+-Recurse\s+-Force\s*$/i)
+  src_bin_approved = false
+  packaged_approved = false
+  resources_bin_approved = false
+
+  normalized.lines.each do |line|
+    if line.match?(/^\s*\$srcBin\s*=/i)
+      src_bin_approved = line.match?(/^\s*\$srcBin\s*=\s*Join-Path\s+\$env:BUILD_SOURCESDIRECTORY\s+["']ui\/desktop\/src\/bin["']\s*$/i)
+    elsif line.match?(/^\s*\$packaged\s*=/i)
+      packaged_approved = line.match?(/^\s*\$packaged\s*=\s*Join-Path\s+["']out["']\s+\(\s*&\s+node\s+-p\s+.*resolveWindowsPackage\(\s*process\.argv\[1\]\s*,[^)]*\)\.packagedDirName["']\s+\$env:ARTIFACT_ARCH\s*\)\s*$/i)
+    elsif line.match?(/^\s*\$resourcesBin\s*=/i)
+      resources_bin_approved = packaged_approved &&
+        line.match?(/^\s*\$resourcesBin\s*=\s*Join-Path\s+\$packaged\s+["']resources\/bin["']\s*$/i)
+    elsif line.match?(/^\s*Copy-Item\s+-Path\s+["']\$srcBin\/\*["']\s+-Destination\s+\$resourcesBin\s+-Recurse\s+-Force\s*$/i)
+      return src_bin_approved && resources_bin_approved
+    end
+  end
+
+  false
 end
 
 def approved_installer_validation?(script)
-  script.match?(/if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*\{[^}]*throw/mi)
+  validation = script.match(/if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*\{(?<body>[^}]*)\}/mi)
+  validation && validation[:body].match?(/(?:\A|[;\r\n])\s*throw(?:\s|\(|;|\z)/i)
 end
 
 workflow_paths = {
@@ -255,13 +269,10 @@ abort "Azure pipeline must stage only the architecture-specific installer" unles
   installer.include?('$installer = Join-Path $outputDir $pkg.setupFileName') &&
   approved_installer_validation?(installer)
 
-aliases = powershell_aliases(azure_powershell)
-staged_payload_copy = azure_powershell.any? do |script|
-  powershell_copy_destinations(script, aliases).any? do |destination|
-    destination.include?("artifactstagingdirectory") ||
-      destination.include?("$outputdir") ||
-      destination.include?("aibuddy-windows-$env:artifact_arch-setup")
-  end
+staged_payload_copy = powershell_copy_destinations(azure_powershell).any? do |destination|
+  destination.include?("artifactstagingdirectory") ||
+    destination.include?("$outputdir") ||
+    destination.include?("aibuddy-windows-$env:artifact_arch-setup")
 end
 abort "Azure pipeline must not copy standalone payloads into setup staging" if staged_payload_copy
 
