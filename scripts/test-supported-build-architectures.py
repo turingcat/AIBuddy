@@ -443,10 +443,12 @@ $destination = "C:\safe"
         self.assertTrue(
             any(
                 "choco install nasm --no-progress -y" in script
+                and "chocolateyProfile.psm1" in script
+                and "refreshenv" in script
                 and "nasm --version" in script
                 for script in preparation_scripts
             ),
-            "Azure must install and verify NASM before aws-lc-sys builds i686",
+            "Azure must install NASM, refresh PATH, and verify it before aws-lc-sys builds i686",
         )
 
     def test_azure_injects_matching_release_cli_and_runtime_binaries(self) -> None:

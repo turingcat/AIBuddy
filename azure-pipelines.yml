@@ -33,6 +33,8 @@ steps:
       if (-not (Get-Command nasm -ErrorAction SilentlyContinue)) {
         choco install nasm --no-progress -y
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+        Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
+        refreshenv
       }
       nasm --version
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
