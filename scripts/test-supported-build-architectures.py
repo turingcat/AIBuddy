@@ -468,6 +468,66 @@ $destination = "C:\safe"
             "Azure pipeline must use the approved src/bin to resources/bin copy",
         )
 
+    def test_azure_resets_runtime_before_copying_cli_and_helpers(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        release_builds = [
+            script
+            for script in powershell_scripts(pipeline)
+            if "cargo build" in script and "--release" in script
+        ]
+        self.assertEqual(1, len(release_builds))
+        release_build = release_builds[0]
+
+        ordered_patterns = {
+            "cleanup": (
+                r'(?im)^\s*Remove-Item\s+["\']ui\\desktop\\src\\bin["\']'
+                r"\s+-Recurse\s+-Force\s*$"
+            ),
+            "recreate": (
+                r'(?im)^\s*New-Item\s+-ItemType\s+Directory\s+-Force\s+'
+                r'["\']ui\\desktop\\src\\bin["\']\s*\|\s*Out-Null\s*$'
+            ),
+            "inject": (
+                r'(?im)^\s*Copy-Item\s+\$binary\s+'
+                r'["\']ui\\desktop\\src\\bin\\goose\.exe["\']\s+-Force\s*$'
+            ),
+            "helper_copy": (
+                r'(?im)^\s*Copy-Item\s+\$helper\.FullName\s+'
+                r'["\']ui\\desktop\\src\\bin\\\$\(\$helper\.Name\)["\']'
+                r"\s+-Force\s*$"
+            ),
+            "goose_npm_copy": (
+                r'(?im)^\s*Copy-Item\s+-Path\s+["\']\$gooseNpmSource\\\*["\']'
+                r"\s+-Destination\s+\$gooseNpmDestination\s+-Recurse\s+-Force\s*$"
+            ),
+        }
+        positions = {}
+        for operation, pattern in ordered_patterns.items():
+            matches = list(re.finditer(pattern, release_build))
+            self.assertEqual(
+                1,
+                len(matches),
+                f"Azure release preparation must define one approved {operation} operation",
+            )
+            positions[operation] = matches[0].start()
+
+        self.assertLess(positions["cleanup"], positions["recreate"])
+        self.assertLess(positions["recreate"], positions["inject"])
+        self.assertLess(positions["inject"], positions["helper_copy"])
+        self.assertLess(positions["inject"], positions["goose_npm_copy"])
+
+        copy_commands = re.findall(r"(?im)^\s*Copy-Item\b[^\r\n]*$", release_build)
+        self.assertEqual(
+            3,
+            len(copy_commands),
+            "Azure release preparation may copy only the built CLI and approved helpers",
+        )
+        self.assertRegex(
+            release_build,
+            r'(?im)^\s*\$authoredHelpers\s*=\s*Get-ChildItem\b[^\r\n]*'
+            r'Where-Object\s*\{[^\r\n]*\$_\.Name\s+-ne\s+["\']goose\.exe["\']',
+        )
+
     def test_azure_publishes_only_architecture_specific_installers(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
         steps = pipeline.get("steps", [])

@@ -287,6 +287,20 @@ abort "Azure pipeline must build the matrix Rust target in release mode" unless 
   release_build.include?('target\$env:RUST_TARGET\release\goose.exe') &&
   release_build.match?(/Copy-Item\s+\$binary\s+["']ui\\desktop\\src\\bin\\goose\.exe["']\s+-Force/i)
 
+runtime_preparation = {
+  cleanup: /Remove-Item\s+["']ui\\desktop\\src\\bin["']\s+-Recurse\s+-Force/i,
+  recreate: /New-Item\s+-ItemType\s+Directory\s+-Force\s+["']ui\\desktop\\src\\bin["']\s*\|\s*Out-Null/i,
+  inject: /Copy-Item\s+\$binary\s+["']ui\\desktop\\src\\bin\\goose\.exe["']\s+-Force/i,
+  helper_copy: /Copy-Item\s+\$helper\.FullName\s+["']ui\\desktop\\src\\bin\\\$\(\$helper\.Name\)["']\s+-Force/i,
+  goose_npm_copy: /Copy-Item\s+-Path\s+["']\$gooseNpmSource\\\*["']\s+-Destination\s+\$gooseNpmDestination\s+-Recurse\s+-Force/i,
+}.transform_values { |pattern| release_build&.match(pattern)&.begin(0) }
+runtime_order = runtime_preparation.values
+abort "Azure release runtime preparation order is unsafe" unless runtime_order.none?(&:nil?) &&
+  runtime_preparation.values_at(:cleanup, :recreate, :inject).each_cons(2).all? { |first, second| first < second } &&
+  runtime_preparation.values_at(:helper_copy, :goose_npm_copy).all? { |helper| runtime_preparation[:inject] < helper } &&
+  release_build.scan(/^\s*Copy-Item\b[^\r\n]*$/i).length == 3 &&
+  release_build.match?(/\$authoredHelpers\s*=\s*Get-ChildItem\b[^\r\n]*Where-Object\s*\{[^\r\n]*\$_\.Name\s+-ne\s+["']goose\.exe["']/i)
+
 desktop_build = azure_powershell.find do |script|
   normalized = script.tr("\\", "/")
   normalized.match?(/(?:Set-Location|cd)\s+["']?(?:\.\/)?ui\/desktop["']?/i) &&
