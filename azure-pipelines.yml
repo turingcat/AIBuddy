@@ -33,10 +33,21 @@ steps:
       if (-not (Get-Command nasm -ErrorAction SilentlyContinue)) {
         choco install nasm --no-progress -y
         if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-        Import-Module "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
-        refreshenv
       }
-      nasm --version
+
+      $nasmCommand = Get-Command nasm -ErrorAction SilentlyContinue
+      if ($nasmCommand) {
+        $nasm = $nasmCommand.Source
+        $nasmInstallDir = Split-Path $nasm
+      } else {
+        $nasmRegistry = Get-Item "Registry::HKEY_CURRENT_USER\Software\nasm" -ErrorAction Stop
+        $nasmInstallDir = [string]$nasmRegistry.GetValue("")
+        if ([string]::IsNullOrWhiteSpace($nasmInstallDir)) { throw "NASM install directory is not registered" }
+        $nasm = Join-Path $nasmInstallDir "nasm.exe"
+      }
+      if (-not (Test-Path $nasm)) { throw "NASM executable not found: $nasm" }
+      Write-Host "##vso[task.prependpath]$nasmInstallDir"
+      & $nasm --version
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     displayName: Prepare Windows Rust toolchain
 
