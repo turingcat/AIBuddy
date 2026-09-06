@@ -116,17 +116,82 @@ azure = YAML.load_file(azure_path)
 azure_text = File.read(azure_path)
 
 abort "Azure pipeline must remain manual-only" unless azure["trigger"] == "none" && azure["pr"] == "none"
-abort "Azure matrix must be serial" unless azure.dig("strategy", "maxParallel") == 1
+azure_strategy = azure.fetch("strategy", {})
+abort "Azure matrix must be serial" unless azure_strategy["maxParallel"] == 1
 
-[
-  "i686-pc-windows-msvc",
-  "x86_64-pc-windows-msvc",
-  "ELECTRON_ARCH: ia32",
-  "ELECTRON_ARCH: x64",
-  "AIBuddy-windows-$(ARTIFACT_ARCH)-setup",
-].each do |fragment|
-  abort "Azure pipeline missing #{fragment}" unless azure_text.include?(fragment)
+azure_matrix = azure_strategy.fetch("matrix", {})
+abort "Azure matrix must define exactly x32 and x64" unless azure_matrix.keys.sort == %w[x32 x64]
+
+expected_azure_matrix = {
+  "x32" => {
+    "ARTIFACT_ARCH" => "x32",
+    "ELECTRON_ARCH" => "ia32",
+    "RUST_TARGET" => "i686-pc-windows-msvc",
+    "CARGO_FEATURES" => "aws-providers,nostr,otel,rustls-tls,system-keyring",
+  },
+  "x64" => {
+    "ARTIFACT_ARCH" => "x64",
+    "ELECTRON_ARCH" => "x64",
+    "RUST_TARGET" => "x86_64-pc-windows-msvc",
+    "CARGO_FEATURES" => "code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update",
+  },
+}
+expected_azure_matrix.each do |leg, expected|
+  actual = azure_matrix.fetch(leg, {}).slice(*expected.keys)
+  abort "Azure #{leg} matrix mapping is incorrect" unless actual == expected
 end
+
+azure_steps = azure.fetch("steps", [])
+azure_powershell = azure_steps.filter_map { |step| step["powershell"] if step.is_a?(Hash) }
+
+release_build = azure_powershell.find { |script| script.include?("cargo build") && script.include?("--release") }
+abort "Azure pipeline must build the matrix Rust target in release mode" unless release_build &&
+  release_build.include?("--target $env:RUST_TARGET") &&
+  release_build.include?("--features $env:CARGO_FEATURES") &&
+  release_build.include?('target\$env:RUST_TARGET\release\goose.exe') &&
+  release_build.match?(/Copy-Item\s+\$binary\s+["']ui\\desktop\\src\\bin\\goose\.exe["']\s+-Force/i)
+
+desktop_build = azure_powershell.find { |script| script.include?("prepare-platform-binaries.js") }
+abort "Azure pipeline must prepare and package the matching Electron architecture" unless desktop_build &&
+  desktop_build.include?("pnpm run package:windows -- --arch=$env:ELECTRON_ARCH")
+
+resource_injection = azure_powershell.find do |script|
+  normalized = script.tr("\\", "/")
+  normalized.match?(/Copy-Item/i) && normalized.include?("src/bin") && normalized.include?("resources/bin")
+end
+abort "Azure pipeline must inject runtime binaries into packaged resources/bin" unless resource_injection
+
+artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
+resolved_artifacts = azure_matrix.values.map do |leg|
+  artifact_name.sub("$(ARTIFACT_ARCH)", leg.fetch("ARTIFACT_ARCH", ""))
+end
+unless resolved_artifacts.sort == %w[AIBuddy-windows-x32-setup AIBuddy-windows-x64-setup]
+  abort "Azure matrix must resolve x32 and x64 setup artifact names"
+end
+
+publish_steps = azure_steps.select do |step|
+  step.is_a?(Hash) && (step.key?("publish") || step["task"].to_s.start_with?("Publish"))
+end
+abort "Azure pipeline must publish exactly one installer artifact per matrix leg" unless publish_steps.length == 1
+
+publish = publish_steps.first
+abort "Azure pipeline must use PublishPipelineArtifact@1" unless publish["task"] == "PublishPipelineArtifact@1"
+publish_inputs = publish.fetch("inputs", {})
+target_path = publish_inputs["targetPath"].to_s.tr("\\", "/")
+expected_target_path = "$(Build.ArtifactStagingDirectory)/#{artifact_name}"
+unless publish_inputs["artifact"] == artifact_name && target_path == expected_target_path
+  abort "Azure pipeline must publish only the staged setup directory"
+end
+
+installer = azure_powershell.find { |script| script.include?("desktop-setup.iss") }
+abort "Azure pipeline must stage only the architecture-specific installer" unless installer &&
+  installer.include?('AIBuddy-windows-$env:ARTIFACT_ARCH-setup') &&
+  installer.include?("BUILD_ARTIFACTSTAGINGDIRECTORY")
+
+staged_cli = azure_powershell.any? do |script|
+  script.downcase.include?("goose.exe") && script.downcase.include?("artifactstagingdirectory")
+end
+abort "Azure pipeline must not stage a standalone CLI artifact" if staged_cli
 
 abort "Azure pipeline must not create portable ZIPs" if azure_text.include?("portableFileName") || azure_text.match?(/7z\s+a\s+-tzip/)
 abort "Azure pipeline must not dispatch GitHub Actions" if azure_text.include?("gh workflow run") || azure_text.include?("workflow_dispatch")

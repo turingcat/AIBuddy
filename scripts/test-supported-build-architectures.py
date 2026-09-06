@@ -1,10 +1,37 @@
 #!/usr/bin/env python3
 
 import json
+import subprocess
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+AZURE_PIPELINE = ROOT / "azure-pipelines.yml"
+
+
+def load_yaml(path: Path) -> dict:
+    result = subprocess.run(
+        [
+            "ruby",
+            "-rjson",
+            "-ryaml",
+            "-e",
+            "print JSON.generate(YAML.load_file(ARGV.fetch(0)))",
+            str(path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(result.stdout)
+
+
+def powershell_scripts(pipeline: dict) -> list[str]:
+    return [
+        step["powershell"]
+        for step in pipeline.get("steps", [])
+        if isinstance(step, dict) and isinstance(step.get("powershell"), str)
+    ]
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
@@ -76,18 +103,141 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
 
-    def test_azure_builds_x32_and_x64_desktop_serially(self) -> None:
-        pipeline = (ROOT / "azure-pipelines.yml").read_text(encoding="utf-8-sig")
-        self.assertIn("i686-pc-windows-msvc", pipeline)
-        self.assertIn("x86_64-pc-windows-msvc", pipeline)
-        self.assertIn("ELECTRON_ARCH: ia32", pipeline)
-        self.assertIn("ELECTRON_ARCH: x64", pipeline)
-        self.assertIn("maxParallel: 1", pipeline)
-        self.assertIn("pnpm run package:windows", pipeline)
-        self.assertIn("desktop-setup.iss", pipeline)
-        self.assertIn("PublishPipelineArtifact@1", pipeline)
-        self.assertNotIn("portableFileName", pipeline)
-        self.assertNotIn("gh workflow run", pipeline)
+    def test_azure_matrix_maps_x32_and_x64_serially(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        self.assertEqual("none", pipeline.get("trigger"))
+        self.assertEqual("none", pipeline.get("pr"))
+
+        strategy = pipeline.get("strategy")
+        self.assertIsInstance(strategy, dict)
+        self.assertEqual(1, strategy.get("maxParallel"))
+
+        matrix = strategy.get("matrix")
+        self.assertIsInstance(matrix, dict)
+        self.assertEqual({"x32", "x64"}, set(matrix))
+
+        expected = {
+            "x32": {
+                "ARTIFACT_ARCH": "x32",
+                "ELECTRON_ARCH": "ia32",
+                "RUST_TARGET": "i686-pc-windows-msvc",
+                "CARGO_FEATURES": "aws-providers,nostr,otel,rustls-tls,system-keyring",
+            },
+            "x64": {
+                "ARTIFACT_ARCH": "x64",
+                "ELECTRON_ARCH": "x64",
+                "RUST_TARGET": "x86_64-pc-windows-msvc",
+                "CARGO_FEATURES": (
+                    "code-mode,aws-providers,nostr,otel,rustls-tls,"
+                    "system-keyring,update"
+                ),
+            },
+        }
+        for leg, expected_mapping in expected.items():
+            with self.subTest(leg=leg):
+                actual_mapping = {
+                    key: matrix[leg].get(key)
+                    for key in expected_mapping
+                }
+                self.assertEqual(expected_mapping, actual_mapping)
+
+    def test_azure_injects_matching_release_cli_and_runtime_binaries(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        scripts = powershell_scripts(pipeline)
+
+        release_builds = [
+            script
+            for script in scripts
+            if "cargo build" in script and "--release" in script
+        ]
+        self.assertEqual(1, len(release_builds))
+        release_build = release_builds[0]
+        self.assertIn("--target $env:RUST_TARGET", release_build)
+        self.assertIn("--features $env:CARGO_FEATURES", release_build)
+        self.assertIn(r"target\$env:RUST_TARGET\release\goose.exe", release_build)
+        self.assertRegex(
+            release_build,
+            r'(?i)Copy-Item\s+\$binary\s+["\']ui\\desktop\\src\\bin\\goose\.exe["\']\s+-Force',
+        )
+
+        desktop_builds = [
+            script for script in scripts if "prepare-platform-binaries.js" in script
+        ]
+        self.assertEqual(1, len(desktop_builds))
+        self.assertIn(
+            "pnpm run package:windows -- --arch=$env:ELECTRON_ARCH",
+            desktop_builds[0],
+        )
+
+        normalized_scripts = [script.replace("\\", "/") for script in scripts]
+        self.assertTrue(
+            any(
+                "Copy-Item" in script
+                and "src/bin" in script
+                and "resources/bin" in script
+                for script in normalized_scripts
+            ),
+            "Azure pipeline must copy runtime binaries into packaged resources/bin",
+        )
+
+    def test_azure_publishes_only_architecture_specific_installers(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
+        matrix = pipeline.get("strategy", {}).get("matrix", {})
+        artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
+        resolved_names = {
+            artifact_name.replace("$(ARTIFACT_ARCH)", leg.get("ARTIFACT_ARCH", ""))
+            for leg in matrix.values()
+        }
+        self.assertEqual(
+            {"AIBuddy-windows-x32-setup", "AIBuddy-windows-x64-setup"},
+            resolved_names,
+        )
+
+        steps = pipeline.get("steps", [])
+        publication_steps = [
+            step
+            for step in steps
+            if isinstance(step, dict)
+            and (
+                "publish" in step
+                or str(step.get("task", "")).startswith("Publish")
+            )
+        ]
+        self.assertEqual(1, len(publication_steps))
+        publish = publication_steps[0]
+        self.assertEqual("PublishPipelineArtifact@1", publish.get("task"))
+        publish_inputs = publish.get("inputs", {})
+        self.assertEqual(artifact_name, publish_inputs.get("artifact"))
+        self.assertEqual(
+            f"$(Build.ArtifactStagingDirectory)/{artifact_name}",
+            str(publish_inputs.get("targetPath", "")).replace("\\", "/"),
+        )
+
+        installer_scripts = [
+            script
+            for script in powershell_scripts(pipeline)
+            if "desktop-setup.iss" in script
+        ]
+        self.assertEqual(1, len(installer_scripts))
+        self.assertIn(
+            "AIBuddy-windows-$env:ARTIFACT_ARCH-setup",
+            installer_scripts[0],
+        )
+        self.assertIn("BUILD_ARTIFACTSTAGINGDIRECTORY", installer_scripts[0])
+
+        self.assertFalse(
+            any(
+                "goose.exe" in script.lower()
+                and "artifactstagingdirectory" in script.lower()
+                for script in powershell_scripts(pipeline)
+            ),
+            "Azure pipeline must not stage a standalone CLI artifact",
+        )
+        self.assertNotIn("portableFileName", pipeline_text)
+        self.assertNotRegex(pipeline_text, r"7z\s+a\s+-tzip")
+        self.assertNotIn("gh workflow run", pipeline_text)
+        self.assertNotIn("workflow_dispatch", pipeline_text)
 
     def test_package_manager_allows_windows_ia32_dependencies(self) -> None:
         workspace = (ROOT / "ui/pnpm-workspace.yaml").read_text(encoding="utf-8")
