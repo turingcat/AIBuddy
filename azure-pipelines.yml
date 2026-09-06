@@ -1,4 +1,4 @@
-# Windows CI on Azure Pipelines for the private GitHub repository.
+# Windows desktop CI on Azure Pipelines for the private GitHub repository.
 # Uses Microsoft-hosted Windows agents and does not consume GitHub Actions minutes.
 
 trigger: none
@@ -7,16 +7,29 @@ pr: none
 pool:
   vmImage: windows-2022
 
+strategy:
+  matrix:
+    x32:
+      ARTIFACT_ARCH: x32
+      ELECTRON_ARCH: ia32
+      RUST_TARGET: i686-pc-windows-msvc
+      CARGO_FEATURES: aws-providers,nostr,otel,rustls-tls,system-keyring
+    x64:
+      ARTIFACT_ARCH: x64
+      ELECTRON_ARCH: x64
+      RUST_TARGET: x86_64-pc-windows-msvc
+      CARGO_FEATURES: code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
+  maxParallel: 1
+
 steps:
   - checkout: self
     clean: true
     fetchDepth: 1
 
   - powershell: |
-      Write-Host "Agent OS: $env:AGENT_OS"
-      Write-Host "Architecture: $env:PROCESSOR_ARCHITECTURE"
       rustup show
-      rustup target add x86_64-pc-windows-msvc
+      rustup target add $(RUST_TARGET)
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     displayName: Prepare Windows Rust toolchain
 
   - task: Cache@2
@@ -27,17 +40,109 @@ steps:
         cargo | "$(Agent.OS)"
       path: $(UserProfile)\.cargo
 
+  - task: NodeTool@0
+    displayName: Use Node.js 24.10.0
+    inputs:
+      versionSpec: 24.10.0
+
+  - powershell: |
+      npm install --global pnpm@10.30.3
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      pnpm config set store-dir "$(Pipeline.Workspace)\.pnpm-store"
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    displayName: Install pnpm 10.30.3
+
+  - task: Cache@2
+    displayName: Cache pnpm store
+    inputs:
+      key: 'pnpm | "$(Agent.OS)" | "$(ELECTRON_ARCH)" | ui/pnpm-lock.yaml'
+      restoreKeys: |
+        pnpm | "$(Agent.OS)" | "$(ELECTRON_ARCH)"
+      path: $(Pipeline.Workspace)\.pnpm-store
+
+  - task: Cache@2
+    displayName: Cache Electron downloads
+    inputs:
+      key: 'electron | "$(Agent.OS)" | "$(ELECTRON_ARCH)" | ui/pnpm-lock.yaml'
+      restoreKeys: |
+        electron | "$(Agent.OS)" | "$(ELECTRON_ARCH)"
+      path: $(Pipeline.Workspace)\.cache\electron
+
   - powershell: |
       $env:CARGO_INCREMENTAL = "0"
-      cargo build --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc
+      cargo build --locked --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      $binary = "target\x86_64-pc-windows-msvc\debug\goose.exe"
+      $binary = "target\$env:RUST_TARGET\release\goose.exe"
       if (-not (Test-Path $binary)) { throw "Windows binary not found: $binary" }
-      New-Item -ItemType Directory -Force "$(Build.ArtifactStagingDirectory)\windows-x64" | Out-Null
-      Copy-Item $binary "$(Build.ArtifactStagingDirectory)\windows-x64\goose.exe"
-    displayName: Build Windows x64 CLI
+      New-Item -ItemType Directory -Force "ui\desktop\src\bin" | Out-Null
+      Copy-Item $binary "ui\desktop\src\bin\goose.exe" -Force
 
-  - publish: $(Build.ArtifactStagingDirectory)\windows-x64
-    artifact: AIBuddy-windows-x64
-    displayName: Publish Windows artifact
+      $platformBin = "ui\desktop\src\platform\windows\bin"
+      if (Test-Path $platformBin) {
+        $authoredHelpers = Get-ChildItem -Path $platformBin -File | Where-Object { $_.Name -ne "goose.exe" -and $_.Extension -in ".exe", ".dll", ".cmd" }
+        foreach ($helper in $authoredHelpers) {
+          Copy-Item $helper.FullName "ui\desktop\src\bin\$($helper.Name)" -Force
+        }
+        $gooseNpmSource = Join-Path $platformBin "goose-npm"
+        if (Test-Path $gooseNpmSource) {
+          $gooseNpmDestination = "ui\desktop\src\bin\goose-npm"
+          New-Item -ItemType Directory -Force $gooseNpmDestination | Out-Null
+          Copy-Item -Path "$gooseNpmSource\*" -Destination $gooseNpmDestination -Recurse -Force
+        }
+      }
+    displayName: Build and inject Windows $(ARTIFACT_ARCH) CLI
+
+  - powershell: |
+      Set-Location "ui\desktop"
+      pnpm install --frozen-lockfile
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      node scripts\build-main.js
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      $env:ELECTRON_PLATFORM = "win32"
+      node scripts\prepare-platform-binaries.js
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      pnpm run package:windows -- --arch=$env:ELECTRON_ARCH
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      $srcBin = Join-Path $env:BUILD_SOURCESDIRECTORY "ui\desktop\src\bin"
+      $packaged = Join-Path "out" (& node -p "require('./scripts/windows-package').resolveWindowsPackage(process.argv[1], '0.0.0', '.', '.').packagedDirName" $env:ARTIFACT_ARCH)
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      if (-not (Test-Path $packaged)) { throw "Packaged Windows directory not found: $packaged" }
+      $resourcesBin = Join-Path $packaged "resources\bin"
+      New-Item -ItemType Directory -Force $resourcesBin | Out-Null
+      Copy-Item -Path "$srcBin\*" -Destination $resourcesBin -Recurse -Force
+
+      $distribution = "dist-windows-$env:ARTIFACT_ARCH"
+      New-Item -ItemType Directory -Force $distribution | Out-Null
+      Copy-Item -Path "$packaged\*" -Destination $distribution -Recurse -Force
+    displayName: Build Windows $(ARTIFACT_ARCH) desktop package
+    env:
+      ELECTRON_CACHE: $(Pipeline.Workspace)\.cache\electron
+
+  - powershell: |
+      $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+      if (-not (Test-Path $iscc)) {
+        choco install innosetup --no-progress -y
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      }
+      if (-not (Test-Path $iscc)) { throw "Inno Setup compiler not found: $iscc" }
+
+      $package = Get-Content "ui\desktop\package.json" -Raw | ConvertFrom-Json
+      $distDir = Join-Path $env:BUILD_SOURCESDIRECTORY "ui\desktop\dist-windows-$env:ARTIFACT_ARCH"
+      $outputDir = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY "AIBuddy-windows-$env:ARTIFACT_ARCH-setup"
+      New-Item -ItemType Directory -Force $outputDir | Out-Null
+      $pkg = & node "ui/desktop/scripts/windows-package.js" $env:ARTIFACT_ARCH $package.version $distDir $outputDir | ConvertFrom-Json
+      if ($LASTEXITCODE -ne 0) { throw "Failed to resolve Windows package definitions" }
+      & $iscc @($pkg.isccArgs) "ui/desktop/desktop-setup.iss"
+      if ($LASTEXITCODE -ne 0) { throw "Inno Setup compilation failed" }
+      $installer = Join-Path $outputDir $pkg.setupFileName
+      if (-not (Test-Path $installer) -or (Get-Item $installer).Length -eq 0) { throw "Installer missing or empty: $installer" }
+      Get-Item $installer
+    displayName: Create Windows $(ARTIFACT_ARCH) installer
+
+  - task: PublishPipelineArtifact@1
+    displayName: Publish Windows $(ARTIFACT_ARCH) installer
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)/AIBuddy-windows-$(ARTIFACT_ARCH)-setup
+      artifact: AIBuddy-windows-$(ARTIFACT_ARCH)-setup
