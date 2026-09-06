@@ -451,6 +451,26 @@ $destination = "C:\safe"
             "Azure must install NASM, persist its installer path, and verify it before aws-lc-sys builds i686",
         )
 
+    def test_azure_uses_lld_for_release_cli_linking(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        steps = pipeline.get("steps", [])
+        cli_build_index = next(
+            index
+            for index, step in enumerate(steps)
+            if isinstance(step, dict)
+            and "cargo build" in str(step.get("powershell", ""))
+        )
+        cli_build = str(steps[cli_build_index].get("powershell", ""))
+        preparation = "\n".join(
+            str(step.get("powershell", ""))
+            for step in steps[:cli_build_index]
+            if isinstance(step, dict)
+        )
+
+        self.assertIn("Get-Command lld-link -ErrorAction Stop", preparation)
+        self.assertIn("& $lldLink.Source --version", preparation)
+        self.assertIn('$env:RUSTFLAGS = "-C linker=lld-link"', cli_build)
+
     def test_azure_injects_matching_release_cli_and_runtime_binaries(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
         scripts = powershell_scripts(pipeline)

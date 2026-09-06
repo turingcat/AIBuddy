@@ -49,6 +49,10 @@ steps:
       Write-Host "##vso[task.prependpath]$nasmInstallDir"
       & $nasm --version
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      $lldLink = Get-Command lld-link -ErrorAction Stop
+      & $lldLink.Source --version
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     displayName: Prepare Windows Rust toolchain
 
   - task: Cache@2
@@ -89,6 +93,7 @@ steps:
 
   - powershell: |
       $env:CARGO_INCREMENTAL = "0"
+      $env:RUSTFLAGS = "-C linker=lld-link"
       cargo build --locked --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
