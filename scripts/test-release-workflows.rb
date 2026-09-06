@@ -3,6 +3,64 @@
 require "yaml"
 require "open3"
 
+def analyze_powershell(script)
+  code = +""
+  executable_semicolon = false
+  quote = nil
+  block_comment = false
+  index = 0
+
+  while index < script.length
+    character = script[index]
+    following = script[index + 1]
+
+    if block_comment
+      if character == "#" && following == ">"
+        block_comment = false
+        index += 2
+      else
+        code << character if character == "\n"
+        index += 1
+      end
+    elsif quote
+      code << character
+      if character == "`" && quote == '"' && following
+        code << following
+        index += 2
+      elsif character == quote
+        if quote == "'" && following == "'"
+          code << following
+          index += 2
+        else
+          quote = nil
+          index += 1
+        end
+      else
+        index += 1
+      end
+    elsif character == "#"
+      index += 1
+      index += 1 while index < script.length && script[index] != "\n"
+    elsif character == "<" && following == "#"
+      block_comment = true
+      index += 2
+    elsif character == "'" || character == '"'
+      quote = character
+      code << character
+      index += 1
+    elsif character == "`" && following
+      code << character << following
+      index += 2
+    else
+      executable_semicolon = true if character == ";"
+      code << character
+      index += 1
+    end
+  end
+
+  [code, executable_semicolon]
+end
+
 def normalize_powershell_value(value, aliases)
   normalized = value.strip.tr("\\", "/")
   8.times do
@@ -67,7 +125,14 @@ end
 
 def approved_installer_validation?(script)
   validation = script.match(/if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*\{(?<body>[^}]*)\}/mi)
-  validation && validation[:body].match?(/(?:\A|[;\r\n])\s*throw(?:\s|\(|;|\z)/i)
+  return false unless validation
+
+  body = validation[:body]
+  code, = analyze_powershell(body)
+  expected = 'throw "Installer missing or empty: $installer"'
+  body.lines.zip(code.lines).any? do |raw_line, code_line|
+    raw_line.strip.casecmp?(expected) && code_line&.strip&.casecmp?(expected)
+  end
 end
 
 workflow_paths = {
@@ -210,6 +275,10 @@ end
 
 azure_steps = azure.fetch("steps", [])
 azure_powershell = azure_steps.filter_map { |step| step["powershell"] if step.is_a?(Hash) }
+abort "Azure PowerShell must use one executable statement per line" if azure_powershell.any? do |script|
+  _, executable_semicolon = analyze_powershell(script)
+  executable_semicolon
+end
 
 release_build = azure_powershell.find { |script| script.include?("cargo build") && script.include?("--release") }
 abort "Azure pipeline must build the matrix Rust target in release mode" unless release_build &&

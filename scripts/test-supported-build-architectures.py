@@ -10,6 +10,61 @@ ROOT = Path(__file__).resolve().parent.parent
 AZURE_PIPELINE = ROOT / "azure-pipelines.yml"
 
 
+def analyze_powershell(script: str) -> tuple[str, bool]:
+    code = []
+    executable_semicolon = False
+    quote = None
+    block_comment = False
+    index = 0
+
+    while index < len(script):
+        character = script[index]
+        following = script[index + 1] if index + 1 < len(script) else None
+
+        if block_comment:
+            if character == "#" and following == ">":
+                block_comment = False
+                index += 2
+            else:
+                if character == "\n":
+                    code.append(character)
+                index += 1
+        elif quote:
+            code.append(character)
+            if character == "`" and quote == '"' and following:
+                code.append(following)
+                index += 2
+            elif character == quote:
+                if quote == "'" and following == "'":
+                    code.append(following)
+                    index += 2
+                else:
+                    quote = None
+                    index += 1
+            else:
+                index += 1
+        elif character == "#":
+            index += 1
+            while index < len(script) and script[index] != "\n":
+                index += 1
+        elif character == "<" and following == "#":
+            block_comment = True
+            index += 2
+        elif character in {"'", '"'}:
+            quote = character
+            code.append(character)
+            index += 1
+        elif character == "`" and following:
+            code.extend((character, following))
+            index += 2
+        else:
+            executable_semicolon = executable_semicolon or character == ";"
+            code.append(character)
+            index += 1
+
+    return "".join(code), executable_semicolon
+
+
 def load_yaml(path: Path) -> dict:
     result = subprocess.run(
         [
@@ -137,12 +192,16 @@ def uses_approved_installer_validation(script: str) -> bool:
         r"\{(?P<body>[^}]*)\}",
         script,
     )
-    return bool(
-        validation
-        and re.search(
-            r"(?i)(?:\A|[;\r\n])\s*throw(?:\s|\(|;|\Z)",
-            validation["body"],
-        )
+    if validation is None:
+        return False
+
+    body = validation["body"]
+    code, _ = analyze_powershell(body)
+    expected = 'throw "Installer missing or empty: $installer"'
+    return any(
+        raw_line.strip().lower() == expected.lower()
+        and code_line.strip().lower() == expected.lower()
+        for raw_line, code_line in zip(body.splitlines(), code.splitlines())
     )
 
 
@@ -154,6 +213,7 @@ def forbidden_publication_or_archive_steps(steps: list[dict]) -> list[dict]:
 
         task = str(step.get("task", ""))
         step_text = str(step)
+        powershell = step.get("powershell")
         if re.search(
             r"(?i)PublishBuildArtifacts|UniversalPackages|CopyFiles|ArchiveFiles",
             task,
@@ -162,6 +222,9 @@ def forbidden_publication_or_archive_steps(steps: list[dict]) -> list[dict]:
             r"\btar(?:\.exe)?\s+-a\b|"
             r"7z(?:\.exe)?\s+a\b.*(?:-tzip|\.zip)|portableFileName|\.zip\b",
             step_text,
+        ) or (
+            isinstance(powershell, str)
+            and analyze_powershell(powershell)[1]
         ):
             forbidden.append(step)
     return forbidden
@@ -193,13 +256,21 @@ if (-not (Test-Path $installer) -or (Get-Item $installer).Length -eq 0) {
 }
 '''
         mutations = {
-            "comment": validation.replace(
+            "line comment": validation.replace(
                 '  throw "Installer missing or empty: $installer"',
-                '  # throw "Installer missing or empty: $installer"',
+                '  # validation bypass; throw "Installer missing or empty: $installer"',
             ),
             "string": validation.replace(
                 '  throw "Installer missing or empty: $installer"',
-                '  "throw Installer missing or empty: $installer"',
+                '  \'validation bypass; throw "Installer missing or empty: $installer"\'',
+            ),
+            "block comment": validation.replace(
+                '  throw "Installer missing or empty: $installer"',
+                '  <#\n  throw "Installer missing or empty: $installer"\n  #>',
+            ),
+            "block comment prefix": validation.replace(
+                '  throw "Installer missing or empty: $installer"',
+                '  <# validation bypass #> throw "Installer missing or empty: $installer"',
             ),
         }
 
@@ -207,6 +278,33 @@ if (-not (Test-Path $installer) -or (Get-Item $installer).Length -eq 0) {
         for name, mutation in mutations.items():
             with self.subTest(mutation=name):
                 self.assertFalse(uses_approved_installer_validation(mutation))
+
+    def test_pipeline_rejects_executable_semicolon_statements(self) -> None:
+        bypass = {
+            "powershell": (
+                "$destination = $outputDir; "
+                'Copy-Item "payload" $destination'
+            )
+        }
+
+        self.assertEqual(
+            [bypass],
+            forbidden_publication_or_archive_steps([bypass]),
+        )
+        self.assertEqual(
+            [],
+            forbidden_publication_or_archive_steps(
+                [
+                    {
+                        "powershell": (
+                            'Write-Host "quoted; text"\n'
+                            "# line; comment\n"
+                            "<# block; comment #>"
+                        )
+                    }
+                ]
+            ),
+        )
 
     def test_staging_aliases_are_resolved_at_copy_time(self) -> None:
         script = r'''
