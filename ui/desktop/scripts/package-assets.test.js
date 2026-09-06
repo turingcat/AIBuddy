@@ -67,4 +67,11 @@ describe('packaged AIBuddy asset contracts', () => {
     expect(installer).toContain('SetupIconFile=src\\images\\aibuddy\\icon.ico');
     expect(installer).not.toMatch(/SetupIconFile=src\\images\\icon\.ico/);
   });
+
+  it('compares the command-line 64-bit mode definition as a string', () => {
+    const installer = fs.readFileSync(path.join(__dirname, '..', 'desktop-setup.iss'), 'utf8');
+
+    expect(installer).toContain('#if MyInstallIn64BitMode == "1"');
+    expect(installer).not.toContain('#if MyInstallIn64BitMode == 1');
+  });
 });
