@@ -524,8 +524,11 @@ $destination = "C:\safe"
         )
         self.assertRegex(
             release_build,
-            r'(?im)^\s*\$authoredHelpers\s*=\s*Get-ChildItem\b[^\r\n]*'
-            r'Where-Object\s*\{[^\r\n]*\$_\.Name\s+-ne\s+["\']goose\.exe["\']',
+            r'(?im)^\s*\$authoredHelpers\s*=\s*Get-ChildItem\s+-Path\s+'
+            r'\$platformBin\s+-File\s*\|\s*Where-Object\s*\{\s*'
+            r'\$_\.Name\s+-ne\s+"goose\.exe"\s+-and\s+'
+            r'\$_\.Extension\s+-in\s+"\.exe"\s*,\s*"\.dll"\s*,\s*"\.cmd"'
+            r"\s*\}\s*$",
         )
 
     def test_azure_publishes_only_architecture_specific_installers(self) -> None:

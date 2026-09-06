@@ -295,11 +295,12 @@ runtime_preparation = {
   goose_npm_copy: /Copy-Item\s+-Path\s+["']\$gooseNpmSource\\\*["']\s+-Destination\s+\$gooseNpmDestination\s+-Recurse\s+-Force/i,
 }.transform_values { |pattern| release_build&.match(pattern)&.begin(0) }
 runtime_order = runtime_preparation.values
+approved_helper_filter = /^\s*\$authoredHelpers\s*=\s*Get-ChildItem\s+-Path\s+\$platformBin\s+-File\s*\|\s*Where-Object\s*\{\s*\$_\.Name\s+-ne\s+"goose\.exe"\s+-and\s+\$_\.Extension\s+-in\s+"\.exe"\s*,\s*"\.dll"\s*,\s*"\.cmd"\s*\}\s*$/i
 abort "Azure release runtime preparation order is unsafe" unless runtime_order.none?(&:nil?) &&
   runtime_preparation.values_at(:cleanup, :recreate, :inject).each_cons(2).all? { |first, second| first < second } &&
   runtime_preparation.values_at(:helper_copy, :goose_npm_copy).all? { |helper| runtime_preparation[:inject] < helper } &&
   release_build.scan(/^\s*Copy-Item\b[^\r\n]*$/i).length == 3 &&
-  release_build.match?(/\$authoredHelpers\s*=\s*Get-ChildItem\b[^\r\n]*Where-Object\s*\{[^\r\n]*\$_\.Name\s+-ne\s+["']goose\.exe["']/i)
+  release_build.match?(approved_helper_filter)
 
 desktop_build = azure_powershell.find do |script|
   normalized = script.tr("\\", "/")
