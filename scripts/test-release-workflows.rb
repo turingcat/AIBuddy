@@ -246,6 +246,9 @@ end
 azure_path = "azure-pipelines.yml"
 azure = YAML.load_file(azure_path)
 azure_text = File.read(azure_path)
+azure_steps_path = ".azure-pipelines/windows-desktop-steps.yml"
+abort "missing Azure Windows steps template" unless File.exist?(azure_steps_path)
+azure_steps_template = YAML.load_file(azure_steps_path)
 
 abort "Azure pipeline must remain manual-only" unless azure["trigger"] == "none" && azure["pr"] == "none"
 architecture = azure.fetch("parameters", []).find { |parameter| parameter["name"] == "architecture" }
@@ -253,17 +256,31 @@ abort "Azure pipeline must expose a both/x32/x64 architecture parameter" unless 
   architecture["type"] == "string" &&
   architecture["default"] == "both" &&
   architecture["values"] == %w[both x32 x64]
-azure_jobs = azure.fetch("jobs", [])
-abort "Azure pipeline must define one shared matrix job" unless azure_jobs.length == 1 && azure_jobs.first["job"] == "build_windows"
-azure_job = azure_jobs.first
-expected_condition = "or(eq('${{ parameters.architecture }}', 'both'), eq(variables['ARTIFACT_ARCH'], '${{ parameters.architecture }}'))"
-abort "Azure matrix job must skip unselected architectures" unless azure_job["condition"] == expected_condition
-azure_strategy = azure_job.fetch("strategy", {})
-abort "Azure matrix must be serial" unless azure_strategy["maxParallel"] == 1
+azure_jobs = azure.fetch("jobs", []).each_with_object([]) do |entry, jobs|
+  if entry.is_a?(Hash) && entry.key?("job")
+    jobs << entry
+  elsif entry.is_a?(Hash)
+    entry.each do |key, value|
+      jobs.concat(value.select { |job| job.is_a?(Hash) }) if key.start_with?("${{ if ") && value.is_a?(Array)
+    end
+  end
+end
+abort "Azure pipeline must define x32 and x64 jobs" unless azure_jobs.map { |job| job["job"] }.sort == %w[build_windows_x32 build_windows_x64]
+["x32", "x64"].each do |architecture_name|
+  condition = "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, '#{architecture_name}')) }}:"
+  abort "Azure pipeline must conditionally select #{architecture_name}" unless azure_text.include?(condition)
+end
+abort "Azure both mode must serialize x64 after x32" unless azure_text.include?("${{ if eq(parameters.architecture, 'both') }}:") &&
+  azure_text.include?("dependsOn: build_windows_x32")
+unless azure_jobs.all? { |job| job["pool"] == { "vmImage" => "windows-2022" } && job["steps"] == [{ "template" => azure_steps_path }] }
+  abort "Azure architecture jobs must share the Windows steps template"
+end
 
-azure_matrix = azure_strategy.fetch("matrix", {})
-azure_matrix_legs = azure_matrix
-abort "Azure matrix must define exactly x32 and x64" unless azure_matrix_legs.keys.sort == %w[x32 x64]
+azure_matrix_legs = azure_jobs.each_with_object({}) do |job, legs|
+  variables = job.fetch("variables", {})
+  legs[variables.fetch("ARTIFACT_ARCH", "")] = variables
+end
+abort "Azure jobs must define exactly x32 and x64" unless azure_matrix_legs.keys.sort == %w[x32 x64]
 
 expected_azure_matrix = {
   "x32" => {
@@ -284,7 +301,7 @@ expected_azure_matrix.each do |leg, expected|
   abort "Azure #{leg} matrix mapping is incorrect" unless actual == expected
 end
 
-azure_steps = azure_job.fetch("steps", [])
+azure_steps = azure_steps_template.fetch("steps", [])
 azure_powershell = azure_steps.each_with_object([]) do |step, scripts|
   scripts << step["powershell"] if step.is_a?(Hash) && step["powershell"]
 end

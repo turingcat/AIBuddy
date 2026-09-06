@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 AZURE_PIPELINE = ROOT / "azure-pipelines.yml"
+AZURE_WINDOWS_STEPS = ROOT / ".azure-pipelines/windows-desktop-steps.yml"
 
 
 def analyze_powershell(script: str) -> tuple[str, bool]:
@@ -82,22 +83,37 @@ def load_yaml(path: Path) -> dict:
     return json.loads(result.stdout)
 
 
-def powershell_scripts(pipeline: dict) -> list[str]:
-    job = azure_job(pipeline)
+def azure_steps() -> list[dict]:
+    return load_yaml(AZURE_WINDOWS_STEPS).get("steps", [])
+
+
+def powershell_scripts(_pipeline: dict) -> list[str]:
     return [
         step["powershell"]
-        for step in job.get("steps", [])
+        for step in azure_steps()
         if isinstance(step, dict) and isinstance(step.get("powershell"), str)
     ]
 
 
-def azure_job(pipeline: dict) -> dict:
-    jobs = pipeline.get("jobs", [])
-    return jobs[0] if len(jobs) == 1 and isinstance(jobs[0], dict) else {}
+def azure_jobs(pipeline: dict) -> list[dict]:
+    jobs = []
+    for entry in pipeline.get("jobs", []):
+        if not isinstance(entry, dict):
+            continue
+        if "job" in entry:
+            jobs.append(entry)
+            continue
+        for key, value in entry.items():
+            if key.startswith("${{ if ") and isinstance(value, list):
+                jobs.extend(job for job in value if isinstance(job, dict))
+    return jobs
 
 
 def azure_matrix_legs(pipeline: dict) -> dict:
-    return azure_job(pipeline).get("strategy", {}).get("matrix", {})
+    return {
+        job.get("variables", {}).get("ARTIFACT_ARCH", ""): job.get("variables", {})
+        for job in azure_jobs(pipeline)
+    }
 
 
 def normalize_powershell_value(value: str, aliases: dict[str, str]) -> str:
@@ -399,6 +415,7 @@ $destination = "C:\safe"
 
     def test_azure_matrix_maps_x32_and_x64_serially(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
+        pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
         self.assertEqual("none", pipeline.get("trigger"))
         self.assertEqual("none", pipeline.get("pr"))
 
@@ -410,24 +427,29 @@ $destination = "C:\safe"
         self.assertEqual("string", architecture.get("type"))
         self.assertEqual("both", architecture.get("default"))
         self.assertEqual(["both", "x32", "x64"], architecture.get("values"))
-        jobs = pipeline.get("jobs", [])
-        self.assertEqual(1, len(jobs))
-        job = azure_job(pipeline)
-        self.assertEqual("build_windows", job.get("job"))
+        jobs = azure_jobs(pipeline)
         self.assertEqual(
-            "or(eq('${{ parameters.architecture }}', 'both'), "
-            "eq(variables['ARTIFACT_ARCH'], '${{ parameters.architecture }}'))",
-            job.get("condition"),
+            {"build_windows_x32", "build_windows_x64"},
+            {job.get("job") for job in jobs},
         )
-
-        strategy = job.get("strategy")
-        self.assertIsInstance(strategy, dict)
-        self.assertEqual(1, strategy.get("maxParallel"))
-
-        matrix = strategy.get("matrix")
-        self.assertIsInstance(matrix, dict)
         matrix_legs = azure_matrix_legs(pipeline)
         self.assertEqual({"x32", "x64"}, set(matrix_legs))
+        self.assertIn(
+            "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x32')) }}:",
+            pipeline_text,
+        )
+        self.assertIn(
+            "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x64')) }}:",
+            pipeline_text,
+        )
+        self.assertIn("${{ if eq(parameters.architecture, 'both') }}:", pipeline_text)
+        self.assertIn("dependsOn: build_windows_x32", pipeline_text)
+        for job in jobs:
+            self.assertEqual({"vmImage": "windows-2022"}, job.get("pool"))
+            self.assertEqual(
+                [{"template": ".azure-pipelines/windows-desktop-steps.yml"}],
+                job.get("steps"),
+            )
 
         expected = {
             "x32": {
@@ -456,7 +478,7 @@ $destination = "C:\safe"
 
     def test_azure_installs_nasm_before_building_windows_cli(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
-        steps = azure_job(pipeline).get("steps", [])
+        steps = azure_steps()
         cli_build_index = next(
             index
             for index, step in enumerate(steps)
@@ -482,7 +504,7 @@ $destination = "C:\safe"
 
     def test_azure_uses_lld_for_release_cli_linking(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
-        steps = azure_job(pipeline).get("steps", [])
+        steps = azure_steps()
         cli_build_index = next(
             index
             for index, step in enumerate(steps)
@@ -514,7 +536,7 @@ $destination = "C:\safe"
 
     def test_azure_prepares_optional_electron_cache(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
-        steps = azure_job(pipeline).get("steps", [])
+        steps = azure_steps()
         cache_index = next(
             index
             for index, step in enumerate(steps)
@@ -642,7 +664,7 @@ $destination = "C:\safe"
 
     def test_azure_publishes_only_architecture_specific_installers(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
-        steps = azure_job(pipeline).get("steps", [])
+        steps = azure_steps()
         publish_shorthand = [
             step
             for step in steps
@@ -716,7 +738,7 @@ $destination = "C:\safe"
     def test_azure_has_no_cli_or_portable_artifact_paths(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
         pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
-        steps = azure_job(pipeline).get("steps", [])
+        steps = azure_steps()
         scripts = powershell_scripts(pipeline)
         self.assertFalse(
             any(
