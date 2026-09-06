@@ -39,6 +39,7 @@ import { buildGooseServeEnv } from './gooseServeEnv';
 import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
 import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
+import { createAuthSessionTransition } from './authSessionTransition';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
 import { expandTilde } from './utils/pathUtils';
 import log from './utils/logger';
@@ -2929,6 +2930,17 @@ async function appMain() {
     if (window) {
       window.reload();
     }
+  });
+
+  const refreshAuthSession = createAuthSessionTransition({
+    listWindows: () => BrowserWindow.getAllWindows(),
+    cleanupBackends: () => gooseServeLeases.cleanupAll(),
+    createReplacementWindow: () => createNewWindow(app),
+  });
+
+  ipcMain.handle('refresh-auth-session', (event) => {
+    requireRegularRendererWindow(event);
+    return refreshAuthSession();
   });
 
   ipcMain.on('open-in-chrome', (_event, url) => {

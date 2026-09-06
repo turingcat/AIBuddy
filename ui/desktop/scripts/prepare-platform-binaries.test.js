@@ -1,6 +1,30 @@
 const { resolveWindowsUvRelease } = require('./prepare-platform-binaries');
 
 describe('resolveWindowsUvRelease', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it.each(['ia32', 'x64'])('uses the workflow ELECTRON_ARCH %s before WINDOWS_ARCH', (arch) => {
+    vi.stubEnv('ELECTRON_ARCH', arch);
+    vi.stubEnv('WINDOWS_ARCH', arch === 'ia32' ? 'x64' : 'x32');
+    expect(resolveWindowsUvRelease()).toEqual(resolveWindowsUvRelease(arch));
+  });
+
+  it.each(['x32', 'x64'])('falls back to WINDOWS_ARCH %s without ELECTRON_ARCH', (arch) => {
+    vi.stubEnv('ELECTRON_ARCH', '');
+    vi.stubEnv('WINDOWS_ARCH', arch);
+    expect(resolveWindowsUvRelease()).toEqual(windowsUvRelease(arch));
+  });
+
+  it('falls back to the host architecture without workflow overrides', () => {
+    vi.stubEnv('ELECTRON_ARCH', '');
+    vi.stubEnv('WINDOWS_ARCH', '');
+    if (process.arch === 'ia32' || process.arch === 'x64') {
+      expect(resolveWindowsUvRelease()).toEqual(resolveWindowsUvRelease(process.arch));
+    } else {
+      expect(() => resolveWindowsUvRelease()).toThrow(/WINDOWS_ARCH/);
+    }
+  });
+
   it('selects the pinned 32-bit uv release for ia32 packaging', () => {
     expect(resolveWindowsUvRelease('ia32')).toEqual({
       target: 'i686-pc-windows-msvc',
@@ -24,6 +48,26 @@ describe('resolveWindowsUvRelease', () => {
   });
 
   it('rejects unsupported Electron architectures', () => {
-    expect(() => resolveWindowsUvRelease('arm64')).toThrow(/architecture/i);
+    expect(() => resolveWindowsUvRelease('arm64')).toThrow(/WINDOWS_ARCH/);
+  });
+});
+
+const { windowsUvRelease } = require('./prepare-platform-binaries');
+
+describe('windowsUvRelease', () => {
+  it('selects the i686 uv release for x32', () => {
+    expect(typeof windowsUvRelease).toBe('function');
+
+    const release = windowsUvRelease('x32');
+    expect(release.url).toMatch(/uv-i686-pc-windows-msvc\.zip$/);
+    expect(release.hashes['uv.exe']).toMatch(/^[a-f0-9]{64}$/);
+    expect(release.hashes['uvx.exe']).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('selects the x86_64 uv release for x64', () => {
+    const release = windowsUvRelease('x64');
+    expect(release.url).toMatch(/uv-x86_64-pc-windows-msvc\.zip$/);
+    expect(release.hashes['uv.exe']).toMatch(/^[a-f0-9]{64}$/);
+    expect(release.hashes['uvx.exe']).toMatch(/^[a-f0-9]{64}$/);
   });
 });

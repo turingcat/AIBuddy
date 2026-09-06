@@ -3,6 +3,12 @@
 Download the release builds from this PR. Once a build is ready, the actions bot will post a comment on this PR
 with instructions on how to download and sign.
 
+## Manually trigger the MSRV and Windows cross-compilation checks
+
+`rust-msrv` and `rust-build-windows` in `ci.yml` only run via `workflow_dispatch` — they are not part of
+the automatic push/PR checks. Before tagging, manually trigger the `CI` workflow from the Actions tab
+(or `gh workflow run ci.yml --ref <release branch>`) and confirm both jobs succeed.
+
 ## Use the following script to create a risk assessment and testing plan:
 ```
 ./workflow_recipes/release_risk_check/run.sh {{VERSION}}

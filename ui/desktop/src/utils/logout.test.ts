@@ -4,7 +4,7 @@ import { createIntl } from 'react-intl';
 import { logout } from './logout';
 
 const clearLoginCredentials = vi.fn();
-const restartApp = vi.fn();
+const refreshAuthSession = vi.fn();
 const englishIntl = createIntl({ locale: 'en' });
 const chineseIntl = createIntl({
   locale: 'zh-CN',
@@ -18,19 +18,19 @@ describe('logout', () => {
       window as unknown as {
         electron: {
           clearLoginCredentials: typeof clearLoginCredentials;
-          restartApp: typeof restartApp;
+          refreshAuthSession: typeof refreshAuthSession;
         };
       }
-    ).electron = { clearLoginCredentials, restartApp };
+    ).electron = { clearLoginCredentials, refreshAuthSession };
   });
 
-  it('clears credentials and restarts after logout is confirmed', async () => {
+  it('clears credentials and refreshes the auth session after logout is confirmed', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     await logout(englishIntl);
 
     expect(clearLoginCredentials).toHaveBeenCalledTimes(1);
-    expect(restartApp).toHaveBeenCalledTimes(1);
+    expect(refreshAuthSession).toHaveBeenCalledTimes(1);
   });
 
   it('does not clear credentials when logout is cancelled', async () => {
@@ -39,7 +39,7 @@ describe('logout', () => {
     await logout(englishIntl);
 
     expect(clearLoginCredentials).not.toHaveBeenCalled();
-    expect(restartApp).not.toHaveBeenCalled();
+    expect(refreshAuthSession).not.toHaveBeenCalled();
   });
 
   it('formats the confirmation prompt in English', async () => {

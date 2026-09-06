@@ -69,6 +69,10 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertIn("electron_arch: ia32", workflow)
         self.assertIn("electron_arch: x64", workflow)
         self.assertIn('pnpm run package:windows -- --arch="${ELECTRON_ARCH}"', workflow)
+        self.assertIn("internal-goose-${{ matrix.artifact_arch }}", workflow)
+        self.assertIn("internal-windows-unsigned-${{ matrix.artifact_arch }}", workflow)
+        self.assertNotIn("package-cli-windows:", workflow)
+        self.assertNotIn("package_cli", workflow)
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
 
@@ -80,6 +84,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
         self.assertIn("portableFileName", workflow)
         self.assertIn("steps.package-windows-zip.outputs.portable_file_name", workflow)
+        self.assertIn("steps.package-windows-installer.outputs.setup_file_name", workflow)
         self.assertNotIn("HeyBuddy-win32-x64", workflow)
 
     def test_intel_native_package_was_removed(self) -> None:

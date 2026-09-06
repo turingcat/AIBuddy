@@ -10,5 +10,5 @@ const i18n = defineMessages({
 export async function logout(intl: IntlShape) {
   if (!window.confirm(intl.formatMessage(i18n.confirmation))) return;
   await window.electron.clearLoginCredentials();
-  window.electron.restartApp();
+  await window.electron.refreshAuthSession();
 }
