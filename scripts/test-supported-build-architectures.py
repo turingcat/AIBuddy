@@ -35,34 +35,114 @@ def powershell_scripts(pipeline: dict) -> list[str]:
     ]
 
 
-def copies_runtime_binaries_forward(script: str) -> bool:
-    source_pattern = re.compile(
-        r'["\']?(?:\./)?(?:ui/desktop/)?src/bin/\*["\']?',
-        re.IGNORECASE,
-    )
-    destination_pattern = re.compile(
-        r'["\']?\$packaged/resources/bin/?["\']?',
-        re.IGNORECASE,
-    )
-
-    for line in script.splitlines():
-        normalized = line.strip().replace("\\", "/")
-        if not re.match(r"(?i)^Copy-Item\b", normalized):
-            continue
-
-        source = source_pattern.search(normalized)
-        destination = destination_pattern.search(normalized)
-        if source is None or destination is None:
-            continue
-
-        has_named_arguments = bool(
-            re.search(r"(?i)-Path\b", normalized)
-            and re.search(r"(?i)-Destination\b", normalized)
+def normalize_powershell_value(value: str, aliases: dict[str, str]) -> str:
+    normalized = value.strip().replace("\\", "/")
+    for _ in range(8):
+        expanded = re.sub(
+            r"\$([A-Za-z_]\w*)",
+            lambda match: aliases.get(match.group(1).lower(), match.group(0)),
+            normalized,
         )
-        if has_named_arguments or source.start() < destination.start():
-            return True
+        if expanded == normalized:
+            break
+        normalized = expanded
+    return normalized.lower()
 
-    return False
+
+def powershell_aliases(scripts: list[str]) -> dict[str, str]:
+    aliases: dict[str, str] = {}
+    for script in scripts:
+        for line in script.splitlines():
+            assignment = re.match(
+                r"^\s*\$([A-Za-z_]\w*)\s*=\s*(.+?)\s*$",
+                line,
+            )
+            if assignment:
+                aliases[assignment.group(1).lower()] = normalize_powershell_value(
+                    assignment.group(2), aliases
+                )
+    return aliases
+
+
+def powershell_copy_destinations(
+    script: str, aliases: dict[str, str]
+) -> list[str]:
+    destinations = []
+    for line in script.splitlines():
+        command = re.match(r"(?i)^\s*(?:Copy-Item|Move-Item)\b(.*)", line)
+        if command is None:
+            continue
+
+        arguments = command.group(1)
+        named = re.search(
+            r'(?i)-Destination\s+("[^"]*"|\'[^\']*\'|\$[A-Za-z_]\w*)',
+            arguments,
+        )
+        if named:
+            destination = named.group(1)
+        else:
+            tokens = [
+                token
+                for token in re.findall(r'"[^"]*"|\'[^\']*\'|\S+', arguments)
+                if not token.startswith("-")
+            ]
+            destination = tokens[1] if len(tokens) > 1 else None
+        if destination:
+            destinations.append(normalize_powershell_value(destination, aliases))
+    return destinations
+
+
+def uses_approved_runtime_copy(script: str) -> bool:
+    normalized = script.replace("\\", "/")
+    return bool(
+        re.search(
+            r'(?im)^\s*\$srcBin\s*=\s*Join-Path\s+'
+            r'\$env:BUILD_SOURCESDIRECTORY\s+["\']ui/desktop/src/bin["\']\s*$',
+            normalized,
+        )
+        and re.search(
+            r'(?im)^\s*\$resourcesBin\s*=\s*Join-Path\s+'
+            r'\$packaged\s+["\']resources/bin["\']\s*$',
+            normalized,
+        )
+        and re.search(
+            r'(?im)^\s*Copy-Item\s+-Path\s+["\']\$srcBin/\*["\']\s+'
+            r'-Destination\s+\$resourcesBin\s+-Recurse\s+-Force\s*$',
+            normalized,
+        )
+    )
+
+
+def uses_approved_installer_validation(script: str) -> bool:
+    return bool(
+        re.search(
+            r"(?is)if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*"
+            r"-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*"
+            r"\{[^}]*throw",
+            script,
+        )
+    )
+
+
+def forbidden_publication_or_archive_steps(steps: list[dict]) -> list[dict]:
+    forbidden = []
+    for step in steps:
+        if not isinstance(step, dict):
+            continue
+
+        task = str(step.get("task", ""))
+        step_text = str(step)
+        if re.search(
+            r"(?i)PublishBuildArtifacts|UniversalPackages|CopyFiles|ArchiveFiles",
+            task,
+        ) or re.search(
+            r"(?i)artifact\.upload|\baz\s+artifacts\b|Compress-Archive|"
+            r"\btar(?:\.exe)?\s+-a\b|"
+            r"7z(?:\.exe)?\s+a\b.*(?:-tzip|\.zip)|portableFileName|\.zip\b",
+            step_text,
+        ):
+            forbidden.append(step)
+    return forbidden
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
@@ -205,14 +285,14 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
                 in normalized
                 and "resolveWindowsPackage" in normalized
                 and "ARTIFACT_ARCH" in normalized
-                and copies_runtime_binaries_forward(script)
+                and uses_approved_runtime_copy(script)
             ):
                 desktop_builds.append(script)
 
         self.assertEqual(1, len(desktop_builds))
         self.assertTrue(
-            copies_runtime_binaries_forward(desktop_builds[0]),
-            "Azure pipeline must copy src/bin contents into packaged resources/bin",
+            uses_approved_runtime_copy(desktop_builds[0]),
+            "Azure pipeline must use the approved src/bin to resources/bin copy",
         )
 
     def test_azure_publishes_only_architecture_specific_installers(self) -> None:
@@ -225,15 +305,19 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         ]
         self.assertEqual([], publish_shorthand)
 
-        artifact_tasks = [
+        publish_tasks = [
             step
             for step in steps
             if isinstance(step, dict)
-            and re.search(r"(?i)Artifact|CopyFiles", str(step.get("task", "")))
+            and re.search(
+                r"(?i)PublishPipelineArtifact",
+                str(step.get("task", "")),
+            )
         ]
-        self.assertEqual(1, len(artifact_tasks))
-        publish = artifact_tasks[0]
+        self.assertEqual(1, len(publish_tasks))
+        publish = publish_tasks[0]
         self.assertEqual("PublishPipelineArtifact@1", publish.get("task"))
+        self.assertEqual([], forbidden_publication_or_archive_steps(steps))
 
         matrix = pipeline.get("strategy", {}).get("matrix", {})
         artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
@@ -280,51 +364,31 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "$installer = Join-Path $outputDir $pkg.setupFileName",
             installer,
         )
-        self.assertIn("Test-Path $installer", installer)
-        self.assertRegex(installer, r"Get-Item\s+\$installer\)\.Length\s+-eq\s+0")
+        self.assertTrue(
+            uses_approved_installer_validation(installer),
+            "Installer validation must check missing and empty in one throwing if",
+        )
 
     def test_azure_has_no_cli_or_portable_artifact_paths(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
         pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
         steps = pipeline.get("steps", [])
+        scripts = powershell_scripts(pipeline)
+        aliases = powershell_aliases(scripts)
         self.assertFalse(
             any(
-                re.search(
-                    r"(?i)(?:Copy-Item|Move-Item).*"
-                    r"(?:artifactstagingdirectory|\$outputDir)",
-                    line,
+                "artifactstagingdirectory" in destination
+                or "$outputdir" in destination
+                or "aibuddy-windows-$env:artifact_arch-setup" in destination
+                for script in scripts
+                for destination in powershell_copy_destinations(
+                    script,
+                    aliases,
                 )
-                for script in powershell_scripts(pipeline)
-                for line in script.splitlines()
             ),
             "Azure pipeline must not copy standalone payloads into setup staging",
         )
-
-        portable_steps = []
-        for step in steps:
-            if not isinstance(step, dict):
-                continue
-            artifact_or_package_step = bool(
-                re.search(r"(?i)Artifact|CopyFiles", str(step.get("task", "")))
-                or re.search(
-                    r"(?i)artifact|package|publish|installer",
-                    str(step.get("displayName", "")),
-                )
-            )
-            step_text = str(step)
-            direct_portable_step = bool(
-                re.search(r"(?i)ArchiveFiles", str(step.get("task", "")))
-                or re.search(
-                    r"(?i)portableFileName|Compress-Archive|7z\b",
-                    step_text,
-                )
-            )
-            if direct_portable_step or (
-                artifact_or_package_step
-                and re.search(r"(?i)\.zip\b|\bzip\b", step_text)
-            ):
-                portable_steps.append(step)
-        self.assertEqual([], portable_steps)
+        self.assertEqual([], forbidden_publication_or_archive_steps(steps))
 
         self.assertNotIn("gh workflow run", pipeline_text)
         self.assertNotIn("workflow_dispatch", pipeline_text)

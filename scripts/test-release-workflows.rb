@@ -3,6 +3,59 @@
 require "yaml"
 require "open3"
 
+def normalize_powershell_value(value, aliases)
+  normalized = value.strip.tr("\\", "/")
+  8.times do
+    expanded = normalized.gsub(/\$([A-Za-z_]\w*)/) do |match|
+      aliases.fetch(Regexp.last_match(1).downcase, match)
+    end
+    break if expanded == normalized
+
+    normalized = expanded
+  end
+  normalized.downcase
+end
+
+def powershell_aliases(scripts)
+  aliases = {}
+  scripts.each do |script|
+    script.lines.each do |line|
+      assignment = line.match(/^\s*\$([A-Za-z_]\w*)\s*=\s*(.+?)\s*$/)
+      next unless assignment
+
+      aliases[assignment[1].downcase] = normalize_powershell_value(assignment[2], aliases)
+    end
+  end
+  aliases
+end
+
+def powershell_copy_destinations(script, aliases)
+  script.lines.filter_map do |line|
+    command = line.strip.match(/\A(?:Copy-Item|Move-Item)\b(.*)/i)
+    next unless command
+
+    arguments = command[1]
+    named = arguments.match(/-Destination\s+("[^"]*"|'[^']*'|\$[A-Za-z_]\w*)/i)
+    destination = if named
+      named[1]
+    else
+      arguments.scan(/"[^"]*"|'[^']*'|\S+/).reject { |token| token.start_with?("-") }[1]
+    end
+    normalize_powershell_value(destination, aliases) if destination
+  end
+end
+
+def approved_runtime_copy?(script)
+  normalized = script.tr("\\", "/")
+  normalized.match?(/^\s*\$srcBin\s*=\s*Join-Path\s+\$env:BUILD_SOURCESDIRECTORY\s+["']ui\/desktop\/src\/bin["']\s*$/i) &&
+    normalized.match?(/^\s*\$resourcesBin\s*=\s*Join-Path\s+\$packaged\s+["']resources\/bin["']\s*$/i) &&
+    normalized.match?(/^\s*Copy-Item\s+-Path\s+["']\$srcBin\/\*["']\s+-Destination\s+\$resourcesBin\s+-Recurse\s+-Force\s*$/i)
+end
+
+def approved_installer_validation?(script)
+  script.match?(/if\s*\(\s*-not\s*\(Test-Path\s+\$installer\)\s*-or\s*\(Get-Item\s+\$installer\)\.Length\s+-eq\s+0\s*\)\s*\{[^}]*throw/mi)
+end
+
 workflow_paths = {
   bundle_macos: ".github/workflows/bundle-macos.yml",
   bundle_windows: ".github/workflows/bundle-windows.yml",
@@ -144,20 +197,6 @@ end
 azure_steps = azure.fetch("steps", [])
 azure_powershell = azure_steps.filter_map { |step| step["powershell"] if step.is_a?(Hash) }
 
-forward_runtime_copy = lambda do |script|
-  script.lines.any? do |line|
-    normalized = line.strip.tr("\\", "/")
-    next false unless normalized.match?(/\ACopy-Item\b/i)
-
-    source = normalized.match(%r{["']?(?:\./)?(?:ui/desktop/)?src/bin/\*["']?}i)
-    destination = normalized.match(%r{["']?\$packaged/resources/bin/?["']?}i)
-    next false unless source && destination
-
-    named_arguments = normalized.match?(/-Path\b/i) && normalized.match?(/-Destination\b/i)
-    named_arguments || source.begin(0) < destination.begin(0)
-  end
-end
-
 release_build = azure_powershell.find { |script| script.include?("cargo build") && script.include?("--release") }
 abort "Azure pipeline must build the matrix Rust target in release mode" unless release_build &&
   release_build.include?("--target $env:RUST_TARGET") &&
@@ -172,11 +211,11 @@ desktop_build = azure_powershell.find do |script|
     normalized.include?("pnpm run package:windows -- --arch=$env:ELECTRON_ARCH") &&
     normalized.include?("resolveWindowsPackage") &&
     normalized.include?("ARTIFACT_ARCH") &&
-    forward_runtime_copy.call(script)
+    approved_runtime_copy?(script)
 end
 abort "Azure pipeline must prepare and package the matching Electron architecture" unless desktop_build &&
   desktop_build.include?("pnpm run package:windows -- --arch=$env:ELECTRON_ARCH")
-abort "Azure pipeline must copy src/bin contents into packaged resources/bin" unless forward_runtime_copy.call(desktop_build)
+abort "Azure pipeline must use the approved src/bin to resources/bin copy" unless approved_runtime_copy?(desktop_build)
 
 artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
 resolved_artifacts = azure_matrix.values.map do |leg|
@@ -189,17 +228,18 @@ end
 publish_shorthand = azure_steps.select { |step| step.is_a?(Hash) && step.key?("publish") }
 abort "Azure pipeline must not use publish shorthand" unless publish_shorthand.empty?
 
-artifact_tasks = azure_steps.select do |step|
-  next false unless step.is_a?(Hash)
-
-  task = step["task"].to_s
-  task.match?(/Artifact|CopyFiles/i)
+publish_tasks = azure_steps.select do |step|
+  step.is_a?(Hash) && step["task"].to_s.match?(/PublishPipelineArtifact/i)
 end
-unless artifact_tasks.length == 1 && artifact_tasks.first["task"] == "PublishPipelineArtifact@1"
-  abort "Azure pipeline must use only one PublishPipelineArtifact@1 task"
-end
+abort "Azure pipeline must define exactly one PublishPipelineArtifact@1 task" unless publish_tasks.length == 1 &&
+  publish_tasks.first["task"] == "PublishPipelineArtifact@1"
 
-publish = artifact_tasks.first
+forbidden_tasks = azure_steps.select do |step|
+  step.is_a?(Hash) && step["task"].to_s.match?(/PublishBuildArtifacts|UniversalPackages|CopyFiles|ArchiveFiles/i)
+end
+abort "Azure pipeline contains a forbidden publication or archive task" unless forbidden_tasks.empty?
+
+publish = publish_tasks.first
 publish_inputs = publish.fetch("inputs", {})
 target_path = publish_inputs["targetPath"].to_s.tr("\\", "/")
 expected_target_path = "$(Build.ArtifactStagingDirectory)/#{artifact_name}"
@@ -213,27 +253,24 @@ abort "Azure pipeline must stage only the architecture-specific installer" unles
   installer.match?(/windows-package\.js.*\$env:ARTIFACT_ARCH.*\$outputDir/) &&
   installer.match?(/&\s+\$iscc\s+@\(\$pkg\.isccArgs\)\s+["']ui[\\\/]desktop[\\\/]desktop-setup\.iss["']/i) &&
   installer.include?('$installer = Join-Path $outputDir $pkg.setupFileName') &&
-  installer.include?("Test-Path $installer") &&
-  installer.match?(/Get-Item\s+\$installer\)\.Length\s+-eq\s+0/)
+  approved_installer_validation?(installer)
 
+aliases = powershell_aliases(azure_powershell)
 staged_payload_copy = azure_powershell.any? do |script|
-  script.lines.any? do |line|
-    line.match?(/(?:Copy-Item|Move-Item).*(?:artifactstagingdirectory|\$outputDir)/i)
+  powershell_copy_destinations(script, aliases).any? do |destination|
+    destination.include?("artifactstagingdirectory") ||
+      destination.include?("$outputdir") ||
+      destination.include?("aibuddy-windows-$env:artifact_arch-setup")
   end
 end
 abort "Azure pipeline must not copy standalone payloads into setup staging" if staged_payload_copy
 
-portable_output = azure_steps.any? do |step|
+forbidden_step_output = azure_steps.any? do |step|
   next false unless step.is_a?(Hash)
 
-  step_text = step.to_s
-  artifact_or_package_step = step["task"].to_s.match?(/Artifact|CopyFiles/i) ||
-    step["displayName"].to_s.match?(/artifact|package|publish|installer/i)
-  direct_portable_step = step["task"].to_s.match?(/ArchiveFiles/i) ||
-    step_text.match?(/portableFileName|Compress-Archive|7z\b/i)
-  direct_portable_step || (artifact_or_package_step && step_text.match?(/\.zip\b|\bzip\b/i))
+  step.to_s.match?(/artifact\.upload|\baz\s+artifacts\b|Compress-Archive|\btar(?:\.exe)?\s+-a\b|7z(?:\.exe)?\s+a\b.*(?:-tzip|\.zip)|portableFileName|\.zip\b/i)
 end
-abort "Azure pipeline must not create or publish portable outputs" if portable_output
+abort "Azure pipeline contains a forbidden publication or archive path" if forbidden_step_output
 abort "Azure pipeline must not dispatch GitHub Actions" if azure_text.include?("gh workflow run") || azure_text.include?("workflow_dispatch")
 
 release_branches = workflows.fetch(:release_branches)
