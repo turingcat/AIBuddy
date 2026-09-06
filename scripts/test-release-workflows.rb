@@ -274,7 +274,9 @@ expected_azure_matrix.each do |leg, expected|
 end
 
 azure_steps = azure.fetch("steps", [])
-azure_powershell = azure_steps.filter_map { |step| step["powershell"] if step.is_a?(Hash) }
+azure_powershell = azure_steps.each_with_object([]) do |step, scripts|
+  scripts << step["powershell"] if step.is_a?(Hash) && step["powershell"]
+end
 abort "Azure PowerShell must use one executable statement per line" if azure_powershell.any? do |script|
   _, executable_semicolon = analyze_powershell(script)
   executable_semicolon
@@ -284,6 +286,9 @@ release_build = azure_powershell.find { |script| script.include?("cargo build") 
 abort "Azure pipeline must build the matrix Rust target in release mode" unless release_build &&
   release_build.include?("--target $env:RUST_TARGET") &&
   release_build.include?("--features $env:CARGO_FEATURES") &&
+  release_build.include?('$env:CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER = "lld-link"') &&
+  release_build.include?('$env:CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER = "lld-link"') &&
+  !release_build.include?("$env:RUSTFLAGS") &&
   release_build.include?('target\$env:RUST_TARGET\release\goose.exe') &&
   release_build.match?(/Copy-Item\s+\$binary\s+["']ui\\desktop\\src\\bin\\goose\.exe["']\s+-Force/i)
 

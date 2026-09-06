@@ -95,7 +95,8 @@ steps:
       $env:CARGO_INCREMENTAL = "0"
       $env:CARGO_PROFILE_RELEASE_OPT_LEVEL = "1"
       $env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "256"
-      $env:RUSTFLAGS = "-C linker=lld-link"
+      $env:CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER = "lld-link"
+      $env:CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER = "lld-link"
       cargo build --locked --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 

@@ -469,7 +469,15 @@ $destination = "C:\safe"
 
         self.assertIn("Get-Command lld-link -ErrorAction Stop", preparation)
         self.assertIn("& $lldLink.Source --version", preparation)
-        self.assertIn('$env:RUSTFLAGS = "-C linker=lld-link"', cli_build)
+        self.assertIn(
+            '$env:CARGO_TARGET_I686_PC_WINDOWS_MSVC_LINKER = "lld-link"',
+            cli_build,
+        )
+        self.assertIn(
+            '$env:CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_LINKER = "lld-link"',
+            cli_build,
+        )
+        self.assertNotIn("$env:RUSTFLAGS", cli_build)
         self.assertIn('$env:CARGO_PROFILE_RELEASE_OPT_LEVEL = "1"', cli_build)
         self.assertIn(
             '$env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "256"', cli_build
