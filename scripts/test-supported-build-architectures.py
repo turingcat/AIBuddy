@@ -425,6 +425,30 @@ $destination = "C:\safe"
                 }
                 self.assertEqual(expected_mapping, actual_mapping)
 
+    def test_azure_installs_nasm_before_building_windows_cli(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        steps = pipeline.get("steps", [])
+        cli_build_index = next(
+            index
+            for index, step in enumerate(steps)
+            if isinstance(step, dict)
+            and "cargo build" in str(step.get("powershell", ""))
+        )
+        preparation_scripts = [
+            str(step.get("powershell", ""))
+            for step in steps[:cli_build_index]
+            if isinstance(step, dict)
+        ]
+
+        self.assertTrue(
+            any(
+                "choco install nasm --no-progress -y" in script
+                and "nasm --version" in script
+                for script in preparation_scripts
+            ),
+            "Azure must install and verify NASM before aws-lc-sys builds i686",
+        )
+
     def test_azure_injects_matching_release_cli_and_runtime_binaries(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
         scripts = powershell_scripts(pipeline)

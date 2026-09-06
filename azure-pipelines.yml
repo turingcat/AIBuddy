@@ -30,6 +30,12 @@ steps:
       rustup show
       rustup target add $(RUST_TARGET)
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      if (-not (Get-Command nasm -ErrorAction SilentlyContinue)) {
+        choco install nasm --no-progress -y
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      }
+      nasm --version
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     displayName: Prepare Windows Rust toolchain
 
   - task: Cache@2
