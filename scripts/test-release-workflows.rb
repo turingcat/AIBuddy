@@ -144,6 +144,20 @@ end
 azure_steps = azure.fetch("steps", [])
 azure_powershell = azure_steps.filter_map { |step| step["powershell"] if step.is_a?(Hash) }
 
+forward_runtime_copy = lambda do |script|
+  script.lines.any? do |line|
+    normalized = line.strip.tr("\\", "/")
+    next false unless normalized.match?(/\ACopy-Item\b/i)
+
+    source = normalized.match(%r{["']?(?:\./)?(?:ui/desktop/)?src/bin/\*["']?}i)
+    destination = normalized.match(%r{["']?\$packaged/resources/bin/?["']?}i)
+    next false unless source && destination
+
+    named_arguments = normalized.match?(/-Path\b/i) && normalized.match?(/-Destination\b/i)
+    named_arguments || source.begin(0) < destination.begin(0)
+  end
+end
+
 release_build = azure_powershell.find { |script| script.include?("cargo build") && script.include?("--release") }
 abort "Azure pipeline must build the matrix Rust target in release mode" unless release_build &&
   release_build.include?("--target $env:RUST_TARGET") &&
@@ -151,15 +165,18 @@ abort "Azure pipeline must build the matrix Rust target in release mode" unless 
   release_build.include?('target\$env:RUST_TARGET\release\goose.exe') &&
   release_build.match?(/Copy-Item\s+\$binary\s+["']ui\\desktop\\src\\bin\\goose\.exe["']\s+-Force/i)
 
-desktop_build = azure_powershell.find { |script| script.include?("prepare-platform-binaries.js") }
+desktop_build = azure_powershell.find do |script|
+  normalized = script.tr("\\", "/")
+  normalized.match?(/(?:Set-Location|cd)\s+["']?(?:\.\/)?ui\/desktop["']?/i) &&
+    normalized.include?("prepare-platform-binaries.js") &&
+    normalized.include?("pnpm run package:windows -- --arch=$env:ELECTRON_ARCH") &&
+    normalized.include?("resolveWindowsPackage") &&
+    normalized.include?("ARTIFACT_ARCH") &&
+    forward_runtime_copy.call(script)
+end
 abort "Azure pipeline must prepare and package the matching Electron architecture" unless desktop_build &&
   desktop_build.include?("pnpm run package:windows -- --arch=$env:ELECTRON_ARCH")
-
-resource_injection = azure_powershell.find do |script|
-  normalized = script.tr("\\", "/")
-  normalized.match?(/Copy-Item/i) && normalized.include?("src/bin") && normalized.include?("resources/bin")
-end
-abort "Azure pipeline must inject runtime binaries into packaged resources/bin" unless resource_injection
+abort "Azure pipeline must copy src/bin contents into packaged resources/bin" unless forward_runtime_copy.call(desktop_build)
 
 artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
 resolved_artifacts = azure_matrix.values.map do |leg|
@@ -169,13 +186,20 @@ unless resolved_artifacts.sort == %w[AIBuddy-windows-x32-setup AIBuddy-windows-x
   abort "Azure matrix must resolve x32 and x64 setup artifact names"
 end
 
-publish_steps = azure_steps.select do |step|
-  step.is_a?(Hash) && (step.key?("publish") || step["task"].to_s.start_with?("Publish"))
-end
-abort "Azure pipeline must publish exactly one installer artifact per matrix leg" unless publish_steps.length == 1
+publish_shorthand = azure_steps.select { |step| step.is_a?(Hash) && step.key?("publish") }
+abort "Azure pipeline must not use publish shorthand" unless publish_shorthand.empty?
 
-publish = publish_steps.first
-abort "Azure pipeline must use PublishPipelineArtifact@1" unless publish["task"] == "PublishPipelineArtifact@1"
+artifact_tasks = azure_steps.select do |step|
+  next false unless step.is_a?(Hash)
+
+  task = step["task"].to_s
+  task.match?(/Artifact|CopyFiles/i)
+end
+unless artifact_tasks.length == 1 && artifact_tasks.first["task"] == "PublishPipelineArtifact@1"
+  abort "Azure pipeline must use only one PublishPipelineArtifact@1 task"
+end
+
+publish = artifact_tasks.first
 publish_inputs = publish.fetch("inputs", {})
 target_path = publish_inputs["targetPath"].to_s.tr("\\", "/")
 expected_target_path = "$(Build.ArtifactStagingDirectory)/#{artifact_name}"
@@ -185,15 +209,31 @@ end
 
 installer = azure_powershell.find { |script| script.include?("desktop-setup.iss") }
 abort "Azure pipeline must stage only the architecture-specific installer" unless installer &&
-  installer.include?('AIBuddy-windows-$env:ARTIFACT_ARCH-setup') &&
-  installer.include?("BUILD_ARTIFACTSTAGINGDIRECTORY")
+  installer.include?('$outputDir = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY "AIBuddy-windows-$env:ARTIFACT_ARCH-setup"') &&
+  installer.match?(/windows-package\.js.*\$env:ARTIFACT_ARCH.*\$outputDir/) &&
+  installer.match?(/&\s+\$iscc\s+@\(\$pkg\.isccArgs\)\s+["']ui[\\\/]desktop[\\\/]desktop-setup\.iss["']/i) &&
+  installer.include?('$installer = Join-Path $outputDir $pkg.setupFileName') &&
+  installer.include?("Test-Path $installer") &&
+  installer.match?(/Get-Item\s+\$installer\)\.Length\s+-eq\s+0/)
 
-staged_cli = azure_powershell.any? do |script|
-  script.downcase.include?("goose.exe") && script.downcase.include?("artifactstagingdirectory")
+staged_payload_copy = azure_powershell.any? do |script|
+  script.lines.any? do |line|
+    line.match?(/(?:Copy-Item|Move-Item).*(?:artifactstagingdirectory|\$outputDir)/i)
+  end
 end
-abort "Azure pipeline must not stage a standalone CLI artifact" if staged_cli
+abort "Azure pipeline must not copy standalone payloads into setup staging" if staged_payload_copy
 
-abort "Azure pipeline must not create portable ZIPs" if azure_text.include?("portableFileName") || azure_text.match?(/7z\s+a\s+-tzip/)
+portable_output = azure_steps.any? do |step|
+  next false unless step.is_a?(Hash)
+
+  step_text = step.to_s
+  artifact_or_package_step = step["task"].to_s.match?(/Artifact|CopyFiles/i) ||
+    step["displayName"].to_s.match?(/artifact|package|publish|installer/i)
+  direct_portable_step = step["task"].to_s.match?(/ArchiveFiles/i) ||
+    step_text.match?(/portableFileName|Compress-Archive|7z\b/i)
+  direct_portable_step || (artifact_or_package_step && step_text.match?(/\.zip\b|\bzip\b/i))
+end
+abort "Azure pipeline must not create or publish portable outputs" if portable_output
 abort "Azure pipeline must not dispatch GitHub Actions" if azure_text.include?("gh workflow run") || azure_text.include?("workflow_dispatch")
 
 release_branches = workflows.fetch(:release_branches)

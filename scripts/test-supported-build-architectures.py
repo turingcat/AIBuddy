@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -32,6 +33,36 @@ def powershell_scripts(pipeline: dict) -> list[str]:
         for step in pipeline.get("steps", [])
         if isinstance(step, dict) and isinstance(step.get("powershell"), str)
     ]
+
+
+def copies_runtime_binaries_forward(script: str) -> bool:
+    source_pattern = re.compile(
+        r'["\']?(?:\./)?(?:ui/desktop/)?src/bin/\*["\']?',
+        re.IGNORECASE,
+    )
+    destination_pattern = re.compile(
+        r'["\']?\$packaged/resources/bin/?["\']?',
+        re.IGNORECASE,
+    )
+
+    for line in script.splitlines():
+        normalized = line.strip().replace("\\", "/")
+        if not re.match(r"(?i)^Copy-Item\b", normalized):
+            continue
+
+        source = source_pattern.search(normalized)
+        destination = destination_pattern.search(normalized)
+        if source is None or destination is None:
+            continue
+
+        has_named_arguments = bool(
+            re.search(r"(?i)-Path\b", normalized)
+            and re.search(r"(?i)-Destination\b", normalized)
+        )
+        if has_named_arguments or source.start() < destination.start():
+            return True
+
+    return False
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
@@ -160,29 +191,50 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             r'(?i)Copy-Item\s+\$binary\s+["\']ui\\desktop\\src\\bin\\goose\.exe["\']\s+-Force',
         )
 
-        desktop_builds = [
-            script for script in scripts if "prepare-platform-binaries.js" in script
-        ]
-        self.assertEqual(1, len(desktop_builds))
-        self.assertIn(
-            "pnpm run package:windows -- --arch=$env:ELECTRON_ARCH",
-            desktop_builds[0],
-        )
+        desktop_builds = []
+        for script in scripts:
+            normalized = script.replace("\\", "/")
+            enters_desktop = re.search(
+                r'(?i)(?:Set-Location|cd)\s+["\']?(?:\./)?ui/desktop["\']?',
+                normalized,
+            )
+            if (
+                enters_desktop
+                and "prepare-platform-binaries.js" in normalized
+                and "pnpm run package:windows -- --arch=$env:ELECTRON_ARCH"
+                in normalized
+                and "resolveWindowsPackage" in normalized
+                and "ARTIFACT_ARCH" in normalized
+                and copies_runtime_binaries_forward(script)
+            ):
+                desktop_builds.append(script)
 
-        normalized_scripts = [script.replace("\\", "/") for script in scripts]
+        self.assertEqual(1, len(desktop_builds))
         self.assertTrue(
-            any(
-                "Copy-Item" in script
-                and "src/bin" in script
-                and "resources/bin" in script
-                for script in normalized_scripts
-            ),
-            "Azure pipeline must copy runtime binaries into packaged resources/bin",
+            copies_runtime_binaries_forward(desktop_builds[0]),
+            "Azure pipeline must copy src/bin contents into packaged resources/bin",
         )
 
     def test_azure_publishes_only_architecture_specific_installers(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
-        pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
+        steps = pipeline.get("steps", [])
+        publish_shorthand = [
+            step
+            for step in steps
+            if isinstance(step, dict) and "publish" in step
+        ]
+        self.assertEqual([], publish_shorthand)
+
+        artifact_tasks = [
+            step
+            for step in steps
+            if isinstance(step, dict)
+            and re.search(r"(?i)Artifact|CopyFiles", str(step.get("task", "")))
+        ]
+        self.assertEqual(1, len(artifact_tasks))
+        publish = artifact_tasks[0]
+        self.assertEqual("PublishPipelineArtifact@1", publish.get("task"))
+
         matrix = pipeline.get("strategy", {}).get("matrix", {})
         artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
         resolved_names = {
@@ -194,19 +246,6 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             resolved_names,
         )
 
-        steps = pipeline.get("steps", [])
-        publication_steps = [
-            step
-            for step in steps
-            if isinstance(step, dict)
-            and (
-                "publish" in step
-                or str(step.get("task", "")).startswith("Publish")
-            )
-        ]
-        self.assertEqual(1, len(publication_steps))
-        publish = publication_steps[0]
-        self.assertEqual("PublishPipelineArtifact@1", publish.get("task"))
         publish_inputs = publish.get("inputs", {})
         self.assertEqual(artifact_name, publish_inputs.get("artifact"))
         self.assertEqual(
@@ -214,28 +253,79 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             str(publish_inputs.get("targetPath", "")).replace("\\", "/"),
         )
 
+    def test_azure_stages_and_validates_only_the_setup_executable(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
         installer_scripts = [
             script
             for script in powershell_scripts(pipeline)
             if "desktop-setup.iss" in script
         ]
         self.assertEqual(1, len(installer_scripts))
+        installer = installer_scripts[0]
         self.assertIn(
-            "AIBuddy-windows-$env:ARTIFACT_ARCH-setup",
-            installer_scripts[0],
+            '$outputDir = Join-Path $env:BUILD_ARTIFACTSTAGINGDIRECTORY '
+            '"AIBuddy-windows-$env:ARTIFACT_ARCH-setup"',
+            installer,
         )
-        self.assertIn("BUILD_ARTIFACTSTAGINGDIRECTORY", installer_scripts[0])
+        self.assertRegex(
+            installer,
+            r"windows-package\.js.*\$env:ARTIFACT_ARCH.*\$outputDir",
+        )
+        self.assertRegex(
+            installer,
+            r'(?i)&\s+\$iscc\s+@\(\$pkg\.isccArgs\)\s+'
+            r'["\']ui[\\/]desktop[\\/]desktop-setup\.iss["\']',
+        )
+        self.assertIn(
+            "$installer = Join-Path $outputDir $pkg.setupFileName",
+            installer,
+        )
+        self.assertIn("Test-Path $installer", installer)
+        self.assertRegex(installer, r"Get-Item\s+\$installer\)\.Length\s+-eq\s+0")
 
+    def test_azure_has_no_cli_or_portable_artifact_paths(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8-sig")
+        steps = pipeline.get("steps", [])
         self.assertFalse(
             any(
-                "goose.exe" in script.lower()
-                and "artifactstagingdirectory" in script.lower()
+                re.search(
+                    r"(?i)(?:Copy-Item|Move-Item).*"
+                    r"(?:artifactstagingdirectory|\$outputDir)",
+                    line,
+                )
                 for script in powershell_scripts(pipeline)
+                for line in script.splitlines()
             ),
-            "Azure pipeline must not stage a standalone CLI artifact",
+            "Azure pipeline must not copy standalone payloads into setup staging",
         )
-        self.assertNotIn("portableFileName", pipeline_text)
-        self.assertNotRegex(pipeline_text, r"7z\s+a\s+-tzip")
+
+        portable_steps = []
+        for step in steps:
+            if not isinstance(step, dict):
+                continue
+            artifact_or_package_step = bool(
+                re.search(r"(?i)Artifact|CopyFiles", str(step.get("task", "")))
+                or re.search(
+                    r"(?i)artifact|package|publish|installer",
+                    str(step.get("displayName", "")),
+                )
+            )
+            step_text = str(step)
+            direct_portable_step = bool(
+                re.search(r"(?i)ArchiveFiles", str(step.get("task", "")))
+                or re.search(
+                    r"(?i)portableFileName|Compress-Archive|7z\b",
+                    step_text,
+                )
+            )
+            if direct_portable_step or (
+                artifact_or_package_step
+                and re.search(r"(?i)\.zip\b|\bzip\b", step_text)
+            ):
+                portable_steps.append(step)
+        self.assertEqual([], portable_steps)
+
         self.assertNotIn("gh workflow run", pipeline_text)
         self.assertNotIn("workflow_dispatch", pipeline_text)
 
