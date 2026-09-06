@@ -46,8 +46,8 @@ abort "Azure matrix must be serial" unless azure.dig("strategy", "maxParallel") 
 [
   "i686-pc-windows-msvc",
   "x86_64-pc-windows-msvc",
-  "electron_arch: ia32",
-  "electron_arch: x64",
+  "ELECTRON_ARCH: ia32",
+  "ELECTRON_ARCH: x64",
   "AIBuddy-windows-$(ARTIFACT_ARCH)-setup",
 ].each do |fragment|
   abort "Azure pipeline missing #{fragment}" unless azure_text.include?(fragment)
@@ -66,8 +66,8 @@ def test_azure_builds_x32_and_x64_desktop_serially(self) -> None:
     pipeline = (ROOT / "azure-pipelines.yml").read_text(encoding="utf-8-sig")
     self.assertIn("i686-pc-windows-msvc", pipeline)
     self.assertIn("x86_64-pc-windows-msvc", pipeline)
-    self.assertIn("electron_arch: ia32", pipeline)
-    self.assertIn("electron_arch: x64", pipeline)
+    self.assertIn("ELECTRON_ARCH: ia32", pipeline)
+    self.assertIn("ELECTRON_ARCH: x64", pipeline)
     self.assertIn("maxParallel: 1", pipeline)
     self.assertIn("pnpm run package:windows", pipeline)
     self.assertIn("desktop-setup.iss", pipeline)
