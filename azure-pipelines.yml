@@ -4,21 +4,33 @@
 trigger: none
 pr: none
 
+parameters:
+  - name: architecture
+    displayName: Windows architecture
+    type: string
+    default: both
+    values:
+      - both
+      - x32
+      - x64
+
 pool:
   vmImage: windows-2022
 
 strategy:
   matrix:
-    x32:
-      ARTIFACT_ARCH: x32
-      ELECTRON_ARCH: ia32
-      RUST_TARGET: i686-pc-windows-msvc
-      CARGO_FEATURES: aws-providers,nostr,otel,rustls-tls,system-keyring
-    x64:
-      ARTIFACT_ARCH: x64
-      ELECTRON_ARCH: x64
-      RUST_TARGET: x86_64-pc-windows-msvc
-      CARGO_FEATURES: code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
+    ${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x32')) }}:
+      x32:
+        ARTIFACT_ARCH: x32
+        ELECTRON_ARCH: ia32
+        RUST_TARGET: i686-pc-windows-msvc
+        CARGO_FEATURES: aws-providers,nostr,otel,rustls-tls,system-keyring
+    ${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x64')) }}:
+      x64:
+        ARTIFACT_ARCH: x64
+        ELECTRON_ARCH: x64
+        RUST_TARGET: x86_64-pc-windows-msvc
+        CARGO_FEATURES: code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
   maxParallel: 1
 
 steps:
@@ -73,6 +85,7 @@ steps:
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       pnpm config set store-dir "$(Pipeline.Workspace)\.pnpm-store"
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      New-Item -ItemType Directory -Force "$(Pipeline.Workspace)\.cache\electron" | Out-Null
     displayName: Install pnpm 10.30.3
 
   - task: Cache@2
@@ -85,6 +98,7 @@ steps:
 
   - task: Cache@2
     displayName: Cache Electron downloads
+    continueOnError: true
     inputs:
       key: 'electron | "$(Agent.OS)" | "$(ELECTRON_ARCH)" | ui/pnpm-lock.yaml'
       restoreKeys: |

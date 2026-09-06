@@ -248,11 +248,27 @@ azure = YAML.load_file(azure_path)
 azure_text = File.read(azure_path)
 
 abort "Azure pipeline must remain manual-only" unless azure["trigger"] == "none" && azure["pr"] == "none"
+architecture = azure.fetch("parameters", []).find { |parameter| parameter["name"] == "architecture" }
+abort "Azure pipeline must expose a both/x32/x64 architecture parameter" unless architecture &&
+  architecture["type"] == "string" &&
+  architecture["default"] == "both" &&
+  architecture["values"] == %w[both x32 x64]
+["x32", "x64"].each do |architecture_name|
+  condition = "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, '#{architecture_name}')) }}:"
+  abort "Azure pipeline must conditionally select #{architecture_name}" unless azure_text.include?(condition)
+end
 azure_strategy = azure.fetch("strategy", {})
 abort "Azure matrix must be serial" unless azure_strategy["maxParallel"] == 1
 
 azure_matrix = azure_strategy.fetch("matrix", {})
-abort "Azure matrix must define exactly x32 and x64" unless azure_matrix.keys.sort == %w[x32 x64]
+azure_matrix_legs = azure_matrix.each_with_object({}) do |(key, value), legs|
+  if %w[x32 x64].include?(key)
+    legs[key] = value
+  elsif key.start_with?("${{ if ") && value.is_a?(Hash)
+    legs.merge!(value)
+  end
+end
+abort "Azure matrix must define exactly x32 and x64" unless azure_matrix_legs.keys.sort == %w[x32 x64]
 
 expected_azure_matrix = {
   "x32" => {
@@ -269,7 +285,7 @@ expected_azure_matrix = {
   },
 }
 expected_azure_matrix.each do |leg, expected|
-  actual = azure_matrix.fetch(leg, {}).slice(*expected.keys)
+  actual = azure_matrix_legs.fetch(leg, {}).slice(*expected.keys)
   abort "Azure #{leg} matrix mapping is incorrect" unless actual == expected
 end
 
@@ -321,7 +337,7 @@ abort "Azure pipeline must prepare and package the matching Electron architectur
 abort "Azure pipeline must use the approved src/bin to resources/bin copy" unless approved_runtime_copy?(desktop_build)
 
 artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
-resolved_artifacts = azure_matrix.values.map do |leg|
+resolved_artifacts = azure_matrix_legs.values.map do |leg|
   artifact_name.sub("$(ARTIFACT_ARCH)", leg.fetch("ARTIFACT_ARCH", ""))
 end
 unless resolved_artifacts.sort == %w[AIBuddy-windows-x32-setup AIBuddy-windows-x64-setup]

@@ -90,6 +90,17 @@ def powershell_scripts(pipeline: dict) -> list[str]:
     ]
 
 
+def azure_matrix_legs(pipeline: dict) -> dict:
+    matrix = pipeline.get("strategy", {}).get("matrix", {})
+    legs = {}
+    for key, value in matrix.items():
+        if key in {"x32", "x64"}:
+            legs[key] = value
+        elif key.startswith("${{ if ") and isinstance(value, dict):
+            legs.update(value)
+    return legs
+
+
 def normalize_powershell_value(value: str, aliases: dict[str, str]) -> str:
     normalized = value.strip().replace("\\", "/")
     for _ in range(8):
@@ -389,8 +400,26 @@ $destination = "C:\safe"
 
     def test_azure_matrix_maps_x32_and_x64_serially(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
+        pipeline_text = AZURE_PIPELINE.read_text(encoding="utf-8")
         self.assertEqual("none", pipeline.get("trigger"))
         self.assertEqual("none", pipeline.get("pr"))
+
+        architecture = next(
+            parameter
+            for parameter in pipeline.get("parameters", [])
+            if parameter.get("name") == "architecture"
+        )
+        self.assertEqual("string", architecture.get("type"))
+        self.assertEqual("both", architecture.get("default"))
+        self.assertEqual(["both", "x32", "x64"], architecture.get("values"))
+        self.assertIn(
+            "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x32')) }}:",
+            pipeline_text,
+        )
+        self.assertIn(
+            "${{ if or(eq(parameters.architecture, 'both'), eq(parameters.architecture, 'x64')) }}:",
+            pipeline_text,
+        )
 
         strategy = pipeline.get("strategy")
         self.assertIsInstance(strategy, dict)
@@ -398,7 +427,8 @@ $destination = "C:\safe"
 
         matrix = strategy.get("matrix")
         self.assertIsInstance(matrix, dict)
-        self.assertEqual({"x32", "x64"}, set(matrix))
+        matrix_legs = azure_matrix_legs(pipeline)
+        self.assertEqual({"x32", "x64"}, set(matrix_legs))
 
         expected = {
             "x32": {
@@ -420,7 +450,7 @@ $destination = "C:\safe"
         for leg, expected_mapping in expected.items():
             with self.subTest(leg=leg):
                 actual_mapping = {
-                    key: matrix[leg].get(key)
+                    key: matrix_legs[leg].get(key)
                     for key in expected_mapping
                 }
                 self.assertEqual(expected_mapping, actual_mapping)
@@ -482,6 +512,28 @@ $destination = "C:\safe"
         self.assertIn(
             '$env:CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "256"', cli_build
         )
+
+    def test_azure_prepares_optional_electron_cache(self) -> None:
+        pipeline = load_yaml(AZURE_PIPELINE)
+        steps = pipeline.get("steps", [])
+        cache_index = next(
+            index
+            for index, step in enumerate(steps)
+            if isinstance(step, dict)
+            and step.get("displayName") == "Cache Electron downloads"
+        )
+        cache = steps[cache_index]
+        preparation = "\n".join(
+            str(step.get("powershell", ""))
+            for step in steps[:cache_index]
+            if isinstance(step, dict)
+        )
+
+        self.assertIn(
+            'New-Item -ItemType Directory -Force "$(Pipeline.Workspace)\\.cache\\electron" | Out-Null',
+            preparation,
+        )
+        self.assertIs(True, cache.get("continueOnError"))
 
     def test_azure_injects_matching_release_cli_and_runtime_binaries(self) -> None:
         pipeline = load_yaml(AZURE_PIPELINE)
@@ -613,11 +665,10 @@ $destination = "C:\safe"
         self.assertEqual("PublishPipelineArtifact@1", publish.get("task"))
         self.assertEqual([], forbidden_publication_or_archive_steps(steps))
 
-        matrix = pipeline.get("strategy", {}).get("matrix", {})
         artifact_name = "AIBuddy-windows-$(ARTIFACT_ARCH)-setup"
         resolved_names = {
             artifact_name.replace("$(ARTIFACT_ARCH)", leg.get("ARTIFACT_ARCH", ""))
-            for leg in matrix.values()
+            for leg in azure_matrix_legs(pipeline).values()
         }
         self.assertEqual(
             {"AIBuddy-windows-x32-setup", "AIBuddy-windows-x64-setup"},
