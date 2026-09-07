@@ -17,6 +17,7 @@ jobs:
     uses: ./.github/workflows/bundle-windows.yml
     permissions:
       contents: read
+      actions: read
     with:
       artifact_retention_days: 14
 

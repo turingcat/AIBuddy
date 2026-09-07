@@ -54,7 +54,7 @@ Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
 ArchitecturesAllowed={#MyArchitecturesAllowed}
-#if MyInstallIn64BitMode == 1
+#if MyInstallIn64BitMode == "1"
 ArchitecturesInstallIn64BitMode=x64compatible
 #endif
 PrivilegesRequired=admin

@@ -3,6 +3,11 @@ name: "Bundle Desktop (Windows x32 and x64)"
 on:
   workflow_dispatch:
     inputs:
+      reuse_run_id:
+        description: 'Reuse unsigned distributions from this run ID; version must match the source build'
+        required: false
+        type: string
+        default: ''
       version:
         description: 'Version to set for the build'
         required: false
@@ -15,6 +20,11 @@ on:
         type: number
   workflow_call:
     inputs:
+      reuse_run_id:
+        description: 'Reuse unsigned distributions from this run ID; version must match the source build'
+        required: false
+        type: string
+        default: ''
       version:
         description: 'Version to build'
         required: false
@@ -39,6 +49,7 @@ permissions:
 
 jobs:
   build-goose-windows:
+    if: ${{ inputs.reuse_run_id == '' }}
     name: Build Desktop backend (Windows ${{ matrix.artifact_arch }})
     runs-on: windows-latest
     strategy:
@@ -106,6 +117,7 @@ jobs:
           overwrite: true
 
   build-desktop-windows:
+    if: ${{ inputs.reuse_run_id == '' }}
     name: Build Desktop (Windows ${{ matrix.artifact_arch }})
     needs: build-goose-windows
     runs-on: windows-latest
@@ -237,6 +249,10 @@ jobs:
           overwrite: true
 
   package-desktop-windows:
+    if: ${{ !cancelled() && (inputs.reuse_run_id != '' || needs.build-desktop-windows.result == 'success') }}
+    permissions:
+      contents: read
+      actions: read
     name: Package Desktop (Windows ${{ matrix.artifact_arch }})
     needs: build-desktop-windows
     runs-on: windows-latest
@@ -260,6 +276,8 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: internal-windows-unsigned-${{ matrix.artifact_arch }}
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.reuse_run_id || github.run_id }}
           path: ui/desktop/dist-windows-${{ matrix.artifact_arch }}
 
       - name: Set up Inno Setup
