@@ -8,7 +8,6 @@ pub use resolver::{
 
 use super::base::{ConfigKey, ModelInfo, Provider, ProviderType};
 use super::canonical::{map_provider_name, map_to_canonical_model, CanonicalModelRegistry};
-use super::catalog::ProviderSetupCategory;
 use crate::config::declarative_providers::{DeclarativeProviderConfig, ProviderEngine};
 use crate::config::Config;
 use crate::session::session_manager::SessionStorage;
@@ -36,7 +35,6 @@ pub struct ProviderInventoryEntry {
     pub configured: bool,
     pub available: bool,
     pub provider_type: ProviderType,
-    pub category: ProviderSetupCategory,
     pub acp: bool,
     pub visible_in_setup: bool,
     pub deprecated: bool,
@@ -49,7 +47,6 @@ pub struct ProviderInventoryEntry {
     pub last_updated_at: Option<DateTime<Utc>>,
     pub last_refresh_attempt_at: Option<DateTime<Utc>>,
     pub last_refresh_error: Option<String>,
-    pub model_selection_hint: Option<String>,
 }
 
 /// Families whose latest model should be surfaced in the compact picker.
@@ -267,7 +264,6 @@ struct ProviderDescriptor {
     configured: bool,
     available: bool,
     provider_type: ProviderType,
-    category: ProviderSetupCategory,
     acp: bool,
     visible_in_setup: bool,
     deprecated: bool,
@@ -276,7 +272,6 @@ struct ProviderDescriptor {
     setup_steps: Vec<String>,
     supports_refresh: bool,
     static_models: Vec<ModelInfo>,
-    model_selection_hint: Option<String>,
 }
 
 impl ProviderInventoryService {
@@ -315,7 +310,6 @@ impl ProviderInventoryService {
             configured: descriptor.configured,
             available: descriptor.available,
             provider_type: descriptor.provider_type,
-            category: descriptor.category,
             acp: descriptor.acp,
             visible_in_setup: descriptor.visible_in_setup,
             deprecated: descriptor.deprecated,
@@ -332,7 +326,6 @@ impl ProviderInventoryService {
                 .as_ref()
                 .and_then(|snapshot| snapshot.last_refresh_attempt_at),
             last_refresh_error: snapshot.and_then(|snapshot| snapshot.last_refresh_error),
-            model_selection_hint: descriptor.model_selection_hint,
         }))
     }
 
@@ -738,11 +731,6 @@ impl ProviderInventoryService {
             },
             available: entry.inventory_configured(),
             provider_type: entry.provider_type(),
-            category: metadata
-                .setup
-                .as_ref()
-                .map(|setup| setup.category)
-                .unwrap_or(ProviderSetupCategory::Model),
             acp: metadata.setup.as_ref().is_some_and(|setup| setup.acp),
             visible_in_setup: metadata.deprecated.is_none(),
             deprecated: metadata.deprecated.is_some(),
@@ -754,7 +742,6 @@ impl ProviderInventoryService {
             setup_steps: metadata.setup_steps.clone(),
             supports_refresh: entry.supports_inventory_refresh(),
             static_models: metadata.known_models,
-            model_selection_hint: metadata.model_selection_hint,
         }))
     }
 
@@ -992,6 +979,19 @@ pub fn declarative_inventory_identity(
                 .insert(config.api_key_env.clone(), value);
         }
     }
+    if let Some(auth) = &config.auth {
+        identity
+            .secret_inputs
+            .insert("auth_command".to_string(), auth.command.clone());
+        identity
+            .secret_inputs
+            .insert("auth_args".to_string(), serde_json::to_string(&auth.args)?);
+        if let Some(cwd) = &auth.cwd {
+            identity
+                .secret_inputs
+                .insert("auth_cwd".to_string(), cwd.clone());
+        }
+    }
 
     Ok(identity)
 }
@@ -1041,6 +1041,10 @@ fn fallback_inventory_identity(provider_id: &str) -> InventoryIdentityInput {
     )
 }
 
+fn is_databricks_v2_model_service(provider_family: &str, model_id: &str) -> bool {
+    provider_family == "databricks_v2" && model_id.splitn(3, '.').count() == 3
+}
+
 fn enrich_model_ids_with_canonical(
     provider_family: &str,
     model_ids: &[String],
@@ -1060,11 +1064,16 @@ fn enrich_model_ids_with_canonical(
     }
 
     let mut models: Vec<InventoryModel> = Vec::new();
-    let mut seen_names: HashSet<String> = HashSet::new();
+    let mut seen_keys: HashSet<String> = HashSet::new();
 
     for id in model_ids {
         let model = enriched_model(provider_family, id, None);
-        if !seen_names.insert(model.name.clone()) {
+        let dedup_key = if is_databricks_v2_model_service(provider_family, id) {
+            id
+        } else {
+            &model.name
+        };
+        if !seen_keys.insert(dedup_key.clone()) {
             continue;
         }
         models.push(model);
@@ -1076,7 +1085,9 @@ fn enrich_model_ids_with_canonical(
     if matches!(provider_family, "databricks" | "databricks_v2") {
         let mut name_to_idx: HashMap<String, usize> = HashMap::new();
         for (idx, model) in models.iter().enumerate() {
-            name_to_idx.insert(model.name.clone(), idx);
+            if !is_databricks_v2_model_service(provider_family, &model.id) {
+                name_to_idx.insert(model.name.clone(), idx);
+            }
         }
         for id in model_ids {
             if !id.starts_with("goose-") {
@@ -1113,7 +1124,7 @@ fn configured_models_to_inventory(
     let mut result: Vec<InventoryModel> = Vec::new();
     let mut seen_names: HashSet<String> = HashSet::new();
     for model in models {
-        let enriched = enriched_model(provider_family, &model.name, Some(model.context_limit));
+        let enriched = enriched_model(provider_family, &model.name, model.context_limit);
         if seen_names.insert(enriched.name.clone()) {
             result.push(enriched);
         }
@@ -1320,8 +1331,10 @@ mod tests {
 
     #[test]
     fn configured_models_use_canonical_enrichment() {
-        let models =
-            configured_models_to_inventory("anthropic", &[ModelInfo::new("claude-sonnet-4-5", 0)]);
+        let models = configured_models_to_inventory(
+            "anthropic",
+            &[ModelInfo::new("claude-sonnet-4-5").with_context_limit(0)],
+        );
 
         assert_eq!(models.len(), 1);
         assert!(models[0].name.contains("Claude"));
@@ -1348,8 +1361,32 @@ mod tests {
     }
 
     #[test]
+    fn databricks_v2_inventory_preserves_distinct_model_service_fqns() {
+        let model_ids = [
+            "alpha.prod.claude-sonnet-4-5",
+            "beta.prod.claude-sonnet-4-5",
+            "alpha.prod.claude-sonnet-4-5",
+        ]
+        .map(String::from);
+        let models = enrich_model_ids_with_canonical("databricks_v2", &model_ids);
+
+        let ids = models
+            .iter()
+            .map(|model| model.id.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            ids,
+            [
+                "alpha.prod.claude-sonnet-4-5",
+                "beta.prod.claude-sonnet-4-5"
+            ]
+        );
+        assert_eq!(models[0].name, models[1].name);
+    }
+
+    #[test]
     fn inventory_uses_configured_models_before_first_successful_refresh() {
-        let configured_models = [ModelInfo::new("claude-sonnet-4-5", 0)];
+        let configured_models = [ModelInfo::new("claude-sonnet-4-5").with_context_limit(0)];
         let snapshot = InventorySnapshot {
             models: vec![],
             last_updated_at: None,
@@ -1366,7 +1403,7 @@ mod tests {
 
     #[test]
     fn inventory_preserves_empty_models_after_successful_refresh() {
-        let configured_models = [ModelInfo::new("claude-sonnet-4-5", 0)];
+        let configured_models = [ModelInfo::new("claude-sonnet-4-5").with_context_limit(0)];
         let snapshot = InventorySnapshot {
             models: vec![],
             last_updated_at: Some(Utc::now()),
@@ -1382,7 +1419,7 @@ mod tests {
 
     #[test]
     fn inventory_ignores_stale_snapshots_for_static_providers() {
-        let configured_models = [ModelInfo::new("gpt-5.6", 0)];
+        let configured_models = [ModelInfo::new("gpt-5.6").with_context_limit(0)];
         let snapshot = InventorySnapshot {
             models: vec![InventoryModel {
                 id: "gpt-5.5".to_string(),

@@ -1,5 +1,9 @@
 use crate::conversation::message::{Message, MessageContentBlock};
 use crate::conversation::token_usage::{ProviderUsage, Usage};
+use crate::documents::{
+    convert_document, document_media_type_is_supported, unsupported_document_text, DocumentFormat,
+    ASSISTANT_ROLE_REASON, UNSUPPORTED_MEDIA_TYPE_REASON,
+};
 use crate::errors::ProviderError;
 use crate::formats::openai::{
     extract_reasoning_effort, is_openai_responses_model, openai_reasoning_effort_for_thinking,
@@ -480,6 +484,25 @@ fn add_message_items(input_items: &mut Vec<Value>, messages: &[Message], support
                         }));
                     }
                 }
+                MessageContentBlock::Document(document) => {
+                    if message.role != Role::User {
+                        text_items.push(json!({
+                            "type": "output_text",
+                            "text": unsupported_document_text(document, ASSISTANT_ROLE_REASON),
+                            "annotations": []
+                        }));
+                    } else if document_media_type_is_supported(&document.mime_type) {
+                        let mut converted = convert_document(document, &DocumentFormat::OpenAi);
+                        let mut file = converted["file"].take();
+                        file["type"] = json!("input_file");
+                        text_items.push(file);
+                    } else {
+                        text_items.push(json!({
+                            "type": "input_text",
+                            "text": unsupported_document_text(document, UNSUPPORTED_MEDIA_TYPE_REASON)
+                        }));
+                    }
+                }
                 MessageContentBlock::ToolResponse(response) => {
                     if !text_items.is_empty() {
                         input_items.push(json!({
@@ -564,43 +587,6 @@ fn add_message_items(input_items: &mut Vec<Value>, messages: &[Message], support
                                 "type": "function_call_output",
                                 "call_id": response.id,
                                 "output": format!("Error: {}", error_data.message)
-                            }));
-                        }
-                    }
-                }
-                MessageContentBlock::FrontendToolRequest(request) => {
-                    if !text_items.is_empty() {
-                        input_items.push(json!({
-                            "type": "message",
-                            "role": role,
-                            "content": text_items
-                        }));
-                        text_items = Vec::new();
-                    }
-
-                    match &request.tool_call {
-                        Ok(tool_call) => {
-                            let sanitized_name = sanitize_function_name(&tool_call.name);
-                            let arguments_str = tool_call
-                                .arguments
-                                .as_ref()
-                                .map(|args| {
-                                    serde_json::to_string(args).unwrap_or_else(|_| "{}".to_string())
-                                })
-                                .unwrap_or_else(|| "{}".to_string());
-
-                            input_items.push(json!({
-                                "type": "function_call",
-                                "call_id": request.id,
-                                "name": sanitized_name,
-                                "arguments": arguments_str
-                            }));
-                        }
-                        Err(e) => {
-                            input_items.push(json!({
-                                "type": "function_call_output",
-                                "call_id": request.id,
-                                "output": format!("Error: {}", e.message)
                             }));
                         }
                     }
@@ -1232,6 +1218,55 @@ where
 }
 
 #[cfg(test)]
+mod document_tests {
+    use super::*;
+
+    fn format(messages: &[Message]) -> Vec<Value> {
+        let mut items = Vec::new();
+        add_message_items(&mut items, messages, true);
+        items
+    }
+
+    #[test]
+    fn user_document_becomes_an_input_file_item() {
+        let items = format(&[Message::user().with_document(
+            "cGRmLWJ5dGVz",
+            "application/pdf",
+            Some("q3-report.pdf".to_string()),
+        )]);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["role"], "user");
+        assert_eq!(
+            items[0]["content"][0],
+            json!({
+                "type": "input_file",
+                "filename": "q3-report.pdf",
+                "file_data": "data:application/pdf;base64,cGRmLWJ5dGVz",
+            })
+        );
+    }
+
+    #[test]
+    fn assistant_document_becomes_an_output_text_item() {
+        let items = format(&[Message::assistant().with_document(
+            "cGRmLWJ5dGVz",
+            "application/pdf",
+            Some("q3-report.pdf".to_string()),
+        )]);
+
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["role"], "assistant");
+        let part = &items[0]["content"][0];
+        assert_eq!(part["type"], "output_text");
+        let text = part["text"].as_str().unwrap();
+        assert!(text.contains("q3-report.pdf"), "{text}");
+        assert!(text.contains("user messages"), "{text}");
+        assert!(!text.contains("cGRmLWJ5dGVz"), "{text}");
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use crate::conversation::message::MessageContentBlock;
@@ -1595,12 +1630,8 @@ mod tests {
         });
 
         let lines = vec![
-            format!(
-                r#"data: {{"type":"response.created","sequence_number":1,"response":{{"id":"resp_1","object":"response","created_at":1737368310,"status":"in_progress","model":"gpt-5","output":[]}}}}"#
-            ),
-            format!(
-                r#"data: {{"type":"response.output_text.delta","sequence_number":2,"item_id":"msg_1","output_index":1,"content_index":0,"delta":"Paris."}}"#
-            ),
+            r#"data: {"type":"response.created","sequence_number":1,"response":{"id":"resp_1","object":"response","created_at":1737368310,"status":"in_progress","model":"gpt-5","output":[]}}"#.to_string(),
+            r#"data: {"type":"response.output_text.delta","sequence_number":2,"item_id":"msg_1","output_index":1,"content_index":0,"delta":"Paris."}"#.to_string(),
             format!(
                 r#"data: {{"type":"response.output_item.done","sequence_number":3,"output_index":0,"item":{}}}"#,
                 serde_json::to_string(&reasoning_item)?
@@ -2957,48 +2988,6 @@ mod tests {
     }
 
     #[test]
-    fn test_frontend_tool_request_serialized_in_responses_request() {
-        use crate::conversation::message::Message;
-        use rmcp::model::{CallToolResult, ContentBlock};
-
-        let messages = vec![
-            Message::assistant().with_frontend_tool_request(
-                "call_ft1",
-                Ok(CallToolRequestParams::new("browser_click")
-                    .with_arguments(object!({"selector": "#btn"}))),
-            ),
-            Message::user().with_content(MessageContentBlock::tool_response(
-                "call_ft1",
-                Ok(CallToolResult::success(vec![ContentBlock::text("clicked")])),
-            )),
-        ];
-
-        let model_config = ModelConfig {
-            model_name: "gpt-5.5".to_string(),
-            context_limit: None,
-            temperature: None,
-            max_tokens: None,
-            toolshim: false,
-            toolshim_model: None,
-            request_params: None,
-            reasoning: None,
-            supports_vision: None,
-            request_headers: None,
-        };
-
-        let result = create_responses_request(&model_config, "", &messages, &[]).unwrap();
-        let input = result["input"].as_array().unwrap();
-
-        assert_eq!(input[0]["type"], "function_call");
-        assert_eq!(input[0]["call_id"], "call_ft1");
-        assert_eq!(input[0]["name"], "browser_click");
-
-        assert_eq!(input[1]["type"], "function_call_output");
-        assert_eq!(input[1]["call_id"], "call_ft1");
-        assert_eq!(input[1]["output"], "clicked");
-    }
-
-    #[test]
     fn test_responses_request_sanitizes_replayed_function_call_names() {
         use crate::conversation::message::Message;
 
@@ -3008,8 +2997,8 @@ mod tests {
                 Ok(CallToolRequestParams::new("Crack Catcher")
                     .with_arguments(object!({"prompt": "verify the work"}))),
             ),
-            Message::assistant().with_frontend_tool_request(
-                "call_frontend_agent",
+            Message::assistant().with_tool_request(
+                "call_review_agent",
                 Ok(CallToolRequestParams::new("@Review Agent")
                     .with_arguments(object!({"prompt": "check it"}))),
             ),
@@ -3036,7 +3025,7 @@ mod tests {
         assert_eq!(input[0]["name"], "Crack_Catcher");
 
         assert_eq!(input[1]["type"], "function_call");
-        assert_eq!(input[1]["call_id"], "call_frontend_agent");
+        assert_eq!(input[1]["call_id"], "call_review_agent");
         assert_eq!(input[1]["name"], "_Review_Agent");
     }
 
@@ -3104,44 +3093,5 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("invalid arguments"));
-    }
-
-    #[test]
-    fn test_frontend_tool_request_error_emits_function_call_output() {
-        use crate::conversation::message::Message;
-        use rmcp::model::{ErrorCode, ErrorData};
-
-        let messages = vec![Message::assistant().with_frontend_tool_request(
-            "call_ft_err",
-            Err(ErrorData {
-                code: ErrorCode::INTERNAL_ERROR,
-                message: "malformed arguments".into(),
-                data: None,
-            }),
-        )];
-
-        let model_config = ModelConfig {
-            model_name: "gpt-5.5".to_string(),
-            context_limit: None,
-            temperature: None,
-            max_tokens: None,
-            toolshim: false,
-            toolshim_model: None,
-            request_params: None,
-            reasoning: None,
-            supports_vision: None,
-            request_headers: None,
-        };
-
-        let result = create_responses_request(&model_config, "", &messages, &[]).unwrap();
-        let input = result["input"].as_array().unwrap();
-
-        assert_eq!(input.len(), 1);
-        assert_eq!(input[0]["type"], "function_call_output");
-        assert_eq!(input[0]["call_id"], "call_ft_err");
-        assert!(input[0]["output"]
-            .as_str()
-            .unwrap()
-            .contains("malformed arguments"));
     }
 }

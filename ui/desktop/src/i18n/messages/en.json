@@ -1118,9 +1118,6 @@
   "extensionInfoFields.typeLabel": {
     "defaultMessage": "Type"
   },
-  "extensionInfoFields.typeSseUnsupported": {
-    "defaultMessage": "SSE (unsupported)"
-  },
   "extensionInfoFields.typeStandardIo": {
     "defaultMessage": "Standard IO (STDIO)"
   },
@@ -3875,6 +3872,9 @@
   "sessionIndicators.streaming": {
     "defaultMessage": "Streaming"
   },
+  "sessions.acpBadge": {
+    "defaultMessage": "ACP"
+  },
   "sessions.action.delete": {
     "defaultMessage": "Delete session"
   },
@@ -3952,6 +3952,9 @@
   },
   "sessions.importing": {
     "defaultMessage": "Importing..."
+  },
+  "sessions.includeAcp": {
+    "defaultMessage": "Include ACP sessions"
   },
   "sessions.loadingMore": {
     "defaultMessage": "Loading more sessions..."

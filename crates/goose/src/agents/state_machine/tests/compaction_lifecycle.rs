@@ -24,11 +24,10 @@ async fn proactive_and_manual_compaction_continue_with_replaced_usage() -> Resul
         .reply("continued after compaction");
     api.on("after manual compaction").reply("still working");
 
-    let half_full = format!(
-        "fill the context {}",
-        "x".repeat(pipeline.context_limit() / 2)
-    );
-    pipeline.run([half_full.as_str()]).await?;
+    pipeline.run(["fill the context"]).await?;
+    pipeline
+        .set_total_tokens((pipeline.context_limit() / 2) as i32)
+        .await;
     let budget = pipeline.run(["check the budget"]).await?;
     budget.assert_message(-1, Agent, "budget checked");
     assert!(api.calls().last().unwrap().input_contains("<compaction>"));
@@ -131,6 +130,39 @@ async fn proactive_and_manual_compaction_continue_with_replaced_usage() -> Resul
             .and_then(|usage| usage.total_tokens),
         Some(15)
     );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn tokenless_provider_compacts_estimated_context() -> Result<()> {
+    let (pipeline, api) = pipeline::test_pipeline_with(ProviderFeatures {
+        reports_usage: false,
+        ..ProviderFeatures::default()
+    })
+    .await?;
+    let pipeline = pipeline
+        .with_model_config(
+            goose_providers::model::ModelConfig::new("gpt-4.1").with_context_limit(Some(200)),
+        )
+        .await;
+    let large_context = (0..500)
+        .map(|index| format!("token-{index}"))
+        .collect::<Vec<_>>()
+        .join(" ");
+    pipeline
+        .seed([Message::user().with_text(large_context)])
+        .await?;
+    assert!(pipeline.session().await?.usage.total_tokens.is_none());
+
+    api.on(SUMMARIZE_HISTORY).reply("summary");
+    api.on("Your context was compacted")
+        .reply("continued after estimated compaction");
+
+    let compacted = pipeline.run(["continue"]).await?;
+    compacted.assert_message(-1, Agent, "continued after estimated compaction");
+    compacted.assert_emitted("Performing auto-compaction");
+    assert_eq!(compacted.history_replacements(), 1);
 
     Ok(())
 }

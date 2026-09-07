@@ -21,6 +21,7 @@ These are the minimum required variables to get started with goose.
 | `GOOSE_FAST_MODEL` | Overrides the provider's default fast model used for auxiliary calls (tool-selection, classification, session titles) | Model name (e.g., "gpt-4o-mini", "google/gemini-2.5-flash") | Provider-specific default |
 | `GOOSE_TEMPERATURE` | Sets the [temperature](https://medium.com/@kelseyywang/a-comprehensive-guide-to-llm-temperature-%EF%B8%8F-363a40bbc91f) for model responses | Float between 0.0 and 1.0 | Model-specific default |
 | `GOOSE_MAX_TOKENS` | Sets the maximum number of tokens for each model response (truncates longer responses) | Positive integer (e.g., 4096, 8192) | Model-specific default |
+| `GOOSE_CACHE_TTL` | Sets the Anthropic prompt-cache TTL. `1h` keeps the cached prefix alive across idle gaps (e.g. stepping away mid-session) but bills cache writes at 2x input instead of 1.25x, so it only pays off for sessions that actually idle. Headless runs (`goose run`, subagents, scheduled recipes) always use `5m` | `5m`, `1h` | `5m` |
 
 **Examples**
 
@@ -250,8 +251,7 @@ These variables allow you to override the default context window size (token lim
 | Variable | Purpose | Values | Default |
 |----------|---------|---------|---------|
 | `GOOSE_CONTEXT_LIMIT` | Override context limit for the main model | Integer (number of tokens) | Model-specific default or 128,000 |
-| `GOOSE_INPUT_LIMIT` | Override input prompt limit for ollama requests (maps to `num_ctx`) | Integer (number of tokens) | Falls back to `GOOSE_CONTEXT_LIMIT` or model default |
-| `GOOSE_PLANNER_CONTEXT_LIMIT` | Override context limit for the [planner model](/docs/guides/context-engineering/creating-plans) | Integer (number of tokens) | Falls back to `GOOSE_CONTEXT_LIMIT` or model default |
+| `GOOSE_INPUT_LIMIT` | Override input prompt limit for ollama requests (maps to `num_ctx`) | Integer (number of tokens) | Unset; Ollama uses its model default |
 
 **Examples**
 
@@ -260,9 +260,6 @@ These variables allow you to override the default context window size (token lim
 export GOOSE_CONTEXT_LIMIT=200000
 # Override ollama input prompt limit
 export GOOSE_INPUT_LIMIT=32000
-
-# Set context limit for planner
-export GOOSE_PLANNER_CONTEXT_LIMIT=1000000
 ```
 
 For more details and examples, see [Model Context Limit Overrides](/docs/guides/sessions/smart-context-management#model-context-limit-overrides).

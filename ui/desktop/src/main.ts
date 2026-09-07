@@ -54,6 +54,7 @@ import {
 } from './recharge';
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
+import { configureProxy } from './proxy';
 import { startGooseServe } from './gooseServe';
 import { buildHeyBuddyEnv } from './gooseServeEnv';
 import { getLoginShellPath } from './loginShellPath';
@@ -227,23 +228,6 @@ function listGitWorktreeDirs(dir: string): Promise<string[]> {
       }
     );
   });
-}
-
-async function configureProxy() {
-  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
-  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
-  const noProxy = process.env.NO_PROXY || process.env.no_proxy || '';
-
-  const proxyUrl = httpsProxy || httpProxy;
-
-  if (proxyUrl) {
-    console.log('[Main] Configuring proxy');
-    await session.defaultSession.setProxy({
-      proxyRules: proxyUrl,
-      proxyBypassRules: noProxy,
-    });
-    console.log('[Main] Proxy configured successfully');
-  }
 }
 
 if (started) app.quit();
@@ -2558,7 +2542,8 @@ async function appMain() {
     }
   });
 
-  await configureProxy();
+  const rendererSession = session.fromPartition('persist:goose');
+  await configureProxy(session.defaultSession, rendererSession);
 
   // Ensure Windows shims are available before any MCP processes are spawned
   await ensureWinShims();

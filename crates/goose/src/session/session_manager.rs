@@ -638,8 +638,14 @@ impl SessionManager {
         };
 
         if should_generate_name {
-            let name =
-                generate_session_name(provider.as_ref(), &model_config, id, &conversation).await?;
+            let name = generate_session_name(
+                provider.as_ref(),
+                &model_config,
+                id,
+                &conversation,
+                Some(session.working_dir.as_path()),
+            )
+            .await?;
             return Ok(Some(self.system_generated_name_update(id, name).await?));
         }
         Ok(None)
@@ -2804,6 +2810,18 @@ mod tests {
 
         assert_eq!(config.model_name, "gpt-5-high");
         assert_eq!(config.thinking_effort(), None);
+        assert!(!json.contains("context_limit"));
+    }
+
+    #[test]
+    fn legacy_session_context_limit_is_ignored() {
+        let config = deserialize_session_model_config(
+            Some("openai"),
+            r#"{"model_name":"gpt-4o","context_limit":64000,"temperature":null,"max_tokens":null,"toolshim":false,"toolshim_model":null}"#,
+        )
+        .unwrap();
+
+        assert_eq!(config.context_limit, None);
     }
 
     #[test]

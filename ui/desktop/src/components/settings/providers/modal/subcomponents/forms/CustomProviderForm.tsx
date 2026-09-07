@@ -459,8 +459,8 @@ export default function CustomProviderForm({
 
     const modelList = models
       .split(',')
-      .map((m) => m.trim())
-      .filter((m) => m);
+      .map((name) => name.trim())
+      .filter(Boolean);
 
     let allHeaders = [...headers];
 

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Message } from '../types/message';
 import GooseMessage from './GooseMessage';
+import { deriveMessageRowContexts } from './messageRowContext';
 
 vi.mock('./ToolCallWithResponse', () => ({
   default: ({ isCancelledMessage }: { isCancelledMessage: boolean }) => (
@@ -43,8 +44,8 @@ describe('GooseMessage', () => {
       <GooseMessage
         sessionId="session-1"
         message={toolRequestMessage}
-        messages={[toolRequestMessage, laterUserMessage]}
-        toolCallNotifications={new Map()}
+        {...deriveMessageRowContexts([toolRequestMessage, laterUserMessage])[0]}
+        toolNotifications={[]}
         append={vi.fn()}
         isStreaming={false}
       />

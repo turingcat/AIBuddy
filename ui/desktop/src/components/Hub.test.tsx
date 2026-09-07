@@ -35,7 +35,7 @@ describe('Hub', () => {
 
     return render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
-        <Hub setView={vi.fn()} />
+        <Hub setView={vi.fn()} draftRef={{ current: '' }} />
       </IntlProvider>
     );
   };

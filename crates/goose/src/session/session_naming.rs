@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::LazyLock;
 
 use anyhow::Result;
@@ -70,8 +71,6 @@ fn extract_short_title(text: &str) -> String {
     text.to_string()
 }
 
-/// Returns the first 3 user messages as strings for session naming,
-/// filtering out assistant-only content (e.g. preprompt blocks).
 fn get_initial_user_messages(messages: &Conversation) -> Vec<String> {
     messages
         .iter()
@@ -86,26 +85,6 @@ fn get_initial_user_messages(messages: &Conversation) -> Vec<String> {
                 .join("\n")
         })
         .collect()
-}
-
-/// Extracts preprompt context (assistant-audience blocks) from the first user message.
-/// These are content blocks visible to the assistant but not the user.
-fn get_preprompt_context(messages: &Conversation) -> String {
-    messages
-        .iter()
-        .filter(|m| m.role == rmcp::model::Role::User)
-        .take(1)
-        .flat_map(|m| m.content.iter())
-        .filter_map(|c| {
-            // If this block is NOT visible to the user, it's preprompt/assistant-only content
-            if c.filter_for_audience(rmcp::model::Role::User).is_none() {
-                c.as_text().map(|s| s.to_string())
-            } else {
-                None
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\n")
 }
 
 fn render_session_name_prompt() -> Result<String> {
@@ -127,27 +106,30 @@ pub(crate) async fn generate_session_name(
     model_config: &goose_providers::model::ModelConfig,
     session_id: &str,
     messages: &Conversation,
+    working_dir: Option<&Path>,
 ) -> Result<String> {
     let context = get_initial_user_messages(messages);
-    let preprompt_context = get_preprompt_context(messages);
     let system = render_session_name_prompt()?;
 
     use crate::providers::cli_common::{
         SESSION_NAME_BEGIN_MARKER, SESSION_NAME_END_MARKER, SESSION_NAME_SUFFIX,
     };
 
-    let preprompt_section = if preprompt_context.is_empty() {
+    let hint = working_dir
+        .and_then(Path::file_name)
+        .and_then(|folder| folder.to_str())
+        .map(|folder| format!("working folder: {folder}"))
+        .unwrap_or_default();
+    let hints_section = if hint.is_empty() {
         String::new()
     } else {
         format!(
-            "---BEGIN BACKGROUND CONTEXT (for understanding only, do NOT base the title on this)---\n{}\n---END BACKGROUND CONTEXT---\n\n",
-            preprompt_context
+            "---BEGIN HINTS (optional signals like the working folder; use them only when they match the subject of the messages)---\n{hint}\n---END HINTS---\n\n"
         )
     };
-
     let user_text = format!(
         "{}{}\n{}\n{}\n\n{}",
-        preprompt_section,
+        hints_section,
         SESSION_NAME_BEGIN_MARKER,
         context.join("\n"),
         SESSION_NAME_END_MARKER,
@@ -339,6 +321,7 @@ mod tests {
             &ModelConfig::new("test"),
             "session-id",
             &conversation,
+            None,
         )
         .await
         .unwrap();
@@ -357,6 +340,7 @@ mod tests {
             &ModelConfig::new("test"),
             "session-id",
             &conversation,
+            None,
         )
         .await
         .unwrap();
