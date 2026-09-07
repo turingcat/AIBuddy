@@ -202,7 +202,7 @@ describe('group-aware AIBuddy provisioning', () => {
         panelUrl,
         session,
         settings,
-        'team-a',
+        '42',
         asFetch(fetchMock),
         () => 'idempotency-key'
       )
@@ -213,15 +213,63 @@ describe('group-aware AIBuddy provisioning', () => {
         apiKey: 'sk-team-a',
         authKind: 'sub2api',
         refreshToken: 'refresh-token',
-        groupId: 'team-a',
+        groupId: '42',
       },
       firstModelId: 'team-model',
     });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({
       name: 'AIBuddy',
-      group_id: 'team-a',
+      group_id: 42,
     });
   });
+
+  it.each([42, 'team-a'])(
+    'reuses an existing key for group %s without creating one',
+    async (id) => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValueOnce(
+          envelope({
+            items: [{ name: 'AIBuddy', status: 'active', group_id: id, key: 'sk-existing' }],
+          })
+        )
+        .mockResolvedValueOnce(new Response(JSON.stringify({ data: [{ id: 'team-model' }] })));
+
+      const result = await provisionAIBuddyGroup(
+        panelUrl,
+        session,
+        settings,
+        String(id),
+        asFetch(fetchMock)
+      );
+
+      expect(result.credentials.apiKey).toBe('sk-existing');
+      expect(result.credentials.groupId).toBe(String(id));
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls.every(([, init]) => init?.method !== 'POST')).toBe(true);
+    }
+  );
+
+  it('rejects an empty group selection before making requests', async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      provisionAIBuddyGroup(panelUrl, session, settings, '', asFetch(fetchMock))
+    ).rejects.toThrow('请选择可用分组');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['team-a', '1.5', '-1', ' ', '1e2', '9007199254740993'])(
+    'rejects invalid group ID %s before creating a key',
+    async (id) => {
+      const fetchMock = vi.fn().mockResolvedValueOnce(envelope({ items: [] }));
+
+      await expect(
+        provisionAIBuddyGroup(panelUrl, session, settings, id, asFetch(fetchMock))
+      ).rejects.toThrow('分组 ID 无效');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    }
+  );
 });
 
 describe('sub2api login steps', () => {

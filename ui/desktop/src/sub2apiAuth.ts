@@ -572,6 +572,10 @@ export async function provisionAIBuddyGroup(
   ).find((key) => groupId(key.group_id) === selectedGroupId);
   let apiKey = existing?.key;
   if (!existing) {
+    const numericGroupId = Number(selectedGroupId);
+    if (!/^[0-9]+$/.test(selectedGroupId) || !Number.isSafeInteger(numericGroupId)) {
+      throw new Sub2apiProtocolError('分组 ID 无效，请重新选择可用分组');
+    }
     const created = (await requestEnvelope(
       `${normalizePanelUrl(panelBaseUrl)}/api/v1/keys`,
       {
@@ -581,7 +585,7 @@ export async function provisionAIBuddyGroup(
           Authorization: `Bearer ${session.accessToken}`,
           'Idempotency-Key': idempotencyKeyFactory(),
         },
-        body: JSON.stringify({ name: 'AIBuddy', group_id: selectedGroupId }),
+        body: JSON.stringify({ name: 'AIBuddy', group_id: numericGroupId }),
       },
       fetchImpl,
       timeoutMs
