@@ -16,6 +16,19 @@ HISTORIC_MACOS_WORKFLOW_FILES = (
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
+    def test_main_updates_do_not_start_build_workflows(self) -> None:
+        for relative_path in (
+            ".github/workflows/ci.yml",
+            ".github/workflows/mcp-conformance.yml",
+        ):
+            with self.subTest(file=relative_path):
+                workflow = (ROOT / relative_path).read_text(encoding="utf-8")
+                trigger_block = workflow.split("on:", 1)[1].split("concurrency:", 1)[0]
+                self.assertNotIn("push:", trigger_block)
+                self.assertNotIn("merge_group:", trigger_block)
+                self.assertIn("pull_request:", trigger_block)
+                self.assertIn("workflow_dispatch:", trigger_block)
+
     def test_macos_builds_only_target_arm64(self) -> None:
         build_files = [
             *ACTIVE_MACOS_WORKFLOW_FILES,
