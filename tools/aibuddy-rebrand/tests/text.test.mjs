@@ -42,6 +42,7 @@ test('supports the five reviewed U0 text paths without widening text scopes', ()
     'ui/desktop/src/images/icon.svg',
   ];
   for (const path of paths) assert.equal(supportsText(path), true, path);
+  assert.equal(supportsText('ui/desktop/brand-legacy/heybuddy/images/icon.svg'), true);
   assert.equal(supportsText('ui/desktop/src/images/other.svg'), false);
   assert.equal(supportsText('documentation/other.goosehints'), false);
 });
@@ -301,4 +302,29 @@ test('fails closed for an unsupported path instead of applying extension fallbac
   assert.equal(result.unresolved.length, 1);
   assert.equal(result.unresolved[0].kind, 'unsupported-path');
   assert.equal(output(result, source), source);
+});
+
+test('supports newly synchronized release helper scripts with scoped literal conversion', () => {
+  for (const path of [
+    '.github/scripts/test_upload_windows_installers_to_cos.py',
+    '.github/scripts/upload-windows-installers-to-cos.sh',
+    'scripts/test-release-workflows.rb',
+  ]) {
+    assert.equal(supportsText(path), true, path);
+    const source = 'HeyBuddy heybuddy GOOSE_RELEASE\n';
+    const result = transformText({ path, text: source, policy });
+    assert.equal(result.unresolved, undefined, path);
+    assert.equal(output(result, source), 'AIBuddy aibuddy AIBUDDY_RELEASE\n', path);
+  }
+});
+
+test('transforms product names inside percent-encoded deep-link arguments', () => {
+  const path = 'documentation/docs/mcp/heybuddy-docs-mcp.md';
+  const source = '[Launch](goose://extension?arg=https%3A%2F%2Fexample%2Fheybuddy%2F&id=heybuddy-docs)\n';
+  const result = transformText({ path, text: source, policy });
+  assert.equal(result.unresolved, undefined);
+  assert.equal(
+    output(result, source),
+    '[Launch](goose://extension?arg=https%3A%2F%2Fexample%2Faibuddy%2F&id=aibuddy-docs)\n',
+  );
 });

@@ -15,6 +15,17 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 }
 
+
+const corrections = Object.entries(map.upstreamCorrections ?? {});
+const correctionPatternSource = corrections
+  .map(([source]) => source)
+  .sort((left, right) => right.length - left.length || left.localeCompare(right))
+  .map(escapeRegExp)
+  .join('|');
+const correctionPattern = correctionPatternSource
+  ? new RegExp(correctionPatternSource, 'g')
+  : null;
+
 const patternSource = replacements
   .map(([source]) => source)
   .sort((left, right) => right.length - left.length || left.localeCompare(right))
@@ -33,4 +44,9 @@ export function createBrandPattern(flags = 'g') {
 
 export function mappedBrand(value) {
   return SOURCE_REPLACEMENTS.get(value) ?? value;
+}
+
+export function applyUpstreamCorrections(value) {
+  if (!correctionPattern) return value;
+  return value.replace(correctionPattern, (match) => map.upstreamCorrections[match] ?? match);
 }

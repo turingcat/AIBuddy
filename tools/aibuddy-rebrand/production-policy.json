@@ -17,6 +17,7 @@
   ],
   "preserve": {
     "pathPrefixes": [
+      ".superpowers/",
       "tools/rebrand/",
       "tools/aibuddy-rebrand/",
       "docs/superpowers/specs/",

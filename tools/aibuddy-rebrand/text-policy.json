@@ -73,6 +73,8 @@
   "scripts": {
     "exactPaths": [
       ".github/scripts/repair-v8-prebuilt.sh",
+      ".github/scripts/test_upload_windows_installers_to_cos.py",
+      ".github/scripts/upload-windows-installers-to-cos.sh",
       "build-windows.ps1",
       "buzz/create_github_manager",
       "buzz/create_issue_channel",
@@ -114,6 +116,7 @@
       "scripts/provider-error-proxy/proxy.py",
       "scripts/run-benchmarks.sh",
       "scripts/test-ci-performance-contracts.rb",
+      "scripts/test-release-workflows.rb",
       "scripts/test-supported-build-architectures.py",
       "scripts/test_compaction.sh",
       "scripts/test_local_model_smoke.sh",
@@ -171,6 +174,7 @@
   ],
   "svg": {
     "exactPaths": [
+      "ui/desktop/brand-legacy/goose/images/icon.svg",
       "ui/desktop/src/images/icon.svg"
     ]
   },
@@ -207,7 +211,7 @@
       "evals/harbor/"
     ],
     "legalLinePatterns": [
-      "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?copyright(?:\\s+\\(c\\))?\\s+\\d{4}(?:\\s*[-–]\\s*\\d{4})?\\b",
+      "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?copyright(?:\\s+\\(c\\))?\\s+\\d{4}(?:\\s*[-\u2013]\\s*\\d{4})?\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?spdx-license-identifier\\s*:\\s*[a-z0-9.+-]+\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?licensed under\\s+(?:the\\s+)?(?:apache|mit|bsd(?:[- ]\\d+(?:\\.\\d+)?)?|mozilla public) license\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?all rights reserved\\b"

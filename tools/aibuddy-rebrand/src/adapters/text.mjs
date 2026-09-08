@@ -14,7 +14,7 @@ const TEXT_POLICY = JSON.parse(
   readFileSync(new URL('../../text-policy.json', import.meta.url), 'utf8'),
 );
 
-const TOKEN_CHARACTER = /[A-Za-z0-9_$@./:-]/u;
+const TOKEN_CHARACTER = /[A-Za-z0-9_$@.%/:-]/u;
 const URL_PATTERN = /\b(?:https?|wss?|git\+(?:https?|wss?)):\/\/[^\s"'`<>]+/gu;
 
 function pathMatchesPrefix(path, prefix) {

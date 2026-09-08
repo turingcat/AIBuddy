@@ -37,3 +37,38 @@ test('mapping policy exposes reusable sync metadata', () => {
   assert.deepEqual(BRAND_MAP.allowedApplyBranchPrefixes, ['feat/', 'sync/']);
   assert.equal(BRAND_MAP.provenanceFile, '.aibuddy-rebrand.json');
 });
+
+test('maps embedded CamelCase brand segments without rewriting ordinary words', () => {
+  assert.equal(renameBrandSegments('startGooseServe'), 'startAIBuddyServe');
+  assert.equal(renameBrandSegments('buildGooseServeEnv'), 'buildAIBuddyServeEnv');
+  assert.equal(renameBrandSegments('isRetiredHeyBuddyChatApp'), 'isRetiredAIBuddyChatApp');
+  assert.equal(renameBrandSegments('HeyBuddyhintsModal'), 'AIBuddyhintsModal');
+  assert.equal(renameBrandSegments('readHeyBuddyhints'), 'readAIBuddyhints');
+  assert.equal(renameBrandSegments('externalHeyBuddyd'), 'externalAIBuddyd');
+  assert.equal(renameBrandSegments('.heybuddyhints'), '.aibuddyhints');
+  assert.equal(renameBrandSegments('heybuddyhintsModal'), 'aibuddyhintsModal');
+  assert.equal(renameBrandSegments('mongoose'), 'mongoose');
+  assert.equal(renameBrandSegments('gooseberry'), 'gooseberry');
+});
+
+test('maps shell variables, product derivatives, and packaging compounds', () => {
+  assert.equal(renameBrandSegments('$HEYBUDDY_VERSION'), '$AIBUDDY_VERSION');
+  assert.equal(renameBrandSegments('heybuddyd'), 'aibuddyd');
+  assert.equal(renameBrandSegments('HeyBuddyy'), 'AIBuddyy');
+  assert.equal(renameBrandSegments('heybuddyhints'), 'aibuddyhints');
+  assert.equal(renameBrandSegments('libheybuddy_sdk'), 'libaibuddy_sdk');
+  assert.equal(renameBrandSegments('20heybuddy'), '20aibuddy');
+  assert.equal(renameBrandSegments('bHEYBUDDY_'), 'bAIBUDDY_');
+});
+
+test('repairs known upstream substitutions that changed third-party words', () => {
+  assert.equal(renameBrandSegments('monheybuddy'), 'mongoose');
+  assert.equal(renameBrandSegments('Monheybuddy'), 'Mongoose');
+  assert.equal(renameBrandSegments('heybuddybumps'), 'goosebumps');
+});
+
+test('maps encoded URL segments and product suffixes at text boundaries', () => {
+  assert.equal(renameBrandSegments('https%3A%2F%2Fexample%2Fheybuddy%2F'), 'https%3A%2F%2Fexample%2Faibuddy%2F');
+  assert.equal(renameBrandSegments('heybuddyselftest/'), 'aibuddyselftest/');
+  assert.equal(renameBrandSegments('heybuddyd backend'), 'aibuddyd backend');
+});

@@ -1,9 +1,8 @@
-import { createBrandPattern, mappedBrand } from '../brand-map.mjs';
+import { applyUpstreamCorrections, createBrandPattern, mappedBrand } from '../brand-map.mjs';
 
 const BRAND_PATTERN = createBrandPattern('g');
 const BRAND_OCCURRENCE_PATTERN = createBrandPattern('g');
 const IDENTIFIER_PART = /[A-Za-z0-9_$]/u;
-const TITLE_CASE_COMPOUND = /^[A-Z][A-Za-z0-9_$]*$/u;
 const URL_PATTERN = /(?:https?|wss?|git\+(?:https?|wss?)):\/\/[^\s'"`<>]+/gu;
 
 export const ADAPTER_VERSION = 1;
@@ -13,18 +12,44 @@ export function canonicalBrand(value) {
 }
 
 export function renameBrandSegments(value) {
-  const renamed = value.replace(BRAND_PATTERN, (match, offset, source) => {
+  const corrected = applyUpstreamCorrections(value);
+  const renamed = corrected.replace(BRAND_PATTERN, (match, offset, source) => {
     const before = offset === 0 ? '' : source[offset - 1];
     const after = source[offset + match.length] ?? '';
-    const compound =
-      before === '' ||
-      after === '' ||
-      /[-./:@]/u.test(before) ||
-      /[-./:@]/u.test(after) ||
-      (TITLE_CASE_COMPOUND.test(source) && /[A-Z]/u.test(after)) ||
-      (match === match.toLowerCase() && /[A-Z_]/u.test(after)) ||
-      (match === match.toUpperCase() && /[_-]/u.test(after));
+    const boundary = (character) =>
+      character === '' || /[-./:@_$]/u.test(character) || !IDENTIFIER_PART.test(character);
+    const suffix = source.slice(offset + match.length).match(/^[A-Za-z0-9]*/u)?.[0] ?? '';
+    const isLower = match === match.toLowerCase();
+    const isUpper = match === match.toUpperCase();
+    const isTitle = !isLower && !isUpper;
+    const prefix = source.slice(0, offset).split(/[-./:@_$]/u).at(-1) ?? '';
+    const camelCaseLeftBoundary = isTitle && /[a-z0-9]/u.test(before);
+    const delimitedLowerPrefix = isLower && /[-./:@_$]/u.test(before);
+    const numericLowerPrefix = isLower && /[0-9]/u.test(before);
+    const percentEncodedLowerPrefix =
+      isLower && /^%[0-9A-F]{2}$/u.test(source.slice(Math.max(0, offset - 3), offset).toUpperCase());
+    const ownedLowerPrefix = isLower && ['lib', 'local'].includes(prefix) && boundary(after);
+    const upperRightBoundary = isUpper && boundary(after);
+    const productSuffix = /^(?:d|y|hints|selftest)(?:$|[A-Z0-9])/u.test(suffix);
+    const leftBoundary =
+      boundary(before) ||
+      camelCaseLeftBoundary ||
+      numericLowerPrefix ||
+      percentEncodedLowerPrefix ||
+      ownedLowerPrefix ||
+      upperRightBoundary;
+    const rightBoundary =
+      boundary(after) ||
+      /[A-Z0-9]/u.test(after) ||
+      /[A-Z]/u.test(suffix) ||
+      camelCaseLeftBoundary ||
+      delimitedLowerPrefix ||
+      productSuffix;
+    const compound = leftBoundary && rightBoundary;
     if (!compound && IDENTIFIER_PART.test(before) && IDENTIFIER_PART.test(after)) {
+      return match;
+    }
+    if (!compound && (IDENTIFIER_PART.test(before) || IDENTIFIER_PART.test(after))) {
       return match;
     }
     return canonicalBrand(match);

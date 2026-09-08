@@ -23,5 +23,12 @@
   "allowedApplyBranchPrefixes": [
     "feat/",
     "sync/"
-  ]
+  ],
+  "upstreamCorrections": {
+    "Monheybuddy": "Mongoose",
+    "monheybuddy": "mongoose",
+    "HEYBUDDYBUMPS": "GOOSEBUMPS",
+    "HeyBuddybumps": "Goosebumps",
+    "heybuddybumps": "goosebumps"
+  }
 }
