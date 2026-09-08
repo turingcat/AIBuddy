@@ -34,7 +34,7 @@ const liveOutputNotification: NotificationEvent = {
   type: 'Notification',
   request_id: 'tool-1',
   message: {
-    method: 'heybuddy/live_output',
+    method: 'aibuddy/live_output',
     params: {
       sequence: 1,
       chunks: [

@@ -1,7 +1,7 @@
 import type {
-  HeyBuddySessionNotification_unstable,
+  AIBuddySessionNotification_unstable,
   ProviderDeviceCodeNotification_unstable,
-} from '@heybuddy/heybuddy-sdk';
+} from '@aibuddy/aibuddy-sdk';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import { AppEvents } from '../constants/events';
 import { maybeHandlePlatformEvent } from '../utils/platform_events';
@@ -46,16 +46,16 @@ function maybeHandleLivePlatformEvent(notification: SessionNotification): void {
   }
 }
 
-export function handleAcpHeyBuddySessionNotification(
-  notification: HeyBuddySessionNotification_unstable
+export function handleAcpAIBuddySessionNotification(
+  notification: AIBuddySessionNotification_unstable
 ): Promise<void> {
-  acpChatSessionActions.applyAcpHeyBuddySessionNotification(notification);
+  acpChatSessionActions.applyAcpAIBuddySessionNotification(notification);
   return Promise.resolve();
 }
 
 export function handleAcpProviderDeviceCodeNotification(
   notification: ProviderDeviceCodeNotification_unstable
 ): Promise<void> {
-  window.dispatchEvent(new CustomEvent('heybuddy:device-code', { detail: notification }));
+  window.dispatchEvent(new CustomEvent('aibuddy:device-code', { detail: notification }));
   return Promise.resolve();
 }

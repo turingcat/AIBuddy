@@ -1,23 +1,23 @@
 ---
 title: Nostrbook Extension
-description: Add Nostrbook MCP Server as a heybuddy Extension
+description: Add Nostrbook MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 
-This tutorial covers how to add the [Nostrbook MCP Server](https://gitlab.com/soapbox-pub/nostrbook) as a heybuddy extension to provide access to a comprehensive registry of Nostr documentation that helps users understand the decentralized social protocol, its implementation possibilities, and technical specifications.
+This tutorial covers how to add the [Nostrbook MCP Server](https://gitlab.com/soapbox-pub/nostrbook) as a aibuddy extension to provide access to a comprehensive registry of Nostr documentation that helps users understand the decentralized social protocol, its implementation possibilities, and technical specifications.
 
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
     [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40nostrbook%2Fmcp%40latest&id=nostrbook-mcp&name=NostrBook&description=A%20comprehensive%20registry%20of%20Nostr%20documentation%20with%20structured%20knowledge)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     **Command**
     ```sh
     npx -y @nostrbook/mcp@latest
@@ -34,8 +34,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="nostrbook-mcp"
     extensionName="Nostrbook"
     description="A comprehensive registry of Nostr documentation with structured knowledge"
@@ -43,7 +43,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@nostrbook/mcp@latest"]}
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Nostrbook"
       description="A comprehensive registry of Nostr documentation with structured knowledge"
@@ -54,12 +54,12 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-### heybuddy Prompt
+### aibuddy Prompt
 
-> _heybuddy, what is the NIP-61 and how can I implement it?._
+> _aibuddy, what is the NIP-61 and how can I implement it?._
 
 
-### heybuddy Output
+### aibuddy Output
 
 Note that IDs have been changed to generic ones
 

@@ -2,7 +2,7 @@ import type {
   RecipeParameterDto,
   RecipeParamsResponse_unstable,
   RequestRecipeParams_unstable,
-} from '@heybuddy/heybuddy-sdk';
+} from '@aibuddy/aibuddy-sdk';
 import { v7 as uuidv7 } from 'uuid';
 
 export interface AcpRecipeParamRequest {

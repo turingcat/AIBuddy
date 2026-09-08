@@ -445,7 +445,7 @@ export default function GdkApiReference() {
         </div>
 
         <p className={styles.meta}>
-          Generated from <code>{doc.source}</code> at <code>heybuddy-sdk {doc.version}</code>.
+          Generated from <code>{doc.source}</code> at <code>aibuddy-sdk {doc.version}</code>.
         </p>
 
         <Anchored as="h2" anchor="functions" label="Functions">

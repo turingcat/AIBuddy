@@ -1,32 +1,32 @@
 ---
-title: heybuddy grant program
+title: aibuddy grant program
 description: $100K grants for open source devs building the future of agentic AI.
 ---
 
 import Link from "@docusaurus/Link";
 
-![](/img/heybuddy-grant-program.png)
+![](/img/aibuddy-grant-program.png)
 
-# heybuddy grant program
+# aibuddy grant program
 
-We’ve created a grant program to accelerate heybuddy in the open source community. If you believe in a future where agentic AI is open and accessible to all, we invite you to help us shape that future.
+We’ve created a grant program to accelerate aibuddy in the open source community. If you believe in a future where agentic AI is open and accessible to all, we invite you to help us shape that future.
 
 <Link to="https://forms.gle/psHBhj8xFY8q1nHP7" target="_blank" rel="noopener noreferrer">
-    ##  → apply for a heybuddy grant
+    ##  → apply for a aibuddy grant
 </Link>
 
 <br/>
 ## what makes a good proposal
 <br/>
 
-We're looking for clear, compelling, and ambitious ideas that align with heybuddy’s values: openness, modularity, and user empowerment.
+We're looking for clear, compelling, and ambitious ideas that align with aibuddy’s values: openness, modularity, and user empowerment.
 
 We'd love to see proposals that explore novel ways of interacting with AI agents. Here are just a few examples:
 
-- **New interaction paradigms:** interact with heybuddy through sketches (white boarding!), camera, voice interactions that pay attention to emotions or other multi-modal interactions
+- **New interaction paradigms:** interact with aibuddy through sketches (white boarding!), camera, voice interactions that pay attention to emotions or other multi-modal interactions
 - **Self-flying:** increase autonomy by adding a long-running background mode, experimenting with new intermediate states, deep planning, and tools to support such operation
-- **Self improving agents:** efforts like absolute zero, the godel Darwin machine and alphaevolve show how agents can improve themselves. Help heybuddy rewrite its system prompt, its MCP servers and maybe its own code
-- **Automate everything:** give heybuddy tools to interact with the real world for home automation, robots or 3D printing.
+- **Self improving agents:** efforts like absolute zero, the godel Darwin machine and alphaevolve show how agents can improve themselves. Help aibuddy rewrite its system prompt, its MCP servers and maybe its own code
+- **Automate everything:** give aibuddy tools to interact with the real world for home automation, robots or 3D printing.
 
 Above all, we want to fund work that aligns with these values and demonstrates an open-source-first mindset.
 
@@ -56,13 +56,13 @@ We will support as many strong, mission-aligned projects as our resources allow.
 
 Potentially, yes. We may extend or renew grants based on progress, impact, and alignment. Renewals are not guaranteed and will be evaluated on a case-by-case basis.
 
-**Does a grant lead to a job at heybuddy or AAIF?**
+**Does a grant lead to a job at aibuddy or AAIF?**
 
-No. Grants are not employment and do not imply future hiring. However, collaboration with heybuddy or AAIF teams may emerge naturally from impactful work.
+No. Grants are not employment and do not imply future hiring. However, collaboration with aibuddy or AAIF teams may emerge naturally from impactful work.
 
 **How does work get reviewed?**
 
-Each grant project will define clear deliverables and milestones. Progress will be reviewed quarterly by the heybuddy team and selected external reviewers.
+Each grant project will define clear deliverables and milestones. Progress will be reviewed quarterly by the aibuddy team and selected external reviewers.
 
 **How are payouts structured?**
 
@@ -89,17 +89,17 @@ Anyone. We welcome individuals, working on their own or in small teams, as long 
 ## contact us
 <br/>
 
-If you have additional questions, feel free to reach out in [Discord](https://discord.com/channels/1287729918100246654/1397943505216868444) in the #heybuddy-grants forum.
+If you have additional questions, feel free to reach out in [Discord](https://discord.com/channels/1287729918100246654/1397943505216868444) in the #aibuddy-grants forum.
 
 <head>
-  <meta property="og:title" content="heybuddy grant program" />
+  <meta property="og:title" content="aibuddy grant program" />
   <meta property="og:type" content="article" />
   <meta property="og:url" content="https://goose-docs.ai/grants" />
   <meta property="og:description" content="$100K grants for open source devs building the future of agentic AI." />
   <meta property="og:image" content="https://goose-docs.ai/img/goose-grant-program.png" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta property="twitter:domain" content="heybuddy-docs.ai" />
-  <meta name="twitter:title" content="heybuddy grant program" />
+  <meta property="twitter:domain" content="aibuddy-docs.ai" />
+  <meta name="twitter:title" content="aibuddy grant program" />
   <meta name="twitter:description" content="$100K grants for open source devs building the future of agentic AI." />
   <meta name="twitter:image" content="https://goose-docs.ai/img/goose-grant-program.png" />
 </head>

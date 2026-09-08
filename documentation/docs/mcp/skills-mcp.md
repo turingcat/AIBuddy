@@ -1,42 +1,42 @@
 ---
 title: Skills Extension
-description: Load reusable instruction sets that teach heybuddy specific workflows
+description: Load reusable instruction sets that teach aibuddy specific workflows
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PlatformExtensionNote } from '@site/src/components/PlatformExtensionNote';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
 :::caution Deprecated
 This extension has been deprecated and is only available in v1.16.0 - v1.24.0. For v1.25.0+, see the [Summon extension](/docs/mcp/summon-mcp).
 :::
 
-The Skills extension loads *skills* &mdash; reusable sets of instructions that teach heybuddy how to perform specific tasks or follow particular workflows.
+The Skills extension loads *skills* &mdash; reusable sets of instructions that teach aibuddy how to perform specific tasks or follow particular workflows.
 
-heybuddy automatically discovers skills at startup and uses them when relevant to your request. heybuddy loads skills from `.agents/skills/` in your project directory and `~/.agents/skills/` globally, making skills portable across different AI coding agents. To learn about creating skills and how heybuddy uses them, see [Using Skills](/docs/guides/context-engineering/using-skills).
+aibuddy automatically discovers skills at startup and uses them when relevant to your request. aibuddy loads skills from `.agents/skills/` in your project directory and `~/.agents/skills/` globally, making skills portable across different AI coding agents. To learn about creating skills and how aibuddy uses them, see [Using Skills](/docs/guides/context-engineering/using-skills).
 
 ## Configuration
 
 <PlatformExtensionNote/>
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Skills"
     description="Load and use skills from the .agents/skills directory"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -52,7 +52,7 @@ heybuddy automatically discovers skills at startup and uses them when relevant t
 
 ## Example Usage
 
-Let's say you have a skill that heybuddy discovers on startup in `~/.agents/skills/deploy/SKILL.md`:
+Let's say you have a skill that aibuddy discovers on startup in `~/.agents/skills/deploy/SKILL.md`:
 
 ```markdown
 ---
@@ -74,13 +74,13 @@ description: Safe deployment procedure for production environment
 4. Monitor error rates for 30 minutes
 ```
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 Deploy the current branch to production
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 I'll help you deploy the current branch to production. Let me first load the production deployment skill to follow the safe deployment procedure.

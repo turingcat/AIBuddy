@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Script to unregister ALL heybuddy:// protocol handlers
+ * Script to unregister ALL aibuddy:// protocol handlers
  * Usage: node scripts/unregister-deeplink-protocols.js
  */
 
 const { execSync } = require('child_process');
 
-const PROTOCOL = 'heybuddy';
+const PROTOCOL = 'aibuddy';
 
 function unregisterAllProtocolHandlers() {
-  console.log('Unregistering ALL heybuddy:// protocol handlers...');
+  console.log('Unregistering ALL aibuddy:// protocol handlers...');
   
   try {
-    // Get all registered HeyBuddy apps
-    console.log('Finding all registered HeyBuddy applications...');
+    // Get all registered AIBuddy apps
+    console.log('Finding all registered AIBuddy applications...');
     const lsregisterOutput = execSync(`/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -dump | grep -B 10 -A 10 "claimed schemes:.*${PROTOCOL}:"`, { encoding: 'utf8' });
     
     // Extract app paths from the output
@@ -24,13 +24,13 @@ function unregisterAllProtocolHandlers() {
     if (pathMatches) {
       pathMatches.forEach(match => {
         const path = match.replace(/path:\s+/, '').trim();
-        if (path.includes('HeyBuddy') || path.includes('heybuddy')) {
+        if (path.includes('AIBuddy') || path.includes('aibuddy')) {
           uniquePaths.add(path);
         }
       });
     }
     
-    console.log(`Found ${uniquePaths.size} HeyBuddy app(s) to unregister:`);
+    console.log(`Found ${uniquePaths.size} AIBuddy app(s) to unregister:`);
     uniquePaths.forEach(path => console.log(`  - ${path}`));
     
     // Unregister each app
@@ -48,9 +48,9 @@ function unregisterAllProtocolHandlers() {
     // Also try to unregister by bundle identifier
     console.log('\nUnregistering by bundle identifier...');
     const bundleIds = [
-      'com.electron.heybuddy',
-      'com.block.heybuddy',
-      'com.block.heybuddy.dev'
+      'com.electron.aibuddy',
+      'com.block.aibuddy',
+      'com.block.aibuddy.dev'
     ];
     
     bundleIds.forEach(bundleId => {
@@ -70,15 +70,15 @@ function unregisterAllProtocolHandlers() {
       console.log('Warning: Could not rebuild Launch Services database');
     }
     
-    console.log(`\n✅ Successfully processed ${unregisteredCount} HeyBuddy applications`);
-    console.log('All heybuddy:// protocol handlers have been unregistered.');
+    console.log(`\n✅ Successfully processed ${unregisteredCount} AIBuddy applications`);
+    console.log('All aibuddy:// protocol handlers have been unregistered.');
     console.log('\nNote: You may need to restart your system for changes to take full effect.');
     
   } catch (error) {
     console.error('Error during unregistration:', error.message);
     console.log('\nManual cleanup options:');
-    console.log('1. Use Activity Monitor to quit all HeyBuddy processes');
-    console.log('2. Delete HeyBuddy apps from Applications folder');
+    console.log('1. Use Activity Monitor to quit all AIBuddy processes');
+    console.log('2. Delete AIBuddy apps from Applications folder');
     console.log('3. Run: sudo /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister -kill -r -domain local -domain system -domain user');
   }
 }

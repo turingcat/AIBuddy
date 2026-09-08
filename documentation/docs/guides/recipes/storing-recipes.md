@@ -8,11 +8,11 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PanelLeft, ChefHat } from 'lucide-react';
 
-This guide covers storing, organizing, and finding heybuddy recipes when you need to access them again later. 
+This guide covers storing, organizing, and finding aibuddy recipes when you need to access them again later. 
 
 :::info Desktop UI vs CLI
-- **heybuddy Desktop** has a visual Recipe Library for browsing and managing saved recipes
-- **heybuddy CLI** stores recipes as files that you find using file paths or environment variables
+- **aibuddy Desktop** has a visual Recipe Library for browsing and managing saved recipes
+- **aibuddy CLI** stores recipes as files that you find using file paths or environment variables
 :::
 
 ## Understanding Recipe Storage
@@ -23,8 +23,8 @@ Before saving recipes, it's important to understand where they can be stored and
 
 | Type | Location | Availability | Best For |
 |------|----------|-------------|----------|
-| **Global** | `~/.config/heybuddy/recipes/` | All projects and sessions | Personal workflows, general-purpose recipes |
-| **Local** | `YOUR_WORKING_DIRECTORY/.heybuddy/recipes/` | Only when working in that project | Project-specific workflows, team recipes |
+| **Global** | `~/.config/aibuddy/recipes/` | All projects and sessions | Personal workflows, general-purpose recipes |
+| **Local** | `YOUR_WORKING_DIRECTORY/.aibuddy/recipes/` | Only when working in that project | Project-specific workflows, team recipes |
 
 **Choose Global Storage When:**
 - You want the recipe available across all projects
@@ -40,7 +40,7 @@ Before saving recipes, it's important to understand where they can be stored and
 ## Storing Recipes
 
 <Tabs groupId="interface">
-  <TabItem value="desktop" label="heybuddy Desktop" default>
+  <TabItem value="desktop" label="aibuddy Desktop" default>
 
 **Save New Recipe:**
 
@@ -59,13 +59,13 @@ When you modify and save a recipe with a new name, a new recipe and new link are
 :::
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
     When you [create a recipe](/docs/guides/recipes/recipe-reference), it gets saved to:
 
     * Your working directory by default: `./recipe.yaml`
     * Any path you specify: `/recipe /path/to/my-recipe.yaml`  
-    * Local project recipes: `/recipe .heybuddy/recipes/my-recipe.yaml`
+    * Local project recipes: `/recipe .aibuddy/recipes/my-recipe.yaml`
 
     :::note
     The CLI saves recipes as `.yaml` files. While the CLI can run recipes in `.json` format, it does not provide an option to save recipes as JSON.
@@ -77,7 +77,7 @@ When you modify and save a recipe with a new name, a new recipe and new link are
 ### Importing Recipes
 
 <Tabs groupId="interface">
-  <TabItem value="desktop" label="heybuddy Desktop" default>
+  <TabItem value="desktop" label="aibuddy Desktop" default>
     Import a recipe using its deeplink or recipe file:
 
     1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
@@ -89,21 +89,21 @@ When you modify and save a recipe with a new name, a new recipe and new link are
     5. Click `Import Recipe` to save a copy of the recipe to your Recipe Library
 
   :::warning Recipe File Format
-  heybuddy Desktop accepts `.yaml`, `.yml`, and `.json` files, but **the CLI only supports `.yaml` and `.json`**. For full compatibility across both interfaces, avoid `.yml` extensions.
+  aibuddy Desktop accepts `.yaml`, `.yml`, and `.json` files, but **the CLI only supports `.yaml` and `.json`**. For full compatibility across both interfaces, avoid `.yml` extensions.
 
   All recipe formats follow the same [schema structure](/docs/guides/recipes/recipe-reference#core-recipe-schema).
   :::
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
-    Recipe import is only available in heybuddy Desktop.
+  <TabItem value="cli" label="aibuddy CLI">
+    Recipe import is only available in aibuddy Desktop.
   </TabItem>
 </Tabs>
 
 ## Finding Available Recipes
 
 <Tabs groupId="interface">
-  <TabItem value="desktop" label="heybuddy Desktop" default>
+  <TabItem value="desktop" label="aibuddy Desktop" default>
 
 **Access Recipe Library:**
 1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
@@ -118,64 +118,64 @@ The Desktop Recipe Library displays all recipes you've explicitly saved or impor
 :::
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-Use the `heybuddy recipe list` command to find all available recipes from multiple sources:
+Use the `aibuddy recipe list` command to find all available recipes from multiple sources:
 
 **Basic Usage**
 
 ```bash
 # List all available recipes
-heybuddy recipe list
+aibuddy recipe list
 
 # Show detailed information including titles and full paths
-heybuddy recipe list --verbose
+aibuddy recipe list --verbose
 
 # Output in JSON format for automation
-heybuddy recipe list --format json
+aibuddy recipe list --format json
 ```
 
 **Recipe Discovery Process**
 
-heybuddy searches for recipes in the following locations (in order):
+aibuddy searches for recipes in the following locations (in order):
 
 1. **Current directory**: `.` (looks for `*.yaml` and `*.json` files)
-2. **Custom paths**: Directories specified in [`HEYBUDDY_RECIPE_PATH`](/docs/guides/environment-variables#recipe-configuration) environment variable
-3. **Global recipe library**: `~/.config/heybuddy/recipes/` (or equivalent on your OS)
-4. **Local project recipes**: `./.heybuddy/recipes/`
-5. **GitHub repository**: If [`HEYBUDDY_RECIPE_GITHUB_REPO`](/docs/guides/environment-variables#recipe-configuration) environment variable is configured
+2. **Custom paths**: Directories specified in [`AIBUDDY_RECIPE_PATH`](/docs/guides/environment-variables#recipe-configuration) environment variable
+3. **Global recipe library**: `~/.config/aibuddy/recipes/` (or equivalent on your OS)
+4. **Local project recipes**: `./.aibuddy/recipes/`
+5. **GitHub repository**: If [`AIBUDDY_RECIPE_GITHUB_REPO`](/docs/guides/environment-variables#recipe-configuration) environment variable is configured
 
 **Example Output**
 
 *Default text format:*
 ```bash
-$ heybuddy recipe list
+$ aibuddy recipe list
 Available recipes:
-heybuddy-self-test - A comprehensive meta-testing recipe - local: ./heybuddy-self-test.yaml
-hello-world - A sample recipe demonstrating basic usage - local: ~/.config/heybuddy/recipes/hello-world.yaml
-job-finder - Find software engineering positions - local: ~/.config/heybuddy/recipes/job-finder.yaml
+aibuddy-self-test - A comprehensive meta-testing recipe - local: ./aibuddy-self-test.yaml
+hello-world - A sample recipe demonstrating basic usage - local: ~/.config/aibuddy/recipes/hello-world.yaml
+job-finder - Find software engineering positions - local: ~/.config/aibuddy/recipes/job-finder.yaml
 ```
 
 *Verbose mode:*
 ```bash
-$ heybuddy recipe list --verbose
+$ aibuddy recipe list --verbose
 Available recipes:
-  heybuddy-self-test - A comprehensive meta-testing recipe - local: ./heybuddy-self-test.yaml
-    Title: heybuddy Self-Testing Integration Suite
-    Path: ./heybuddy-self-test.yaml
-  hello-world - A sample recipe demonstrating basic usage - local: ~/.config/heybuddy/recipes/hello-world.yaml
+  aibuddy-self-test - A comprehensive meta-testing recipe - local: ./aibuddy-self-test.yaml
+    Title: aibuddy Self-Testing Integration Suite
+    Path: ./aibuddy-self-test.yaml
+  hello-world - A sample recipe demonstrating basic usage - local: ~/.config/aibuddy/recipes/hello-world.yaml
     Title: Hello World Recipe
-    Path: /Users/username/.config/heybuddy/recipes/hello-world.yaml
+    Path: /Users/username/.config/aibuddy/recipes/hello-world.yaml
 ```
 
 *JSON format for automation:*
 ```json
 [
   {
-    "name": "heybuddy-self-test",
+    "name": "aibuddy-self-test",
     "source": "Local",
-    "path": "./heybuddy-self-test.yaml",
-    "title": "heybuddy Self-Testing Integration Suite",
+    "path": "./aibuddy-self-test.yaml",
+    "title": "aibuddy Self-Testing Integration Suite",
     "description": "A comprehensive meta-testing recipe"
   },
   {
@@ -192,14 +192,14 @@ Available recipes:
 
 Add custom recipe directories:
 ```bash
-export HEYBUDDY_RECIPE_PATH="/path/to/my/recipes:/path/to/team/recipes"
-heybuddy recipe list
+export AIBUDDY_RECIPE_PATH="/path/to/my/recipes:/path/to/team/recipes"
+aibuddy recipe list
 ```
 
 Configure GitHub recipe repository:
 ```bash
-export HEYBUDDY_RECIPE_GITHUB_REPO="myorg/heybuddy-recipes"
-heybuddy recipe list
+export AIBUDDY_RECIPE_GITHUB_REPO="myorg/aibuddy-recipes"
+aibuddy recipe list
 ```
 
 See the [Environment Variables Guide](/docs/guides/environment-variables#recipe-configuration) for more configuration options.
@@ -210,17 +210,17 @@ If you need to browse recipe directories manually:
 
 ```bash
 # List recipes in default global location
-ls ~/.config/heybuddy/recipes/
+ls ~/.config/aibuddy/recipes/
 
 # List recipes in current project
-ls .heybuddy/recipes/
+ls .aibuddy/recipes/
 
 # Search for all recipe files
 find . -name "*.yaml" -path "*/recipes/*" -o -name "*.json" -path "*/recipes/*"
 ```
 
 :::tip
-The `heybuddy recipe list` command is the recommended way to find recipes as it automatically searches all configured sources and provides consistent formatting.
+The `aibuddy recipe list` command is the recommended way to find recipes as it automatically searches all configured sources and provides consistent formatting.
 :::
 
   </TabItem>
@@ -229,7 +229,7 @@ The `heybuddy recipe list` command is the recommended way to find recipes as it 
 ## Using Saved Recipes
 
 <Tabs groupId="interface">
-  <TabItem value="desktop" label="heybuddy Desktop" default>
+  <TabItem value="desktop" label="aibuddy Desktop" default>
 
 1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
 2. Click `Recipes`
@@ -239,12 +239,12 @@ The `heybuddy recipe list` command is the recommended way to find recipes as it 
    - Click `Preview` to see the recipe details first, then click **Load Recipe** to run it
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-Once you've located your recipe file, [run the recipe](/docs/guides/recipes/session-recipes#run-a-recipe) or [open it in heybuddy Desktop](/docs/guides/heybuddy-cli-commands#recipe).
+Once you've located your recipe file, [run the recipe](/docs/guides/recipes/session-recipes#run-a-recipe) or [open it in aibuddy Desktop](/docs/guides/aibuddy-cli-commands#recipe).
 
 :::tip Format Compatibility
-The CLI can run recipes saved from heybuddy Desktop without any conversion. Both CLI-created and Desktop-saved recipes work with all recipe commands.
+The CLI can run recipes saved from aibuddy Desktop without any conversion. Both CLI-created and Desktop-saved recipes work with all recipe commands.
 :::
 
   </TabItem>

@@ -57,7 +57,7 @@ function validPayload(overrides = {}) {
   const now = Math.floor(Date.now() / 1000);
   return {
     iss: "https://token.actions.githubusercontent.com",
-    aud: "heybuddy-oidc-proxy",
+    aud: "aibuddy-oidc-proxy",
     iat: now - 10,
     exp: now + 300,
     jti: `test-jti-${++jtiCounter}`,
@@ -137,7 +137,7 @@ function mockTokenBucket(overrides = {}) {
 function testEnv(overrides = {}) {
   return {
     OIDC_ISSUER: "https://token.actions.githubusercontent.com",
-    OIDC_AUDIENCE: "heybuddy-oidc-proxy",
+    OIDC_AUDIENCE: "aibuddy-oidc-proxy",
     UPSTREAM_URL: "https://api.anthropic.com",
     UPSTREAM_AUTH_HEADER: "x-api-key",
     UPSTREAM_API_KEY: "sk-ant-real-key",

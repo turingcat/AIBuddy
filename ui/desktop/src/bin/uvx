@@ -20,17 +20,17 @@ trap 'log "An error occurred. Exiting with status $?."' ERR
 
 log "Starting uvx setup script."
 
-if [ -n "${HEYBUDDY_PATH_ROOT:-}" ]; then
-    RESOLVED_HEYBUDDY_CONFIG_DIR="${HEYBUDDY_PATH_ROOT}/config"
-elif [ -n "${HEYBUDDY_CONFIG_DIR:-}" ]; then
-    log "HEYBUDDY_CONFIG_DIR is deprecated for desktop shims; prefer HEYBUDDY_PATH_ROOT."
-    RESOLVED_HEYBUDDY_CONFIG_DIR="${HEYBUDDY_CONFIG_DIR}"
+if [ -n "${AIBUDDY_PATH_ROOT:-}" ]; then
+    RESOLVED_AIBUDDY_CONFIG_DIR="${AIBUDDY_PATH_ROOT}/config"
+elif [ -n "${AIBUDDY_CONFIG_DIR:-}" ]; then
+    log "AIBUDDY_CONFIG_DIR is deprecated for desktop shims; prefer AIBUDDY_PATH_ROOT."
+    RESOLVED_AIBUDDY_CONFIG_DIR="${AIBUDDY_CONFIG_DIR}"
 else
-    RESOLVED_HEYBUDDY_CONFIG_DIR="${HOME}/.config/heybuddy"
+    RESOLVED_AIBUDDY_CONFIG_DIR="${HOME}/.config/aibuddy"
 fi
-MCP_HERMIT_DIR="${RESOLVED_HEYBUDDY_CONFIG_DIR}/mcp-hermit"
-mkdir -p "${RESOLVED_HEYBUDDY_CONFIG_DIR}"
-HERMIT_SETUP_LOCK_DIR="${RESOLVED_HEYBUDDY_CONFIG_DIR}/.mcp-hermit-setup.lock"
+MCP_HERMIT_DIR="${RESOLVED_AIBUDDY_CONFIG_DIR}/mcp-hermit"
+mkdir -p "${RESOLVED_AIBUDDY_CONFIG_DIR}"
+HERMIT_SETUP_LOCK_DIR="${RESOLVED_AIBUDDY_CONFIG_DIR}/.mcp-hermit-setup.lock"
 HERMIT_SETUP_LOCK_TIMEOUT=300
 HERMIT_SETUP_LOCK_STARTED_AT=$(date +%s)
 while ! mkdir "${HERMIT_SETUP_LOCK_DIR}" 2>/dev/null; do
@@ -45,7 +45,7 @@ trap 'rm -rf "${HERMIT_SETUP_LOCK_DIR}"; log "An error occurred. Exiting with st
 trap 'rm -rf "${HERMIT_SETUP_LOCK_DIR}"' EXIT
 
 # One-time cleanup for existing Linux users to fix locking issues
-CLEANUP_MARKER="${RESOLVED_HEYBUDDY_CONFIG_DIR}/.mcp-hermit-cleanup-v1"
+CLEANUP_MARKER="${RESOLVED_AIBUDDY_CONFIG_DIR}/.mcp-hermit-cleanup-v1"
 if [[ "$(uname -s)" == "Linux" ]] && [ ! -f "${CLEANUP_MARKER}" ]; then
     log "Performing one-time cleanup of old mcp-hermit directory to fix locking issues."
     if [ -d "${MCP_HERMIT_DIR}" ]; then
@@ -168,15 +168,15 @@ trap 'log "An error occurred. Exiting with status $?."' ERR
 trap - EXIT
 
 
-log "Checking for HEYBUDDY_UV_REGISTRY environment variable for custom python/pip/UV registry setup..."
-# Check if HEYBUDDY_UV_REGISTRY is set and accessible
-if [ -n "${HEYBUDDY_UV_REGISTRY:-}" ] && curl -s --head --fail "$HEYBUDDY_UV_REGISTRY" > /dev/null; then
-    log "Checking custom heybuddy registry availability: $HEYBUDDY_UV_REGISTRY"
-    log "$HEYBUDDY_UV_REGISTRY is accessible, setting it as UV_INDEX_URL. Setting UV_NATIVE_TLS to true."
-    export UV_INDEX_URL="$HEYBUDDY_UV_REGISTRY"
+log "Checking for AIBUDDY_UV_REGISTRY environment variable for custom python/pip/UV registry setup..."
+# Check if AIBUDDY_UV_REGISTRY is set and accessible
+if [ -n "${AIBUDDY_UV_REGISTRY:-}" ] && curl -s --head --fail "$AIBUDDY_UV_REGISTRY" > /dev/null; then
+    log "Checking custom aibuddy registry availability: $AIBUDDY_UV_REGISTRY"
+    log "$AIBUDDY_UV_REGISTRY is accessible, setting it as UV_INDEX_URL. Setting UV_NATIVE_TLS to true."
+    export UV_INDEX_URL="$AIBUDDY_UV_REGISTRY"
     export UV_NATIVE_TLS=true
 else
-    log "Neither HEYBUDDY_UV_REGISTRY nor UV_INDEX_URL is set. Falling back to default configuration."
+    log "Neither AIBUDDY_UV_REGISTRY nor UV_INDEX_URL is set. Falling back to default configuration."
 fi
 
 # Final step: Execute uvx with passed arguments

@@ -7,16 +7,16 @@ instructions: |
   
   Your work persists through FILES ONLY. You will NOT remember previous iterations.
   
-  STATE FILES (in .heybuddy/ralph/):
+  STATE FILES (in .aibuddy/ralph/):
   - task.md = The task you need to accomplish (READ THIS FIRST)
   - iteration.txt = Current iteration number
   - review-feedback.txt = Feedback from last review (if any)
   - work-complete.txt = Create when task is DONE (reviewer will verify)
   
   FIRST: Check your state
-  1. cat .heybuddy/ralph/task.md (YOUR TASK)
-  2. cat .heybuddy/ralph/iteration.txt 2>/dev/null || echo "1"
-  3. cat .heybuddy/ralph/review-feedback.txt 2>/dev/null
+  1. cat .aibuddy/ralph/task.md (YOUR TASK)
+  2. cat .aibuddy/ralph/iteration.txt 2>/dev/null || echo "1"
+  3. cat .aibuddy/ralph/review-feedback.txt 2>/dev/null
   4. ls -la to see existing work
   
   THEN: Make progress
@@ -26,21 +26,21 @@ instructions: |
   - Run tests/verification if applicable
   
   FINALLY: Signal status
-  - If task is complete: echo "done" > .heybuddy/ralph/work-complete.txt
-  - Always write a summary: echo "what I did" > .heybuddy/ralph/work-summary.txt
+  - If task is complete: echo "done" > .aibuddy/ralph/work-complete.txt
+  - Always write a summary: echo "what I did" > .aibuddy/ralph/work-summary.txt
 
 prompt: |
   ## Ralph Work Phase
   
-  Read your task from: .heybuddy/ralph/task.md
+  Read your task from: .aibuddy/ralph/task.md
   
-  1. Read the task: `cat .heybuddy/ralph/task.md`
-  2. Check iteration: `cat .heybuddy/ralph/iteration.txt 2>/dev/null || echo "1"`
-  3. Check for review feedback: `cat .heybuddy/ralph/review-feedback.txt 2>/dev/null`
+  1. Read the task: `cat .aibuddy/ralph/task.md`
+  2. Check iteration: `cat .aibuddy/ralph/iteration.txt 2>/dev/null || echo "1"`
+  3. Check for review feedback: `cat .aibuddy/ralph/review-feedback.txt 2>/dev/null`
   4. List existing files: `ls -la`
   5. Do the work (address feedback if any, otherwise make progress)
-  6. Write summary: `echo "summary" > .heybuddy/ralph/work-summary.txt`
-  7. If complete: `echo "done" > .heybuddy/ralph/work-complete.txt`
+  6. Write summary: `echo "summary" > .aibuddy/ralph/work-summary.txt`
+  7. If complete: `echo "done" > .aibuddy/ralph/work-complete.txt`
 
 extensions:
   - type: builtin

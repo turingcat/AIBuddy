@@ -16,7 +16,7 @@ vi.mock('../acpConnection', () => ({
 
 function createClient() {
   return {
-    heybuddy: {
+    aibuddy: {
       resourcesRead_unstable: vi.fn(),
       toolsCall_unstable: vi.fn(),
       toolsList_unstable: vi.fn(),
@@ -40,7 +40,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('flattens ACP resource reads into the renderer resource shape', async () => {
-    client.heybuddy.resourcesRead_unstable.mockResolvedValue({
+    client.aibuddy.resourcesRead_unstable.mockResolvedValue({
       result: {
         contents: [
           {
@@ -62,7 +62,7 @@ describe('ACP MCP app helpers', () => {
 
     const resource = await readMcpAppResource('session-1', 'weather', 'ui://weather/panel');
 
-    expect(client.heybuddy.resourcesRead_unstable).toHaveBeenCalledWith({
+    expect(client.aibuddy.resourcesRead_unstable).toHaveBeenCalledWith({
       sessionId: 'session-1',
       extensionName: 'weather',
       uri: 'ui://weather/panel',
@@ -83,7 +83,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('decodes blob resources as UTF-8 text', async () => {
-    client.heybuddy.resourcesRead_unstable.mockResolvedValue({
+    client.aibuddy.resourcesRead_unstable.mockResolvedValue({
       result: {
         contents: [
           {
@@ -101,7 +101,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('prefixes app tool calls before sending them over ACP', async () => {
-    client.heybuddy.toolsCall_unstable.mockResolvedValue({
+    client.aibuddy.toolsCall_unstable.mockResolvedValue({
       content: [{ type: 'text', text: 'done' }],
       structuredContent: { ok: true },
       isError: false,
@@ -110,7 +110,7 @@ describe('ACP MCP app helpers', () => {
 
     const result = await callMcpAppTool('session-1', 'weather', 'refresh', { city: 'Amsterdam' });
 
-    expect(client.heybuddy.toolsCall_unstable).toHaveBeenCalledWith({
+    expect(client.aibuddy.toolsCall_unstable).toHaveBeenCalledWith({
       sessionId: 'session-1',
       name: 'weather__refresh',
       arguments: { city: 'Amsterdam' },
@@ -124,7 +124,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('maps and filters ACP tools for app host context', async () => {
-    client.heybuddy.toolsList_unstable.mockResolvedValue({
+    client.aibuddy.toolsList_unstable.mockResolvedValue({
       tools: [
         {
           name: 'weather__refresh',
@@ -148,7 +148,7 @@ describe('ACP MCP app helpers', () => {
 
     const tools = await listMcpAppTools('session-1', 'weather');
 
-    expect(client.heybuddy.toolsList_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
+    expect(client.aibuddy.toolsList_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
     expect(tools).toEqual([
       {
         name: 'weather__refresh',
@@ -165,7 +165,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('lists apps through ACP', async () => {
-    client.heybuddy.appsList_unstable.mockResolvedValue({
+    client.aibuddy.appsList_unstable.mockResolvedValue({
       apps: [
         {
           uri: 'ui://apps/weather',
@@ -179,7 +179,7 @@ describe('ACP MCP app helpers', () => {
 
     const apps = await listMcpApps('session-1');
 
-    expect(client.heybuddy.appsList_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
+    expect(client.aibuddy.appsList_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
     expect(apps).toEqual([
       {
         uri: 'ui://apps/weather',
@@ -192,10 +192,10 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('imports and exports apps through ACP', async () => {
-    client.heybuddy.appsExport_unstable.mockResolvedValue({
+    client.aibuddy.appsExport_unstable.mockResolvedValue({
       html: '<html><body>Weather</body></html>',
     });
-    client.heybuddy.appsImport_unstable.mockResolvedValue({
+    client.aibuddy.appsImport_unstable.mockResolvedValue({
       name: 'weather',
       message: 'ok',
     });
@@ -203,25 +203,25 @@ describe('ACP MCP app helpers', () => {
     await expect(exportMcpApp('weather')).resolves.toBe('<html><body>Weather</body></html>');
     await importMcpApp('<html><body>Weather</body></html>');
 
-    expect(client.heybuddy.appsExport_unstable).toHaveBeenCalledWith({ name: 'weather' });
-    expect(client.heybuddy.appsImport_unstable).toHaveBeenCalledWith({
+    expect(client.aibuddy.appsExport_unstable).toHaveBeenCalledWith({ name: 'weather' });
+    expect(client.aibuddy.appsImport_unstable).toHaveBeenCalledWith({
       html: '<html><body>Weather</body></html>',
     });
   });
 
   it('deletes apps through ACP', async () => {
-    client.heybuddy.appsDelete_unstable.mockResolvedValue({
+    client.aibuddy.appsDelete_unstable.mockResolvedValue({
       name: 'weather',
       message: 'App deleted',
     });
 
     await deleteMcpApp('weather');
 
-    expect(client.heybuddy.appsDelete_unstable).toHaveBeenCalledWith({ name: 'weather' });
+    expect(client.aibuddy.appsDelete_unstable).toHaveBeenCalledWith({ name: 'weather' });
   });
 
   it('normalizes ACP delete errors', async () => {
-    client.heybuddy.appsDelete_unstable.mockRejectedValue({
+    client.aibuddy.appsDelete_unstable.mockRejectedValue({
       error: { data: 'Cannot delete default app' },
     });
 
@@ -229,7 +229,7 @@ describe('ACP MCP app helpers', () => {
   });
 
   it('normalizes ACP export errors', async () => {
-    client.heybuddy.appsExport_unstable.mockRejectedValue({
+    client.aibuddy.appsExport_unstable.mockRejectedValue({
       error: { message: 'App not found' },
     });
 

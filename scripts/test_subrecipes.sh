@@ -6,8 +6,8 @@ if [ -f .env ]; then
 fi
 
 if [ -z "$SKIP_BUILD" ]; then
-  echo "Building heybuddy..."
-  cargo build --bin heybuddy
+  echo "Building aibuddy..."
+  cargo build --bin aibuddy
   echo ""
 else
   echo "Skipping build (SKIP_BUILD is set)..."
@@ -16,16 +16,16 @@ fi
 
 SCRIPT_DIR=$(pwd)
 
-# Add heybuddy binary to PATH so subagents can find it when spawning
+# Add aibuddy binary to PATH so subagents can find it when spawning
 export PATH="$SCRIPT_DIR/target/debug:$PATH"
 
 # Set default provider and model if not already set
 # Use fast model for CI to speed up tests
-export HEYBUDDY_PROVIDER="${HEYBUDDY_PROVIDER:-anthropic}"
-export HEYBUDDY_MODEL="${HEYBUDDY_MODEL:-claude-haiku-4-5}"
+export AIBUDDY_PROVIDER="${AIBUDDY_PROVIDER:-anthropic}"
+export AIBUDDY_MODEL="${AIBUDDY_MODEL:-claude-haiku-4-5}"
 
-echo "Using provider: $HEYBUDDY_PROVIDER"
-echo "Using model: $HEYBUDDY_MODEL"
+echo "Using provider: $AIBUDDY_PROVIDER"
+echo "Using model: $AIBUDDY_MODEL"
 echo ""
 
 TESTDIR=$(mktemp -d)
@@ -98,7 +98,7 @@ check_recipe_output() {
 
 echo "Running recipe with parallel subrecipes..."
 TMPFILE=$(mktemp)
-if (cd "$TESTDIR" && "$SCRIPT_DIR/target/debug/heybuddy" run --recipe project_analyzer_parallel.yaml --no-session 2>&1) | tee "$TMPFILE"; then
+if (cd "$TESTDIR" && "$SCRIPT_DIR/target/debug/aibuddy" run --recipe project_analyzer_parallel.yaml --no-session 2>&1) | tee "$TMPFILE"; then
   echo "✓ SUCCESS: Recipe completed successfully"
   RESULTS+=("✓ Recipe exit code")
   check_recipe_output "$TMPFILE" "parallel"

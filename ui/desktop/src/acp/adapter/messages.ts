@@ -7,7 +7,7 @@ import {
   type AcpChatStateChange,
   type AdapterState,
   DEFAULT_VISIBLE_MESSAGE_METADATA,
-  getHeyBuddyMessageMeta,
+  getAIBuddyMessageMeta,
   messagesChange,
 } from './shared';
 
@@ -26,50 +26,50 @@ export function applyContentChunk(
     return [];
   }
 
-  const heybuddyMeta = getHeyBuddyMessageMeta(update);
-  const messageId = update.messageId ?? heybuddyMeta.messageId;
-  const existing = findMessageForChunk(state, role, messageId, heybuddyMeta.created);
+  const aibuddyMeta = getAIBuddyMessageMeta(update);
+  const messageId = update.messageId ?? aibuddyMeta.messageId;
+  const existing = findMessageForChunk(state, role, messageId, aibuddyMeta.created);
 
   if (existing) {
     const isOutputLimitFallbackChunk =
-      heybuddyMeta.outputTokenLimitReached === true && heybuddyMeta.fallbackContent === true;
+      aibuddyMeta.outputTokenLimitReached === true && aibuddyMeta.fallbackContent === true;
     const existingMessageHasContent = existing.content.length > 0;
     const shouldSkipFallbackChunk = isOutputLimitFallbackChunk && existingMessageHasContent;
 
-    existing.metadata.outputTokenLimitReached = heybuddyMeta.outputTokenLimitReached;
+    existing.metadata.outputTokenLimitReached = aibuddyMeta.outputTokenLimitReached;
     existing.metadata.fallbackContent = shouldSkipFallbackChunk
       ? undefined
-      : heybuddyMeta.fallbackContent;
+      : aibuddyMeta.fallbackContent;
 
     if (shouldSkipFallbackChunk) {
-      return messagesChangeWithLocalSteerConfirmation(state, existing, heybuddyMeta.steer);
+      return messagesChangeWithLocalSteerConfirmation(state, existing, aibuddyMeta.steer);
     }
 
     const lastContent = existing.content[existing.content.length - 1];
-    if (reconcileLocalSteerTextChunk(state, existing, content, heybuddyMeta.steer)) {
-      return messagesChangeWithLocalSteerConfirmation(state, existing, heybuddyMeta.steer);
+    if (reconcileLocalSteerTextChunk(state, existing, content, aibuddyMeta.steer)) {
+      return messagesChangeWithLocalSteerConfirmation(state, existing, aibuddyMeta.steer);
     }
 
     if (lastContent?.type === 'text' && content.type === 'text') {
       lastContent.text += content.text;
     } else if (content.type === 'image' && hasImageContent(existing, content)) {
-      return messagesChangeWithLocalSteerConfirmation(state, existing, heybuddyMeta.steer);
+      return messagesChangeWithLocalSteerConfirmation(state, existing, aibuddyMeta.steer);
     } else {
       existing.content.push(content);
     }
 
-    return messagesChangeWithLocalSteerConfirmation(state, existing, heybuddyMeta.steer);
+    return messagesChangeWithLocalSteerConfirmation(state, existing, aibuddyMeta.steer);
   } else {
     state.messages.push({
       ...(messageId ? { id: messageId } : {}),
       role,
-      created: heybuddyMeta.created ?? Math.floor(Date.now() / 1000),
+      created: aibuddyMeta.created ?? Math.floor(Date.now() / 1000),
       content: [content],
       metadata: {
         ...DEFAULT_VISIBLE_MESSAGE_METADATA,
-        ...(heybuddyMeta.steer ? { steer: true } : {}),
-        outputTokenLimitReached: heybuddyMeta.outputTokenLimitReached,
-        fallbackContent: heybuddyMeta.fallbackContent,
+        ...(aibuddyMeta.steer ? { steer: true } : {}),
+        outputTokenLimitReached: aibuddyMeta.outputTokenLimitReached,
+        fallbackContent: aibuddyMeta.fallbackContent,
       },
     });
   }
@@ -85,22 +85,22 @@ export function applyThoughtChunk(
     return [];
   }
 
-  const heybuddyMeta = getHeyBuddyMessageMeta(update);
-  const messageId = update.messageId ?? heybuddyMeta.messageId;
-  let message = findMessageForChunk(state, 'assistant', messageId, heybuddyMeta.created);
+  const aibuddyMeta = getAIBuddyMessageMeta(update);
+  const messageId = update.messageId ?? aibuddyMeta.messageId;
+  let message = findMessageForChunk(state, 'assistant', messageId, aibuddyMeta.created);
 
   if (!message) {
     message = {
       ...(messageId ? { id: messageId } : {}),
       role: 'assistant',
-      created: heybuddyMeta.created ?? Math.floor(Date.now() / 1000),
+      created: aibuddyMeta.created ?? Math.floor(Date.now() / 1000),
       content: [],
       metadata: { ...DEFAULT_VISIBLE_MESSAGE_METADATA },
     };
     state.messages.push(message);
   }
 
-  message.metadata.outputTokenLimitReached = heybuddyMeta.outputTokenLimitReached;
+  message.metadata.outputTokenLimitReached = aibuddyMeta.outputTokenLimitReached;
 
   const lastContent = message.content[message.content.length - 1];
   if (lastContent?.type === 'thinking') {

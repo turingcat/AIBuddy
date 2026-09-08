@@ -1,21 +1,21 @@
 ---
 title: Scholar Sidekick Extension
-description: Add Scholar Sidekick MCP Server as a heybuddy Extension
+description: Add Scholar Sidekick MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
-This tutorial covers how to add the [Scholar Sidekick MCP Server](https://github.com/mlava/scholar-sidekick-mcp) as a heybuddy extension to resolve, format, export, and verify academic citations from any scholarly identifier — DOI, PMID, PMCID, ISBN, ISSN, arXiv ID, ADS bibcode, or WHO IRIS URL — plus retraction (Crossref + Retraction Watch) and open-access (Unpaywall) checks.
+This tutorial covers how to add the [Scholar Sidekick MCP Server](https://github.com/mlava/scholar-sidekick-mcp) as a aibuddy extension to resolve, format, export, and verify academic citations from any scholarly identifier — DOI, PMID, PMCID, ISBN, ISSN, arXiv ID, ADS bibcode, or WHO IRIS URL — plus retraction (Crossref + Retraction Watch) and open-access (Unpaywall) checks.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=scholar-sidekick-mcp%40latest&id=scholar-sidekick&name=Scholar%20Sidekick&description=Resolve%2C%20format%2C%20export%2C%20and%20verify%20academic%20citations%20plus%20retraction%20and%20open-access%20checks&timeout=300)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y scholar-sidekick-mcp@latest
@@ -32,8 +32,8 @@ You'll need [Node.js](https://nodejs.org/) installed (the command uses `npx`). *
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-    <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="scholar-sidekick"
       extensionName="Scholar Sidekick"
       description="Resolve, format, export, and verify academic citations plus retraction and open-access checks."
@@ -42,7 +42,7 @@ You'll need [Node.js](https://nodejs.org/) installed (the command uses `npx`). *
       args={["-y", "scholar-sidekick-mcp@latest"]}
     />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Scholar Sidekick"
       description="Resolve, format, export, and verify academic citations plus retraction and open-access checks."
@@ -55,7 +55,7 @@ You'll need [Node.js](https://nodejs.org/) installed (the command uses `npx`). *
 
 ## Optional: higher rate limits
 
-Scholar Sidekick runs **without any key** on a free, rate-limited tier — fine for normal interactive use. To raise your limits, add one environment variable to the extension (heybuddy Desktop: extension settings → Environment Variables; CLI: `heybuddy configure` → the extension's env):
+Scholar Sidekick runs **without any key** on a free, rate-limited tier — fine for normal interactive use. To raise your limits, add one environment variable to the extension (aibuddy Desktop: extension settings → Environment Variables; CLI: `aibuddy configure` → the extension's env):
 
 - **`SCHOLAR_API_KEY`** — a **free** first-party key (prefixed `ssk_`). Create one at [scholar-sidekick.com/account](https://scholar-sidekick.com/account). Sent as `Authorization: Bearer`; raises your rate limit and unlocks the verifier's optional LLM screen.
 - **`RAPIDAPI_KEY`** — for paid/managed tiers via the [RapidAPI gateway](https://rapidapi.com/scholar-sidekick-scholar-sidekick-api/api/scholar-sidekick). When set, calls route through RapidAPI instead of the anonymous/first-party endpoint.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate GDK API reference data from the UniFFI surface in heybuddy-sdk.
+"""Generate GDK API reference data from the UniFFI surface in aibuddy-sdk.
 
-`crates/heybuddy-sdk/src/bindings.rs` is the single source of truth for the Rust,
+`crates/aibuddy-sdk/src/bindings.rs` is the single source of truth for the Rust,
 Python, and Kotlin GDK APIs, so the docs are derived from it instead of being
 written by hand. Output is `documentation/src/data/gdk-api.json`, holding one
 entry per GDK release series, consumed by the GdkApiReference component.
@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BINDINGS = REPO_ROOT / "crates/heybuddy-sdk/src/bindings.rs"
-CARGO_TOML = REPO_ROOT / "crates/heybuddy-sdk/Cargo.toml"
+BINDINGS = REPO_ROOT / "crates/aibuddy-sdk/src/bindings.rs"
+CARGO_TOML = REPO_ROOT / "crates/aibuddy-sdk/Cargo.toml"
 OUT_FILE = REPO_ROOT / "documentation/src/data/gdk-api.json"
 
 
@@ -200,7 +200,7 @@ def parse_signature(signature: str, docs: str) -> Func:
         if inner:
             parts = split_top_level(inner)
             returns = clean_type(parts[0])
-            throws = clean_type(parts[1]) if len(parts) > 1 else "HeyBuddyError"
+            throws = clean_type(parts[1]) if len(parts) > 1 else "AIBuddyError"
         else:
             returns = result
     if returns in ("()", ""):
@@ -336,7 +336,7 @@ def build(version: str) -> dict:
     return {
         "version": version,
         "docVersion": doc_version(version),
-        "source": "crates/heybuddy-sdk/src/bindings.rs",
+        "source": "crates/aibuddy-sdk/src/bindings.rs",
         "functions": [serialize_func(func) for func in sorted(functions, key=lambda f: f.name)],
         "items": [serialize_item(item) for item in items],
     }
@@ -373,7 +373,7 @@ def main() -> int:
 
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(payload)
-    print(f"wrote {relative} for heybuddy-sdk {version}")
+    print(f"wrote {relative} for aibuddy-sdk {version}")
     return 0
 
 

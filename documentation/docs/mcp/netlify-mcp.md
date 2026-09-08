@@ -1,24 +1,24 @@
 ---
 title: Netlify Extension
-description: Add Netlify MCP Server as a heybuddy Extension
+description: Add Netlify MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/iSUNmxOf6gw" />
 
-This tutorial covers how to add the [Netlify MCP Server](https://github.com/netlify/netlify-mcp) as a heybuddy extension to build, deploy, and manage Netlify sites.
+This tutorial covers how to add the [Netlify MCP Server](https://github.com/netlify/netlify-mcp) as a aibuddy extension to build, deploy, and manage Netlify sites.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40netlify%2Fmcp&id=netlify-mcp&name=Netlify&description=Build%2C%20deploy%2C%20and%20manage%20sites%20with%20Netlify%27s%20official%20MCP%20server.)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y @netlify/mcp
@@ -42,8 +42,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="netlify-mcp"
     extensionName="Netlify"
     description="Build, deploy, and manage sites with Netlify's official MCP server."
@@ -51,7 +51,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@netlify/mcp"]}
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Netlify"
       description="Build, deploy, and manage sites with Netlify's official MCP server"
@@ -62,13 +62,13 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-In this example, I’ll show you how to use heybuddy with the Netlify Extension to deploy a web application.
+In this example, I’ll show you how to use aibuddy with the Netlify Extension to deploy a web application.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 > Can you deploy my app to Netlify via my GitHub repo?
 
-### heybuddy Output
+### aibuddy Output
 
 :::note CLI
 

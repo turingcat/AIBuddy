@@ -1,23 +1,23 @@
 ---
 title: Building MCP Apps
-description: Create interactive UI applications that render inside heybuddy Desktop
+description: Create interactive UI applications that render inside aibuddy Desktop
 ---
 
 import { PanelLeft } from 'lucide-react';
 
-# Building MCP Apps for heybuddy
+# Building MCP Apps for aibuddy
 
-MCP Apps let MCP servers return interactive UIs that render directly inside the heybuddy chat interface, rather than responding with text alone. This allows users to express intent through interaction, which is useful for workflows that require input, iteration, or visual feedback.
+MCP Apps let MCP servers return interactive UIs that render directly inside the aibuddy chat interface, rather than responding with text alone. This allows users to express intent through interaction, which is useful for workflows that require input, iteration, or visual feedback.
 
 :::warning Experimental
-MCP Apps support in heybuddy is experimental and based on a draft specification. The implementation is minimal and may change, and does not yet support advanced capabilities or persistent app windows.
+MCP Apps support in aibuddy is experimental and based on a draft specification. The implementation is minimal and may change, and does not yet support advanced capabilities or persistent app windows.
 :::
 
 In this tutorial, you will build an MCP App using JavaScript and Node.js. The app includes an interactive counter, stays in sync with the host theme, and sends messages back to the chat, showing how user intent flows from UI to agent.
 
 :::info Prerequisites
 - Node.js 18+ installed
-- heybuddy Desktop 1.19.1+ installed
+- aibuddy Desktop 1.19.1+ installed
 :::
 
 ---
@@ -127,7 +127,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           text: "The demo app is now displayed!",
         },
       ],
-      // This metadata tells heybuddy to render the MCP App
+      // This metadata tells aibuddy to render the MCP App
       _meta: {
         ui: {
           resourceUri: "ui://mcp-app-demo/main",
@@ -322,7 +322,7 @@ Create `index.html` - this is your interactive UI:
 <body class="light">
   <div class="container">
     <h1>🎮 MCP App Demo</h1>
-    <p class="subtitle">An interactive UI running inside heybuddy</p>
+    <p class="subtitle">An interactive UI running inside aibuddy</p>
     
     <div class="counter-section">
       <div class="counter-value" id="counter">0</div>
@@ -335,7 +335,7 @@ Create `index.html` - this is your interactive UI:
     </div>
     
     <div class="message-section">
-      <h3>💬 Send a message to heybuddy</h3>
+      <h3>💬 Send a message to aibuddy</h3>
       <div class="message-input">
         <input type="text" id="messageInput" placeholder="Type a message..." />
         <button class="btn-send" onclick="sendMessage()">Send</button>
@@ -346,11 +346,11 @@ Create `index.html` - this is your interactive UI:
     <div class="info-section">
       <strong>How this works:</strong><br><br>
       This UI is served as an MCP resource with the <code>ui://</code> scheme. 
-      It communicates with heybuddy via JSON-RPC messages through the sandbox bridge.
+      It communicates with aibuddy via JSON-RPC messages through the sandbox bridge.
       <br><br>
       • Counter uses local state<br>
       • "Send" calls <code>ui/message</code> to append text to chat<br>
-      • Theme syncs with heybuddy's theme setting
+      • Theme syncs with aibuddy's theme setting
     </div>
   </div>
 
@@ -486,7 +486,7 @@ Create `index.html` - this is your interactive UI:
 
 ---
 
-## Step 4: Add to heybuddy Desktop
+## Step 4: Add to aibuddy Desktop
 
 1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
 2. Click `Extensions`
@@ -504,15 +504,15 @@ For more options, see [Adding Extensions](/docs/getting-started/using-extensions
 
 ## Step 5: Test Your App
 
-1. Restart heybuddy to load the new extension
-2. Prompt heybuddy: "Show me the demo app"
-3. heybuddy will call the `show_demo_app` tool
+1. Restart aibuddy to load the new extension
+2. Prompt aibuddy: "Show me the demo app"
+3. aibuddy will call the `show_demo_app` tool
 4. Your interactive app will render in the chat!
 
 Try:
 - Clicking the counter buttons
 - Typing a message and clicking "Send"
-- Switching heybuddy between light/dark mode
+- Switching aibuddy between light/dark mode
 
 ---
 
@@ -524,7 +524,7 @@ Try:
 └──────────────────┬───────────────────┘
                    │ postMessage
 ┌──────────────────▼───────────────────┐
-│          heybuddy Desktop               │  Renders UI, routes messages
+│          aibuddy Desktop               │  Renders UI, routes messages
 └──────────────────┬───────────────────┘
                    │ MCP Protocol
 ┌──────────────────▼───────────────────┐
@@ -532,7 +532,7 @@ Try:
 └──────────────────────────────────────┘
 ```
 
-Your server returns a `ui://` resource URI, heybuddy fetches the HTML and renders it in an iframe. The app communicates back via `postMessage`—requesting theme info, sending messages to chat, or resizing itself.
+Your server returns a `ui://` resource URI, aibuddy fetches the HTML and renders it in an iframe. The app communicates back via `postMessage`—requesting theme info, sending messages to chat, or resizing itself.
 
 MCP Apps run in a sandboxed iframe with strict Content Security Policy restrictions.
 

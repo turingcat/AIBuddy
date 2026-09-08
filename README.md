@@ -22,19 +22,19 @@ Product accounts and authentication are provided through [TFlow](https://tflow.o
 
 ## Project lineage
 
-The code lineage is **Goose -> HeyBuddy shared -> AIBuddy**. [Goose](https://github.com/aaif-goose/goose) is the upstream open source agent framework from the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. HeyBuddy is the shared fork layer from which this repository inherited compatibility code. AIBuddy is the active product and the only product identity exposed by this app.
+The code lineage is **AIBuddy -> AIBuddy shared -> AIBuddy**. [AIBuddy](https://github.com/aaif-goose/goose) is the upstream open source agent framework from the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. AIBuddy is the shared fork layer from which this repository inherited compatibility code. AIBuddy is the active product and the only product identity exposed by this app.
 
-The CLI binary, crate names, environment variables, configuration files, and protocol compatibility surfaces retain the original `goose` naming where changing them would break compatibility.
+The CLI binary, crate names, environment variables, configuration files, and protocol compatibility surfaces retain the original `aibuddy` naming where changing them would break compatibility.
 
 ## Synchronization
 
-Routine AIBuddy updates fetch and merge `upstream/shared`, never `upstream/main`. The shared branch carries official Goose updates and reusable product-neutral engine, desktop, localization, tooling, and generic user-visible behavior. AIBuddy owns product-specific identity, service and authentication configuration, provider credentials and entitlements, data migration and data boundaries, and user-visible product behavior. Run `cd ui/desktop && pnpm run check:product-boundary` after each shared merge.
+Routine AIBuddy updates fetch and merge `upstream/shared`, never `upstream/main`. The shared branch carries official AIBuddy updates and reusable product-neutral engine, desktop, localization, tooling, and generic user-visible behavior. AIBuddy owns product-specific identity, service and authentication configuration, provider credentials and entitlements, data migration and data boundaries, and user-visible product behavior. Run `cd ui/desktop && pnpm run check:product-boundary` after each shared merge.
 
 ## Get started
 
 Open [TFlow](https://tflow.online) to access AIBuddy.
 
-The compatible Goose CLI can still be installed with the upstream installer:
+The compatible AIBuddy CLI can still be installed with the upstream installer:
 
 ```bash
 curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash

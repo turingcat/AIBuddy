@@ -101,12 +101,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function generateInstallLink(server) {
         if (server.is_builtin) {
             const queryParams = [
-                'cmd=heybuddyd',
+                'cmd=aibuddyd',
                 'arg=mcp',
                 `arg=${encodeURIComponent(server.id)}`,
                 `description=${encodeURIComponent(server.id)}`
             ].join('&');
-            return `heybuddy://extension?${queryParams}`;
+            return `aibuddy://extension?${queryParams}`;
         }
 
         // Handle the case where the command is a URL
@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ),
             ].join("&");
         
-            return `heybuddy://extension?${queryParams}`;
+            return `aibuddy://extension?${queryParams}`;
         }
 
         const parts = server.command.split(" ");
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ),
         ].join("&");
 
-        return `heybuddy://extension?${queryParams}`;
+        return `aibuddy://extension?${queryParams}`;
     }
 
     function displayGeneratedLink(link) {
@@ -155,8 +155,8 @@ document.addEventListener('DOMContentLoaded', () => {
         is_builtin: false,
         id: "example-extension",
         name: "Example Extension",
-        description: "An example HeyBuddy extension",
-        command: "npx @heybuddyai/example-extension",
+        description: "An example AIBuddy extension",
+        command: "npx @aibuddyai/example-extension",
         environmentVariables: [
             {
                 name: "API_KEY",

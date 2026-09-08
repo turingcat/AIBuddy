@@ -1,4 +1,4 @@
-# heybuddy Release Manual Testing Checklist
+# aibuddy Release Manual Testing Checklist
 
 Download the release builds from this PR. Once a build is ready, the actions bot will post a comment on this PR
 with instructions on how to download and sign.
@@ -16,14 +16,14 @@ the automatic push/PR checks. Before tagging, manually trigger the `CI` workflow
 
 It will generate an analysis report in `/tmp/release_report_final.md` and perform testing is necessary for high risk pr changes.
 
-## Run the heybuddy self-test recipe
+## Run the aibuddy self-test recipe
 
-heybuddy run --recipe heybuddy-self-test.yaml
+aibuddy run --recipe aibuddy-self-test.yaml
 
-## Have heybuddy produce a test plan
+## Have aibuddy produce a test plan
 
-Open the release candidate desktop app and have heybuddy produce a test plan by pointing it at this PR. Use a prompt like
+Open the release candidate desktop app and have aibuddy produce a test plan by pointing it at this PR. Use a prompt like
 
 > Look at the notes in PR <release PR> and the report at `/tmp/release_report_final.md` and investigate potential risks in this release. After familiarizing yourself with the scope of each change, produce a suggested test plan that I should follow before publishing the release.
 
-heybuddy will produce a plan. Follow this plan to finish testing.
+aibuddy will produce a plan. Follow this plan to finish testing.

@@ -4,7 +4,7 @@ import type { setViewType } from './hooks/useNavigation';
 import type { FixedExtensionEntry } from './components/ConfigContext';
 import { AppEvents } from './constants/events';
 import { acpChatSessionController } from './acp/chatSessionController';
-import { getConfiguredHeyBuddyExtensions, heybuddyExtensionName } from './acp/extensions';
+import { getConfiguredAIBuddyExtensions, aibuddyExtensionName } from './acp/extensions';
 import { beginConfiguredRecipeParameterScope } from './acp/recipeParamRequests';
 import { getAcpFeatureCapabilities } from './acp/capabilities';
 import { RecipeParameterScopesUnsupportedError } from './acp/errors';
@@ -56,13 +56,13 @@ async function createAcpSession(
       }
     }
     const selectedNames = new Set(selectedExtensionConfigs(options).map((config) => config.name));
-    const heybuddyExtensions =
+    const aibuddyExtensions =
       selectedNames.size > 0
-        ? (await getConfiguredHeyBuddyExtensions())
-            .filter((entry) => selectedNames.has(heybuddyExtensionName(entry.extension)))
+        ? (await getConfiguredAIBuddyExtensions())
+            .filter((entry) => selectedNames.has(aibuddyExtensionName(entry.extension)))
             .map((entry) => entry.extension)
         : [];
-    return await acpChatSessionController.createSession(workingDir, heybuddyExtensions, {
+    return await acpChatSessionController.createSession(workingDir, aibuddyExtensions, {
       recipeId: options?.recipeId,
       recipeDeeplink: options?.recipeDeeplink,
       recipeParameterScopeId: configuredParameterScope?.id,

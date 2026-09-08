@@ -2,7 +2,7 @@
 sidebar_position: 4
 title: Custom Slash Commands
 sidebar_title: Slash Commands
-description: "Create custom shortcuts to quickly apply reusable instructions in any heybuddy chat session"
+description: "Create custom shortcuts to quickly apply reusable instructions in any aibuddy chat session"
 ---
 
 import Tabs from '@theme/Tabs';
@@ -21,26 +21,26 @@ Custom slash commands are personalized shortcuts to run [recipes](/docs/guides/r
 Assign a custom command to a recipe.
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
    1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
    2. Click `Recipes` in the sidebar
    3. Find the recipe you want to use and click the <Terminal className="inline" size={16} /> button
    4. In the modal that pops up, type your custom command (without the leading `/`)
    5. Click `Save`
  
-  The command appears under the recipe in your `Recipes` menu. For recipes that aren't in your Recipe Library, follow the `heybuddy CLI` steps.
+  The command appears under the recipe in your `Recipes` menu. For recipes that aren't in your Recipe Library, follow the `aibuddy CLI` steps.
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   Configure slash commands in your [configuration file](/docs/guides/config-files). List the command (without the leading `/`) along with the path to the recipe file on your computer:
 
-```yaml title="~/.config/heybuddy/config.yaml"
+```yaml title="~/.config/aibuddy/config.yaml"
 slash_commands:
   - command: "run-tests"
     recipe_path: "/path/to/recipe.yaml"
   - command: "daily-report"
-    recipe_path: "/Users/me/.local/share/heybuddy/recipes/report.yaml"
+    recipe_path: "/Users/me/.local/share/aibuddy/recipes/report.yaml"
 ```
 
    </TabItem>
@@ -51,18 +51,18 @@ slash_commands:
 In any chat session, type your custom command with a leading slash at the start of your message:
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
 
 ```
 /run-tests
 ```
 
 :::tip Available Commands
-Typing `/` in heybuddy Desktop shows a popup menu with the available slash commands.
+Typing `/` in aibuddy Desktop shows a popup menu with the available slash commands.
 :::
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
 ```sh
 Context: ●○○○○○○○○○ 5% (9695/200000 tokens)
@@ -85,7 +85,7 @@ When you run a recipe using a slash command, the recipe's instructions and promp
 - Slash commands accept only one [parameter](/docs/guides/recipes/recipe-reference#parameters). Any additional parameters in the recipe must have default values.
 - Command names are case-insensitive (`/Bug` and `/bug` are treated as the same command).
 - Command names must be unique and contain no spaces.
-- You cannot use names that conflict with [built-in CLI slash commands](/docs/guides/heybuddy-cli-commands#slash-commands) like `/recipe`, `/compact`, or `/help`.
+- You cannot use names that conflict with [built-in CLI slash commands](/docs/guides/aibuddy-cli-commands#slash-commands) like `/recipe`, `/compact`, or `/help`.
 - If the recipe file is missing or invalid, the command will be treated as regular text sent to the model.
 
 ## Additional Resources
@@ -97,7 +97,7 @@ import ContentCardCarousel from '@site/src/components/ContentCardCarousel';
     {
       type: 'topic',
       title: 'Recipes',
-      description: 'Check out the Recipes guide for more docs, tools, and resources to help you master heybuddy recipes.',
+      description: 'Check out the Recipes guide for more docs, tools, and resources to help you master aibuddy recipes.',
       linkUrl: '/docs/guides/recipes'
     },
     {

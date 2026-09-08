@@ -18,7 +18,7 @@ importers:
 
   desktop:
     dependencies:
-      '@heybuddy/heybuddy-sdk':
+      '@aibuddy/aibuddy-sdk':
         specifier: workspace:*
         version: link:../sdk
       '@agentclientprotocol/sdk':
@@ -329,13 +329,13 @@ importers:
         specifier: ^4.1.10
         version: 4.1.10(@opentelemetry/api@1.9.0)(@types/node@26.2.0)(@vitest/coverage-v8@4.1.10)(@vitest/ui@4.1.10)(jsdom@28.1.0)(vite@8.2.1(@types/node@26.2.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.50.0)(tsx@4.23.12)(yaml@2.8.2))
 
-  heybuddy-binary/heybuddy-binary-darwin-arm64: {}
+  aibuddy-binary/aibuddy-binary-darwin-arm64: {}
 
-  heybuddy-binary/heybuddy-binary-linux-arm64: {}
+  aibuddy-binary/aibuddy-binary-linux-arm64: {}
 
-  heybuddy-binary/heybuddy-binary-linux-x64: {}
+  aibuddy-binary/aibuddy-binary-linux-x64: {}
 
-  heybuddy-binary/heybuddy-binary-win32-x64: {}
+  aibuddy-binary/aibuddy-binary-win32-x64: {}
 
   sdk:
     dependencies:
@@ -368,18 +368,18 @@ importers:
         specifier: ~5.9.3
         version: 5.9.3
     optionalDependencies:
-      '@heybuddy/heybuddy-binary-darwin-arm64':
+      '@aibuddy/aibuddy-binary-darwin-arm64':
         specifier: workspace:*
-        version: link:../heybuddy-binary/heybuddy-binary-darwin-arm64
-      '@heybuddy/heybuddy-binary-linux-arm64':
+        version: link:../aibuddy-binary/aibuddy-binary-darwin-arm64
+      '@aibuddy/aibuddy-binary-linux-arm64':
         specifier: workspace:*
-        version: link:../heybuddy-binary/heybuddy-binary-linux-arm64
-      '@heybuddy/heybuddy-binary-linux-x64':
+        version: link:../aibuddy-binary/aibuddy-binary-linux-arm64
+      '@aibuddy/aibuddy-binary-linux-x64':
         specifier: workspace:*
-        version: link:../heybuddy-binary/heybuddy-binary-linux-x64
-      '@heybuddy/heybuddy-binary-win32-x64':
+        version: link:../aibuddy-binary/aibuddy-binary-linux-x64
+      '@aibuddy/aibuddy-binary-win32-x64':
         specifier: workspace:*
-        version: link:../heybuddy-binary/heybuddy-binary-win32-x64
+        version: link:../aibuddy-binary/aibuddy-binary-win32-x64
 
 packages:
 

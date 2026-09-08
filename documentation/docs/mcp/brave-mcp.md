@@ -1,26 +1,26 @@
 ---
 title: Brave Search Extension
-description: Add Brave Search API as a heybuddy Extension
+description: Add Brave Search API as a aibuddy Extension
 unlisted: true
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/kD2YA61NTLU" />
 
 Server moved
 
-This tutorial will get you started with the [Brave Search MCP Server](https://www.pulsemcp.com/servers/brave-search) as a heybuddy extension to enable interactive searches for both web and local searches.
+This tutorial will get you started with the [Brave Search MCP Server](https://www.pulsemcp.com/servers/brave-search) as a aibuddy extension to enable interactive searches for both web and local searches.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40modelcontextprotocol%2Fserver-brave-search&id=brave-search&name=Brave%20Search&description=Brave%20Search%20API&env=BRAVE_API_KEY%3DYour%20API%20Key)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y @modelcontextprotocol/server-brave-search
@@ -40,8 +40,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="brave-search"
     extensionName="Brave Search"
     description="Brave Search API"
@@ -52,15 +52,15 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     apiKeyLinkText="Brave Search API Key"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to add a `Command-line Extension`
   ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -76,7 +76,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
   3. Give your extension a name
   ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -93,7 +93,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
   4. Enter the command
   ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -111,9 +111,9 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     └ 
   ```  
 
-  5. Enter the number of seconds heybuddy should wait for actions to complete before timing out. Default is 300s
+  5. Enter the number of seconds aibuddy should wait for actions to complete before timing out. Default is 300s
    ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -137,7 +137,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
   6. Choose to add a description. If you select "Yes" here, you will be prompted to enter a description for the extension.
    ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -168,7 +168,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
   :::
 
    ```sh
-    ┌   heybuddy-configure 
+    ┌   aibuddy-configure 
     │
     ◇  What would you like to configure?
     │  Add Extension (Connect to a new extension) 
@@ -217,13 +217,13 @@ The Brave Search MCP server gives you access to the Brave Search API, providing 
 - **Smart Fallbacks**: Local search automatically falls back to web when no results are found
 
 
-#### heybuddy Prompt
+#### aibuddy Prompt
 
 ```
 ( O)> Organize a Italian dinner party with Ian, Rizel, Ace, and Ebony. Find 3 or 4 YouTube cooking channels (with URLs) that focus on Italian cuisine for beginners, and then find one recipe (with URL) for each person to make: one salad, two entrees, and one dessert.
 ```
 
-#### heybuddy Output
+#### aibuddy Output
 
 ```
 

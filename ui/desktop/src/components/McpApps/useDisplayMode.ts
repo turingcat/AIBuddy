@@ -8,7 +8,7 @@
 
 import type { McpUiDisplayMode } from '@modelcontextprotocol/ext-apps/app-bridge';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { HeyBuddyDisplayMode, OnDisplayModeChange } from './types';
+import type { AIBuddyDisplayMode, OnDisplayModeChange } from './types';
 
 const DEFAULT_IFRAME_HEIGHT = 200;
 
@@ -21,13 +21,13 @@ const PIP_MARGIN_RIGHT = 16;
 const PIP_MARGIN_BOTTOM = 140;
 
 interface UseDisplayModeOptions {
-  displayMode: HeyBuddyDisplayMode;
+  displayMode: AIBuddyDisplayMode;
   onDisplayModeChange?: OnDisplayModeChange;
   containerRef: React.RefObject<HTMLDivElement | null>;
 }
 
 export interface DisplayModeState {
-  activeDisplayMode: HeyBuddyDisplayMode;
+  activeDisplayMode: AIBuddyDisplayMode;
   effectiveDisplayModes: McpUiDisplayMode[];
   isStandalone: boolean;
   isFullscreen: boolean;
@@ -38,7 +38,7 @@ export interface DisplayModeState {
   appSupportsPip: boolean;
   appTitle: string | null;
 
-  changeDisplayMode: (mode: HeyBuddyDisplayMode) => void;
+  changeDisplayMode: (mode: AIBuddyDisplayMode) => void;
 
   /** Remembered inline height for placeholders when detached. */
   inlineHeight: number;
@@ -66,7 +66,7 @@ export function useDisplayMode({
   onDisplayModeChange,
   containerRef,
 }: UseDisplayModeOptions): DisplayModeState {
-  const [activeDisplayMode, setActiveDisplayMode] = useState<HeyBuddyDisplayMode>(displayMode);
+  const [activeDisplayMode, setActiveDisplayMode] = useState<AIBuddyDisplayMode>(displayMode);
 
   useEffect(() => {
     setActiveDisplayMode(displayMode);
@@ -101,7 +101,7 @@ export function useDisplayMode({
   // ── Mode transitions ──────────────────────────────────────────────────
 
   const changeDisplayMode = useCallback(
-    (mode: HeyBuddyDisplayMode) => {
+    (mode: AIBuddyDisplayMode) => {
       const el = containerRef.current;
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 

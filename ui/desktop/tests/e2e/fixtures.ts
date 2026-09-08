@@ -5,8 +5,8 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 
-type HeyBuddyTestFixtures = {
-  heybuddyPage: Page;
+type AIBuddyTestFixtures = {
+  aibuddyPage: Page;
 };
 
 /**
@@ -16,19 +16,19 @@ type HeyBuddyTestFixtures = {
  * Speed: ⚠️ Slow - ~3s startup overhead per test
  *
  * This ensures each test starts with a fresh app instance, but the app uses the
- * user's existing HeyBuddy configuration (providers, models, etc.).
+ * user's existing AIBuddy configuration (providers, models, etc.).
  *
  * Usage:
  *   import { test, expect } from './fixtures';
  *
- *   test('my test', async ({ heybuddyPage }) => {
- *     await heybuddyPage.waitForSelector('[data-testid="chat-input"]');
+ *   test('my test', async ({ aibuddyPage }) => {
+ *     await aibuddyPage.waitForSelector('[data-testid="chat-input"]');
  *     // ... test code
  *   });
  */
-export const test = base.extend<HeyBuddyTestFixtures>({
+export const test = base.extend<AIBuddyTestFixtures>({
   // Test-scoped fixture: launches a fresh Electron app for each test
-  heybuddyPage: async ({ browserName }, providePage, testInfo) => {
+  aibuddyPage: async ({ browserName }, providePage, testInfo) => {
     void browserName;
     console.log(`Launching fresh Electron app for test: ${testInfo.title}`);
 
@@ -51,10 +51,10 @@ export const test = base.extend<HeyBuddyTestFixtures>({
           ...process.env,
           ELECTRON_IS_DEV: '1',
           NODE_ENV: 'development',
-          HEYBUDDY_ALLOWLIST_BYPASS: 'true',
+          AIBUDDY_ALLOWLIST_BYPASS: 'true',
           ENABLE_PLAYWRIGHT: 'true',
           PLAYWRIGHT_DEBUG_PORT: debugPort.toString(), // Unique port per test for parallel execution
-          RUST_LOG: 'info', // Enable info-level logging for heybuddyd backend
+          RUST_LOG: 'info', // Enable info-level logging for aibuddyd backend
         }
       });
 

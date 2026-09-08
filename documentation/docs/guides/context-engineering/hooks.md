@@ -6,9 +6,9 @@ sidebar_label: Hooks
 
 # Hooks
 
-Hooks let you run your own scripts when key events happen during a heybuddy session. Use hooks to log activity, send notifications, format files after edits, run checks after shell commands, or integrate heybuddy with local workflows without writing a custom extension.
+Hooks let you run your own scripts when key events happen during a aibuddy session. Use hooks to log activity, send notifications, format files after edits, run checks after shell commands, or integrate aibuddy with local workflows without writing a custom extension.
 
-heybuddy follows the [Open Plugins hooks specification](https://open-plugins.com/agent-builders/components/hooks). Hooks are discovered from [plugins](/docs/guides/context-engineering/plugins) on disk and run as shell commands when matching lifecycle events fire.
+aibuddy follows the [Open Plugins hooks specification](https://open-plugins.com/agent-builders/components/hooks). Hooks are discovered from [plugins](/docs/guides/context-engineering/plugins) on disk and run as shell commands when matching lifecycle events fire.
 
 :::warning Run trusted hooks only
 Hooks execute local commands on your machine. Only install or create hooks from sources you trust, and review hook scripts before enabling them.
@@ -16,13 +16,13 @@ Hooks execute local commands on your machine. Only install or create hooks from 
 
 ## Where Hooks Live
 
-A hook belongs to a [plugin](/docs/guides/context-engineering/plugins) directory. heybuddy discovers plugins from these locations:
+A hook belongs to a [plugin](/docs/guides/context-engineering/plugins) directory. aibuddy discovers plugins from these locations:
 
 | Scope | Location |
 |---|---|
 | User | `~/.agents/plugins/<plugin-name>/` |
 | Project | `<project>/.agents/plugins/<plugin-name>/` |
-| Installed plugin | heybuddy's plugin install directory |
+| Installed plugin | aibuddy's plugin install directory |
 
 Each plugin that defines hooks must include a `hooks/hooks.json` file:
 
@@ -35,7 +35,7 @@ my-plugin/
     └── notify.sh
 ```
 
-Project plugins are loaded when heybuddy is started from that project. User plugins are available across projects.
+Project plugins are loaded when aibuddy is started from that project. User plugins are available across projects.
 
 ## Create a Hook
 
@@ -58,7 +58,7 @@ The plugin manifest identifies the plugin:
 {
   "name": "session-logger",
   "version": "0.1.0",
-  "description": "Log heybuddy session events"
+  "description": "Log aibuddy session events"
 }
 ```
 
@@ -89,7 +89,7 @@ payload="$(cat)"
 session_id="$(printf '%s' "$payload" | jq -r .session_id)"
 date_str="$(date '+%Y-%m-%d %H:%M')"
 
-echo "- $date_str — session $session_id ended" >> ~/heybuddy-session-log.md
+echo "- $date_str — session $session_id ended" >> ~/aibuddy-session-log.md
 ```
 
 Place the plugin under a discovered plugin location, such as `~/.agents/plugins/session-logger/`, and make command scripts executable when your operating system requires it.
@@ -121,12 +121,12 @@ Place the plugin under a discovered plugin location, such as `~/.agents/plugins/
 |---|---:|---|
 | `matcher` | No | Regular expression (not a glob) used to decide whether the rule runs for the event. If omitted, the rule runs for every event of that type. |
 | `hooks` | Yes | Actions to run when the event and matcher apply. |
-| `type` | No | Action type. heybuddy currently supports `command`. If omitted, `command` is used. |
-| `command` | Yes for command hooks | Shell command to run. heybuddy runs it with `sh -c`. |
+| `type` | No | Action type. aibuddy currently supports `command`. If omitted, `command` is used. |
+| `command` | Yes for command hooks | Shell command to run. aibuddy runs it with `sh -c`. |
 | `timeout` | No | Timeout in seconds for the command. Defaults to 30 seconds. |
-| `on_failure` | No | What to do when a `PreToolUse` hook fails: it cannot be executed, times out, does not receive its payload, produces output heybuddy cannot decode, or exits without a decision heybuddy recognizes. `allow` (the default) continues the tool call, `block` denies it. Interpreted only for selected `PreToolUse` command actions and ignored for every other event. See [Blocking a Tool Call](#blocking-a-tool-call). |
+| `on_failure` | No | What to do when a `PreToolUse` hook fails: it cannot be executed, times out, does not receive its payload, produces output aibuddy cannot decode, or exits without a decision aibuddy recognizes. `allow` (the default) continues the tool call, `block` denies it. Interpreted only for selected `PreToolUse` command actions and ignored for every other event. See [Blocking a Tool Call](#blocking-a-tool-call). |
 
-Use `${PLUGIN_ROOT}` in a command to reference the plugin directory. heybuddy also sets `PLUGIN_ROOT` in the hook command's environment.
+Use `${PLUGIN_ROOT}` in a command to reference the plugin directory. aibuddy also sets `PLUGIN_ROOT` in the hook command's environment.
 
 ## Supported Events
 
@@ -134,37 +134,37 @@ Use `${PLUGIN_ROOT}` in a command to reference the plugin directory. heybuddy al
 |---|---|---|
 | `SessionStart` | A session starts | None |
 | `SessionEnd` | A session ends | None |
-| `Stop` | heybuddy finishes a turn or receives a stop event | None |
+| `Stop` | aibuddy finishes a turn or receives a stop event | None |
 | `UserPromptSubmit` | The user submits a prompt | Prompt text |
-| `PreToolUse` | Before heybuddy runs a tool | Tool name |
+| `PreToolUse` | Before aibuddy runs a tool | Tool name |
 | `PreToolUseResult` | After the `PreToolUse` chain resolves, for allowed and denied calls alike, before the tool runs or the denial is returned. Observation only | Tool name |
 | `PostToolUse` | After a tool succeeds | Tool name |
 | `PostToolUseFailure` | After a tool fails | Tool name |
-| `BeforeReadFile` | Before heybuddy reads a file | File path |
-| `AfterFileEdit` | After heybuddy successfully edits a file | File path |
-| `BeforeShellExecution` | Before heybuddy runs a shell command | Shell command |
-| `AfterShellExecution` | After heybuddy successfully runs a shell command | Shell command |
+| `BeforeReadFile` | Before aibuddy reads a file | File path |
+| `AfterFileEdit` | After aibuddy successfully edits a file | File path |
+| `BeforeShellExecution` | Before aibuddy runs a shell command | Shell command |
+| `AfterShellExecution` | After aibuddy successfully runs a shell command | Shell command |
 
 The matcher is a regular expression matched against the most relevant string for the event. For example, use `"\\.rs$"` to match Rust files on `AfterFileEdit`, or `"^(cargo test|pnpm test)"` to match test commands on `AfterShellExecution`. The match is unanchored, so `"developer__shell"` also matches `"developer__shell_foo"`; anchor with `^`/`$` when you need an exact match.
 
 :::warning Use `.*`, not `*`, to match everything
-The matcher is a regular expression, not a glob. A bare `"*"` is an invalid regex, so the whole rule is **silently skipped** (heybuddy logs a warning and moves on). To run a rule for every event, either omit `matcher` entirely or use `".*"`.
+The matcher is a regular expression, not a glob. A bare `"*"` is an invalid regex, so the whole rule is **silently skipped** (aibuddy logs a warning and moves on). To run a rule for every event, either omit `matcher` entirely or use `".*"`.
 :::
 
 :::note
 `AfterFileEdit` and `AfterShellExecution` only run after successful tool calls. To react to failed edits, failed shell commands, or other failed tool calls, use `PostToolUseFailure`.
 :::
 
-`PreToolUseResult` is observation only in authority, not asynchronous in delivery. Matching hooks are run and awaited before heybuddy continues to the tool or returns the denial, so a slow subscriber adds its runtime, up to its timeout, to the tool call. Delivery is best effort and not durable: a subscriber that fails or is absent changes nothing about the decision, and no record is kept if the hook does not run.
+`PreToolUseResult` is observation only in authority, not asynchronous in delivery. Matching hooks are run and awaited before aibuddy continues to the tool or returns the denial, so a slow subscriber adds its runtime, up to its timeout, to the tool call. Delivery is best effort and not durable: a subscriber that fails or is absent changes nothing about the decision, and no record is kept if the hook does not run.
 
 ## Hook Payload
 
-When a hook runs, heybuddy writes a JSON payload to the command's stdin. Every payload includes the event name and session ID. The remaining fields are only present when they apply to the event, so a hook should treat them as optional.
+When a hook runs, aibuddy writes a JSON payload to the command's stdin. Every payload includes the event name and session ID. The remaining fields are only present when they apply to the event, so a hook should treat them as optional.
 
 | Field | Description |
 |---|---|
 | `event` | Name of the event that fired, such as `PostToolUse` or `UserPromptSubmit`. |
-| `session_id` | ID of the current heybuddy session. |
+| `session_id` | ID of the current aibuddy session. |
 | `matcher_context` | String the rule's `matcher` is tested against (for example, the tool name on tool events or the prompt text on `UserPromptSubmit`). |
 | `tool_name` | Name of the tool, on tool events. |
 | `tool_input` | Input arguments passed to the tool, on tool events. |
@@ -175,7 +175,7 @@ When a hook runs, heybuddy writes a JSON payload to the command's stdin. Every p
 | `decision` | `allow` or `deny`, on `PreToolUseResult`. There is no third value. |
 | `policy_evaluated` | `true` when at least one matching `PreToolUse` hook exited 0 or returned an explicit decision (exit `2`, or `{"decision":"block"}` on stdout), on `PreToolUseResult`. A hook that exits non-zero without a decision, fails to spawn, times out, or whose payload could not be serialized does not count, and neither does the absence of a matching hook. It is an at-least-one value that stays `true` if a later hook fails. It reports that a hook ran to a conclusion, not that the conclusion was usable: read `cause` for that. |
 | `blocked_by` | Plugin whose hook denied the call, on `PreToolUseResult` when `decision` is `deny`. |
-| `reason` | Message for a denial, on `PreToolUseResult` when `decision` is `deny`. For an explicit policy denial, heybuddy derives this from exit-2 stderr or the JSON `reason` field. heybuddy does not bound or redact hook-supplied reasons, so hooks must not include secrets. For a hook failure under `on_failure: block`, heybuddy supplies a bounded framework-generated message that does not include command strings, plugin paths, or payload content. |
+| `reason` | Message for a denial, on `PreToolUseResult` when `decision` is `deny`. For an explicit policy denial, aibuddy derives this from exit-2 stderr or the JSON `reason` field. aibuddy does not bound or redact hook-supplied reasons, so hooks must not include secrets. For a hook failure under `on_failure: block`, aibuddy supplies a bounded framework-generated message that does not include command strings, plugin paths, or payload content. |
 | `cause` | Why the chain ended as it did, on `PreToolUseResult`. `policy_denial` means an explicit policy decision blocked the call. `hook_failure` means at least one hook failed to execute, to receive its payload, to produce decodable output, or to answer the decision protocol, and that failure determined or qualified the reported result. Absent only for an allow with no hook failure. |
 
 Example payload for a tool event:
@@ -222,12 +222,12 @@ payload="$(cat)"
 event="$(printf '%s' "$payload" | jq -r .event)"
 tool="$(printf '%s' "$payload" | jq -r '.tool_name // "none"')"
 
-echo "heybuddy hook: event=$event tool=$tool" >> "${PLUGIN_ROOT}/hook.log"
+echo "aibuddy hook: event=$event tool=$tool" >> "${PLUGIN_ROOT}/hook.log"
 ```
 
 ### Tool Input Keys
 
-`tool_name` uses the tool's namespaced name (for example `developer__shell`), and `tool_input` holds that tool's own arguments. The keys are the tool's schema, so they vary by tool—a hook that inspects a file path must read the right field for the tool it matched. The keys for heybuddy's built-in `developer` tools are:
+`tool_name` uses the tool's namespaced name (for example `developer__shell`), and `tool_input` holds that tool's own arguments. The keys are the tool's schema, so they vary by tool—a hook that inspects a file path must read the right field for the tool it matched. The keys for aibuddy's built-in `developer` tools are:
 
 | `tool_name` | `tool_input` keys |
 |---|---|
@@ -241,26 +241,26 @@ For the shell and file tools, `matcher_context` already carries the shell comman
 
 ## Blocking a Tool Call
 
-Most events are observation-only: heybuddy runs the hook, logs the result, and continues regardless of what the hook returns. Two events are different—**`PreToolUse` and `Stop` can block**. A hook on any other event (including `UserPromptSubmit`, `PostToolUse`, and the `Before*`/`After*` events) cannot stop anything; a block decision from those events is ignored.
+Most events are observation-only: aibuddy runs the hook, logs the result, and continues regardless of what the hook returns. Two events are different—**`PreToolUse` and `Stop` can block**. A hook on any other event (including `UserPromptSubmit`, `PostToolUse`, and the `Before*`/`After*` events) cannot stop anything; a block decision from those events is ignored.
 
 A `PreToolUse` hook denies the tool call with either of two signals:
 
-- **Exit code `2`** — heybuddy blocks and takes the reason from **stderr**.
-- **`{"decision":"block","reason":"..."}` on stdout** — heybuddy blocks and takes the reason from the `reason` field. heybuddy checks stdout whenever the exit code is not `2`, so this signal is honored regardless of whether the hook exits `0` or non-zero.
+- **Exit code `2`** — aibuddy blocks and takes the reason from **stderr**.
+- **`{"decision":"block","reason":"..."}` on stdout** — aibuddy blocks and takes the reason from the `reason` field. aibuddy checks stdout whenever the exit code is not `2`, so this signal is honored regardless of whether the hook exits `0` or non-zero.
 
-For the stdout signal, stdout must start with `{` and `decision` must be exactly `"block"`. If the `reason` is empty, heybuddy substitutes `denied by plugin hook`.
+For the stdout signal, stdout must start with `{` and `decision` must be exactly `"block"`. If the `reason` is empty, aibuddy substitutes `denied by plugin hook`.
 
-When a `PreToolUse` hook blocks, heybuddy does not run the tool and returns this message to the model:
+When a `PreToolUse` hook blocks, aibuddy does not run the tool and returns this message to the model:
 
 ```text
 Tool call denied by policy hook `<plugin>`: <reason>. Do not retry; this is a policy denial, not a transient failure.
 ```
 
-A `Stop` hook that blocks forces the turn to keep going instead of ending. To prevent a misbehaving hook from looping forever, heybuddy caps the number of consecutive `Stop` blocks; once the cap is hit, heybuddy overrides the hook and ends the turn. Raise the cap with the `HEYBUDDY_STOP_HOOK_BLOCK_CAP` environment variable.
+A `Stop` hook that blocks forces the turn to keep going instead of ending. To prevent a misbehaving hook from looping forever, aibuddy caps the number of consecutive `Stop` blocks; once the cap is hit, aibuddy overrides the hook and ends the turn. Raise the cap with the `AIBUDDY_STOP_HOOK_BLOCK_CAP` environment variable.
 
 ### stdout Is the Decision Channel
 
-For a blocking event, heybuddy reads a decision out of the hook's exit status and stdout, in this order:
+For a blocking event, aibuddy reads a decision out of the hook's exit status and stdout, in this order:
 
 1. Exit `2` denies, with the reason from stderr.
 2. `{"decision":"block"}` on stdout denies, whatever the exit status.
@@ -272,18 +272,18 @@ Rule 5 covers more than a crash. A stray log line on stdout, truncated or malfor
 
 Two further cases read as no decision:
 
-- **stdout is not valid UTF-8.** heybuddy reads stdout strictly and does not repair invalid bytes, because repairing them can turn malformed output into JSON that parses as an allow. stderr is decoded leniently, since it is only ever shown to a human.
-- **heybuddy could not deliver the request.** If the payload cannot be written to the hook's stdin, the hook decided without seeing the request, so an allow from it does not count. An explicit denial still does: heybuddy reads the hook's output before deciding, and a block it managed to print is honored.
+- **stdout is not valid UTF-8.** aibuddy reads stdout strictly and does not repair invalid bytes, because repairing them can turn malformed output into JSON that parses as an allow. stderr is decoded leniently, since it is only ever shown to a human.
+- **aibuddy could not deliver the request.** If the payload cannot be written to the hook's stdin, the hook decided without seeing the request, so an allow from it does not count. An explicit denial still does: aibuddy reads the hook's output before deciding, and a block it managed to print is honored.
 
 Because the block signal is read independently of the exit code, a hook that prints `{"decision":"block"}` and *then* exits non-zero still blocks. Do not rely on a non-zero exit to cancel a block you have already printed.
 
 ### Choose What Happens When a Hook Fails
 
-A hook allows cleanly only when heybuddy delivered the payload and the process exited 0 with either empty stdout or a valid allow decision. A failed delivery, output heybuddy cannot use, or a non-zero exit without a denial is a hook failure, not an allow.
+A hook allows cleanly only when aibuddy delivered the payload and the process exited 0 with either empty stdout or a valid allow decision. A failed delivery, output aibuddy cannot use, or a non-zero exit without a denial is a hook failure, not an allow.
 
 **By default a hook failure is logged and the tool call proceeds.** That is the historical behavior and it stays the default, so a broken hook never wedges a session.
 
-For a policy you actually depend on, set `on_failure` to `block` on the action. heybuddy then denies the tool call when that hook fails:
+For a policy you actually depend on, set `on_failure` to `block` on the action. aibuddy then denies the tool call when that hook fails:
 
 ```json title="hooks/hooks.json"
 {
@@ -314,11 +314,11 @@ Three limits are worth knowing:
 
 - `on_failure` applies to `PreToolUse` only. A `Stop` hook stays fail-open even with `on_failure: block`, so a broken hook can never keep a finished turn from ending.
 - `on_failure` never overrides an explicit denial. A hook that explicitly blocks is honored in either mode. It also changes nothing about a clean allow, meaning one where the payload was delivered and the process exited 0 with empty stdout or a valid allow decision.
-- On a selected `PreToolUse` command action, any value other than `allow` or `block` is a configuration error, and heybuddy skips that plugin's whole `hooks.json` file with a warning rather than guessing a policy. Other events do not interpret the field. `on_failure` governs what happens when a hook runs and fails, not how configuration load errors are handled.
+- On a selected `PreToolUse` command action, any value other than `allow` or `block` is a configuration error, and aibuddy skips that plugin's whole `hooks.json` file with a warning rather than guessing a policy. Other events do not interpret the field. `on_failure` governs what happens when a hook runs and fails, not how configuration load errors are handled.
 
-### What heybuddy Validates in `hooks.json`
+### What aibuddy Validates in `hooks.json`
 
-Unknown event names and unsupported string action types are ignored without their payloads being interpreted, so a plugin can carry configuration for a newer heybuddy without breaking on this one. Recognized event schemas and selected runnable command actions are validated. A malformed selected configuration skips that plugin's `hooks.json` with a warning, and an invalid matcher regex warns and skips only that rule. `on_failure` governs what happens when a hook fails at runtime; it does not make configuration-loading or matcher errors fail closed.
+Unknown event names and unsupported string action types are ignored without their payloads being interpreted, so a plugin can carry configuration for a newer aibuddy without breaking on this one. Recognized event schemas and selected runnable command actions are validated. A malformed selected configuration skips that plugin's `hooks.json` with a warning, and an invalid matcher regex warns and skips only that rule. `on_failure` governs what happens when a hook fails at runtime; it does not make configuration-loading or matcher errors fail closed.
 
 The `PreToolUseResult` event reports the outcome through `cause`: `policy_denial` for an explicit block, `hook_failure` for an execution or protocol failure, and no `cause` for a clean allow.
 
@@ -326,7 +326,7 @@ The `PreToolUseResult` event reports the outcome through `cause`: `policy_denial
 
 `PreToolUseResult` carries the outcome of the `PreToolUse` chain. Its fields are defined once in [Hook Payload](#hook-payload); this section covers only what `on_failure` changes.
 
-`decision` is the result actually applied to the tool call, so under `on_failure: block` a hook failure shows as `deny`. `cause` is how a subscriber tells the two kinds of denial apart: `policy_denial` when a hook explicitly blocked, `hook_failure` when a hook could not be executed, did not receive its payload, produced output heybuddy could not decode, or answered nothing the decision protocol recognizes.
+`decision` is the result actually applied to the tool call, so under `on_failure: block` a hook failure shows as `deny`. `cause` is how a subscriber tells the two kinds of denial apart: `policy_denial` when a hook explicitly blocked, `hook_failure` when a hook could not be executed, did not receive its payload, produced output aibuddy could not decode, or answered nothing the decision protocol recognizes.
 
 `policy_evaluated` answers a different question from `cause` and the two move independently. A hook that exits 0 while printing a stray log line has run to a conclusion, so `policy_evaluated` is `true`, but it produced no usable decision, so `cause` is `hook_failure`. A hook that fails to spawn never ran at all, so `policy_evaluated` stays `false`.
 
@@ -368,7 +368,7 @@ if printf '%s' "$command" | grep -qE '(^|[[:space:]])sudo([[:space:]]|$)'; then
 fi
 ```
 
-The hook prints nothing when the command is allowed, so heybuddy runs it normally.
+The hook prints nothing when the command is allowed, so aibuddy runs it normally.
 
 ## Examples
 
@@ -396,10 +396,10 @@ The hook prints nothing when the command is allowed, so heybuddy runs it normall
 payload="$(cat)"
 tool="$(printf '%s' "$payload" | jq -r '.tool_name // "tool"')"
 
-osascript -e "display notification \"$tool failed\" with title \"heybuddy\""
+osascript -e "display notification \"$tool failed\" with title \"aibuddy\""
 ```
 
-### Format Files After heybuddy Edits Them
+### Format Files After aibuddy Edits Them
 
 ```json
 {
@@ -451,7 +451,7 @@ fi
         "hooks": [
           {
             "type": "command",
-            "command": "say 'heybuddy finished running your command'"
+            "command": "say 'aibuddy finished running your command'"
           }
         ]
       }
@@ -462,14 +462,14 @@ fi
 
 ## Try the Example Plugin
 
-heybuddy includes an example plugin at `examples/plugins/hello-hooks`.
+aibuddy includes an example plugin at `examples/plugins/hello-hooks`.
 
 ```bash
 mkdir -p ~/.agents/plugins
 cp -R examples/plugins/hello-hooks ~/.agents/plugins/hello-hooks
 chmod +x ~/.agents/plugins/hello-hooks/scripts/announce.sh
 
-heybuddy session
+aibuddy session
 ```
 
 The example prints hook events to stderr and appends full payloads to:
@@ -480,9 +480,9 @@ The example prints hook events to stderr and appends full payloads to:
 
 ## Disable a Hook Plugin
 
-To disable a plugin, add its name to `disabledPlugins` in your heybuddy settings file:
+To disable a plugin, add its name to `disabledPlugins` in your aibuddy settings file:
 
-```json title="~/.config/heybuddy/settings.json"
+```json title="~/.config/aibuddy/settings.json"
 {
   "disabledPlugins": ["session-logger"]
 }
@@ -491,7 +491,7 @@ To disable a plugin, add its name to `disabledPlugins` in your heybuddy settings
 For project-specific settings, use:
 
 ```text
-<project>/.config/heybuddy/settings.json
+<project>/.config/aibuddy/settings.json
 ```
 
 A plugin listed in `disabledPlugins` is skipped during plugin discovery, so its hooks will not run.
@@ -509,16 +509,16 @@ Check the following:
 - The command path is correct. Use `${PLUGIN_ROOT}` for scripts inside the plugin.
 - The script is executable if you call it directly.
 - The plugin is not listed in `disabledPlugins`.
-- The event is not a subagent lifecycle event. `SubagentStart` and `SubagentStop` are not currently emitted by heybuddy, so hooks registered for them will never run.
+- The event is not a subagent lifecycle event. `SubagentStart` and `SubagentStop` are not currently emitted by aibuddy, so hooks registered for them will never run.
 
 ### My Hook Timed Out or Failed
 
-Hook failures are logged but do not crash heybuddy or the tool that triggered the hook. By default, a hook that fails to run, exceeds its timeout, never receives its payload, or exits without a decision heybuddy recognizes is logged and the tool call proceeds. To intentionally stop a tool call, a `PreToolUse` hook must emit a clean block signal, not just exit non-zero.
+Hook failures are logged but do not crash aibuddy or the tool that triggered the hook. By default, a hook that fails to run, exceeds its timeout, never receives its payload, or exits without a decision aibuddy recognizes is logged and the tool call proceeds. To intentionally stop a tool call, a `PreToolUse` hook must emit a clean block signal, not just exit non-zero.
 
 Two cases look like a failure but are not what people expect:
 
-- **The hook printed a log line to stdout.** heybuddy reads stdout as the decision channel, so `echo "checking policy"` makes an otherwise healthy hook read as no decision. Send diagnostics to stderr instead.
-- **The hook printed `{"decision":"allow"}` and then exited non-zero.** The exit status contradicts the decision, so heybuddy treats it as no decision. Exit `0` alongside an allow.
+- **The hook printed a log line to stdout.** aibuddy reads stdout as the decision channel, so `echo "checking policy"` makes an otherwise healthy hook read as no decision. Send diagnostics to stderr instead.
+- **The hook printed `{"decision":"allow"}` and then exited non-zero.** The exit status contradicts the decision, so aibuddy treats it as no decision. Exit `0` alongside an allow.
 
 If you would rather a failing hook stop the tool call instead of being ignored, set `on_failure` to `block` on that action. See [Choose What Happens When a Hook Fails](#choose-what-happens-when-a-hook-fails).
 
@@ -549,16 +549,16 @@ Hooks run as local shell commands. Make sure any commands your script uses are i
 ## Additional Resources
 
 import ContentCardCarousel from '@site/src/components/ContentCardCarousel';
-import hooksBanner from '@site/static/img/blog/heybuddy-hooks.jpg';
+import hooksBanner from '@site/static/img/blog/aibuddy-hooks.jpg';
 
 <ContentCardCarousel
   items={[
     {
       type: 'blog',
-      title: 'Hooks: run your own scripts on every heybuddy event',
+      title: 'Hooks: run your own scripts on every aibuddy event',
       description: 'Learn how lifecycle hooks let you react to session, prompt, tool, file, and shell events with your own scripts.',
       thumbnailUrl: hooksBanner,
-      linkUrl: '/blog/2026/05/14/heybuddy-hooks',
+      linkUrl: '/blog/2026/05/14/aibuddy-hooks',
       date: '2026-05-14',
       duration: '5 min read'
     }

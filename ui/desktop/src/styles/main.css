@@ -158,9 +158,9 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   4. HEYBUDDY DESKTOP UI ALIASES — @theme inline {}
+   4. AIBUDDY DESKTOP UI ALIASES — @theme inline {}
    App-specific tokens that map to MCP spec tokens.
-   Not part of the MCP spec — only used by HeyBuddy components.
+   Not part of the MCP spec — only used by AIBuddy components.
    ═══════════════════════════════════════════════════════════════════════════ */
 @theme inline {
   --font-serif: serif;
@@ -174,7 +174,7 @@
 
 /* ═══════════════════════════════════════════════════════════════════════════
    5. APP-SPECIFIC VARIABLES — :root / .dark
-   HeyBuddy-only variables that derive from MCP tokens. These are NOT duplicated
+   AIBuddy-only variables that derive from MCP tokens. These are NOT duplicated
    in theme-tokens.ts — they exist only here.
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -391,8 +391,8 @@
     opacity: 1 !important;
   }
 
-  /* HeyBuddy icon entrance animation */
-  .heybuddy-icon-entrance {
+  /* AIBuddy icon entrance animation */
+  .aibuddy-icon-entrance {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
@@ -620,7 +620,7 @@ pre:has(> code.bg-inline-code) {
   scrollbar-width: thin;
 }
 
-.assistant:has(+ .user):not(.in-chain) .heybuddy-message {
+.assistant:has(+ .user):not(.in-chain) .aibuddy-message {
   padding-bottom: 24px;
 }
 
@@ -704,8 +704,8 @@ pre:has(> code.bg-inline-code) {
   contain: layout style paint;
 }
 
-/* HeyBuddy icon animation to replace framer-motion */
-@keyframes heybuddy-icon-entrance {
+/* AIBuddy icon animation to replace framer-motion */
+@keyframes aibuddy-icon-entrance {
   from {
     opacity: 0;
     transform: scale(0.25) translate(-5px, 5px) rotate(-20deg);
@@ -716,8 +716,8 @@ pre:has(> code.bg-inline-code) {
   }
 }
 
-.heybuddy-icon-animation {
-  animation: heybuddy-icon-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+.aibuddy-icon-animation {
+  animation: aibuddy-icon-entrance 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
   transform-origin: bottom left;
 }
 

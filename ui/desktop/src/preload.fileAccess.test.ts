@@ -33,11 +33,11 @@ describe('preload file access boundary', () => {
     expect(electron).not.toHaveProperty('readFile');
 
     electron.selectRecipeFile('/etc/passwd');
-    electron.readHeyBuddyhints('../secret');
-    electron.writeHeyBuddyhints('project guidance', '../secret');
+    electron.readAIBuddyhints('../secret');
+    electron.writeAIBuddyhints('project guidance', '../secret');
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'select-recipe-file');
-    expect(invoke).toHaveBeenNthCalledWith(2, 'read-heybuddyhints');
-    expect(invoke).toHaveBeenNthCalledWith(3, 'write-heybuddyhints', 'project guidance');
+    expect(invoke).toHaveBeenNthCalledWith(2, 'read-aibuddyhints');
+    expect(invoke).toHaveBeenNthCalledWith(3, 'write-aibuddyhints', 'project guidance');
   });
 });

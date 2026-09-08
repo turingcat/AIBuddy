@@ -3,7 +3,7 @@
 ## Failure and Fix
 
 The old session database already reported upstream schema version 16 but stored
-`sessions.goose_mode`. The renamed application queried `heybuddy_mode`, so neither
+`sessions.aibuddy_mode`. The renamed application queried `aibuddy_mode`, so neither
 reading nor creating sessions worked. Renaming the historical v8 SQL alone could
 not update an existing v16 database.
 
@@ -11,7 +11,7 @@ Session initialization now normalizes the old column under the existing SQLite
 `BEGIN IMMEDIATE` transaction, independently of upstream version dispatch. The
 stored mode values are retained by `ALTER TABLE ... RENAME COLUMN`. New databases
 and already-renamed databases require no work. Migration 8 checks for an existing
-canonical column, and legacy JSON imports accept `goose_mode` as an alias.
+canonical column, and legacy JSON imports accept `aibuddy_mode` as an alias.
 
 Upstream schema numbering remains unchanged. If both old and new mode columns
 exist, initialization fails without committing instead of guessing which approval
@@ -34,8 +34,8 @@ the rebranding map audit.
 
 ## Test Package
 
-- App: `ui/desktop/out/session-db-fix-20260908/HeyBuddy-darwin-arm64/HeyBuddy.app`.
-- ZIP: `ui/desktop/out/HeyBuddy-macOS-arm64-session-db-fix-20260908.zip`.
+- App: `ui/desktop/out/session-db-fix-20260908/AIBuddy-darwin-arm64/AIBuddy.app`.
+- ZIP: `ui/desktop/out/AIBuddy-macOS-arm64-session-db-fix-20260908.zip`.
 - Platform: macOS ARM64; locally ad-hoc signed, not notarized or published.
 - Release backend SHA-256 before signing:
   `e74210379f31d4d9b339ce667fd1e23a5ede0db6c66048671b4f5328b8f1fd1f`.

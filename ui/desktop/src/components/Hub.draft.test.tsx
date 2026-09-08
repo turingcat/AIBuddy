@@ -24,7 +24,7 @@ vi.mock('./ChatInput', () => ({
   },
 }));
 
-vi.mock('./LoadingHeyBuddy', () => ({ default: () => <div /> }));
+vi.mock('./LoadingAIBuddy', () => ({ default: () => <div /> }));
 
 vi.mock('./ConfigContext', () => ({
   useConfig: () => ({ extensionsList: [] }),
@@ -33,8 +33,8 @@ vi.mock('./ConfigContext', () => ({
 vi.mock('../sessions', () => ({ createSession: vi.fn() }));
 
 vi.mock('../utils/workingDir', () => ({
-  getInitialWorkingDir: () => '/tmp/heybuddy',
-  getEffectiveWorkingDir: () => Promise.resolve('/tmp/heybuddy'),
+  getInitialWorkingDir: () => '/tmp/aibuddy',
+  getEffectiveWorkingDir: () => Promise.resolve('/tmp/aibuddy'),
 }));
 
 vi.mock('../utils/nextChatExtensions', () => ({

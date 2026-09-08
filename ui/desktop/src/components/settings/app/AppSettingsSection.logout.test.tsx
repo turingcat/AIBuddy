@@ -6,7 +6,7 @@ import { IntlProvider } from 'react-intl';
 import AppSettingsSection from './AppSettingsSection';
 
 vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
-vi.mock('../../HeyBuddySidebar/ThemeSelector', () => ({ default: () => null }));
+vi.mock('../../AIBuddySidebar/ThemeSelector', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();
 const refreshAuthSession = vi.fn();
@@ -135,7 +135,7 @@ describe('AppSettingsSection 退出登录', () => {
   it('shows macOS notification instructions and the configured version theme', async () => {
     electronMock.platform = 'darwin';
     appConfigMock.get.mockImplementation((key: string) =>
-      key === 'GOOSE_VERSION' ? '1.2.3' : undefined
+      key === 'AIBUDDY_VERSION' ? '1.2.3' : undefined
     );
     document.documentElement.classList.add('dark');
     renderWith(<AppSettingsSection />);

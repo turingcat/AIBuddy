@@ -39,7 +39,7 @@ export type WindowProps = {
   width?: number;
 };
 
-export type HeyBuddyApp = McpAppResource &
+export type AIBuddyApp = McpAppResource &
   WindowProps & {
     mcpServers?: string[];
     prd?: string | null;

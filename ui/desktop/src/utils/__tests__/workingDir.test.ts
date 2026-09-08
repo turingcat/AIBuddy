@@ -3,11 +3,11 @@ import { getEffectiveWorkingDir, resolveWorkingDir } from '../workingDir';
 
 describe('resolveWorkingDir', () => {
   it('uses the configured external backend directory when present', () => {
-    expect(resolveWorkingDir(' /home/heybuddy ', 'C:\\Users\\heybuddy', 'C:\\Users\\heybuddy')).toBe(
-      '/home/heybuddy'
+    expect(resolveWorkingDir(' /home/aibuddy ', 'C:\\Users\\aibuddy', 'C:\\Users\\aibuddy')).toBe(
+      '/home/aibuddy'
     );
-    expect(resolveWorkingDir(' ', 'C:\\work', 'C:\\Users\\heybuddy')).toBe('C:\\work');
-    expect(resolveWorkingDir(undefined, undefined, 'C:\\Users\\heybuddy')).toBe('C:\\Users\\heybuddy');
+    expect(resolveWorkingDir(' ', 'C:\\work', 'C:\\Users\\aibuddy')).toBe('C:\\work');
+    expect(resolveWorkingDir(undefined, undefined, 'C:\\Users\\aibuddy')).toBe('C:\\Users\\aibuddy');
   });
 });
 
@@ -17,10 +17,10 @@ describe('getEffectiveWorkingDir', () => {
 
   const mockWindow = (externalBackend: boolean, boundUrl: string, source = 'settings') => {
     appConfigGetMock.mockImplementation((key: string) => {
-      if (key === 'HEYBUDDY_EXTERNAL_BACKEND') return externalBackend;
-      if (key === 'HEYBUDDY_EXTERNAL_BACKEND_URL') return boundUrl;
-      if (key === 'HEYBUDDY_EXTERNAL_BACKEND_SOURCE') return source;
-      if (key === 'HEYBUDDY_WORKING_DIR') return '/Users/johannes/home/workspace';
+      if (key === 'AIBUDDY_EXTERNAL_BACKEND') return externalBackend;
+      if (key === 'AIBUDDY_EXTERNAL_BACKEND_URL') return boundUrl;
+      if (key === 'AIBUDDY_EXTERNAL_BACKEND_SOURCE') return source;
+      if (key === 'AIBUDDY_WORKING_DIR') return '/Users/johannes/home/workspace';
       return undefined;
     });
   };
@@ -39,9 +39,9 @@ describe('getEffectiveWorkingDir', () => {
     getSettingMock.mockResolvedValue({
       enabled: true,
       url: 'http://remote:3000',
-      workingDir: ' /home/heybuddy/workspace ',
+      workingDir: ' /home/aibuddy/workspace ',
     });
-    await expect(getEffectiveWorkingDir()).resolves.toBe('/home/heybuddy/workspace');
+    await expect(getEffectiveWorkingDir()).resolves.toBe('/home/aibuddy/workspace');
   });
 
   it('honors the configured remote directory for env-mode backends regardless of enabled/url', async () => {
@@ -49,9 +49,9 @@ describe('getEffectiveWorkingDir', () => {
     getSettingMock.mockResolvedValue({
       enabled: false,
       url: 'http://unrelated:4000',
-      workingDir: '/home/heybuddy/workspace',
+      workingDir: '/home/aibuddy/workspace',
     });
-    await expect(getEffectiveWorkingDir()).resolves.toBe('/home/heybuddy/workspace');
+    await expect(getEffectiveWorkingDir()).resolves.toBe('/home/aibuddy/workspace');
   });
 
   it('falls back to the remembered directory for env-mode backends without a configured dir', async () => {
@@ -62,7 +62,7 @@ describe('getEffectiveWorkingDir', () => {
 
   it('ignores the remote directory when the window is bound to the local backend', async () => {
     mockWindow(false, '');
-    getSettingMock.mockResolvedValue({ enabled: true, workingDir: '/home/heybuddy/workspace' });
+    getSettingMock.mockResolvedValue({ enabled: true, workingDir: '/home/aibuddy/workspace' });
     await expect(getEffectiveWorkingDir()).resolves.toBe('/Users/johannes/home/workspace');
   });
 
@@ -71,14 +71,14 @@ describe('getEffectiveWorkingDir', () => {
     getSettingMock.mockResolvedValue({
       enabled: true,
       url: 'http://server-b:3000',
-      workingDir: '/home/heybuddy/workspace',
+      workingDir: '/home/aibuddy/workspace',
     });
     await expect(getEffectiveWorkingDir()).resolves.toBe('/Users/johannes/home/workspace');
   });
 
   it('falls back to the remembered directory when the external backend is disabled', async () => {
     mockWindow(true, 'http://remote:3000');
-    getSettingMock.mockResolvedValue({ enabled: false, workingDir: '/home/heybuddy/workspace' });
+    getSettingMock.mockResolvedValue({ enabled: false, workingDir: '/home/aibuddy/workspace' });
     await expect(getEffectiveWorkingDir()).resolves.toBe('/Users/johannes/home/workspace');
   });
 

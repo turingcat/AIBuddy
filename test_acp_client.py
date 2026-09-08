@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Simple ACP client to test the heybuddy ACP agent.
-Connects to heybuddy acp running on stdio.
+Simple ACP client to test the aibuddy ACP agent.
+Connects to aibuddy acp running on stdio.
 
 Tests:
 1. Initialize - Establish connection and verify capabilities
@@ -20,7 +20,7 @@ import time
 class AcpClient:
     def __init__(self):
         self.process = subprocess.Popen(
-            ['cargo', 'run', '-p', 'heybuddy-cli', '--', 'acp'],
+            ['cargo', 'run', '-p', 'aibuddy-cli', '--', 'acp'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

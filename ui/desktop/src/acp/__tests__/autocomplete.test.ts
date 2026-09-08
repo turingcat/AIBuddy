@@ -1,4 +1,4 @@
-import type { AgentMention, AvailableCommand } from '@heybuddy/heybuddy-sdk';
+import type { AgentMention, AvailableCommand } from '@aibuddy/aibuddy-sdk';
 import { describe, expect, it } from 'vitest';
 import { agentMentionToDisplayItem, availableCommandToDisplayItem } from '../autocomplete';
 

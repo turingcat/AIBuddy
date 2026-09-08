@@ -17,7 +17,7 @@ The Ollama tool shim enables tool calling for models that don't natively support
    ```bash
    ollama pull mistral-nemo
    ```
-3. Start heybuddy with the shim enabled:
+3. Start aibuddy with the shim enabled:
    ```bash
-   HEYBUDDY_TOOLSHIM=true heybuddy session
+   AIBUDDY_TOOLSHIM=true aibuddy session
    ```

@@ -1,26 +1,26 @@
 ---
 title: Dev.to Extension
-description: Add Dev.to MCP Server as a heybuddy Extension
+description: Add Dev.to MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import { PanelLeft } from 'lucide-react';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/nkdksdxHxaQ" />  
 
-This tutorial covers how to add the [Dev.to MCP Server](https://github.com/nickytonline/dev-to-mcp) as a heybuddy extension to enable access to the Dev.to public API. With this extension, heybuddy can fetch articles, tags, user info, comments, and more—without requiring authentication.
+This tutorial covers how to add the [Dev.to MCP Server](https://github.com/nickytonline/dev-to-mcp) as a aibuddy extension to enable access to the Dev.to public API. With this extension, aibuddy can fetch articles, tags, user info, comments, and more—without requiring authentication.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?type=streamable_http&url=http%3A%2F%2Flocalhost%3A3000%2Fmcp&id=dev-to&name=Dev.to&description=Access%20Dev.to%20articles%20and%20content)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
-  Use `heybuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
+  <TabItem value="cli" label="aibuddy CLI">
+  Use `aibuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
 
   **Endpoint URL**
 
@@ -57,8 +57,8 @@ Your server will now be running at:
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-    <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="dev-to"
       extensionName="Dev.to"
       description="Access Dev.to articles and content"
@@ -67,7 +67,7 @@ Your server will now be running at:
     />
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI" default>
+  <TabItem value="cli" label="aibuddy CLI" default>
       <CLIExtensionInstructions
         name="dev.to"
         description="Access Dev.to articles and content"
@@ -80,11 +80,11 @@ Your server will now be running at:
 
 ## Example Usage
 
-In this example, heybuddy uses the `Dev.to MCP` extension to fetch the 5 most recent JavaScript articles and instantly turn them into a personalized learning hub.
+In this example, aibuddy uses the `Dev.to MCP` extension to fetch the 5 most recent JavaScript articles and instantly turn them into a personalized learning hub.
 
-### heybuddy Prompt
+### aibuddy Prompt
 ```
-Hey heybuddy, fetch the 5 most recent JavaScript articles from Dev.to
+Hey aibuddy, fetch the 5 most recent JavaScript articles from Dev.to
 Create a simple HTML landing page that:
 
 1. Lists each article title as a clickable link
@@ -98,7 +98,7 @@ Create a simple HTML landing page that:
 The goal is to save me time by quickly showing what’s worth reading and help me learn faster by giving actionable practice ideas.
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 

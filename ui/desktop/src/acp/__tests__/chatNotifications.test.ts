@@ -14,7 +14,7 @@ vi.mock('../chatSessionStore', () => ({
   },
   acpChatSessionActions: {
     applyAcpSessionNotification: vi.fn(),
-    applyAcpHeyBuddySessionNotification: vi.fn(),
+    applyAcpAIBuddySessionNotification: vi.fn(),
   },
 }));
 

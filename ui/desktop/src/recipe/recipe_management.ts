@@ -65,18 +65,18 @@ export const convertToLocaleDateString = (lastModified: string): string => {
 
 export const getStorageDirectory = (isGlobal: boolean): string => {
   if (isGlobal) {
-    const pathRoot = window.appConfig.get('HEYBUDDY_PATH_ROOT') as string | undefined;
+    const pathRoot = window.appConfig.get('AIBUDDY_PATH_ROOT') as string | undefined;
     if (pathRoot) {
       return `${pathRoot}/config/recipes`;
     }
-    const configDir = window.appConfig.get('HEYBUDDY_CONFIG_DIR') as string | undefined;
+    const configDir = window.appConfig.get('AIBUDDY_CONFIG_DIR') as string | undefined;
     if (configDir) {
       return `${configDir}/recipes`;
     }
-    return '~/.config/heybuddy/recipes';
+    return '~/.config/aibuddy/recipes';
   } else {
     // For directory recipes, build absolute path using working directory
-    const workingDir = window.appConfig.get('HEYBUDDY_WORKING_DIR') as string;
-    return `${workingDir}/.heybuddy/recipes`;
+    const workingDir = window.appConfig.get('AIBUDDY_WORKING_DIR') as string;
+    return `${workingDir}/.aibuddy/recipes`;
   }
 };

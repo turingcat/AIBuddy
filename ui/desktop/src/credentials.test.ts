@@ -209,7 +209,7 @@ describe('credentials 读写', () => {
     expect(readCredentials(tmpFile, identityCodec)).toBeNull();
   });
 
-  it('rejects canonical credentials for the removed HeyBuddy provider', () => {
+  it('rejects canonical credentials for the removed AIBuddy provider', () => {
     fs.writeFileSync(
       tmpFile,
       JSON.stringify({
@@ -217,7 +217,7 @@ describe('credentials 读写', () => {
         siteKind: 'oa',
         session: { accessToken: 'legacy' },
         account: {},
-        gateway: { providerId: 'heybuddy', baseUrl: 'u', apiKey: 'k' },
+        gateway: { providerId: 'aibuddy', baseUrl: 'u', apiKey: 'k' },
         token: 'legacy',
         baseUrl: 'u',
         apiKey: 'k',
@@ -231,12 +231,12 @@ describe('credentials 读写', () => {
     ['unmarked', { token: 't', baseUrl: 'u', apiKey: 'k' }],
     ['OA', { token: 't', baseUrl: 'u', apiKey: 'k', authKind: 'oa' }],
     [
-      'HeyBuddy',
+      'AIBuddy',
       {
         schemaVersion: 2,
         siteKind: 'oa',
         session: { accessToken: 't' },
-        gateway: { providerId: 'heybuddy', baseUrl: 'u', apiKey: 'k' },
+        gateway: { providerId: 'aibuddy', baseUrl: 'u', apiKey: 'k' },
         token: 't',
         baseUrl: 'u',
         apiKey: 'k',

@@ -23,15 +23,15 @@ The **Tool Selection Strategy** is an experimental feature (preview) that dynami
 
 This saves context window space when many extensions are enabled.
 
-**Configuration**: `HEYBUDDY_ENABLE_ROUTER` (boolean, default: false)
+**Configuration**: `AIBUDDY_ENABLE_ROUTER` (boolean, default: false)
 
 ## Detailed Findings
 
 ### 1. Feature Toggle - Configuration
 
-The feature is controlled by the `HEYBUDDY_ENABLE_ROUTER` config parameter:
+The feature is controlled by the `AIBUDDY_ENABLE_ROUTER` config parameter:
 
-**File: `crates/heybuddy/src/agents/tool_route_manager.rs:79-86`**
+**File: `crates/aibuddy/src/agents/tool_route_manager.rs:79-86`**
 ```rust
 pub async fn is_router_enabled(&self) -> bool {
     if *self.router_disabled_override.lock().await {
@@ -39,7 +39,7 @@ pub async fn is_router_enabled(&self) -> bool {
     }
 
     let config = Config::global();
-    if let Ok(config_value) = config.get_param::<String>("HEYBUDDY_ENABLE_ROUTER") {
+    if let Ok(config_value) = config.get_param::<String>("AIBUDDY_ENABLE_ROUTER") {
         return config_value.to_lowercase() == "true";
     }
 
@@ -50,13 +50,13 @@ pub async fn is_router_enabled(&self) -> bool {
 
 **UI Toggle: `ui/desktop/src/components/settings/tool_selection_strategy/ToolSelectionStrategySection.tsx`**
 - Displays "Disabled" (default) and "Enabled" radio options
-- Updates `HEYBUDDY_ENABLE_ROUTER` config via upsert
+- Updates `AIBUDDY_ENABLE_ROUTER` config via upsert
 - Calls `/agent/update_router_tool_selector` endpoint to reinitialize
 
 ### 2. Core Components
 
 #### 2.1 ToolRouteManager
-**File: `crates/heybuddy/src/agents/tool_route_manager.rs`**
+**File: `crates/aibuddy/src/agents/tool_route_manager.rs`**
 
 Central manager that:
 - Holds the `RouterToolSelector` instance
@@ -78,7 +78,7 @@ Key methods:
 - `list_tools_for_router()` - Returns search tool + recently used tools
 
 #### 2.2 RouterToolSelector Trait & LLMToolSelector
-**File: `crates/heybuddy/src/agents/router_tool_selector.rs`**
+**File: `crates/aibuddy/src/agents/router_tool_selector.rs`**
 
 ```rust
 #[async_trait]
@@ -97,7 +97,7 @@ pub trait RouterToolSelector: Send + Sync {
 - Tracks last 100 tool calls for "recently used" feature
 
 #### 2.3 The Search Tool Definition
-**File: `crates/heybuddy/src/agents/router_tools.rs`**
+**File: `crates/aibuddy/src/agents/router_tools.rs`**
 
 ```rust
 pub const ROUTER_LLM_SEARCH_TOOL_NAME: &str = "router__llm_search";
@@ -115,7 +115,7 @@ pub fn llm_search_tool() -> Tool {
 ```
 
 #### 2.4 Tool Indexing Manager
-**File: `crates/heybuddy/src/agents/tool_router_index_manager.rs`**
+**File: `crates/aibuddy/src/agents/tool_router_index_manager.rs`**
 
 Handles indexing/removing tools when extensions are added/removed:
 
@@ -137,7 +137,7 @@ impl ToolRouterIndexManager {
 │                    INITIALIZATION                               │
 ├─────────────────────────────────────────────────────────────────┤
 │ 1. User enables "Tool Selection Strategy" in settings           │
-│ 2. HEYBUDDY_ENABLE_ROUTER = "true" saved to config                 │
+│ 2. AIBUDDY_ENABLE_ROUTER = "true" saved to config                 │
 │ 3. /agent/update_router_tool_selector called                    │
 │ 4. ToolRouteManager.update_router_tool_selector():              │
 │    a. Creates LLMToolSelector with provider                     │
@@ -199,7 +199,7 @@ impl ToolRouterIndexManager {
 
 ### 4. System Prompt Integration
 
-**File: `crates/heybuddy/src/agents/prompt_manager.rs`**
+**File: `crates/aibuddy/src/agents/prompt_manager.rs`**
 
 When router is enabled, the system prompt includes special instructions:
 
@@ -207,7 +207,7 @@ When router is enabled, the system prompt includes special instructions:
 tool_selection_strategy: self.router_enabled.then(llm_search_tool_prompt),
 ```
 
-**File: `crates/heybuddy/src/agents/router_tools.rs:41-57`**
+**File: `crates/aibuddy/src/agents/router_tools.rs:41-57`**
 ```rust
 pub fn llm_search_tool_prompt() -> String {
     format!(
@@ -215,7 +215,7 @@ pub fn llm_search_tool_prompt() -> String {
     Important: the user has opted to dynamically enable tools, so although an extension could be enabled, \
     please invoke the llm search tool to actually retrieve the most relevant tools to use according to the user's messages.
     ...
-    By dynamically enabling tools, you (heybuddy) as the agent save context window space and allow the user to dynamically retrieve the most relevant tools.
+    By dynamically enabling tools, you (aibuddy) as the agent save context window space and allow the user to dynamically retrieve the most relevant tools.
     "#,
         // Lists platform extension tools that are always available
     )
@@ -226,7 +226,7 @@ This is injected into `system.md` via `{{tool_selection_strategy}}`.
 
 ### 5. LLM Search Prompt Template
 
-**File: `crates/heybuddy/src/prompts/router_tool_selector.md`**
+**File: `crates/aibuddy/src/prompts/router_tool_selector.md`**
 ```markdown
 You are a tool selection assistant. Your task is to find the most relevant tools based on the user's query.
 
@@ -243,7 +243,7 @@ Schema: <tool_schema>
 
 ### 6. Server Endpoint
 
-**File: `crates/heybuddy-server/src/routes/agent.rs`**
+**File: `crates/aibuddy-server/src/routes/agent.rs`**
 
 ```rust
 #[utoipa::path(
@@ -269,7 +269,7 @@ async fn update_router_tool_selector(
 
 Recipes can disable the router to ensure all tools are available:
 
-**File: `crates/heybuddy/src/agents/tool_route_manager.rs:31-34`**
+**File: `crates/aibuddy/src/agents/tool_route_manager.rs:31-34`**
 ```rust
 pub async fn disable_router_for_recipe(&self) {
     *self.router_disabled_override.lock().await = true;
@@ -280,22 +280,22 @@ pub async fn disable_router_for_recipe(&self) {
 ## Code References
 
 ### Core Implementation
-- `crates/heybuddy/src/agents/tool_route_manager.rs` - Main manager, config check, dispatch
-- `crates/heybuddy/src/agents/router_tool_selector.rs` - `RouterToolSelector` trait, `LLMToolSelector` impl
-- `crates/heybuddy/src/agents/router_tools.rs` - `router__llm_search` tool definition, prompt function
-- `crates/heybuddy/src/agents/tool_router_index_manager.rs` - Tool indexing on extension add/remove
+- `crates/aibuddy/src/agents/tool_route_manager.rs` - Main manager, config check, dispatch
+- `crates/aibuddy/src/agents/router_tool_selector.rs` - `RouterToolSelector` trait, `LLMToolSelector` impl
+- `crates/aibuddy/src/agents/router_tools.rs` - `router__llm_search` tool definition, prompt function
+- `crates/aibuddy/src/agents/tool_router_index_manager.rs` - Tool indexing on extension add/remove
 
 ### Integration Points
-- `crates/heybuddy/src/agents/agent.rs` - `dispatch_tool_call()` routes `ROUTER_LLM_SEARCH_TOOL_NAME`
-- `crates/heybuddy/src/agents/prompt_manager.rs` - `with_router_enabled()`, injects prompt
-- `crates/heybuddy-server/src/routes/agent.rs` - `/agent/update_router_tool_selector` endpoint
+- `crates/aibuddy/src/agents/agent.rs` - `dispatch_tool_call()` routes `ROUTER_LLM_SEARCH_TOOL_NAME`
+- `crates/aibuddy/src/agents/prompt_manager.rs` - `with_router_enabled()`, injects prompt
+- `crates/aibuddy-server/src/routes/agent.rs` - `/agent/update_router_tool_selector` endpoint
 
 ### UI
 - `ui/desktop/src/components/settings/tool_selection_strategy/ToolSelectionStrategySection.tsx` - Settings toggle
 
 ### Prompts
-- `crates/heybuddy/src/prompts/router_tool_selector.md` - LLM search prompt template
-- `crates/heybuddy/src/prompts/system.md` - `{{tool_selection_strategy}}` placeholder
+- `crates/aibuddy/src/prompts/router_tool_selector.md` - LLM search prompt template
+- `crates/aibuddy/src/prompts/system.md` - `{{tool_selection_strategy}}` placeholder
 
 ## Key Design Patterns
 

@@ -53,7 +53,7 @@ release_consumers.each do |workflow|
   unless workflow.include?("AIBuddy*.exe") || workflow.include?("AIBuddy-windows-*-setup.exe")
     abort "release consumer missing AIBuddy Windows installers"
   end
-  abort "release consumer retains HeyBuddy artifact names" if workflow.include?("HeyBuddy")
+  abort "release consumer retains AIBuddy artifact names" if workflow.include?("AIBuddy")
   abort "release consumer retains CLI install artifacts" if workflow.include?("download_cli.sh")
 end
 

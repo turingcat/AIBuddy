@@ -1,39 +1,39 @@
 ---
 title: Memory Extension
-description: Use Memory MCP Server as a heybuddy Extension
+description: Use Memory MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
 <YouTubeShortEmbed videoUrl="https://youtube.com/embed/BZ0yrSLXQwk" />
 
-The Memory extension turns heybuddy into a knowledgeable assistant by allowing you to teach it personalized key information (e.g. commands, code snippets, preferences and configurations) that it can recall and apply later. Whether it’s project-specific (local) or universal (global) knowledge, heybuddy learns and remembers what matters most to you.
+The Memory extension turns aibuddy into a knowledgeable assistant by allowing you to teach it personalized key information (e.g. commands, code snippets, preferences and configurations) that it can recall and apply later. Whether it’s project-specific (local) or universal (global) knowledge, aibuddy learns and remembers what matters most to you.
 
-This tutorial covers enabling and using the Memory MCP Server, which is a built-in heybuddy extension.  
+This tutorial covers enabling and using the Memory MCP Server, which is a built-in aibuddy extension.  
 
 ## Configuration
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Memory"
     description="Store and recall personalized information for consistent assistance"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
  
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -54,10 +54,10 @@ Memories are stored as files on disk in one of two locations:
 
 | Scope | Path | When to use |
 |-------|------|-------------|
-| Local (project) | `.heybuddy/memory/` in your working directory | Project-specific preferences and configs |
-| Global (user) | `~/.config/heybuddy/memory/` | Preferences that apply across all projects |
+| Local (project) | `.aibuddy/memory/` in your working directory | Project-specific preferences and configs |
+| Global (user) | `~/.config/aibuddy/memory/` | Preferences that apply across all projects |
 
-heybuddy loads all saved memories at the start of a session and includes them in every prompt sent to the LLM.
+aibuddy loads all saved memories at the start of a session and includes them in every prompt sent to the LLM.
 
 ## Tool Reference
 
@@ -69,22 +69,22 @@ heybuddy loads all saved memories at the start of a session and includes them in
 | `remove_specific_memory(category, memory_content, is_global)` | Remove a single memory by matching its content within a category |
 
 ## Why Use Memory?  
-With the Memory extension, you’re not just storing static notes, you’re teaching heybuddy how to assist you better. Imagine telling heybuddy:  
+With the Memory extension, you’re not just storing static notes, you’re teaching aibuddy how to assist you better. Imagine telling aibuddy:  
 
 > _learn everything about MCP servers and save it to memory._
 
 Later, you can ask:
 > _utilizing our MCP server knowledge help me build an MCP server._ 
 
-heybuddy will recall everything you’ve saved as long as you instruct it to remember. This makes it easier to have consistent results when working with heybuddy.
+aibuddy will recall everything you’ve saved as long as you instruct it to remember. This makes it easier to have consistent results when working with aibuddy.
 
-For large or detailed instructions, store them in files and instruct heybuddy to reference those files:
+For large or detailed instructions, store them in files and instruct aibuddy to reference those files:
 
 > _Remember that if I ask for help writing JavaScript, I want you to refer to "/path/to/javascript_notes.txt" and follow the instructions in that file._
 
 
 ## Trigger Words and When to Use Them
-heybuddy also recognizes certain trigger words that signal when to store, retrieve, or remove memory.
+aibuddy also recognizes certain trigger words that signal when to store, retrieve, or remove memory.
 
 | **Trigger Words**   | **When to Use** |
 |---------------------|----------------|
@@ -99,33 +99,33 @@ heybuddy also recognizes certain trigger words that signal when to store, retrie
 
 ## Example Usage
 
-In this example, I’ll show you how to make heybuddy a knowledgeable development assistant by teaching it about your project’s API standards. With the Memory extension, heybuddy can store structured information and recall it when needed, helping you stay consistent in your work.
+In this example, I’ll show you how to make aibuddy a knowledgeable development assistant by teaching it about your project’s API standards. With the Memory extension, aibuddy can store structured information and recall it when needed, helping you stay consistent in your work.
 
-This means you no longer have to repeat yourself. heybuddy will remember your project’s requirements and automatically apply them to new tasks.
+This means you no longer have to repeat yourself. aibuddy will remember your project’s requirements and automatically apply them to new tasks.
 
 :::tip  
-If you frequently work with API standards or other structured knowledge, heybuddy may automatically suggest saving them to memory for you when it detects a pattern in your workflow.  
+If you frequently work with API standards or other structured knowledge, aibuddy may automatically suggest saving them to memory for you when it detects a pattern in your workflow.  
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-   1. Open a new session in heybuddy Desktop
+  <TabItem value="ui" label="aibuddy Desktop" default>
+   1. Open a new session in aibuddy Desktop
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-  1. Open a terminal and start a new heybuddy session:
+  1. Open a terminal and start a new aibuddy session:
 
   ```sh
-  heybuddy session
+  aibuddy session
   ```
 
   </TabItem>
 </Tabs>
 
-### Step 1: Teach heybuddy Your API Standards
-    #### heybuddy Prompt #1
+### Step 1: Teach aibuddy Your API Standards
+    #### aibuddy Prompt #1
     ```
-    heybuddy, learn our API development standards:
+    aibuddy, learn our API development standards:
 
     - All endpoints must use TypeScript interfaces
     - Error responses follow RFC 7807 Problem Details spec
@@ -136,7 +136,7 @@ If you frequently work with API standards or other structured knowledge, heybudd
     Remember this so you can help me follow these practices.
     ```
 
-    #### heybuddy Output
+    #### aibuddy Output
 
     ```
     I've learned your API standards. I'll help enforce these requirements when working on API endpoints.
@@ -153,12 +153,12 @@ If you frequently work with API standards or other structured knowledge, heybudd
         - Documentation requirements
     ```
 ### Step 2: Use Stored Knowledge to Create a New API Endpoint
-    #### heybuddy Prompt # 2
+    #### aibuddy Prompt # 2
 
     ```
     Help me create a new endpoint for user preferences
     ```
-    #### heybuddy Output
+    #### aibuddy Output
     ```
     I see you need a new endpoint. Based on our API development standards that I have stored in memory, I'll ensure it meets all our requirements.
 

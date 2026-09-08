@@ -1,12 +1,12 @@
 {
   "title": "📚 Community Content Contributions",
-  "description": "Amazing blog posts, videos, and tutorials created by our community for heybuddy!",
+  "description": "Amazing blog posts, videos, and tutorials created by our community for aibuddy!",
   "lastUpdated": "2025-10-15",
   "hacktoberfestYear": 2025,
   "submissionUrl": "https://github.com/aaif-goose/goose/issues/4705",
   "submissions": [
     {
-      "title": "Hacktoberfest 2025: Contributing to heybuddy",
+      "title": "Hacktoberfest 2025: Contributing to aibuddy",
       "author": {
         "name": "Tania Chakraborty",
         "handle": "taniacryptid"
@@ -22,7 +22,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Running heybuddy in Containers (Without Losing Your Mind)",
+      "title": "Running aibuddy in Containers (Without Losing Your Mind)",
       "author": {
         "name": "Rupam Golui",
         "handle": "Itz-Agasta"
@@ -37,7 +37,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "HeyBuddy with heybuddy Docs MCP",
+      "title": "AIBuddy with aibuddy Docs MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -51,7 +51,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Best Practices for Using heybuddy in Enterprise Environments",
+      "title": "Best Practices for Using aibuddy in Enterprise Environments",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -66,7 +66,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Getting started with heybuddy on Windows",
+      "title": "Getting started with aibuddy on Windows",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -81,7 +81,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Best Practices for Prompt Engineering with heybuddy",
+      "title": "Best Practices for Prompt Engineering with aibuddy",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -96,7 +96,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Deep Dive into heybuddy's Extension System and Model Context Protocol (MCP)",
+      "title": "Deep Dive into aibuddy's Extension System and Model Context Protocol (MCP)",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -111,7 +111,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Configuring heybuddy for Team Environments and Shared Workflows",
+      "title": "Configuring aibuddy for Team Environments and Shared Workflows",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -126,7 +126,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Adopting heybuddy in the Enterprise: A Guide to Security, Scalability, and Governance",
+      "title": "Adopting aibuddy in the Enterprise: A Guide to Security, Scalability, and Governance",
       "author": {
         "name": "M A Sai Adithyaa",
         "handle": "M-A-SAIADITHYAA"
@@ -140,7 +140,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Creating and Sharing Effective heybuddy Recipes",
+      "title": "Creating and Sharing Effective aibuddy Recipes",
       "author": {
         "name": "Shreyansh Singh Gautam",
         "handle": "Shreyanshsingh23"
@@ -155,7 +155,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "heybuddy with Context7 MCP",
+      "title": "aibuddy with Context7 MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -169,7 +169,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Stop Chasing Stale Docs: Creating Automated Documentation Workflows with heybuddy",
+      "title": "Stop Chasing Stale Docs: Creating Automated Documentation Workflows with aibuddy",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -183,7 +183,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Building Effective Prompts and Workflows for Code Review with heybuddy",
+      "title": "Building Effective Prompts and Workflows for Code Review with aibuddy",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -198,7 +198,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Optimizing heybuddy Performance on Windows",
+      "title": "Optimizing aibuddy Performance on Windows",
       "author": {
         "name": "Mohammed Thaha",
         "handle": "mohammed-thaha"
@@ -213,7 +213,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "heybuddy with Neon MCP",
+      "title": "aibuddy with Neon MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -227,7 +227,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "HeyBuddy with Canva MCP",
+      "title": "AIBuddy with Canva MCP",
       "author": {
         "name": "BestCodes",
         "handle": "the-best-codes"
@@ -241,7 +241,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "heybuddy with Apify MCP",
+      "title": "aibuddy with Apify MCP",
       "author": {
         "name": "abhi",
         "handle": "Better-Boy"
@@ -255,7 +255,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Building Custom Tools and Extensions for heybuddy: A Developer's Guide",
+      "title": "Building Custom Tools and Extensions for aibuddy: A Developer's Guide",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -270,7 +270,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Managing heybuddy Configurations Across Multiple Projects",
+      "title": "Managing aibuddy Configurations Across Multiple Projects",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -285,7 +285,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Managing HeyBuddy Configurations Across Multiple Projects: A Practical Guide",
+      "title": "Managing AIBuddy Configurations Across Multiple Projects: A Practical Guide",
       "author": {
         "name": "Viet Bui",
         "handle": "vietbui1999ru"

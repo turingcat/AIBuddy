@@ -24,7 +24,7 @@ if (options.help) {
 const relayUrl = process.env.BUZZ_RELAY_URL || "https://buzz.gdk.so";
 const configHome = process.env.XDG_CONFIG_HOME || join(homedir(), ".config");
 const buzzHome =
-  process.env.HEYBUDDY_BUZZ_HOME || join(configHome, "heybuddy", "buzz");
+  process.env.AIBUDDY_BUZZ_HOME || join(configHome, "aibuddy", "buzz");
 const privateKey = readRequiredFile(
   join(buzzHome, "github-manager", "private-key.nsec"),
 );
@@ -139,7 +139,7 @@ console.log(
 function parseArguments(arguments_) {
   const parsed = {
     repository: "aaif-goose/goose",
-    projectOwner: "aaif-heybuddy",
+    projectOwner: "aaif-aibuddy",
     projectNumber: 1,
     projectLimit: 1000,
     channelLimit: 500,
@@ -577,7 +577,7 @@ function printHelp() {
 
 Options:
   --repo <owner/repo>       GitHub repository (default: aaif-goose/goose)
-  --project-owner <owner>   GitHub project owner (default: aaif-heybuddy)
+  --project-owner <owner>   GitHub project owner (default: aaif-aibuddy)
   --project-number <number> GitHub project number (default: 1)
   --project-limit <number>  Maximum project items (default: 1000)
   --channel-limit <number>  Maximum Buzz channels to inspect (default: 500)

@@ -11,13 +11,13 @@ import TabItem from '@theme/TabItem';
 The tool shim is an experimental feature. Configuration options and behavior may change in future releases.
 :::
 
-Some language models don't natively support tool/function calling, or intermittently output tool calls as plaintext instead of structured API responses. The tool shim detects these text-based tool call formats and converts them into proper tool calls that heybuddy can execute.
+Some language models don't natively support tool/function calling, or intermittently output tool calls as plaintext instead of structured API responses. The tool shim detects these text-based tool call formats and converts them into proper tool calls that aibuddy can execute.
 
 ## When to enable
 
 Enable the tool shim when:
 
-- Tools stop working mid-session — the model calls a tool but heybuddy doesn't execute it
+- Tools stop working mid-session — the model calls a tool but aibuddy doesn't execute it
 - The model outputs plaintext like `functions.shell:0 <|tool_call_argument_begin|> {...}` instead of using the tool API
 - You're using a local model (Ollama, llama.cpp) that doesn't have native tool calling support
 - Your OpenAI-compatible provider routes to models that mix reasoning tags (`<think>`) with tool calls, causing parsing failures
@@ -26,14 +26,14 @@ Most locally-hosted models and some cloud models that weren't fine-tuned for str
 
 ## How it works
 
-The shim intercepts model responses and converts any text-based tool call formats into structured tool calls that heybuddy can execute. It requires a separate **interpreter model** — by default, heybuddy uses Ollama for this. The interpreter model is independent of whichever provider you use for your main conversation.
+The shim intercepts model responses and converts any text-based tool call formats into structured tool calls that aibuddy can execute. It requires a separate **interpreter model** — by default, aibuddy uses Ollama for this. The interpreter model is independent of whichever provider you use for your main conversation.
 
 ## Configuration
 
 ### Enable the shim
 
 ```bash
-export HEYBUDDY_TOOLSHIM=true
+export AIBUDDY_TOOLSHIM=true
 ```
 
 ### Ollama backend (default)
@@ -45,19 +45,19 @@ Ollama must be installed and running. The default interpreter model is `mistral-
 ollama pull mistral-nemo
 
 # Optional: use a different interpreter model
-export HEYBUDDY_TOOLSHIM_OLLAMA_MODEL=llama3.2
+export AIBUDDY_TOOLSHIM_OLLAMA_MODEL=llama3.2
 ```
 
 ### Local backend (llama.cpp / built-in inference)
 
-If you're running heybuddy with the built-in local inference backend, you can use it as the interpreter instead of a separate Ollama instance. A model name is required — set either `HEYBUDDY_TOOLSHIM_MODEL` or the `LOCAL_LLM_MODEL` config key, otherwise heybuddy will error on startup:
+If you're running aibuddy with the built-in local inference backend, you can use it as the interpreter instead of a separate Ollama instance. A model name is required — set either `AIBUDDY_TOOLSHIM_MODEL` or the `LOCAL_LLM_MODEL` config key, otherwise aibuddy will error on startup:
 
 ```bash
-export HEYBUDDY_TOOLSHIM_BACKEND=local
-export HEYBUDDY_TOOLSHIM_MODEL=my-model-name
+export AIBUDDY_TOOLSHIM_BACKEND=local
+export AIBUDDY_TOOLSHIM_MODEL=my-model-name
 ```
 
-Valid values for `HEYBUDDY_TOOLSHIM_BACKEND`: `ollama` (default), `local`, `llama.cpp`.
+Valid values for `AIBUDDY_TOOLSHIM_BACKEND`: `ollama` (default), `local`, `llama.cpp`.
 
 ## Usage examples
 
@@ -65,18 +65,18 @@ Valid values for `HEYBUDDY_TOOLSHIM_BACKEND`: `ollama` (default), `local`, `llam
   <TabItem value="ollama-primary" label="Ollama as primary provider" default>
 
   ```bash
-  HEYBUDDY_TOOLSHIM=true heybuddy session
+  AIBUDDY_TOOLSHIM=true aibuddy session
   ```
 
-  Uses `mistral-nemo` as the interpreter. Override with `HEYBUDDY_TOOLSHIM_OLLAMA_MODEL` if needed.
+  Uses `mistral-nemo` as the interpreter. Override with `AIBUDDY_TOOLSHIM_OLLAMA_MODEL` if needed.
 
   </TabItem>
   <TabItem value="custom-provider" label="Custom OpenAI-compatible provider">
 
   ```bash
-  HEYBUDDY_TOOLSHIM=true \
-  HEYBUDDY_TOOLSHIM_OLLAMA_MODEL=llama3.2 \
-  heybuddy session
+  AIBUDDY_TOOLSHIM=true \
+  AIBUDDY_TOOLSHIM_OLLAMA_MODEL=llama3.2 \
+  aibuddy session
   ```
 
   Your primary provider can be anything (Bedrock, a custom router, etc.). The shim uses Ollama locally as the interpreter regardless of which provider you're talking to.
@@ -85,13 +85,13 @@ Valid values for `HEYBUDDY_TOOLSHIM_BACKEND`: `ollama` (default), `local`, `llam
   <TabItem value="local-backend" label="Built-in local inference">
 
   ```bash
-  HEYBUDDY_TOOLSHIM=true \
-  HEYBUDDY_TOOLSHIM_BACKEND=local \
-  HEYBUDDY_TOOLSHIM_MODEL=my-model-name \
-  heybuddy session
+  AIBUDDY_TOOLSHIM=true \
+  AIBUDDY_TOOLSHIM_BACKEND=local \
+  AIBUDDY_TOOLSHIM_MODEL=my-model-name \
+  aibuddy session
   ```
 
-  Uses heybuddy's built-in llama.cpp backend as the interpreter. `HEYBUDDY_TOOLSHIM_MODEL` (or `LOCAL_LLM_MODEL` in config) is required — startup fails if neither is set.
+  Uses aibuddy's built-in llama.cpp backend as the interpreter. `AIBUDDY_TOOLSHIM_MODEL` (or `LOCAL_LLM_MODEL` in config) is required — startup fails if neither is set.
 
   </TabItem>
 </Tabs>
@@ -100,16 +100,16 @@ Valid values for `HEYBUDDY_TOOLSHIM_BACKEND`: `ollama` (default), `local`, `llam
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `HEYBUDDY_TOOLSHIM` | Enable the tool shim (`true` or `1`) | `false` |
-| `HEYBUDDY_TOOLSHIM_BACKEND` | Interpreter backend: `ollama`, `local`, or `llama.cpp` | `ollama` |
-| `HEYBUDDY_TOOLSHIM_OLLAMA_MODEL` | Ollama model used as the interpreter | `mistral-nemo` |
-| `HEYBUDDY_TOOLSHIM_MODEL` | Model name for the local interpreter backend (required if using `local` backend and `LOCAL_LLM_MODEL` config is not set) | — |
+| `AIBUDDY_TOOLSHIM` | Enable the tool shim (`true` or `1`) | `false` |
+| `AIBUDDY_TOOLSHIM_BACKEND` | Interpreter backend: `ollama`, `local`, or `llama.cpp` | `ollama` |
+| `AIBUDDY_TOOLSHIM_OLLAMA_MODEL` | Ollama model used as the interpreter | `mistral-nemo` |
+| `AIBUDDY_TOOLSHIM_MODEL` | Model name for the local interpreter backend (required if using `local` backend and `LOCAL_LLM_MODEL` config is not set) | — |
 
 ## Troubleshooting
 
 **Tools suddenly stop working in the middle of a session**
 
-The model may have switched from native tool calls to a text-based format. Enable `HEYBUDDY_TOOLSHIM=true` and restart.
+The model may have switched from native tool calls to a text-based format. Enable `AIBUDDY_TOOLSHIM=true` and restart.
 
 **The shim is enabled but tools still don't execute**
 
@@ -121,7 +121,7 @@ Check that your interpreter backend is reachable:
 
 Switch to a smaller, faster Ollama model:
 ```bash
-export HEYBUDDY_TOOLSHIM_OLLAMA_MODEL=qwen2.5:3b
+export AIBUDDY_TOOLSHIM_OLLAMA_MODEL=qwen2.5:3b
 ```
 
 **Model outputs reasoning before tool calls (`<think>` tags)**

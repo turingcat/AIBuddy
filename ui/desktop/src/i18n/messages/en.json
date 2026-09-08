@@ -1020,7 +1020,7 @@
     "defaultMessage": "Working directory must be an absolute path"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "Enter an absolute path (e.g. /home/heybuddy/workspace)"
+    "defaultMessage": "Enter an absolute path (e.g. /home/aibuddy/workspace)"
   },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
@@ -1332,7 +1332,7 @@
     "defaultMessage": "Secret Key"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "The secret key configured on the external backend (HEYBUDDY_SERVER__SECRET_KEY)."
+    "defaultMessage": "The secret key configured on the external backend (AIBUDDY_SERVER__SECRET_KEY)."
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "Enter the server's secret key"
@@ -1368,7 +1368,7 @@
     "defaultMessage": "Absolute path on the external backend. Leave blank to send the local working directory."
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/heybuddy/workspace"
+    "defaultMessage": "/home/aibuddy/workspace"
   },
   "gitBranchIndicator.failedToSwitch": {
     "defaultMessage": "Failed to switch to {branch}"
@@ -1382,67 +1382,67 @@
   "gitBranchIndicator.uncommittedChanges": {
     "defaultMessage": "You may have uncommitted changes."
   },
-  "heybuddyhintsModal.close": {
+  "aibuddyhintsModal.close": {
     "defaultMessage": "Close"
   },
-  "heybuddyhintsModal.developer": {
+  "aibuddyhintsModal.developer": {
     "defaultMessage": "Developer"
   },
-  "heybuddyhintsModal.dialogDescription": {
+  "aibuddyhintsModal.dialogDescription": {
     "defaultMessage": "Provide additional context about your project to improve communication with {appName}"
   },
-  "heybuddyhintsModal.dialogTitle": {
-    "defaultMessage": "Configure Project Hints (.heybuddyhints)"
+  "aibuddyhintsModal.dialogTitle": {
+    "defaultMessage": "Configure Project Hints (.aibuddyhints)"
   },
-  "heybuddyhintsModal.errorReading": {
-    "defaultMessage": "Error reading .heybuddyhints file: {error}"
+  "aibuddyhintsModal.errorReading": {
+    "defaultMessage": "Error reading .aibuddyhints file: {error}"
   },
-  "heybuddyhintsModal.failedToAccess": {
-    "defaultMessage": "Failed to access .heybuddyhints file"
+  "aibuddyhintsModal.failedToAccess": {
+    "defaultMessage": "Failed to access .aibuddyhints file"
   },
-  "heybuddyhintsModal.failedToSave": {
-    "defaultMessage": "Failed to save .heybuddyhints file"
+  "aibuddyhintsModal.failedToSave": {
+    "defaultMessage": "Failed to save .aibuddyhints file"
   },
-  "heybuddyhintsModal.fileCreating": {
-    "defaultMessage": "Creating new .heybuddyhints file at: {filePath}"
+  "aibuddyhintsModal.fileCreating": {
+    "defaultMessage": "Creating new .aibuddyhints file at: {filePath}"
   },
-  "heybuddyhintsModal.fileFound": {
-    "defaultMessage": ".heybuddyhints file found at: {filePath}"
+  "aibuddyhintsModal.fileFound": {
+    "defaultMessage": ".aibuddyhints file found at: {filePath}"
   },
-  "heybuddyhintsModal.helpText1": {
-    "defaultMessage": ".heybuddyhints is a text file used to provide additional context about your project and improve the communication with {appName}."
+  "aibuddyhintsModal.helpText1": {
+    "defaultMessage": ".aibuddyhints is a text file used to provide additional context about your project and improve the communication with {appName}."
   },
-  "heybuddyhintsModal.helpText2": {
-    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .heybuddyhints. You'll need to restart your session for .heybuddyhints updates to take effect."
+  "aibuddyhintsModal.helpText2": {
+    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .aibuddyhints. You'll need to restart your session for .aibuddyhints updates to take effect."
   },
-  "heybuddyhintsModal.helpText3": {
+  "aibuddyhintsModal.helpText3": {
     "defaultMessage": "See {link} for more information."
   },
-  "heybuddyhintsModal.helpTextLink": {
-    "defaultMessage": "using .heybuddyhints"
+  "aibuddyhintsModal.helpTextLink": {
+    "defaultMessage": "using .aibuddyhints"
   },
-  "heybuddyhintsModal.placeholder": {
+  "aibuddyhintsModal.placeholder": {
     "defaultMessage": "Enter project hints here..."
   },
-  "heybuddyhintsModal.save": {
+  "aibuddyhintsModal.save": {
     "defaultMessage": "Save"
   },
-  "heybuddyhintsModal.savedSuccessfully": {
+  "aibuddyhintsModal.savedSuccessfully": {
     "defaultMessage": "Saved successfully"
   },
-  "heybuddyhintsModal.saving": {
+  "aibuddyhintsModal.saving": {
     "defaultMessage": "Saving..."
   },
-  "heybuddyhintsSection.configure": {
+  "aibuddyhintsSection.configure": {
     "defaultMessage": "Configure"
   },
-  "heybuddyhintsSection.description": {
-    "defaultMessage": "Configure your project's .heybuddyhints file to provide additional context to {appName}"
+  "aibuddyhintsSection.description": {
+    "defaultMessage": "Configure your project's .aibuddyhints file to provide additional context to {appName}"
   },
-  "heybuddyhintsSection.title": {
-    "defaultMessage": "Project Hints (.heybuddyhints)"
+  "aibuddyhintsSection.title": {
+    "defaultMessage": "Project Hints (.aibuddyhints)"
   },
-  "groupedExtensionLoadingToast.askHeyBuddy": {
+  "groupedExtensionLoadingToast.askAIBuddy": {
     "defaultMessage": "Ask {appName}"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
@@ -1859,25 +1859,25 @@
   "launcher.placeholder": {
     "defaultMessage": "Ask {appName} anything..."
   },
-  "loadingHeyBuddy.compacting": {
+  "loadingAIBuddy.compacting": {
     "defaultMessage": "{appName} is compacting the conversation..."
   },
-  "loadingHeyBuddy.idle": {
+  "loadingAIBuddy.idle": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingHeyBuddy.loadingConversation": {
+  "loadingAIBuddy.loadingConversation": {
     "defaultMessage": "loading conversation..."
   },
-  "loadingHeyBuddy.restartingAgent": {
+  "loadingAIBuddy.restartingAgent": {
     "defaultMessage": "restarting session..."
   },
-  "loadingHeyBuddy.streaming": {
+  "loadingAIBuddy.streaming": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingHeyBuddy.thinking": {
+  "loadingAIBuddy.thinking": {
     "defaultMessage": "{appName} is thinking…"
   },
-  "loadingHeyBuddy.waiting": {
+  "loadingAIBuddy.waiting": {
     "defaultMessage": "{appName} is waiting…"
   },
   "localInferenceSettings.deleteConfirm": {
@@ -4140,7 +4140,7 @@
     "defaultMessage": "No matching skills found"
   },
   "skillsView.noSkillsDescription": {
-    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .heybuddy/skills/, or other supported directories."
+    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .aibuddy/skills/, or other supported directories."
   },
   "skillsView.noSkillsInstalled": {
     "defaultMessage": "No skills installed"
@@ -4418,7 +4418,7 @@
   "toolConfirmation.allowToolCallWithName": {
     "defaultMessage": "Allow {toolName}?"
   },
-  "toolConfirmation.heybuddyWouldLikeToCallWithName": {
+  "toolConfirmation.aibuddyWouldLikeToCallWithName": {
     "defaultMessage": "{appName} would like to call {toolName}. Allow?"
   },
   "userMessage.cancel": {

@@ -44,7 +44,7 @@ import { defineMessages, useIntl } from '../../i18n';
 import FlyingBird from '../FlyingBird';
 import { formatExtensionName } from '../settings/extensions/subcomponents/ExtensionList';
 import {
-  HeyBuddyDisplayMode,
+  AIBuddyDisplayMode,
   SandboxPermissions,
   McpAppToolCancelled,
   McpAppToolInput,
@@ -112,7 +112,7 @@ const DEFAULT_IFRAME_HEIGHT = 200;
 const FULLSCREEN_HEADER_HEIGHT = 48;
 const DEFAULT_SANDBOX_PERMISSIONS = 'allow-scripts allow-same-origin allow-forms';
 
-const DISPLAY_MODE_LAYOUTS: Record<HeyBuddyDisplayMode, DimensionLayout> = {
+const DISPLAY_MODE_LAYOUTS: Record<AIBuddyDisplayMode, DimensionLayout> = {
   inline: { width: 'fixed', height: 'unbounded' },
   fullscreen: { width: 'fixed', height: 'fixed' },
   standalone: { width: 'fixed', height: 'fixed' },
@@ -121,7 +121,7 @@ const DISPLAY_MODE_LAYOUTS: Record<HeyBuddyDisplayMode, DimensionLayout> = {
 };
 
 function getContainerDimensions(
-  displayMode: HeyBuddyDisplayMode,
+  displayMode: AIBuddyDisplayMode,
   measuredWidth: number,
   measuredHeight: number
 ): McpUiHostContext['containerDimensions'] {
@@ -208,7 +208,7 @@ interface McpAppRendererProps {
   toolResult?: CallToolResult;
   toolCancelled?: McpAppToolCancelled;
   append?: (text: string) => void;
-  displayMode?: HeyBuddyDisplayMode;
+  displayMode?: AIBuddyDisplayMode;
   cachedHtml?: string;
   onDisplayModeChange?: OnDisplayModeChange;
 }
@@ -228,7 +228,7 @@ type FallbackRequestHandler = {
   ) => Promise<Record<string, unknown>>;
 };
 
-interface HeyBuddyAppFrameProps {
+interface AIBuddyAppFrameProps {
   html: string;
   sandbox: SandboxConfig;
   hostContext: McpUiHostContext;
@@ -261,7 +261,7 @@ interface HeyBuddyAppFrameProps {
 
 const SANDBOX_PROXY_READY_METHOD = 'ui/notifications/sandbox-proxy-ready';
 
-function HeyBuddyAppFrame({
+function AIBuddyAppFrame({
   html,
   sandbox,
   hostContext,
@@ -278,7 +278,7 @@ function HeyBuddyAppFrame({
   onSizeChanged,
   onInitialized,
   onError,
-}: HeyBuddyAppFrameProps) {
+}: AIBuddyAppFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const bridgeRef = useRef<AppBridge | null>(null);
@@ -1006,7 +1006,7 @@ export default function McpAppRenderer({
     if (!sandboxConfig) return null;
 
     return (
-      <HeyBuddyAppFrame
+      <AIBuddyAppFrame
         sandbox={sandboxConfig}
         html={html ?? ''}
         hostContext={hostContext}

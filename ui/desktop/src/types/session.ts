@@ -3,7 +3,7 @@ import type { Message } from './message';
 
 export type ExtensionData = Record<string, unknown>;
 
-export type HeyBuddyMode = 'auto' | 'approve' | 'smart_approve' | 'chat';
+export type AIBuddyMode = 'auto' | 'approve' | 'smart_approve' | 'chat';
 
 export type ModelConfig = {
   context_limit?: number | null;
@@ -40,7 +40,7 @@ export type Session = {
   conversation?: Message[] | null;
   created_at: string;
   extension_data: ExtensionData;
-  heybuddy_mode?: HeyBuddyMode;
+  aibuddy_mode?: AIBuddyMode;
   id: string;
   last_message_at?: string | null;
   last_message_snippet?: string | null;

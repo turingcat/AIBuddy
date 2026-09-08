@@ -1,42 +1,42 @@
 ---
 title: Computer Controller Extension
-description: Use Computer Controller MCP Server as a heybuddy Extension
+description: Use Computer Controller MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/EuMzToNOQtw" />
 
 The Computer Controller extension helps automate everyday computer tasks such as controlling applications and system settings (macOS UI automation via the Peekaboo CLI) and processing documents (PDF, Word, Excel) without needing to know how to code.
 
-This tutorial covers enabling and using the Computer Controller MCP Server, which is a built-in heybuddy extension.
+This tutorial covers enabling and using the Computer Controller MCP Server, which is a built-in aibuddy extension.
 
 :::tip
-Let heybuddy complete its tasks without interruption - avoid using your mouse or keyboard until it's done.
+Let aibuddy complete its tasks without interruption - avoid using your mouse or keyboard until it's done.
 :::
 
 ## Configuration
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Computer Controller"
     description="Automate everyday computer tasks and web interactions"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -53,26 +53,26 @@ Let heybuddy complete its tasks without interruption - avoid using your mouse or
 
 ## Example Usage
 
-In this example, I'll show you how heybuddy can multitask, handling everything from system controls and music playback to web research and data organization.
+In this example, I'll show you how aibuddy can multitask, handling everything from system controls and music playback to web research and data organization.
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-   1. Open a new session in heybuddy Desktop
+  <TabItem value="ui" label="aibuddy Desktop" default>
+   1. Open a new session in aibuddy Desktop
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-  1. Open a terminal and start a new heybuddy session:
+  1. Open a terminal and start a new aibuddy session:
 
   ```sh
-  heybuddy session
+  aibuddy session
   ```
 
   </TabItem>
 </Tabs>
 
-### heybuddy Prompt
+### aibuddy Prompt
 ```
-heybuddy, I need to decompress while researching AI models for tomorrow's meeting. Can you create a relaxing environment and help me research?
+aibuddy, I need to decompress while researching AI models for tomorrow's meeting. Can you create a relaxing environment and help me research?
 
 1. Play classical music in Safari
 2. Dim screen brightness (2 levels)
@@ -85,7 +85,7 @@ heybuddy, I need to decompress while researching AI models for tomorrow's meetin
 6. Reset brightness and close Safari
 ```
 
-### heybuddy Output
+### aibuddy Output
 ```md
 I'll help you create a relaxing research environment and gather information about AI models. I'll break this down into steps:
 

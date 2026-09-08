@@ -1,25 +1,25 @@
 ---
 title: Repomix Extension
-description: Add Repomix MCP Server as a heybuddy Extension
+description: Add Repomix MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/69h4LLkIg_E" />
 
 
-This tutorial covers how to add the [Repomix MCP Server](https://github.com/yamadashy/repomix) as a heybuddy extension to enable automated repository packing, codebase analysis, architecture summaries, test generation, and code exploration, all while compressing the codebase to minimize token usage and stay within your LLM's context limits.
+This tutorial covers how to add the [Repomix MCP Server](https://github.com/yamadashy/repomix) as a aibuddy extension to enable automated repository packing, codebase analysis, architecture summaries, test generation, and code exploration, all while compressing the codebase to minimize token usage and stay within your LLM's context limits.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=repomix&arg=--mcp&id=repomix-mcp&name=Repomix&description=Pack%20repositories%20into%20AI-friendly%20formats%20for%20heybuddy)
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=repomix&arg=--mcp&id=repomix-mcp&name=Repomix&description=Pack%20repositories%20into%20AI-friendly%20formats%20for%20aibuddy)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y repomix --mcp
@@ -35,19 +35,19 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="repomix-mcp"
     extensionName="Repomix"
-    description="Pack repositories into AI-friendly formats for heybuddy"
+    description="Pack repositories into AI-friendly formats for aibuddy"
     command="npx"
     args={["-y", "repomix", "--mcp"]}
   />
 </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Repomix"
-      description="Pack repositories into AI-friendly formats for heybuddy"
+      description="Pack repositories into AI-friendly formats for aibuddy"
       command="npx -y repomix --mcp"
     />
   </TabItem>
@@ -55,16 +55,16 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-In this example, I’ll show you how to use heybuddy with the Repomix Extension to analyze the compressed Axios repository. heybuddy will focus on the `lib/core/Axios.js` file, explain its role in the architecture, spot missing tests, write new unit tests, and suggest improvements to the testing strategy and code maintainability. 
+In this example, I’ll show you how to use aibuddy with the Repomix Extension to analyze the compressed Axios repository. aibuddy will focus on the `lib/core/Axios.js` file, explain its role in the architecture, spot missing tests, write new unit tests, and suggest improvements to the testing strategy and code maintainability. 
 
-By compressing the entire codebase into an AI-friendly format, Repomix helps heybuddy stay within token limits while providing detailed, file-specific insights.
+By compressing the entire codebase into an AI-friendly format, Repomix helps aibuddy stay within token limits while providing detailed, file-specific insights.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 > Review the file lib/core/Axios.js from the Axios repository and identify any missing unit tests needed to thoroughly cover its core functions and classes. Explain the role this file plays in the overall Axios architecture, how it integrates with other modules, and how well it is currently tested. Write new unit tests to improve coverage, and recommend improvements to the testing strategy or refactoring opportunities to make the code more maintainable.
 
 
-### heybuddy Output
+### aibuddy Output
 
 :::note CLI
 

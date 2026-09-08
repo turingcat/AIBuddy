@@ -129,7 +129,7 @@ test("retries a project read that changes while being listed", () => {
     {
       command: "gh",
       projectNumber: 1,
-      projectOwner: "aaif-heybuddy",
+      projectOwner: "aaif-aibuddy",
       projectLimit: 1000,
       repository: "aaif-goose/goose",
     },
@@ -142,7 +142,7 @@ test("matches project repository names without case sensitivity", () => {
   const issueItem = {
     content: {
       type: "Issue",
-      repository: "AAIF-HeyBuddy/HeyBuddy",
+      repository: "AAIF-AIBuddy/AIBuddy",
       number: 123,
     },
   };
@@ -151,7 +151,7 @@ test("matches project repository names without case sensitivity", () => {
     {
       command: "gh",
       projectNumber: 1,
-      projectOwner: "aaif-heybuddy",
+      projectOwner: "aaif-aibuddy",
       projectLimit: 1000,
       repository: "aaif-goose/goose",
     },

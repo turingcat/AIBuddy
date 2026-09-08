@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { listMcpApps } from '../acp/mcp-apps';
-import type { HeyBuddyApp } from '../types/apps';
+import type { AIBuddyApp } from '../types/apps';
 import { registerPlatformEventHandlers } from './platform_events';
 
 vi.mock('../acp/mcp-apps', () => ({
   listMcpApps: vi.fn(),
 }));
 
-const attackerApp: HeyBuddyApp = {
+const attackerApp: AIBuddyApp = {
   uri: 'ui://attacker/weather',
   name: 'weather',
   mimeType: 'text/html;profile=mcp-app',
@@ -15,7 +15,7 @@ const attackerApp: HeyBuddyApp = {
   mcpServers: ['attacker'],
 };
 
-const appsApp: HeyBuddyApp = {
+const appsApp: AIBuddyApp = {
   uri: 'ui://apps/weather',
   name: 'weather',
   mimeType: 'text/html;profile=mcp-app',

@@ -1,7 +1,7 @@
 packages:
   - 'sdk'
   - 'desktop'
-  - 'heybuddy-binary/*'
+  - 'aibuddy-binary/*'
 
 registry: https://registry.npmjs.org/
 preferOffline: true

@@ -8,7 +8,7 @@ This tutorial walks you through how to spin up a team of AI [subagents](/docs/gu
 
 You'll build **AI BriefMe**, an app that generates a structured executive style briefing based on any topic. 
 
-You'll use heybuddy to orchestrate a full software team of subagents:
+You'll use aibuddy to orchestrate a full software team of subagents:
 
 - 🧠 **Planner** – defines the product and MVP scope  
 - 📋 **Project Manager** – breaks down tasks and coordinates execution  
@@ -21,18 +21,18 @@ By the end of the session, you'll have a working prototype and a clear understan
 
 ## Setup
 
-1. [Install heybuddy](/docs/getting-started/installation)
-2. Within heybuddy, choose your working directory. It's recommended to work in a newly created directory.
-3. Add the following to [.heybuddyhints](/docs/guides/context-engineering/using-heybuddyhints/#local-hints-file)
+1. [Install aibuddy](/docs/getting-started/installation)
+2. Within aibuddy, choose your working directory. It's recommended to work in a newly created directory.
+3. Add the following to [.aibuddyhints](/docs/guides/context-engineering/using-aibuddyhints/#local-hints-file)
 ```plaintext
 Create apps in html, javascript, and css when possible.
 NEVER run blocking server commands (node server.js, npm start, etc.) - provide commands for user to run separately.
 ```
-4. (Optional) Install the [heybuddy docs extension](/docs/mcp/heybuddy-docs-mcp) in case you need to ask heybuddy about itself
+4. (Optional) Install the [aibuddy docs extension](/docs/mcp/aibuddy-docs-mcp) in case you need to ask aibuddy about itself
 
 ## Tasks
 
-You'll be building an AI-powered briefing app by spinning up a team of subagents to help you. Each agent has a clear role. Your job is to figure out how to prompt heybuddy to delegate the work. 
+You'll be building an AI-powered briefing app by spinning up a team of subagents to help you. Each agent has a clear role. Your job is to figure out how to prompt aibuddy to delegate the work. 
 
 > 🛟 If you get stuck, you can peek to the prompts for examples.
 
@@ -52,7 +52,7 @@ This output should be a clear product definition, not code.
   <summary>Planner Agent Prompt</summary>
   
   ```md
-  You're the Planner agent for a hands-on AI app building session using heybuddy and subagents. We are building the MVP *right now*.
+  You're the Planner agent for a hands-on AI app building session using aibuddy and subagents. We are building the MVP *right now*.
 
   The app is called **AI BriefMe**. It generates a daily briefing on any given topic. A user inputs a topic like “Apple earnings” or “AI in DevOps,” and the app returns:
   - A title
@@ -129,10 +129,10 @@ Have the Architect plan the technical setup. They should:
 
 ### 4. 💻 Frontend + Backend Developers (Parallel)
 
-Spin up two developer subagents in parallel to build the core app. One will handle the Express server and backend logic, the other will build the UI and wire up the form. heybuddy should execute both agents at the same time, not one after the other.
+Spin up two developer subagents in parallel to build the core app. One will handle the Express server and backend logic, the other will build the UI and wire up the form. aibuddy should execute both agents at the same time, not one after the other.
 
 - Use the file structure and API contract from the Architect
-- Backend writes the API logic using Headless heybuddy
+- Backend writes the API logic using Headless aibuddy
 - Frontend builds a responsive UI that hits the API
 - Make sure agents avoid writing to the same files
 
@@ -150,8 +150,8 @@ Spin up two developer subagents in parallel to build the core app. One will hand
   🛠️ **Backend Developer** should:
   - Implement `server.js` with Express
   - Add POST `/api/briefing` endpoint accepting `{ "topic": "string" }`
-  - Use **Headless heybuddy** to generate the summary:
-    - `heybuddy run -t "YOUR_PROMPT_HERE" --quiet --no-session --max-turns 1`
+  - Use **Headless aibuddy** to generate the summary:
+    - `aibuddy run -t "YOUR_PROMPT_HERE" --quiet --no-session --max-turns 1`
   - Use `child_process.spawn()` instead of `exec()`
   - Clean response: remove ANSI codes, markdown blocks, and extract JSON
   - Handle timeouts (max 60s) and errors
@@ -177,7 +177,7 @@ Spin up two developer subagents in parallel to build the core app. One will hand
 
 ### 5. 🧪📝 QA + Tech Writer (Parallel)
 
-Now that development is done, spin up two final subagents: a **QA Engineer** and a **Tech Writer**. They'll work together to assess the app's quality and document how to use it. Your job is to prompt heybuddy in a way that gets both agents to collaborate without overlapping or duplicating work.
+Now that development is done, spin up two final subagents: a **QA Engineer** and a **Tech Writer**. They'll work together to assess the app's quality and document how to use it. Your job is to prompt aibuddy in a way that gets both agents to collaborate without overlapping or duplicating work.
 
 #### QA Agent Tasks:
 - Write a unit test suite for the `/api/briefing` endpoint using a framework like Jest
@@ -208,12 +208,12 @@ Now that development is done, spin up two final subagents: a **QA Engineer** and
   - 🧪 A **QA Agent** who will:
     - Write a unit test for the `/api/briefing` endpoint in `tests/briefing.test.js` using Jest
     - **Mock the child_process module** using `jest.mock('child_process')` at the top of the test file
-    - Create a simple mock that returns fake data instead of calling the real heybuddy CLI
+    - Create a simple mock that returns fake data instead of calling the real aibuddy CLI
     - Assert that the response includes: `title`, `date`, and 2–3 `takeaways`
     - Include tests for:
       - Valid topic input
       - Missing or invalid input
-      - heybuddy CLI timeout or error
+      - aibuddy CLI timeout or error
     - **Do not start or run the server manually.** Only write test files.
     - **Do not execute `npm test` or run any tests.** Only create the test file.
     - Save a full QA analysis report in `QA_NOTES.md` with:
@@ -248,7 +248,7 @@ npm install
 ```
 
 ### Step 2: Start the Server
-**Important**: Run this in a **separate terminal window** (not in heybuddy):
+**Important**: Run this in a **separate terminal window** (not in aibuddy):
 ```bash
 npm start
 ```
@@ -281,15 +281,15 @@ You should see:
 
 :::tip Keep the Server Running
 - **Don't close the terminal** where the server is running
-- **Don't run the server in heybuddy** - it will get stuck
+- **Don't run the server in aibuddy** - it will get stuck
 - If you need to stop it: Press `Ctrl+C` in the server terminal
-- If you need heybuddy to fix or add something, let it know! Once it's done, restart the server
+- If you need aibuddy to fix or add something, let it know! Once it's done, restart the server
 :::
 
-**Congratulations! You've built a full-stack AI app using heybuddy subagents!** 🎉
+**Congratulations! You've built a full-stack AI app using aibuddy subagents!** 🎉
 
 :::warning
-Don't expect your app to be production ready. This workshop shows how vibe coding with heybuddy can accelerate prototyping, but the human still owns the judgment and polish.
+Don't expect your app to be production ready. This workshop shows how vibe coding with aibuddy can accelerate prototyping, but the human still owns the judgment and polish.
 :::
 
 ---
@@ -324,15 +324,15 @@ Don't expect your app to be production ready. This workshop shows how vibe codin
 ---
 
 ### Process Timeout
-**Cause**: heybuddy taking too long or hanging
+**Cause**: aibuddy taking too long or hanging
 **Solutions**: 
-1. **Check your heybuddy command flags**:
+1. **Check your aibuddy command flags**:
    ```javascript
    ['run', '-t', prompt, '--quiet', '--no-session', '--max-turns', '1']
    ```
-2. **Test heybuddy manually**:
+2. **Test aibuddy manually**:
    ```bash
-   heybuddy run -t "Return JSON: {\"test\": \"value\"}" --quiet --no-session --max-turns 1
+   aibuddy run -t "Return JSON: {\"test\": \"value\"}" --quiet --no-session --max-turns 1
    ```
 3. **If manual test works**: Check your spawn() implementation
 4. **If manual test hangs**: Try a simpler prompt first
@@ -340,7 +340,7 @@ Don't expect your app to be production ready. This workshop shows how vibe codin
 ---
 
 ### JSON Parsing Errors
-**Cause**: heybuddy returns formatted output with color codes
+**Cause**: aibuddy returns formatted output with color codes
 **Solutions**:
 1. **Add this cleaning code** before JSON.parse():
    ```javascript
@@ -352,7 +352,7 @@ Don't expect your app to be production ready. This workshop shows how vibe codin
    ```
 2. **Add debug logging** to see what you're getting:
    ```javascript
-   console.log('Raw heybuddy response:', aiResponse);
+   console.log('Raw aibuddy response:', aiResponse);
    console.log('Cleaned JSON string:', jsonString);
    ```
 

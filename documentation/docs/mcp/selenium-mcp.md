@@ -1,25 +1,25 @@
 ---
 title: Selenium Extension
-description: Add Selenium MCP Server as a heybuddy Extension
+description: Add Selenium MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/PLqPOEeGPLc" />
 
 
-This tutorial covers how to add the [Selenium MCP Server](https://github.com/angiejones/mcp-selenium) as a heybuddy extension to automate browser interactions such as navigating web pages and completing forms.
+This tutorial covers how to add the [Selenium MCP Server](https://github.com/angiejones/mcp-selenium) as a aibuddy extension to automate browser interactions such as navigating web pages and completing forms.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40angiejones%2Fmcp-selenium&id=selenium-mcp&name=Selenium%20MCP&description=automates%20browser%20interactions)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y @angiejones/mcp-selenium
@@ -36,8 +36,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="selenium-mcp"
     extensionName="Selenium MCP"
     description="automates browser interactions"
@@ -45,7 +45,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@angiejones/mcp-selenium"]}
   />
 </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Selenium"
       description="Automates browser interactions"
@@ -56,14 +56,14 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-Let's use heybuddy to build a test automation project from scratch! We'll use the Selenium MCP to automate filling out a web form, then have heybuddy generate a Selenium project with the code so that we can run these tests again when needed.
+Let's use aibuddy to build a test automation project from scratch! We'll use the Selenium MCP to automate filling out a web form, then have aibuddy generate a Selenium project with the code so that we can run these tests again when needed.
 
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 > Use selenium to go to the heroku formy site and fill out the form page with generic data. then can you turn what you've done into an automation script for me? I would like it in Java. Also use the Page Object Model pattern.
 
 
-### heybuddy Output
+### aibuddy Output
 
 <iframe class="aspect-ratio" src="https://www.youtube.com/embed/mRV0N8hcgYA?start=28&end=152" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>

@@ -19,7 +19,7 @@ export default function ArchivedExtensionWarning({ extensionName, repoUrl }: Arc
       ) : (
         'repository'
       )}{' '}
-      remains available for reference, but may not be compatible with current versions of heybuddy.
+      remains available for reference, but may not be compatible with current versions of aibuddy.
     </Admonition>
   );
 }

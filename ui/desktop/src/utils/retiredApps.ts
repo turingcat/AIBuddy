@@ -1,6 +1,6 @@
-import type { HeyBuddyApp } from '../types/apps';
+import type { AIBuddyApp } from '../types/apps';
 
-export function isRetiredHeyBuddyChatApp(app: HeyBuddyApp) {
+export function isRetiredAIBuddyChatApp(app: AIBuddyApp) {
   return (
     app.mcpServers?.includes('apps') &&
     app.uri === 'ui://apps/chat' &&

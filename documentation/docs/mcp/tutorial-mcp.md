@@ -1,17 +1,17 @@
 ---
 title: Tutorial Extension
-description: Learn how to use heybuddy's built-in Tutorial extension for guided learning
+description: Learn how to use aibuddy's built-in Tutorial extension for guided learning
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
-The Tutorial extension is a built-in feature of heybuddy that provides interactive, step-by-step guidance for learning various aspects of heybuddy and its capabilities. It's designed to help users get comfortable with heybuddy's features through hands-on practice.
+The Tutorial extension is a built-in feature of aibuddy that provides interactive, step-by-step guidance for learning various aspects of aibuddy and its capabilities. It's designed to help users get comfortable with aibuddy's features through hands-on practice.
 
 The Tutorial extension serves as an interactive learning tool that:
 - Provides structured, step-by-step tutorials
-- Allows hands-on practice with heybuddy features
+- Allows hands-on practice with aibuddy features
 - Offers immediate feedback and guidance
 
 ## Configuration
@@ -19,21 +19,21 @@ The Tutorial extension serves as an interactive learning tool that:
 1. Ensure the Tutorial extension is enabled:
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Tutorial"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -53,7 +53,7 @@ The Tutorial extension serves as an interactive learning tool that:
 Currently, the following tutorials are available:
 
 - **build-mcp-extension**: Learn how to build an extension using the Model Context Protocol (MCP)
-- **first-game**: Create your first game with heybuddy
+- **first-game**: Create your first game with aibuddy
 
 More tutorials are being added regularly to cover additional features and use cases.
 
@@ -63,10 +63,10 @@ More tutorials are being added regularly to cover additional features and use ca
 
 There are two main ways to interact with tutorials:
 
-1. **Ask heybuddy directly**: You can simply ask about a topic you're interested in, and heybuddy will suggest relevant tutorials.
+1. **Ask aibuddy directly**: You can simply ask about a topic you're interested in, and aibuddy will suggest relevant tutorials.
 
 ```
-( O)> I'd like to learn how to build an extension for heybuddy
+( O)> I'd like to learn how to build an extension for aibuddy
 ```
 
 2. **Request a specific tutorial**: You can directly request a tutorial by name.
@@ -79,7 +79,7 @@ There are two main ways to interact with tutorials:
 
 While going through a tutorial:
 
-1. heybuddy will guide you step-by-step through the process
+1. aibuddy will guide you step-by-step through the process
 2. You'll receive clear instructions before any actions are taken
 3. You can ask questions at any time for clarification
 4. You can take breaks and resume later
@@ -87,7 +87,7 @@ While going through a tutorial:
 ### Best Practices
 
 - **Take your time**: Don't rush through the tutorials. Make sure you understand each step before moving on.
-- **Ask questions**: If something isn't clear, ask heybuddy to explain it further.
+- **Ask questions**: If something isn't clear, ask aibuddy to explain it further.
 - **Experiment**: Feel free to try variations of what you're learning.
 - **Take notes**: Document any interesting findings or techniques you learn.
 
@@ -97,12 +97,12 @@ While going through a tutorial:
 
 Here's an example of how to start learning about building extensions:
 
-### heybuddy Prompt
+### aibuddy Prompt
 ```
-I'd like to learn how to build an extension for heybuddy
+I'd like to learn how to build an extension for aibuddy
 ```
 
-### heybuddy Output
+### aibuddy Output
 ```
 I'll help you learn about building extensions! The "build-mcp-extension" tutorial would be perfect for this. Let me load it and guide you through it.
 
@@ -138,7 +138,7 @@ Which SDK would you like to use to get started?
 
 After completing tutorials, you can:
 - Apply learned concepts to your own projects
-- Contribute to the heybuddy community by sharing your experiences
+- Contribute to the aibuddy community by sharing your experiences
 - Suggest new tutorial topics that would be helpful for others
 
 ### Need Further Help? 

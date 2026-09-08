@@ -27,8 +27,8 @@ describe('AIBuddy recipe deeplinks', () => {
     });
   });
 
-  it('rejects the legacy Goose scheme before decoding it', async () => {
-    await expect(parseDeeplink('goose://recipe?config=ENCODED')).resolves.toBeNull();
+  it('rejects the legacy AIBuddy scheme before decoding it', async () => {
+    await expect(parseDeeplink('aibuddy://recipe?config=ENCODED')).resolves.toBeNull();
     expect(acpDecodeRecipe).not.toHaveBeenCalled();
   });
 });

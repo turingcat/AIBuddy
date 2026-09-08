@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router';
-import type { ScheduledJobDto } from '@heybuddy/heybuddy-sdk';
+import type { ScheduledJobDto } from '@aibuddy/aibuddy-sdk';
 import {
   acpListSchedules,
   acpCreateSchedule,

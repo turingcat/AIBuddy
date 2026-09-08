@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { all_heybuddy_modes, ModeSelectionItem } from './ModeSelectionItem';
+import { all_aibuddy_modes, ModeSelectionItem } from './ModeSelectionItem';
 import { useConfig } from '../../ConfigContext';
 import { ConversationLimitsDropdown } from './ConversationLimitsDropdown';
 
@@ -10,24 +10,24 @@ export const ModeSection = () => {
 
   const handleModeChange = async (newMode: string) => {
     try {
-      await upsert('HEYBUDDY_MODE', newMode, false);
+      await upsert('AIBUDDY_MODE', newMode, false);
       setCurrentMode(newMode);
     } catch (error) {
-      console.error('Error updating heybuddy mode:', error);
-      throw new Error(`Failed to store new heybuddy mode: ${newMode}`, { cause: error });
+      console.error('Error updating aibuddy mode:', error);
+      throw new Error(`Failed to store new aibuddy mode: ${newMode}`, { cause: error });
     }
   };
 
   useEffect(() => {
-    const mode = config.HEYBUDDY_MODE as string | undefined;
+    const mode = config.AIBUDDY_MODE as string | undefined;
     if (mode) {
       setCurrentMode(mode);
     }
-  }, [config.HEYBUDDY_MODE]);
+  }, [config.AIBUDDY_MODE]);
 
   const fetchMaxTurns = useCallback(async () => {
     try {
-      const turns = (await read('HEYBUDDY_MAX_TURNS', false)) as number;
+      const turns = (await read('AIBUDDY_MAX_TURNS', false)) as number;
       if (turns) {
         setMaxTurns(turns);
       }
@@ -38,7 +38,7 @@ export const ModeSection = () => {
 
   const handleMaxTurnsChange = async (value: number) => {
     try {
-      await upsert('HEYBUDDY_MAX_TURNS', value, false);
+      await upsert('AIBUDDY_MAX_TURNS', value, false);
       setMaxTurns(value);
     } catch (error) {
       console.error('Error updating max turns:', error);
@@ -52,7 +52,7 @@ export const ModeSection = () => {
   return (
     <div className="space-y-1">
       {/* Mode Selection */}
-      {all_heybuddy_modes.map((mode) => (
+      {all_aibuddy_modes.map((mode) => (
         <ModeSelectionItem
           key={mode.key}
           mode={mode}

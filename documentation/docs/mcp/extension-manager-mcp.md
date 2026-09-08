@@ -1,38 +1,38 @@
 ---
 title: Extension Manager
-description: Dynamically discover, enable, and disable extensions during heybuddy sessions
+description: Dynamically discover, enable, and disable extensions during aibuddy sessions
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PlatformExtensionNote } from '@site/src/components/PlatformExtensionNote';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
-You don't always need to manually manage extensions. The Extension Manager extension enables heybuddy to dynamically discover, enable, and disable extensions during active sessions. Based on the task you give it, heybuddy recognizes when it needs a specific extension, enables it when required, and suggests disabling unused extensions if the bloat is eating up your context window.
+You don't always need to manually manage extensions. The Extension Manager extension enables aibuddy to dynamically discover, enable, and disable extensions during active sessions. Based on the task you give it, aibuddy recognizes when it needs a specific extension, enables it when required, and suggests disabling unused extensions if the bloat is eating up your context window.
 
-Simply describe your task, and heybuddy will handle the extension management automatically.
+Simply describe your task, and aibuddy will handle the extension management automatically.
 
 ## Configuration
 
 <PlatformExtensionNote/>
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Extension Manager"
     description="Dynamically discover, enable, and disable extensions during sessions"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -48,18 +48,18 @@ Simply describe your task, and heybuddy will handle the extension management aut
 
 ## Why Use Extension Manager?
 
-heybuddy can work with many extensions, but having too many enabled at once can:
+aibuddy can work with many extensions, but having too many enabled at once can:
 - Overwhelm the LLM with too many tool choices
 - Reduce the quality of tool selection
 - Slow down response times
 - Exceed recommended limits (5 extensions or 50 tools)
 
-The Extension Manager solves this by letting heybuddy:
+The Extension Manager solves this by letting aibuddy:
 - **Discover** what extensions are available
 - **Enable** extensions only when needed for specific tasks
 - **Disable** extensions when they're no longer required
 
-This creates a more focused, efficient experience where heybuddy has access to exactly the tools it needs, when it needs them.
+This creates a more focused, efficient experience where aibuddy has access to exactly the tools it needs, when it needs them.
 
 :::tip Recommended Limits
 For optimal performance, aim for **5 or fewer active extensions** with a total of **50 or fewer tools**. The Extension Manager helps you stay within these limits by enabling task-specific extensions only when needed.
@@ -84,13 +84,13 @@ The resource tools (`list_resources` and `read_resource`) are only available whe
 
 Let's enable an extension when we need it. In this example, we'll enable the GitHub extension to work with repositories.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 List all my GitHub repositories
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 

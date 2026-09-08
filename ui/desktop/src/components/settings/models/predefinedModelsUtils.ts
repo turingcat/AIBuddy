@@ -2,10 +2,10 @@ import Model from './modelInterface';
 
 export function getPredefinedModelsFromEnv(): Model[] {
   try {
-    const envModels = window.appConfig.get('HEYBUDDY_PREDEFINED_MODELS');
+    const envModels = window.appConfig.get('AIBUDDY_PREDEFINED_MODELS');
     if (Array.isArray(envModels)) return envModels as Model[];
   } catch (error) {
-    console.warn('Failed to parse HEYBUDDY_PREDEFINED_MODELS:', error);
+    console.warn('Failed to parse AIBUDDY_PREDEFINED_MODELS:', error);
   }
   return [];
 }

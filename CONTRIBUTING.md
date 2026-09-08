@@ -1,8 +1,8 @@
 # Contribution Guide
 
-heybuddy is open source, and code is only one way to contribute. Reporting a problem, reproducing it, sharing domain knowledge, shaping the design, implementing the solution, and verifying the result are all valuable work.
+aibuddy is open source, and code is only one way to contribute. Reporting a problem, reproducing it, sharing domain knowledge, shaping the design, implementing the solution, and verifying the result are all valuable work.
 
-We organize this work on the public [HeyBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1). The issue is the main record of a contribution, from the first report through design, implementation, and verification.
+We organize this work on the public [AIBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1). The issue is the main record of a contribution, from the first report through design, implementation, and verification.
 
 > [!TIP]
 > Beyond code, check out [other ways to contribute](#other-ways-to-contribute)
@@ -11,7 +11,7 @@ We organize this work on the public [HeyBuddy Issues board](https://github.com/o
 
 ## Issue Workflow
 
-Every open issue is tracked on the [HeyBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1):
+Every open issue is tracked on the [AIBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1):
 
 - **Inbox**: The issue is waiting for triage.
 - **Needs info**: More information is needed before the issue can progress.
@@ -39,7 +39,7 @@ Substantial contributors at any stage may be recognized as co-authors. The unit 
 
 ## From Issue to Pull Request
 
-Do not begin implementation or open a pull request until the issue has reached **Ready** on the HeyBuddy Issues board.
+Do not begin implementation or open a pull request until the issue has reached **Ready** on the AIBuddy Issues board.
 
 Every external pull request must:
 
@@ -54,7 +54,7 @@ Don't open many pull requests in quick succession. Submit them in order of prefe
 
 ## Agent Loop Migration
 
-We are replacing the legacy agent loop in `crates/heybuddy/src/agents/agent.rs` with the state machine in `crates/heybuddy/src/agents/state_machine/`. The state-machine path is enabled with `HEYBUDDY_STATE_MACHINE=1`.
+We are replacing the legacy agent loop in `crates/aibuddy/src/agents/agent.rs` with the state machine in `crates/aibuddy/src/agents/state_machine/`. The state-machine path is enabled with `AIBUDDY_STATE_MACHINE=1`.
 
 Until the migration is complete, changes to agent-loop behavior must be implemented and tested in both paths. Pull requests should explain how parity between the two paths was verified.
 
@@ -75,7 +75,7 @@ are responsible for the final code. Before submitting a PR for review, make sure
 We'll close any vibe coded submissions that obviously skip this step.
 
 You can use whatever agent and whatever methodology you like as long as you stick to that principle. We hope
-you like heybuddy of course and use that. One thing to watch out for is LLM eagerness. They like to please and
+you like aibuddy of course and use that. One thing to watch out for is LLM eagerness. They like to please and
 are in a hurry. 
 
    * **Think first**. Agents tend to jump straight to code writing. Explain the architecture you want first to 
@@ -94,7 +94,7 @@ are in a hurry.
    
 ## Prerequisites
 
-heybuddy includes Rust binaries alongside an electron app for the GUI.
+aibuddy includes Rust binaries alongside an electron app for the GUI.
 
 We use [Hermit][hermit] to manage development dependencies (Rust, Node, pnpm, just, etc.).
 Activate Hermit when entering the project:
@@ -122,34 +122,34 @@ sudo apt install libxcb1-dev      # libxcb1-dev is the development package for t
 
 ### Rust
 
-First let's compile heybuddy and try it out
-Since heybuddy requires Hermit for managing dependencies, let's activate hermit.
+First let's compile aibuddy and try it out
+Since aibuddy requires Hermit for managing dependencies, let's activate hermit.
 
 ```
-cd heybuddy
+cd aibuddy
 source ./bin/activate-hermit
 cargo build
 ```
 
-When that completes, debug builds of the binaries are available, including the heybuddy CLI:
+When that completes, debug builds of the binaries are available, including the aibuddy CLI:
 
 ```
-./target/debug/heybuddy --help
+./target/debug/aibuddy --help
 ```
 
 For first-time setup, run the configure command:
 
 ```
-./target/debug/heybuddy configure
+./target/debug/aibuddy configure
 ```
 
 Once a connection to an LLM provider is working, start a session:
 
 ```
-./target/debug/heybuddy session
+./target/debug/aibuddy session
 ```
 
-These same commands can be recompiled and immediately run using `cargo run -p heybuddy-cli` for iteration.
+These same commands can be recompiled and immediately run using `cargo run -p aibuddy-cli` for iteration.
 When making changes to the Rust code, test them on the CLI or run checks, tests, and the linter:
 
 ```
@@ -168,7 +168,7 @@ just run-ui
 ```
 
 This command builds a release build of Rust (equivalent to `cargo build -r`) and starts the Electron process.
-The app opens a window and displays first-time setup. After completing setup, heybuddy is ready for use.
+The app opens a window and displays first-time setup. After completing setup, aibuddy is ready for use.
 
 Make GUI changes in `ui/desktop`.
 
@@ -188,13 +188,13 @@ See #8757.
 To debug the external ACP backend, run it from an IDE. The configuration will depend on the IDE. The command to run is:
 
 ```
-export HEYBUDDY_SERVER__SECRET_KEY=test
-cargo run --package heybuddy-cli --bin heybuddy -- serve --platform desktop --enable-scheduler --host 127.0.0.1 --port 3000
+export AIBUDDY_SERVER__SECRET_KEY=test
+cargo run --package aibuddy-cli --bin aibuddy -- serve --platform desktop --enable-scheduler --host 127.0.0.1 --port 3000
 ```
 
 The `debug-ui` recipe connects to `http://127.0.0.1:3000` by default. If the
-backend uses another port, set `HEYBUDDY_PORT` when starting the UI, or set
-`HEYBUDDY_EXTERNAL_BACKEND_URL` to the backend's HTTP base URL.
+backend uses another port, set `AIBUDDY_PORT` when starting the UI, or set
+`AIBUDDY_EXTERNAL_BACKEND_URL` to the backend's HTTP base URL.
 
 Once the backend is running, start a UI and connect it to the backend by running:
 
@@ -210,12 +210,12 @@ and stepping through the backend code while interacting with the UI.
 To fork the repository:
 
 1. Go to https://github.com/aaif-goose/goose and click “Fork” (top-right corner).
-2. This creates https://github.com/<your-username>/heybuddy under your GitHub account.
+2. This creates https://github.com/<your-username>/aibuddy under your GitHub account.
 3. Clone your fork (not the main repo):
 
 ```
-git clone https://github.com/<your-username>/heybuddy.git
-cd heybuddy
+git clone https://github.com/<your-username>/aibuddy.git
+cd aibuddy
 ```
 
 4. Add the main repository as upstream:
@@ -305,7 +305,7 @@ your configuration.
 > At the moment, we are still updating some of the CLI configuration to make sure this is
 > respected.
 
-You can change the provider heybuddy points to via the `HEYBUDDY_PROVIDER` env var. If you already
+You can change the provider aibuddy points to via the `AIBUDDY_PROVIDER` env var. If you already
 have a credential for that provider in your keychain from previously setting up, it should
 reuse it. For things like automations or to test without doing official setup, you can also
 set the relevant env vars for that provider. For example `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`,
@@ -313,23 +313,23 @@ or `DATABRICKS_HOST`. Refer to the provider details for more info on required ke
 
 ### Isolating Test Environments
 
-When testing changes or running multiple heybuddy configurations, use `HEYBUDDY_PATH_ROOT` to isolate your data:
+When testing changes or running multiple aibuddy configurations, use `AIBUDDY_PATH_ROOT` to isolate your data:
 
 ```bash
 # Test with a clean environment
-export HEYBUDDY_PATH_ROOT="/tmp/heybuddy-test"
-./target/debug/heybuddy session
+export AIBUDDY_PATH_ROOT="/tmp/aibuddy-test"
+./target/debug/aibuddy session
 
 # Or for a single command
-HEYBUDDY_PATH_ROOT="/tmp/heybuddy-dev" cargo run -p heybuddy-cli -- session
+AIBUDDY_PATH_ROOT="/tmp/aibuddy-dev" cargo run -p aibuddy-cli -- session
 ```
 
-This creates isolated `config/`, `data/`, and `state/` directories under the specified path, preventing your test sessions from affecting your main heybuddy installation. See the [environment variables guide](./documentation/docs/guides/environment-variables.md#development--testing) for more details.
+This creates isolated `config/`, `data/`, and `state/` directories under the specified path, preventing your test sessions from affecting your main aibuddy installation. See the [environment variables guide](./documentation/docs/guides/environment-variables.md#development--testing) for more details.
 
-## Enable traces in heybuddy with [locally hosted Langfuse](https://langfuse.com/docs/deployment/self-host)
+## Enable traces in aibuddy with [locally hosted Langfuse](https://langfuse.com/docs/deployment/self-host)
 
 - [Start a local Langfuse using the docs](https://langfuse.com/self-hosting/docker-compose). Create an organization and project and create API credentials.
-- Set the environment variables so that heybuddy can connect to the langfuse server:
+- Set the environment variables so that aibuddy can connect to the langfuse server:
 
 ```
 export LANGFUSE_INIT_PROJECT_PUBLIC_KEY=publickey-local
@@ -348,14 +348,14 @@ This project follows the [Conventional Commits](https://www.conventionalcommits.
 
 ## Other Ways to Contribute
 
-There are numerous ways to be an open source contributor and contribute to heybuddy. We're here to help you on your way! Here are some suggestions to get started. If you have any questions or need help, feel free to reach out to us on [Discord](https://discord.gg/n8R5VaWDAn).
+There are numerous ways to be an open source contributor and contribute to aibuddy. We're here to help you on your way! Here are some suggestions to get started. If you have any questions or need help, feel free to reach out to us on [Discord](https://discord.gg/n8R5VaWDAn).
 
-- **Stars on GitHub:** If you resonate with our project and find it valuable, consider starring our heybuddy on GitHub! 🌟
+- **Stars on GitHub:** If you resonate with our project and find it valuable, consider starring our aibuddy on GitHub! 🌟
 - **Ask Questions:** Your questions not only help us improve but also benefit the community. If you have a question, don't hesitate to ask it on [Discord](https://discord.gg/n8R5VaWDAn).
-- **Give Feedback:** Have a feature you want to see or encounter an issue with heybuddy, [click here to open an issue](https://github.com/aaif-goose/goose/issues/new/choose), [start a discussion](https://github.com/aaif-goose/goose/discussions) or tell us on Discord.
+- **Give Feedback:** Have a feature you want to see or encounter an issue with aibuddy, [click here to open an issue](https://github.com/aaif-goose/goose/issues/new/choose), [start a discussion](https://github.com/aaif-goose/goose/discussions) or tell us on Discord.
 - **Participate in Community Events:** We host a variety of community events and livestreams on Discord every month, ranging from workshops to brainstorming sessions. You can subscribe to our [events calendar](https://calget.com/c/t7jszrie) or follow us on [social media](https://linktr.ee/goose_oss) to stay in touch.
 - **Improve Documentation:** Good documentation is key to the success of any project. You can help improve the quality of our existing docs or add new pages.
 - **Help Other Members:** See another community member stuck? Or a contributor blocked by a question you know the answer to? Reply to community threads or do a code review for others to help.
 - **Showcase Your Work:** Working on a project or written a blog post recently? Share it with the community in our [#share-your-work](https://discord.com/channels/1287729918100246654/1287729920797179958) channel.
 - **Give Shoutouts:** Is there a project you love or a community/staff who's been especially helpful? Feel free to give them a shoutout in our [#general](https://discord.com/channels/1287729918100246654/1287729920797179957) channel.
-- **Spread the Word:** Help us reach more people by sharing heybuddy's project, website, YouTube, and/or Twitter/X.
+- **Spread the Word:** Help us reach more people by sharing aibuddy's project, website, YouTube, and/or Twitter/X.

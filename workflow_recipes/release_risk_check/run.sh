@@ -9,4 +9,4 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-heybuddy run --recipe "$SCRIPT_DIR/recipe.yaml" --params "version=$1"
+aibuddy run --recipe "$SCRIPT_DIR/recipe.yaml" --params "version=$1"

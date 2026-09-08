@@ -58,7 +58,7 @@ permissions:
   contents: read
 
 jobs:
-  build-goose-windows:
+  build-aibuddy-windows:
     if: ${{ inputs.reuse_run_id == '' }}
     name: Build Desktop backend (Windows ${{ matrix.artifact_arch }})
     runs-on: windows-latest
@@ -106,10 +106,10 @@ jobs:
           RUST_TARGET: ${{ matrix.rust_target }}
           CARGO_FEATURES: ${{ matrix.cargo_features }}
         run: |
-          cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
+          cargo build --release --target $env:RUST_TARGET -p aibuddy-cli --bin aibuddy --no-default-features --features $env:CARGO_FEATURES
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          $binaryPath = "./target/$env:RUST_TARGET/release/heybuddy.exe"
+          $binaryPath = "./target/$env:RUST_TARGET/release/aibuddy.exe"
           if (-not (Test-Path $binaryPath)) {
             Write-Error "Windows binary not found: $binaryPath"
             Get-ChildItem "./target/$env:RUST_TARGET/release/" -ErrorAction SilentlyContinue
@@ -120,8 +120,8 @@ jobs:
       - name: Upload backend artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-${{ matrix.artifact_arch }}
-          path: target/${{ matrix.rust_target }}/release/goose.exe
+          name: internal-aibuddy-${{ matrix.artifact_arch }}
+          path: target/${{ matrix.rust_target }}/release/aibuddy.exe
           if-no-files-found: error
           retention-days: 1
           overwrite: true
@@ -129,7 +129,7 @@ jobs:
   build-desktop-windows:
     if: ${{ inputs.reuse_run_id == '' }}
     name: Build Desktop (Windows ${{ matrix.artifact_arch }})
-    needs: build-goose-windows
+    needs: build-aibuddy-windows
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -190,7 +190,7 @@ jobs:
       - name: Download backend artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-${{ matrix.artifact_arch }}
+          name: internal-aibuddy-${{ matrix.artifact_arch }}
           path: backend
 
       - name: Prepare Windows binary
@@ -198,18 +198,18 @@ jobs:
         run: |
           rm -rf ./ui/desktop/src/bin
           mkdir -p ./ui/desktop/src/bin
-          cp -f ./backend/heybuddy.exe ./ui/desktop/src/bin/
+          cp -f ./backend/aibuddy.exe ./ui/desktop/src/bin/
 
           if [ -d "./ui/desktop/src/platform/windows/bin" ]; then
             for file in ./ui/desktop/src/platform/windows/bin/*.{exe,dll,cmd}; do
               filename="$(basename "$file")"
-              if [ -f "$file" ] && [ "$filename" != "heybuddy.exe" ]; then
+              if [ -f "$file" ] && [ "$filename" != "aibuddy.exe" ]; then
                 cp -f "$file" ./ui/desktop/src/bin/
               fi
             done
 
-            if [ -d "./ui/desktop/src/platform/windows/bin/heybuddy-npm" ]; then
-              cp -r ./ui/desktop/src/platform/windows/bin/heybuddy-npm/ ./ui/desktop/src/bin/heybuddy-npm/
+            if [ -d "./ui/desktop/src/platform/windows/bin/aibuddy-npm" ]; then
+              cp -r ./ui/desktop/src/platform/windows/bin/aibuddy-npm/ ./ui/desktop/src/bin/aibuddy-npm/
             fi
           fi
 

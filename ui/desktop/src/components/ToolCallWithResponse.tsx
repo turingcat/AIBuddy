@@ -457,7 +457,7 @@ const liveOutputToString = (notifications: NotificationEvent[] | undefined): str
   notifications
     ?.filter((notification) => {
       const message = notification.message as { method?: string };
-      return message.method === 'heybuddy/live_output';
+      return message.method === 'aibuddy/live_output';
     })
     .flatMap((notification) => {
       const message = notification.message as { params?: LiveOutputNotificationParams };

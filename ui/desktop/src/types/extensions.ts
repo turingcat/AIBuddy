@@ -1,4 +1,4 @@
-import type { RecipeExtensionDto } from '@heybuddy/heybuddy-sdk';
+import type { RecipeExtensionDto } from '@aibuddy/aibuddy-sdk';
 
 export type Envs = Record<string, string>;
 

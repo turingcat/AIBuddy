@@ -435,7 +435,7 @@ function PageActionsMenu(): ReactNode {
             <ExternalLink size={16} className="flex-shrink-0" />
           </button>
           <a
-            href="/docs/mcp/heybuddy-docs-mcp"
+            href="/docs/mcp/aibuddy-docs-mcp"
             className="w-full flex items-center justify-between gap-1.5 px-3 py-1.5 text-sm text-white dark:text-black hover:opacity-90 hover:-translate-y-px active:translate-y-px transition-all duration-200 ease-in-out bg-transparent rounded-b-md no-underline"
             onClick={() => setDropdownOpen(false)}
           >

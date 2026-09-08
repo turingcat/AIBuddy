@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generates TypeScript types + Zod validators for HeyBuddy custom extension methods.
+ * Generates TypeScript types + Zod validators for AIBuddy custom extension methods.
  *
  * Usage:
  *   npm run generate              # build Rust schema, then generate TS
@@ -15,8 +15,8 @@ import * as prettier from "prettier";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = resolve(__dirname, "../..");
-const SCHEMA_PATH = resolve(ROOT, "crates/heybuddy/acp-schema.json");
-const META_PATH = resolve(ROOT, "crates/heybuddy/acp-meta.json");
+const SCHEMA_PATH = resolve(ROOT, "crates/aibuddy/acp-schema.json");
+const META_PATH = resolve(ROOT, "crates/aibuddy/acp-meta.json");
 const OUTPUT_DIR = resolve(__dirname, "src/generated");
 
 // Export the main function so it can be imported by build-schema.ts
@@ -33,7 +33,7 @@ export default async function main() {
     input: {
       openapi: "3.1.0",
       info: {
-        title: "HeyBuddy Extensions",
+        title: "AIBuddy Extensions",
         version: "1.0.0",
       },
       components: {
@@ -60,7 +60,7 @@ export default async function main() {
 
   await generateClient(meta);
 
-  console.log(`\nGenerated HeyBuddy extension schema in ${OUTPUT_DIR}`);
+  console.log(`\nGenerated AIBuddy extension schema in ${OUTPUT_DIR}`);
 }
 
 async function postProcessTypes() {
@@ -88,17 +88,17 @@ async function postProcessIndex(meta: {
 
   const methodConstants = await prettier.format(
     `
-export const HEYBUDDY_EXT_METHODS = ${JSON.stringify(meta.methods, null, 2)} as const;
+export const AIBUDDY_EXT_METHODS = ${JSON.stringify(meta.methods, null, 2)} as const;
 
-export type HeyBuddyExtMethod = (typeof HEYBUDDY_EXT_METHODS)[number];
+export type AIBuddyExtMethod = (typeof AIBUDDY_EXT_METHODS)[number];
 
-export const HEYBUDDY_EXT_NOTIFICATIONS = ${JSON.stringify(meta.notifications ?? [], null, 2)} as const;
+export const AIBUDDY_EXT_NOTIFICATIONS = ${JSON.stringify(meta.notifications ?? [], null, 2)} as const;
 
-export type HeyBuddyExtNotification = (typeof HEYBUDDY_EXT_NOTIFICATIONS)[number];
+export type AIBuddyExtNotification = (typeof AIBUDDY_EXT_NOTIFICATIONS)[number];
 
-export const HEYBUDDY_EXT_AGENT_REQUESTS = ${JSON.stringify(meta.agentRequests ?? [], null, 2)} as const;
+export const AIBUDDY_EXT_AGENT_REQUESTS = ${JSON.stringify(meta.agentRequests ?? [], null, 2)} as const;
 
-export type HeyBuddyExtAgentRequest = (typeof HEYBUDDY_EXT_AGENT_REQUESTS)[number];
+export type AIBuddyExtAgentRequest = (typeof AIBUDDY_EXT_AGENT_REQUESTS)[number];
 `,
     { parser: "typescript" },
   );
@@ -141,7 +141,7 @@ function methodToCamelCase(method: string): string {
   let methodParts = method.split(/[/_]/).filter((part) => part.length > 0);
 
   let suffix: string;
-  if (methodParts[0] == "heybuddy" && methodParts[1] == "unstable") {
+  if (methodParts[0] == "aibuddy" && methodParts[1] == "unstable") {
     methodParts.shift();
     methodParts.shift();
     suffix = "_unstable";
@@ -224,7 +224,7 @@ ${upstreamImportLine}
 ${typeImportLine}
 ${zodImportLine}
 
-export class HeyBuddyExtClient {
+export class AIBuddyExtClient {
   constructor(private conn: Pick<ClientContext, "request">) {}
 ${methodDefs.join("\n")}
 }

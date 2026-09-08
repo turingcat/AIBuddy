@@ -1,25 +1,25 @@
 ---
 title: Knowledge Graph Memory Extension
-description: Add Knowledge Graph Memory MCP Server as a heybuddy Extension
+description: Add Knowledge Graph Memory MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/PF6hpDaI9Mc" />
 
 
-This tutorial covers how to add the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) as a heybuddy extension. This enables heybuddy to analyze relationships, detect patterns, and gain a deeper understanding of your data. The knowledge graph builds on the [memory extension](/docs/mcp/memory-mcp) by mapping complex relationships between concepts and providing persistent memory across heybuddy sessions.
+This tutorial covers how to add the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) as a aibuddy extension. This enables aibuddy to analyze relationships, detect patterns, and gain a deeper understanding of your data. The knowledge graph builds on the [memory extension](/docs/mcp/memory-mcp) by mapping complex relationships between concepts and providing persistent memory across aibuddy sessions.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40modelcontextprotocol%2Fserver-memory&id=knowledge_graph_memory&name=Knowledge%20Graph%20Memory&description=Graph-based%20memory%20system%20for%20persistent%20knowledge%20storage)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y @modelcontextprotocol/server-memory
@@ -35,8 +35,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="knowledge_graph_memory"
     extensionName="Knowledge Graph Memory"
     description="Graph-based memory system for persistent knowledge storage"
@@ -44,7 +44,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@modelcontextprotocol/server-memory"]}
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Knowledge Graph Memory"
       description="Graph-based memory system for persistent knowledge storage"
@@ -55,16 +55,16 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-In this example, I'll show you how heybuddy can become an intelligent security reviewer by using connected knowledge patterns to detect and analyze vulnerabilities. heybuddy will be able to understand the relationship between security issues, their impacts, and mitigations.
+In this example, I'll show you how aibuddy can become an intelligent security reviewer by using connected knowledge patterns to detect and analyze vulnerabilities. aibuddy will be able to understand the relationship between security issues, their impacts, and mitigations.
 
-This means heybuddy doesn't just spot issues - it understands how vulnerabilities connect to real world impacts and can suggest comprehensive solutions.
+This means aibuddy doesn't just spot issues - it understands how vulnerabilities connect to real world impacts and can suggest comprehensive solutions.
 
-### Step 1: Teach heybuddy About Security Patterns
+### Step 1: Teach aibuddy About Security Patterns
 
-#### heybuddy Prompt #1
+#### aibuddy Prompt #1
 
 ```text
-heybuddy, learn these security vulnerability patterns and their relationships:
+aibuddy, learn these security vulnerability patterns and their relationships:
 
 1. SQL Injection relates to:
 
@@ -85,7 +85,7 @@ heybuddy, learn these security vulnerability patterns and their relationships:
    - JWT-based solutions
 ```
 
-#### heybuddy Output
+#### aibuddy Output
 
 ```text
 I'll store this security knowledge in the Knowledge Graph Memory with proper entities and relationships
@@ -128,7 +128,7 @@ The knowledge is now structured in a way that I can:
 
 ### Step 2:  Use Connected Knowledge for Code Review
 
-#### heybuddy Prompt #2
+#### aibuddy Prompt #2
 
 Review this API endpoint for security issues:
 
@@ -146,7 +146,7 @@ app.post('/api/login', (req, res) => {
 });
 ```
 
-#### heybuddy Output
+#### aibuddy Output
 
 ```text
 I'll analyze this code using our connected knowledge graph to trace security vulnerabilities and their implications:

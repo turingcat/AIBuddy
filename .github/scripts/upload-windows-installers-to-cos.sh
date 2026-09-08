@@ -5,8 +5,8 @@ set -euo pipefail
 : "${TENCENT_CLOUD_SECRET_ID:?TENCENT_CLOUD_SECRET_ID is required}"
 : "${TENCENT_CLOUD_SECRET_KEY:?TENCENT_CLOUD_SECRET_KEY is required}"
 
-readonly COS_BUCKET="heybuddy-1252724067"
-readonly COS_ENDPOINT="heybuddy-1252724067.cos.ap-guangzhou.myqcloud.com"
+readonly COS_BUCKET="aibuddy-1252724067"
+readonly COS_ENDPOINT="aibuddy-1252724067.cos.ap-guangzhou.myqcloud.com"
 readonly COS_PREFIX="aibuddy/stable"
 readonly COSCLI_VERSION="1.0.9"
 readonly COSCLI_SHA256="a07de5ba2800147a700ed29036b0c76a4229088cee68e1682d0eae19b638a915"

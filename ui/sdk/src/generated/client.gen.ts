@@ -71,8 +71,8 @@ import type {
   GetSessionInfoResponse_unstable,
   GetToolsRequest_unstable,
   GetToolsResponse_unstable,
-  HeyBuddyToolCallRequest_unstable,
-  HeyBuddyToolCallResponse_unstable,
+  AIBuddyToolCallRequest_unstable,
+  AIBuddyToolCallResponse_unstable,
   ImportSessionRequest_unstable,
   ImportSessionResponse_unstable,
   ImportSourcesRequest_unstable,
@@ -214,7 +214,7 @@ import {
   zGetSessionExtensionsResponse_unstable,
   zGetSessionInfoResponse_unstable,
   zGetToolsResponse_unstable,
-  zHeyBuddyToolCallResponse_unstable,
+  zAIBuddyToolCallResponse_unstable,
   zImportSessionResponse_unstable,
   zImportSourcesResponse_unstable,
   zInspectRunningJobResponse_unstable,
@@ -262,14 +262,14 @@ import {
   zUpdateSourceResponse_unstable,
 } from './zod.gen.js';
 
-export class HeyBuddyExtClient {
+export class AIBuddyExtClient {
   constructor(private conn: Pick<ClientContext, "request">) {}
 
   async sessionExtensionsAdd_unstable(
     params: AddSessionExtensionRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/extensions/add",
+      "_aibuddy/unstable/session/extensions/add",
       params,
     );
   }
@@ -278,7 +278,7 @@ export class HeyBuddyExtClient {
     params: RemoveSessionExtensionRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/extensions/remove",
+      "_aibuddy/unstable/session/extensions/remove",
       params,
     );
   }
@@ -287,7 +287,7 @@ export class HeyBuddyExtClient {
     params: GetToolsRequest_unstable,
   ): Promise<GetToolsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/tools/list",
+      "_aibuddy/unstable/tools/list",
       params,
     );
     return zGetToolsResponse_unstable.parse(raw) as GetToolsResponse_unstable;
@@ -297,7 +297,7 @@ export class HeyBuddyExtClient {
     params: SetToolPermissionsRequest_unstable,
   ): Promise<SetToolPermissionsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/tools/permissions/set",
+      "_aibuddy/unstable/tools/permissions/set",
       params,
     );
     return zSetToolPermissionsResponse_unstable.parse(
@@ -306,22 +306,22 @@ export class HeyBuddyExtClient {
   }
 
   async toolsCall_unstable(
-    params: HeyBuddyToolCallRequest_unstable,
-  ): Promise<HeyBuddyToolCallResponse_unstable> {
+    params: AIBuddyToolCallRequest_unstable,
+  ): Promise<AIBuddyToolCallResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/tools/call",
+      "_aibuddy/unstable/tools/call",
       params,
     );
-    return zHeyBuddyToolCallResponse_unstable.parse(
+    return zAIBuddyToolCallResponse_unstable.parse(
       raw,
-    ) as HeyBuddyToolCallResponse_unstable;
+    ) as AIBuddyToolCallResponse_unstable;
   }
 
   async resourcesRead_unstable(
     params: ReadResourceRequest_unstable,
   ): Promise<ReadResourceResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/resources/read",
+      "_aibuddy/unstable/resources/read",
       params,
     );
     return zReadResourceResponse_unstable.parse(
@@ -332,7 +332,7 @@ export class HeyBuddyExtClient {
   async appsList_unstable(
     params: AppsListRequest_unstable,
   ): Promise<AppsListResponse_unstable> {
-    const raw = await this.conn.request("_heybuddy/unstable/apps/list", params);
+    const raw = await this.conn.request("_aibuddy/unstable/apps/list", params);
     return zAppsListResponse_unstable.parse(raw) as AppsListResponse_unstable;
   }
 
@@ -340,7 +340,7 @@ export class HeyBuddyExtClient {
     params: AppsExportRequest_unstable,
   ): Promise<AppsExportResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/apps/export",
+      "_aibuddy/unstable/apps/export",
       params,
     );
     return zAppsExportResponse_unstable.parse(
@@ -352,7 +352,7 @@ export class HeyBuddyExtClient {
     params: AppsImportRequest_unstable,
   ): Promise<AppsImportResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/apps/import",
+      "_aibuddy/unstable/apps/import",
       params,
     );
     return zAppsImportResponse_unstable.parse(
@@ -364,7 +364,7 @@ export class HeyBuddyExtClient {
     params: AppsDeleteRequest_unstable,
   ): Promise<AppsDeleteResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/apps/delete",
+      "_aibuddy/unstable/apps/delete",
       params,
     );
     return zAppsDeleteResponse_unstable.parse(
@@ -376,7 +376,7 @@ export class HeyBuddyExtClient {
     params: UpdateWorkingDirRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/working-dir/update",
+      "_aibuddy/unstable/session/working-dir/update",
       params,
     );
   }
@@ -385,7 +385,7 @@ export class HeyBuddyExtClient {
     params: SetSessionSystemPromptRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/system-prompt/set",
+      "_aibuddy/unstable/session/system-prompt/set",
       params,
     );
   }
@@ -394,7 +394,7 @@ export class HeyBuddyExtClient {
     params: SteerSessionRequest_unstable,
   ): Promise<SteerSessionResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/steer",
+      "_aibuddy/unstable/session/steer",
       params,
     );
     return zSteerSessionResponse_unstable.parse(
@@ -406,7 +406,7 @@ export class HeyBuddyExtClient {
     params: DiagnosticsGetRequest_unstable,
   ): Promise<DiagnosticsGetResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/diagnostics/get",
+      "_aibuddy/unstable/diagnostics/get",
       params,
     );
     return zDiagnosticsGetResponse_unstable.parse(
@@ -418,7 +418,7 @@ export class HeyBuddyExtClient {
     params: ListPromptsRequest_unstable,
   ): Promise<ListPromptsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/prompts/list",
+      "_aibuddy/unstable/config/prompts/list",
       params,
     );
     return zListPromptsResponse_unstable.parse(
@@ -430,7 +430,7 @@ export class HeyBuddyExtClient {
     params: GetPromptRequest_unstable,
   ): Promise<GetPromptResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/prompts/get",
+      "_aibuddy/unstable/config/prompts/get",
       params,
     );
     return zGetPromptResponse_unstable.parse(raw) as GetPromptResponse_unstable;
@@ -440,7 +440,7 @@ export class HeyBuddyExtClient {
     params: SavePromptRequest_unstable,
   ): Promise<PromptOperationResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/prompts/save",
+      "_aibuddy/unstable/config/prompts/save",
       params,
     );
     return zPromptOperationResponse_unstable.parse(
@@ -452,7 +452,7 @@ export class HeyBuddyExtClient {
     params: ResetPromptRequest_unstable,
   ): Promise<PromptOperationResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/prompts/reset",
+      "_aibuddy/unstable/config/prompts/reset",
       params,
     );
     return zPromptOperationResponse_unstable.parse(
@@ -464,7 +464,7 @@ export class HeyBuddyExtClient {
     params: GetConfigExtensionsRequest_unstable,
   ): Promise<GetConfigExtensionsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/extensions/list",
+      "_aibuddy/unstable/config/extensions/list",
       params,
     );
     return zGetConfigExtensionsResponse_unstable.parse(
@@ -475,14 +475,14 @@ export class HeyBuddyExtClient {
   async configExtensionsAdd_unstable(
     params: AddConfigExtensionRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/config/extensions/add", params);
+    await this.conn.request("_aibuddy/unstable/config/extensions/add", params);
   }
 
   async configExtensionsRemove_unstable(
     params: RemoveConfigExtensionRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/config/extensions/remove",
+      "_aibuddy/unstable/config/extensions/remove",
       params,
     );
   }
@@ -491,7 +491,7 @@ export class HeyBuddyExtClient {
     params: SetConfigExtensionEnabledRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/config/extensions/set-enabled",
+      "_aibuddy/unstable/config/extensions/set-enabled",
       params,
     );
   }
@@ -500,7 +500,7 @@ export class HeyBuddyExtClient {
     params: GetSessionExtensionsRequest_unstable,
   ): Promise<GetSessionExtensionsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/extensions/list",
+      "_aibuddy/unstable/session/extensions/list",
       params,
     );
     return zGetSessionExtensionsResponse_unstable.parse(
@@ -512,7 +512,7 @@ export class HeyBuddyExtClient {
     params: ListProvidersRequest_unstable,
   ): Promise<ListProvidersResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/list",
+      "_aibuddy/unstable/providers/list",
       params,
     );
     return zListProvidersResponse_unstable.parse(
@@ -524,7 +524,7 @@ export class HeyBuddyExtClient {
     params: ProviderSupportedModelsListRequest_unstable,
   ): Promise<ProviderSupportedModelsListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/supported-models/list",
+      "_aibuddy/unstable/providers/supported-models/list",
       params,
     );
     return zProviderSupportedModelsListResponse_unstable.parse(
@@ -536,7 +536,7 @@ export class HeyBuddyExtClient {
     params: ProviderCatalogListRequest_unstable,
   ): Promise<ProviderCatalogListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/catalog/list",
+      "_aibuddy/unstable/providers/catalog/list",
       params,
     );
     return zProviderCatalogListResponse_unstable.parse(
@@ -548,7 +548,7 @@ export class HeyBuddyExtClient {
     params: ProviderSetupCatalogListRequest_unstable,
   ): Promise<ProviderSetupCatalogListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/setup/catalog/list",
+      "_aibuddy/unstable/providers/setup/catalog/list",
       params,
     );
     return zProviderSetupCatalogListResponse_unstable.parse(
@@ -560,7 +560,7 @@ export class HeyBuddyExtClient {
     params: ProviderCatalogTemplateRequest_unstable,
   ): Promise<ProviderCatalogTemplateResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/catalog/template",
+      "_aibuddy/unstable/providers/catalog/template",
       params,
     );
     return zProviderCatalogTemplateResponse_unstable.parse(
@@ -572,7 +572,7 @@ export class HeyBuddyExtClient {
     params: CustomProviderCreateRequest_unstable,
   ): Promise<CustomProviderCreateResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/custom/create",
+      "_aibuddy/unstable/providers/custom/create",
       params,
     );
     return zCustomProviderCreateResponse_unstable.parse(
@@ -584,7 +584,7 @@ export class HeyBuddyExtClient {
     params: CustomProviderReadRequest_unstable,
   ): Promise<CustomProviderReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/custom/read",
+      "_aibuddy/unstable/providers/custom/read",
       params,
     );
     return zCustomProviderReadResponse_unstable.parse(
@@ -596,7 +596,7 @@ export class HeyBuddyExtClient {
     params: CustomProviderUpdateRequest_unstable,
   ): Promise<CustomProviderUpdateResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/custom/update",
+      "_aibuddy/unstable/providers/custom/update",
       params,
     );
     return zCustomProviderUpdateResponse_unstable.parse(
@@ -608,7 +608,7 @@ export class HeyBuddyExtClient {
     params: CustomProviderDeleteRequest_unstable,
   ): Promise<CustomProviderDeleteResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/custom/delete",
+      "_aibuddy/unstable/providers/custom/delete",
       params,
     );
     return zCustomProviderDeleteResponse_unstable.parse(
@@ -620,7 +620,7 @@ export class HeyBuddyExtClient {
     params: RefreshProviderInventoryRequest_unstable,
   ): Promise<RefreshProviderInventoryResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/inventory/refresh",
+      "_aibuddy/unstable/providers/inventory/refresh",
       params,
     );
     return zRefreshProviderInventoryResponse_unstable.parse(
@@ -632,7 +632,7 @@ export class HeyBuddyExtClient {
     params: ProviderReadinessCheckRequest_unstable,
   ): Promise<ProviderReadinessCheckResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/readiness/check",
+      "_aibuddy/unstable/providers/readiness/check",
       params,
     );
     return zProviderReadinessCheckResponse_unstable.parse(
@@ -644,7 +644,7 @@ export class HeyBuddyExtClient {
     params: ProviderConfigReadRequest_unstable,
   ): Promise<ProviderConfigReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/config/read",
+      "_aibuddy/unstable/providers/config/read",
       params,
     );
     return zProviderConfigReadResponse_unstable.parse(
@@ -656,7 +656,7 @@ export class HeyBuddyExtClient {
     params: ProviderConfigStatusRequest_unstable,
   ): Promise<ProviderConfigStatusResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/config/status",
+      "_aibuddy/unstable/providers/config/status",
       params,
     );
     return zProviderConfigStatusResponse_unstable.parse(
@@ -668,7 +668,7 @@ export class HeyBuddyExtClient {
     params: ProviderConfigSaveRequest_unstable,
   ): Promise<ProviderConfigChangeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/config/save",
+      "_aibuddy/unstable/providers/config/save",
       params,
     );
     return zProviderConfigChangeResponse_unstable.parse(
@@ -680,7 +680,7 @@ export class HeyBuddyExtClient {
     params: ProviderConfigDeleteRequest_unstable,
   ): Promise<ProviderConfigChangeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/config/delete",
+      "_aibuddy/unstable/providers/config/delete",
       params,
     );
     return zProviderConfigChangeResponse_unstable.parse(
@@ -692,7 +692,7 @@ export class HeyBuddyExtClient {
     params: ProviderConfigAuthenticateRequest_unstable,
   ): Promise<ProviderConfigChangeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/config/authenticate",
+      "_aibuddy/unstable/providers/config/authenticate",
       params,
     );
     return zProviderConfigChangeResponse_unstable.parse(
@@ -704,7 +704,7 @@ export class HeyBuddyExtClient {
     params: ProviderSecretsListRequest_unstable,
   ): Promise<ProviderSecretsListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/secrets/list",
+      "_aibuddy/unstable/providers/secrets/list",
       params,
     );
     return zProviderSecretsListResponse_unstable.parse(
@@ -716,7 +716,7 @@ export class HeyBuddyExtClient {
     params: ProviderSecretDeleteRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/providers/secrets/delete",
+      "_aibuddy/unstable/providers/secrets/delete",
       params,
     );
   }
@@ -725,7 +725,7 @@ export class HeyBuddyExtClient {
     params: CanonicalModelInfoRequest_unstable,
   ): Promise<CanonicalModelInfoResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/providers/canonical-model-info",
+      "_aibuddy/unstable/providers/canonical-model-info",
       params,
     );
     return zCanonicalModelInfoResponse_unstable.parse(
@@ -737,7 +737,7 @@ export class HeyBuddyExtClient {
     params: PreferencesReadRequest_unstable,
   ): Promise<PreferencesReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/preferences/read",
+      "_aibuddy/unstable/preferences/read",
       params,
     );
     return zPreferencesReadResponse_unstable.parse(
@@ -748,14 +748,14 @@ export class HeyBuddyExtClient {
   async preferencesSave_unstable(
     params: PreferencesSaveRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/preferences/save", params);
+    await this.conn.request("_aibuddy/unstable/preferences/save", params);
   }
 
   async configRead_unstable(
     params: ConfigReadRequest_unstable,
   ): Promise<ConfigReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/read",
+      "_aibuddy/unstable/config/read",
       params,
     );
     return zConfigReadResponse_unstable.parse(
@@ -766,20 +766,20 @@ export class HeyBuddyExtClient {
   async configUpsert_unstable(
     params: ConfigUpsertRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/config/upsert", params);
+    await this.conn.request("_aibuddy/unstable/config/upsert", params);
   }
 
   async configRemove_unstable(
     params: ConfigRemoveRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/config/remove", params);
+    await this.conn.request("_aibuddy/unstable/config/remove", params);
   }
 
   async configReadAll_unstable(
     params: ConfigReadAllRequest_unstable,
   ): Promise<ConfigReadAllResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/config/read-all",
+      "_aibuddy/unstable/config/read-all",
       params,
     );
     return zConfigReadAllResponse_unstable.parse(
@@ -791,7 +791,7 @@ export class HeyBuddyExtClient {
     params: DefaultsReadRequest_unstable,
   ): Promise<DefaultsReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/defaults/read",
+      "_aibuddy/unstable/defaults/read",
       params,
     );
     return zDefaultsReadResponse_unstable.parse(
@@ -803,7 +803,7 @@ export class HeyBuddyExtClient {
     params: DefaultsSaveRequest_unstable,
   ): Promise<DefaultsReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/defaults/save",
+      "_aibuddy/unstable/defaults/save",
       params,
     );
     return zDefaultsReadResponse_unstable.parse(
@@ -815,7 +815,7 @@ export class HeyBuddyExtClient {
     params: DefaultsClearRequest_unstable,
   ): Promise<DefaultsReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/defaults/clear",
+      "_aibuddy/unstable/defaults/clear",
       params,
     );
     return zDefaultsReadResponse_unstable.parse(
@@ -827,7 +827,7 @@ export class HeyBuddyExtClient {
     params: OnboardingImportScanRequest_unstable,
   ): Promise<OnboardingImportScanResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/onboarding/import/scan",
+      "_aibuddy/unstable/onboarding/import/scan",
       params,
     );
     return zOnboardingImportScanResponse_unstable.parse(
@@ -839,7 +839,7 @@ export class HeyBuddyExtClient {
     params: OnboardingImportApplyRequest_unstable,
   ): Promise<OnboardingImportApplyResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/onboarding/import/apply",
+      "_aibuddy/unstable/onboarding/import/apply",
       params,
     );
     return zOnboardingImportApplyResponse_unstable.parse(
@@ -851,7 +851,7 @@ export class HeyBuddyExtClient {
     params: ExportSessionRequest_unstable,
   ): Promise<ExportSessionResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/export",
+      "_aibuddy/unstable/session/export",
       params,
     );
     return zExportSessionResponse_unstable.parse(
@@ -863,7 +863,7 @@ export class HeyBuddyExtClient {
     params: ImportSessionRequest_unstable,
   ): Promise<ImportSessionResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/import",
+      "_aibuddy/unstable/session/import",
       params,
     );
     return zImportSessionResponse_unstable.parse(
@@ -875,7 +875,7 @@ export class HeyBuddyExtClient {
     params: ShareSessionNostrRequest_unstable,
   ): Promise<ShareSessionNostrResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/share/nostr",
+      "_aibuddy/unstable/session/share/nostr",
       params,
     );
     return zShareSessionNostrResponse_unstable.parse(
@@ -887,7 +887,7 @@ export class HeyBuddyExtClient {
     params: EncodeRecipeRequest_unstable,
   ): Promise<EncodeRecipeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/encode",
+      "_aibuddy/unstable/recipes/encode",
       params,
     );
     return zEncodeRecipeResponse_unstable.parse(
@@ -899,7 +899,7 @@ export class HeyBuddyExtClient {
     params: DecodeRecipeRequest_unstable,
   ): Promise<DecodeRecipeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/decode",
+      "_aibuddy/unstable/recipes/decode",
       params,
     );
     return zDecodeRecipeResponse_unstable.parse(
@@ -911,7 +911,7 @@ export class HeyBuddyExtClient {
     params: ScanRecipeRequest_unstable,
   ): Promise<ScanRecipeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/scan",
+      "_aibuddy/unstable/recipes/scan",
       params,
     );
     return zScanRecipeResponse_unstable.parse(
@@ -923,7 +923,7 @@ export class HeyBuddyExtClient {
     params: ListRecipesRequest_unstable,
   ): Promise<ListRecipesResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/list",
+      "_aibuddy/unstable/recipes/list",
       params,
     );
     return zListRecipesResponse_unstable.parse(
@@ -934,26 +934,26 @@ export class HeyBuddyExtClient {
   async recipesDelete_unstable(
     params: DeleteRecipeRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/recipes/delete", params);
+    await this.conn.request("_aibuddy/unstable/recipes/delete", params);
   }
 
   async recipesSchedule_unstable(
     params: ScheduleRecipeRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/recipes/schedule", params);
+    await this.conn.request("_aibuddy/unstable/recipes/schedule", params);
   }
 
   async recipesSlashCommand_unstable(
     params: SetRecipeSlashCommandRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/recipes/slash-command", params);
+    await this.conn.request("_aibuddy/unstable/recipes/slash-command", params);
   }
 
   async recipesSave_unstable(
     params: SaveRecipeRequest_unstable,
   ): Promise<SaveRecipeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/save",
+      "_aibuddy/unstable/recipes/save",
       params,
     );
     return zSaveRecipeResponse_unstable.parse(
@@ -965,7 +965,7 @@ export class HeyBuddyExtClient {
     params: ParseRecipeRequest_unstable,
   ): Promise<ParseRecipeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/parse",
+      "_aibuddy/unstable/recipes/parse",
       params,
     );
     return zParseRecipeResponse_unstable.parse(
@@ -977,7 +977,7 @@ export class HeyBuddyExtClient {
     params: RecipeToYamlRequest_unstable,
   ): Promise<RecipeToYamlResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/recipes/to-yaml",
+      "_aibuddy/unstable/recipes/to-yaml",
       params,
     );
     return zRecipeToYamlResponse_unstable.parse(
@@ -989,7 +989,7 @@ export class HeyBuddyExtClient {
     params: ListSchedulesRequest_unstable,
   ): Promise<ListSchedulesResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/list",
+      "_aibuddy/unstable/schedules/list",
       params,
     );
     return zListSchedulesResponse_unstable.parse(
@@ -1001,7 +1001,7 @@ export class HeyBuddyExtClient {
     params: ListScheduleSessionsRequest_unstable,
   ): Promise<ListScheduleSessionsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/sessions/list",
+      "_aibuddy/unstable/schedules/sessions/list",
       params,
     );
     return zListScheduleSessionsResponse_unstable.parse(
@@ -1013,7 +1013,7 @@ export class HeyBuddyExtClient {
     params: CreateScheduleRequest_unstable,
   ): Promise<CreateScheduleResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/create",
+      "_aibuddy/unstable/schedules/create",
       params,
     );
     return zCreateScheduleResponse_unstable.parse(
@@ -1024,26 +1024,26 @@ export class HeyBuddyExtClient {
   async schedulesDelete_unstable(
     params: DeleteScheduleRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/schedules/delete", params);
+    await this.conn.request("_aibuddy/unstable/schedules/delete", params);
   }
 
   async schedulesPause_unstable(
     params: PauseScheduleRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/schedules/pause", params);
+    await this.conn.request("_aibuddy/unstable/schedules/pause", params);
   }
 
   async schedulesUnpause_unstable(
     params: UnpauseScheduleRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/schedules/unpause", params);
+    await this.conn.request("_aibuddy/unstable/schedules/unpause", params);
   }
 
   async schedulesUpdate_unstable(
     params: UpdateScheduleRequest_unstable,
   ): Promise<UpdateScheduleResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/update",
+      "_aibuddy/unstable/schedules/update",
       params,
     );
     return zUpdateScheduleResponse_unstable.parse(
@@ -1055,7 +1055,7 @@ export class HeyBuddyExtClient {
     params: RunScheduleNowRequest_unstable,
   ): Promise<RunScheduleNowResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/run-now",
+      "_aibuddy/unstable/schedules/run-now",
       params,
     );
     return zRunScheduleNowResponse_unstable.parse(
@@ -1067,7 +1067,7 @@ export class HeyBuddyExtClient {
     params: KillRunningJobRequest_unstable,
   ): Promise<KillRunningJobResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/running-job/kill",
+      "_aibuddy/unstable/schedules/running-job/kill",
       params,
     );
     return zKillRunningJobResponse_unstable.parse(
@@ -1079,7 +1079,7 @@ export class HeyBuddyExtClient {
     params: InspectRunningJobRequest_unstable,
   ): Promise<InspectRunningJobResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/schedules/running-job/inspect",
+      "_aibuddy/unstable/schedules/running-job/inspect",
       params,
     );
     return zInspectRunningJobResponse_unstable.parse(
@@ -1091,7 +1091,7 @@ export class HeyBuddyExtClient {
     params: GetSessionInfoRequest_unstable,
   ): Promise<GetSessionInfoResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/session/info",
+      "_aibuddy/unstable/session/info",
       params,
     );
     return zGetSessionInfoResponse_unstable.parse(
@@ -1103,7 +1103,7 @@ export class HeyBuddyExtClient {
     params: TruncateSessionConversationRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/conversation/truncate",
+      "_aibuddy/unstable/session/conversation/truncate",
       params,
     );
   }
@@ -1112,7 +1112,7 @@ export class HeyBuddyExtClient {
     params: UpdateSessionProjectRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/session/project/update",
+      "_aibuddy/unstable/session/project/update",
       params,
     );
   }
@@ -1120,26 +1120,26 @@ export class HeyBuddyExtClient {
   async sessionRename_unstable(
     params: RenameSessionRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/session/rename", params);
+    await this.conn.request("_aibuddy/unstable/session/rename", params);
   }
 
   async sessionArchive_unstable(
     params: ArchiveSessionRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/session/archive", params);
+    await this.conn.request("_aibuddy/unstable/session/archive", params);
   }
 
   async sessionUnarchive_unstable(
     params: UnarchiveSessionRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/session/unarchive", params);
+    await this.conn.request("_aibuddy/unstable/session/unarchive", params);
   }
 
   async sourcesCreate_unstable(
     params: CreateSourceRequest_unstable,
   ): Promise<CreateSourceResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/sources/create",
+      "_aibuddy/unstable/sources/create",
       params,
     );
     return zCreateSourceResponse_unstable.parse(
@@ -1151,7 +1151,7 @@ export class HeyBuddyExtClient {
     params: ListSourcesRequest_unstable,
   ): Promise<ListSourcesResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/sources/list",
+      "_aibuddy/unstable/sources/list",
       params,
     );
     return zListSourcesResponse_unstable.parse(
@@ -1163,7 +1163,7 @@ export class HeyBuddyExtClient {
     params: ListAgentMentionsRequest_unstable,
   ): Promise<ListAgentMentionsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/agent-mentions/list",
+      "_aibuddy/unstable/agent-mentions/list",
       params,
     );
     return zListAgentMentionsResponse_unstable.parse(
@@ -1175,7 +1175,7 @@ export class HeyBuddyExtClient {
     params: ListSlashCommandsRequest_unstable,
   ): Promise<ListSlashCommandsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/slash-commands/list",
+      "_aibuddy/unstable/slash-commands/list",
       params,
     );
     return zListSlashCommandsResponse_unstable.parse(
@@ -1187,7 +1187,7 @@ export class HeyBuddyExtClient {
     params: UpdateSourceRequest_unstable,
   ): Promise<UpdateSourceResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/sources/update",
+      "_aibuddy/unstable/sources/update",
       params,
     );
     return zUpdateSourceResponse_unstable.parse(
@@ -1198,14 +1198,14 @@ export class HeyBuddyExtClient {
   async sourcesDelete_unstable(
     params: DeleteSourceRequest_unstable,
   ): Promise<void> {
-    await this.conn.request("_heybuddy/unstable/sources/delete", params);
+    await this.conn.request("_aibuddy/unstable/sources/delete", params);
   }
 
   async sourcesExport_unstable(
     params: ExportSourceRequest_unstable,
   ): Promise<ExportSourceResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/sources/export",
+      "_aibuddy/unstable/sources/export",
       params,
     );
     return zExportSourceResponse_unstable.parse(
@@ -1217,7 +1217,7 @@ export class HeyBuddyExtClient {
     params: ImportSourcesRequest_unstable,
   ): Promise<ImportSourcesResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/sources/import",
+      "_aibuddy/unstable/sources/import",
       params,
     );
     return zImportSourcesResponse_unstable.parse(
@@ -1229,7 +1229,7 @@ export class HeyBuddyExtClient {
     params: DictationTranscribeRequest_unstable,
   ): Promise<DictationTranscribeResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/dictation/transcribe",
+      "_aibuddy/unstable/dictation/transcribe",
       params,
     );
     return zDictationTranscribeResponse_unstable.parse(
@@ -1241,7 +1241,7 @@ export class HeyBuddyExtClient {
     params: DictationConfigRequest_unstable,
   ): Promise<DictationConfigResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/dictation/config",
+      "_aibuddy/unstable/dictation/config",
       params,
     );
     return zDictationConfigResponse_unstable.parse(
@@ -1253,7 +1253,7 @@ export class HeyBuddyExtClient {
     params: DictationModelsListRequest_unstable,
   ): Promise<DictationModelsListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/dictation/models/list",
+      "_aibuddy/unstable/dictation/models/list",
       params,
     );
     return zDictationModelsListResponse_unstable.parse(
@@ -1265,7 +1265,7 @@ export class HeyBuddyExtClient {
     params: DictationModelDownloadRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/dictation/models/download",
+      "_aibuddy/unstable/dictation/models/download",
       params,
     );
   }
@@ -1274,7 +1274,7 @@ export class HeyBuddyExtClient {
     params: DictationModelDownloadProgressRequest_unstable,
   ): Promise<DictationModelDownloadProgressResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/dictation/models/download/progress",
+      "_aibuddy/unstable/dictation/models/download/progress",
       params,
     );
     return zDictationModelDownloadProgressResponse_unstable.parse(
@@ -1286,7 +1286,7 @@ export class HeyBuddyExtClient {
     params: DictationModelCancelRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/dictation/models/cancel",
+      "_aibuddy/unstable/dictation/models/cancel",
       params,
     );
   }
@@ -1295,7 +1295,7 @@ export class HeyBuddyExtClient {
     params: DictationModelDeleteRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/dictation/models/delete",
+      "_aibuddy/unstable/dictation/models/delete",
       params,
     );
   }
@@ -1304,7 +1304,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelsListRequest_unstable,
   ): Promise<LocalInferenceModelsListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/list",
+      "_aibuddy/unstable/local-inference/models/list",
       params,
     );
     return zLocalInferenceModelsListResponse_unstable.parse(
@@ -1316,7 +1316,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelDownloadRequest_unstable,
   ): Promise<LocalInferenceModelDownloadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/download",
+      "_aibuddy/unstable/local-inference/models/download",
       params,
     );
     return zLocalInferenceModelDownloadResponse_unstable.parse(
@@ -1328,7 +1328,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelDownloadProgressRequest_unstable,
   ): Promise<LocalInferenceModelDownloadProgressResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/download/progress",
+      "_aibuddy/unstable/local-inference/models/download/progress",
       params,
     );
     return zLocalInferenceModelDownloadProgressResponse_unstable.parse(
@@ -1340,7 +1340,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelDownloadCancelRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/download/cancel",
+      "_aibuddy/unstable/local-inference/models/download/cancel",
       params,
     );
   }
@@ -1349,7 +1349,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelDeleteRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/delete",
+      "_aibuddy/unstable/local-inference/models/delete",
       params,
     );
   }
@@ -1358,7 +1358,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelEvictRequest_unstable,
   ): Promise<void> {
     await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/evict",
+      "_aibuddy/unstable/local-inference/models/evict",
       params,
     );
   }
@@ -1367,7 +1367,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelSettingsReadRequest_unstable,
   ): Promise<LocalInferenceModelSettingsReadResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/settings/read",
+      "_aibuddy/unstable/local-inference/models/settings/read",
       params,
     );
     return zLocalInferenceModelSettingsReadResponse_unstable.parse(
@@ -1379,7 +1379,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceModelSettingsUpdateRequest_unstable,
   ): Promise<LocalInferenceModelSettingsUpdateResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/models/settings/update",
+      "_aibuddy/unstable/local-inference/models/settings/update",
       params,
     );
     return zLocalInferenceModelSettingsUpdateResponse_unstable.parse(
@@ -1391,7 +1391,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceHuggingFaceSearchRequest_unstable,
   ): Promise<LocalInferenceHuggingFaceSearchResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/huggingface/search",
+      "_aibuddy/unstable/local-inference/huggingface/search",
       params,
     );
     return zLocalInferenceHuggingFaceSearchResponse_unstable.parse(
@@ -1403,7 +1403,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceHuggingFaceRepoVariantsRequest_unstable,
   ): Promise<LocalInferenceHuggingFaceRepoVariantsResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/huggingface/repo/variants",
+      "_aibuddy/unstable/local-inference/huggingface/repo/variants",
       params,
     );
     return zLocalInferenceHuggingFaceRepoVariantsResponse_unstable.parse(
@@ -1415,7 +1415,7 @@ export class HeyBuddyExtClient {
     params: LocalInferenceBuiltinChatTemplatesListRequest_unstable,
   ): Promise<LocalInferenceBuiltinChatTemplatesListResponse_unstable> {
     const raw = await this.conn.request(
-      "_heybuddy/unstable/local-inference/chat-templates/builtin/list",
+      "_aibuddy/unstable/local-inference/chat-templates/builtin/list",
       params,
     );
     return zLocalInferenceBuiltinChatTemplatesListResponse_unstable.parse(

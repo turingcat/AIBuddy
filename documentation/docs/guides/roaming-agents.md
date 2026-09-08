@@ -4,27 +4,27 @@ title: Roaming Agents
 sidebar_label: Roaming Agents
 ---
 
-Roaming agents let you reach a running heybuddy agent from another machine over a
+Roaming agents let you reach a running aibuddy agent from another machine over a
 peer-to-peer connection — no open ports, no VPN, no server to host. It's built
 on [iroh](https://iroh.computer) (QUIC), so two machines can connect directly or
 via a relay, typically without any firewall changes.
 
 :::warning Opt-in build required
 Roaming is an optional, experimental feature that is **not included in
-released heybuddy binaries**. Every command in this guide requires a heybuddy built
+released aibuddy binaries**. Every command in this guide requires a aibuddy built
 from source with the `roaming` feature enabled:
 
 ```bash
-cargo build --release -p heybuddy-cli --features roaming
+cargo build --release -p aibuddy-cli --features roaming
 ```
 
-On a default build, `heybuddy roam` reports an unrecognized subcommand.
+On a default build, `aibuddy roam` reports an unrecognized subcommand.
 :::
 
 Roaming is designed to be **embedded**: the transport is a standalone Rust crate
-(`heybuddy-roaming`) with no dependency on heybuddy's agent internals, the CLI exposes
-it as `heybuddy roam` commands, and there are wasm bindings for browser apps. If
-you build on heybuddy — or just want an authenticated p2p ACP transport — you can
+(`aibuddy-roaming`) with no dependency on aibuddy's agent internals, the CLI exposes
+it as `aibuddy roam` commands, and there are wasm bindings for browser apps. If
+you build on aibuddy — or just want an authenticated p2p ACP transport — you can
 use the same pieces directly. The web client (covered near the end) is a
 **reference client** built entirely on this public surface.
 
@@ -35,7 +35,7 @@ or wire p2p agent access into your own application.
 ## The core idea: roaming is an ACP transport
 
 Roaming does exactly one thing: it provides an **authenticated, peer-to-peer
-[ACP](/docs/guides/acp-clients) transport**. The host runs heybuddy's real ACP
+[ACP](/docs/guides/acp-clients) transport**. The host runs aibuddy's real ACP
 server; the connecting side is an ACP client. That's it.
 
 Everything that feels "session-shaped" is therefore just plain ACP that happens
@@ -55,8 +55,8 @@ protocol. Higher-level behaviours (saved peers) sit *above* the transport and
 are described below.
 
 :::note
-Roaming is an optional, experimental feature. It's available when heybuddy is built
-with the `roaming` feature (`cargo build -p heybuddy-cli --features roaming`).
+Roaming is an optional, experimental feature. It's available when aibuddy is built
+with the `roaming` feature (`cargo build -p aibuddy-cli --features roaming`).
 :::
 
 ## How it works: cards and mutual acceptance
@@ -69,11 +69,11 @@ possessing one grants no access.
 
 To let a peer reach you, you each:
 
-1. **Swap cards** (`heybuddy roam id` prints yours; send it over any channel).
-2. **Accept the other's key** (`heybuddy roam peers accept …`).
+1. **Swap cards** (`aibuddy roam id` prints yours; send it over any channel).
+2. **Accept the other's key** (`aibuddy roam peers accept …`).
 
 Since a card is just a string, it can travel however is convenient — including
-as a QR code: `heybuddy roam id --qr` and `heybuddy roam share --qr` also render the
+as a QR code: `aibuddy roam id --qr` and `aibuddy roam share --qr` also render the
 card as a QR code in the terminal, which you can scan from a phone camera (or
 directly from the web client's camera, see below) instead of copy-pasting.
 
@@ -100,15 +100,15 @@ session is a possible future feature, not part of this ACP-transport model.)
 
 ### Quick start
 
-Say machine B wants to drive machine A's agent. Both run `heybuddy roam id` and send
+Say machine B wants to drive machine A's agent. Both run `aibuddy roam id` and send
 each other the card it prints. Then:
 
 **On machine A (the host):** add B's card and accept its key.
 
 ```bash
-heybuddy roam peers add 'heybuddy+roam://…B…' laptop-b
-heybuddy roam peers accept laptop-b          # grants control by default
-heybuddy roam share                          # serve to accepted peers
+aibuddy roam peers add 'aibuddy+roam://…B…' laptop-b
+aibuddy roam peers accept laptop-b          # grants control by default
+aibuddy roam share                          # serve to accepted peers
 ```
 
 `share` keeps running and prints A's card too. The agent runs in the directory
@@ -118,8 +118,8 @@ directory is always ignored.
 **On machine B (the client):** add A's card and connect.
 
 ```bash
-heybuddy roam peers add 'heybuddy+roam://…A…' laptop-a
-heybuddy roam connect laptop-a
+aibuddy roam peers add 'aibuddy+roam://…A…' laptop-a
+aibuddy roam connect laptop-a
 ```
 
 You get an interactive prompt that drives the agent on machine A. Type a message
@@ -130,7 +130,7 @@ real work, prefer `bridge` (drive the remote agent from a full ACP client) or
 `delegate` (scriptable one-shot tasks).
 
 For the common "pair a new device" case there is also a one-step helper:
-`heybuddy roam pair` shows this node's card as a QR code, reads the device's card
+`aibuddy roam pair` shows this node's card as a QR code, reads the device's card
 from stdin, and saves + accepts it in one go (the equivalent of
 `peers add` + `peers accept`).
 
@@ -144,7 +144,7 @@ Compare the short **fingerprint** shown by `roam id` / `peers accept` out of ban
 To send a single task and get the answer back — no interactive session:
 
 ```bash
-heybuddy roam delegate 'heybuddy+roam://…' "Summarize the last 5 commits in this repo."
+aibuddy roam delegate 'aibuddy+roam://…' "Summarize the last 5 commits in this repo."
 ```
 
 The remote agent runs the task with its own tools and prints its final response.
@@ -153,36 +153,36 @@ sessions — all plain ACP under the hood:
 
 ```bash
 # List the remote agent's sessions (session/list)
-heybuddy roam delegate 'heybuddy+roam://…' --list-sessions
+aibuddy roam delegate 'aibuddy+roam://…' --list-sessions
 
 # Continue a specific session instead of starting fresh (session/load)
-heybuddy roam delegate 'heybuddy+roam://…' --session <SESSION_ID> "Now fix the first failure."
+aibuddy roam delegate 'aibuddy+roam://…' --session <SESSION_ID> "Now fix the first failure."
 ```
 
 ### Bridging to any ACP client
 
-`connect` and `delegate` embed heybuddy's own ACP client. `bridge` does the
+`connect` and `delegate` embed aibuddy's own ACP client. `bridge` does the
 opposite: it exposes a remote agent as a **local ACP endpoint**, so any ACP
 client — [Zed](/docs/guides/acp-clients) or another editor — can drive it as if
 it were running locally. It runs no UI and no agent
 of its own; it transparently proxies ACP bytes between the local client and the
 remote agent.
 
-Bridge over stdio (the default — for a client that launches heybuddy as a
+Bridge over stdio (the default — for a client that launches aibuddy as a
 subprocess):
 
 ```bash
-heybuddy roam bridge 'heybuddy+roam://…'
+aibuddy roam bridge 'aibuddy+roam://…'
 ```
 
-Configure your ACP client to run `heybuddy roam bridge '<card>'` as its agent
+Configure your ACP client to run `aibuddy roam bridge '<card>'` as its agent
 command. It will speak ACP on the process's stdin/stdout, and every request is
 forwarded to the remote agent.
 
 Or bridge over a local TCP port, for a client that connects to an address:
 
 ```bash
-heybuddy roam bridge laptop --listen 127.0.0.1:8900
+aibuddy roam bridge laptop --listen 127.0.0.1:8900
 ```
 
 This accepts a single ACP connection on that address and proxies it to the
@@ -199,17 +199,17 @@ imposes its own working directory, and authorizes the connection.
 
 ## Embedding roaming in your own app
 
-Everything above is built on the **`heybuddy-roaming` crate**
-(`crates/heybuddy-roaming`), and you can use it directly. The crate deliberately
-has **zero dependency on heybuddy core** — it knows nothing about agents or
+Everything above is built on the **`aibuddy-roaming` crate**
+(`crates/aibuddy-roaming`), and you can use it directly. The crate deliberately
+has **zero dependency on aibuddy core** — it knows nothing about agents or
 sessions, only about identity, trust, and authenticated byte streams — so you
-can embed it in any Rust application, with or without heybuddy.
+can embed it in any Rust application, with or without aibuddy.
 
 The surface a consumer touches:
 
 - **`RoamingIdentity`** — a persisted ed25519 node key whose public half *is*
   the iroh endpoint id (`RoamingIdentity::generate()` for ephemeral,
-  `default_key_path` for the on-disk one heybuddy uses).
+  `default_key_path` for the on-disk one aibuddy uses).
 - **`RoamingConfig`** — a builder for a node: `RoamingConfig::new(identity)`
   plus chainers like `.with_relay(RelaySettings::…)` and
   `.with_bind_addr(addr)`. Defaults to iroh's public relays and an **empty
@@ -222,23 +222,23 @@ The surface a consumer touches:
 - **`AcpStreamServer`** — the trait your host side implements to plug in "the
   agent". It has two methods — `serve_stream` (drive your protocol over an
   authorized stream for an accepted peer) and `agent_id` (a display id sent in
-  the handshake ack) — and that's the entire integration seam. heybuddy-cli's
-  `FullAcpBridge` implements it by handing the stream to heybuddy's real ACP
+  the handshake ack) — and that's the entire integration seam. aibuddy-cli's
+  `FullAcpBridge` implements it by handing the stream to aibuddy's real ACP
   `serve`; your app can serve anything.
 - **`TrustBook`** — the mutual allowlist of accepted peer keys, with durable
   persistence and fail-closed reload. `node.trust()` gives you a handle to
   accept or revoke keys at runtime.
 - **`ConnectionCard`** — the non-secret identity + reachability string
-  (`heybuddy+roam://…`), with `encode()` / parsing and a short `fingerprint()`
+  (`aibuddy+roam://…`), with `encode()` / parsing and a short `fingerprint()`
   for out-of-band verification.
 
 A minimal end-to-end example (condensed from
-`crates/heybuddy-roaming/examples/echo_roundtrip.rs`, which runs both ends in one
-process — `cargo run -p heybuddy-roaming --example echo_roundtrip`):
+`crates/aibuddy-roaming/examples/echo_roundtrip.rs`, which runs both ends in one
+process — `cargo run -p aibuddy-roaming --example echo_roundtrip`):
 
 ```rust
 use std::sync::Arc;
-use heybuddy_roaming::{
+use aibuddy_roaming::{
     AcpStreamServer, EndpointId, RoamingConfig, RoamingIdentity, RoamingNode,
 };
 
@@ -277,13 +277,13 @@ async fn demo() -> anyhow::Result<()> {
 
 A few notes for integrators:
 
-- **To expose a full heybuddy backend**, you don't have to implement
-  `AcpStreamServer` yourself: `heybuddy serve --roam` runs heybuddy's regular agent
+- **To expose a full aibuddy backend**, you don't have to implement
+  `AcpStreamServer` yourself: `aibuddy serve --roam` runs aibuddy's regular agent
   server *and* exposes it over roam in one process. It works headless, writes
   its card to `<data-dir>/roam/serve.json`, and prints it on startup.
 - **For browser apps**, the same transport compiles to WebAssembly. The wasm
-  bindings (`@heybuddy/heybuddy-roam-web`, built from the `heybuddy-roaming-web` crate in
-  the [heybuddy-mobile repo](https://github.com/aaif-goose/goose-mobile/tree/main/mobile-web))
+  bindings (`@aibuddy/aibuddy-roam-web`, built from the `aibuddy-roaming-web` crate in
+  the [aibuddy-mobile repo](https://github.com/aaif-goose/goose-mobile/tree/main/mobile-web))
   expose a `RoamClient` to JavaScript — generate an identity, print your card,
   dial a host's card, and drive ACP from inside a browser tab, with no server in
   between. The web client below is built on these bindings.
@@ -294,9 +294,9 @@ A few notes for integrators:
 ## The web client: a reference browser client
 
 The hosted web client at
-[aaif-heybuddy.github.io/heybuddy-mobile](https://aaif-goose.github.io/goose-mobile/)
-is a **reference client built on the pieces above**: the `@heybuddy/heybuddy-roam-web`
-wasm bindings for transport, and heybuddy's `ui/sdk` `HeyBuddyClient` for the ACP
+[aaif-aibuddy.github.io/aibuddy-mobile](https://aaif-goose.github.io/goose-mobile/)
+is a **reference client built on the pieces above**: the `@aibuddy/aibuddy-roam-web`
+wasm bindings for transport, and aibuddy's `ui/sdk` `AIBuddyClient` for the ACP
 protocol layer. The browser tab is itself a roam peer: iroh compiled to
 WebAssembly runs inside the tab and connects through the same relays with the
 same mutual key trust — there is no server in between, and no traffic goes
@@ -307,17 +307,17 @@ Pairing works exactly like any other peer. The tab generates its own identity
 and shows its card; you accept it once on the host:
 
 ```bash
-heybuddy roam peers accept 'heybuddy+roam://…tab…' phone
+aibuddy roam peers accept 'aibuddy+roam://…tab…' phone
 ```
 
 To get the host's card into the browser, paste it — or run
-`heybuddy roam share --qr` and scan the QR code with the web client's camera.
+`aibuddy roam share --qr` and scan the QR code with the web client's camera.
 
 Once connected, the tab can list and open the host's sessions, start new ones,
 stream responses, steer a running turn, and group sessions by project. You can
 connect several hosts at once; their sessions appear in one merged list.
 
-The source lives in the [heybuddy-mobile repo](https://github.com/aaif-goose/goose-mobile/tree/main/mobile-web)
+The source lives in the [aibuddy-mobile repo](https://github.com/aaif-goose/goose-mobile/tree/main/mobile-web)
 (`mobile-web/`) — the README there has build details if you want to host it
 yourself (it builds to a static site).
 
@@ -328,13 +328,13 @@ card is just an address-book entry — it does **not** let that peer connect to
 you (use `peers accept` for that):
 
 ```bash
-heybuddy roam peers add 'heybuddy+roam://…' laptop   # save to the address book
-heybuddy roam connect laptop
-heybuddy roam delegate laptop "run the tests and report failures"
+aibuddy roam peers add 'aibuddy+roam://…' laptop   # save to the address book
+aibuddy roam connect laptop
+aibuddy roam delegate laptop "run the tests and report failures"
 
-heybuddy roam peers list      # show saved peers + which keys you accept
-heybuddy roam connections     # show observed connections
-heybuddy roam id              # print this node's connection card
+aibuddy roam peers list      # show saved peers + which keys you accept
+aibuddy roam connections     # show observed connections
+aibuddy roam id              # print this node's connection card
 ```
 
 ## Controlling who can connect
@@ -343,15 +343,15 @@ Access is granted **only** by accepting a peer's public key — there is no bear
 token that works by possession. You accept a peer by saved name or inline card:
 
 ```bash
-heybuddy roam peers accept laptop                    # accept a saved peer
-heybuddy roam peers accept 'heybuddy+roam://…'          # accept an inline card (also saves it)
-heybuddy roam peers accept 'heybuddy+roam://…' laptop   # accept + save under a nickname in one go
+aibuddy roam peers accept laptop                    # accept a saved peer
+aibuddy roam peers accept 'aibuddy+roam://…'          # accept an inline card (also saves it)
+aibuddy roam peers accept 'aibuddy+roam://…' laptop   # accept + save under a nickname in one go
 
-heybuddy roam peers list                             # see who is accepted
-heybuddy roam peers revoke laptop                    # stop accepting (name, card, or raw id)
+aibuddy roam peers list                             # see who is accepted
+aibuddy roam peers revoke laptop                    # stop accepting (name, card, or raw id)
 ```
 
-An accepted peer gets heybuddy's **full ACP surface** — it can drive its own
+An accepted peer gets aibuddy's **full ACP surface** — it can drive its own
 sessions on this machine (new/list/load/prompt), which is effectively remote
 shell access. There are no finer-grained roles: acceptance is all-or-nothing.
 
@@ -373,13 +373,13 @@ fingerprint out of band.
 
 ## Letting the agent reach other agents
 
-With the roaming feature enabled, heybuddy can delegate to other agents itself. Ask
-it to, and it can run `heybuddy roam delegate <peer> "<task>"` via its shell — for
+With the roaming feature enabled, aibuddy can delegate to other agents itself. Ask
+it to, and it can run `aibuddy roam delegate <peer> "<task>"` via its shell — for
 example, "delegate this to my work laptop and summarize what it finds." It sends
 one self-contained task and relays the response.
 
 Because saved peers are just an address book, the agent can discover what
-remotes it has available (`heybuddy roam peers list`) and route work to the right
+remotes it has available (`aibuddy roam peers list`) and route work to the right
 one — e.g. run a build on the machine that has the toolchain, then bring the
 result back. Each delegation is a self-contained task with a bounded response,
 so this composes into multi-machine workflows without any shared state.
@@ -387,12 +387,12 @@ so this composes into multi-machine workflows without any shared state.
 ## Notes and limits
 
 - Peers connect directly when NAT hole-punching succeeds and fall back to a
-  relay otherwise. By default roaming uses a set of heybuddy-managed iroh relays
+  relay otherwise. By default roaming uses a set of aibuddy-managed iroh relays
   (one per region — not iroh's shared public relays); override them with the
-  `HEYBUDDY_ROAM_RELAYS` config key or environment variable to point at your own
+  `AIBUDDY_ROAM_RELAYS` config key or environment variable to point at your own
   deployment.
 - `connect`, `delegate`, and `bridge` all accept either a saved peer name or a
-  raw `heybuddy+roam://…` card. Remember the peer must also have accepted your key.
+  raw `aibuddy+roam://…` card. Remember the peer must also have accepted your key.
 - A message sent to a session that has a run in flight **in the share process**
   becomes a steer of that run. A loop running in a *different* process on the
   host (another CLI, or a host that does not have roam enabled) can't be steered
@@ -402,4 +402,4 @@ so this composes into multi-machine workflows without any shared state.
   an OS process a tool had already spawned (say, a long shell command) may run
   to completion — revocation stops the agent, not processes it already forked.
 - On macOS, if a session still appears to hang on connect, set
-  `HEYBUDDY_DISABLE_KEYRING=1` to skip the keychain entirely.
+  `AIBUDDY_DISABLE_KEYRING=1` to skip the keychain entirely.

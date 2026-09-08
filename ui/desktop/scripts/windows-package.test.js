@@ -154,7 +154,7 @@ describe('Windows packaging automation contracts', () => {
   it('does not apply the removed edition validator to the proxy parameter', () => {
     const script = fs.readFileSync(path.join(repositoryRoot, 'build-windows.ps1'), 'utf8');
 
-    expect(script).not.toMatch(/\[ValidateSet\('heybuddy', 'aibuddy'\)\]/);
+    expect(script).not.toMatch(/\[ValidateSet\('aibuddy', 'aibuddy'\)\]/);
     expect(script).not.toMatch(/build-windows\.ps1\s+-Edition/);
   });
 });

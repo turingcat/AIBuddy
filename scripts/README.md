@@ -1,14 +1,14 @@
-# HeyBuddy Benchmark Scripts
+# AIBuddy Benchmark Scripts
 
-This directory contains scripts for running and analyzing HeyBuddy benchmarks.
+This directory contains scripts for running and analyzing AIBuddy benchmarks.
 
 ## run-benchmarks.sh
 
-This script runs HeyBuddy benchmarks across multiple provider:model pairs and analyzes the results.
+This script runs AIBuddy benchmarks across multiple provider:model pairs and analyzes the results.
 
 ### Prerequisites
 
-- HeyBuddy CLI must be built or installed
+- AIBuddy CLI must be built or installed
 - `jq` command-line tool for JSON processing (optional, but recommended for result analysis)
 
 ### Usage
@@ -41,7 +41,7 @@ The script:
 1. Parses the provider:model pairs and benchmark suites
 2. Determines whether to use the debug or release binary
 3. For each provider:model pair:
-   - Sets the `HEYBUDDY_PROVIDER` and `HEYBUDDY_MODEL` environment variables
+   - Sets the `AIBUDDY_PROVIDER` and `AIBUDDY_MODEL` environment variables
    - Runs the benchmark with the specified suites
    - Analyzes the results for failures
 4. Generates a summary of all benchmark runs

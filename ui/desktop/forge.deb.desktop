@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=HeyBuddy
-Exec=/usr/lib/heybuddy/HeyBuddy %U
-Icon=/usr/share/pixmaps/heybuddy.png
+Name=AIBuddy
+Exec=/usr/lib/aibuddy/AIBuddy %U
+Icon=/usr/share/pixmaps/aibuddy.png
 Terminal=false
 Type=Application
 Categories=Development;
-MimeType=x-scheme-handler/heybuddy;
+MimeType=x-scheme-handler/aibuddy;

@@ -1,23 +1,23 @@
 ---
 title: Linux MCP Server Extension
-description: Add Linux MCP Server as a heybuddy Extension
+description: Add Linux MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
-This tutorial covers how to add the [Linux MCP Server](https://github.com/rhel-lightspeed/linux-mcp-server) as a heybuddy extension to enable AI assistants to run, discover, and troubleshoot complex issues on Linux systems.
+This tutorial covers how to add the [Linux MCP Server](https://github.com/rhel-lightspeed/linux-mcp-server) as a aibuddy extension to enable AI assistants to run, discover, and troubleshoot complex issues on Linux systems.
 
 :::tip TLDR
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Install Linux MCP Server](https://rhel-lightspeed.github.io/linux-mcp-server/install/)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   # Using uv (recommended)
@@ -35,9 +35,9 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
 
-    <HeyBuddyDesktopInstaller
+    <AIBuddyDesktopInstaller
       extensionId="linux-mcp-server"
       extensionName="Linux MCP server"
       description="Tools for Linux system discovery and troubleshooting"
@@ -48,7 +48,7 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 
  
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
     <CLIExtensionInstructions
       name="Linux MCP Server"
@@ -65,12 +65,12 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 
 Follow the instructions on how to use the Linux MCP Server for system diagnostics and troubleshooting.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 > _My wifi connection is not working very well. Find the error messages in the system logs and diagnose the problem to help me fix it._
 
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 

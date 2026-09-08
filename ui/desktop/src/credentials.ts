@@ -6,7 +6,7 @@ import type { GatewayCredentials, SiteAccountIdentity, SiteTarget } from './site
 /**
  * @author: logic
  * @date: 2026-08-11
- * AIBuddy 登录凭证：登录成功后由服务端下发，写入独立文件，注入给 goose serve
+ * AIBuddy 登录凭证：登录成功后由服务端下发，写入独立文件，注入给 aibuddy serve
  * 2026-08-27 起：文件为 v:1 加密信封 {"v":1,"blob":"..."}，codec 由调用方注入；
  * 读取到旧版明文文件时自动加密迁移，迁移失败仅记录不阻断
  */

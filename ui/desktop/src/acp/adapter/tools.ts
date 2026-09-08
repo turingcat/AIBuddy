@@ -4,15 +4,15 @@ import type {
   ToolCallUpdate,
 } from '@agentclientprotocol/sdk';
 import type { Message } from '../../types/message';
-import type { ContentBlock as HeyBuddyContentBlock } from '../../types/message';
+import type { ContentBlock as AIBuddyContentBlock } from '../../types/message';
 import { findMessageForChunk } from './messages';
 import { toolNotificationChange } from './toolNotifications';
 import {
   type AcpChatStateChange,
   type AdapterState,
   DEFAULT_VISIBLE_MESSAGE_METADATA,
-  type HeyBuddyMessageMeta,
-  getHeyBuddyMessageMeta,
+  type AIBuddyMessageMeta,
+  getAIBuddyMessageMeta,
   isRecord,
   messagesChange,
   rawInputToArguments,
@@ -24,8 +24,8 @@ import {
 export function applyToolCall(state: AdapterState, update: ToolCall): AcpChatStateChange[] {
   updateToolCallState(state, update);
 
-  const heybuddyMeta = getHeyBuddyMessageMeta(update);
-  const message = getOrCreateAssistantMessageForUpdate(state, heybuddyMeta);
+  const aibuddyMeta = getAIBuddyMessageMeta(update);
+  const message = getOrCreateAssistantMessageForUpdate(state, aibuddyMeta);
 
   if (
     message.content.some(
@@ -72,8 +72,8 @@ export function applyToolCallUpdate(
     return messagesChange(state);
   }
 
-  const heybuddyMeta = getHeyBuddyMessageMeta(update);
-  const message = getOrCreateToolResponseMessageForUpdate(state, heybuddyMeta);
+  const aibuddyMeta = getAIBuddyMessageMeta(update);
+  const message = getOrCreateToolResponseMessageForUpdate(state, aibuddyMeta);
   const identity = toolIdentity(update);
   const metadata = toolResponseMetadata(toolCallState, identity);
 
@@ -113,17 +113,17 @@ function mergeToolCallState(
 
 function getOrCreateAssistantMessageForUpdate(
   state: AdapterState,
-  heybuddyMeta: HeyBuddyMessageMeta
+  aibuddyMeta: AIBuddyMessageMeta
 ): Message {
-  const existing = findMessageForChunk(state, 'assistant', heybuddyMeta.messageId, heybuddyMeta.created);
+  const existing = findMessageForChunk(state, 'assistant', aibuddyMeta.messageId, aibuddyMeta.created);
   if (existing) {
     return existing;
   }
 
   const message: Message = {
-    ...(heybuddyMeta.messageId ? { id: heybuddyMeta.messageId } : {}),
+    ...(aibuddyMeta.messageId ? { id: aibuddyMeta.messageId } : {}),
     role: 'assistant',
-    created: heybuddyMeta.created ?? Math.floor(Date.now() / 1000),
+    created: aibuddyMeta.created ?? Math.floor(Date.now() / 1000),
     content: [],
     metadata: { ...DEFAULT_VISIBLE_MESSAGE_METADATA },
   };
@@ -133,11 +133,11 @@ function getOrCreateAssistantMessageForUpdate(
 
 function getOrCreateToolResponseMessageForUpdate(
   state: AdapterState,
-  heybuddyMeta: HeyBuddyMessageMeta
+  aibuddyMeta: AIBuddyMessageMeta
 ): Message {
-  if (heybuddyMeta.messageId) {
+  if (aibuddyMeta.messageId) {
     const existing = state.messages.find(
-      (message) => message.id === heybuddyMeta.messageId && message.role === 'user'
+      (message) => message.id === aibuddyMeta.messageId && message.role === 'user'
     );
     if (existing) {
       return existing;
@@ -145,9 +145,9 @@ function getOrCreateToolResponseMessageForUpdate(
   }
 
   const message: Message = {
-    ...(heybuddyMeta.messageId ? { id: heybuddyMeta.messageId } : {}),
+    ...(aibuddyMeta.messageId ? { id: aibuddyMeta.messageId } : {}),
     role: 'user',
-    created: heybuddyMeta.created ?? Math.floor(Date.now() / 1000),
+    created: aibuddyMeta.created ?? Math.floor(Date.now() / 1000),
     content: [],
     metadata: { ...DEFAULT_VISIBLE_MESSAGE_METADATA },
   };
@@ -225,8 +225,8 @@ function toolResultValue(
   return toolResult;
 }
 
-function toolResultContent(update: ToolCallUpdate): HeyBuddyContentBlock[] {
-  const content: HeyBuddyContentBlock[] = [];
+function toolResultContent(update: ToolCallUpdate): AIBuddyContentBlock[] {
+  const content: AIBuddyContentBlock[] = [];
 
   for (const item of update.content ?? []) {
     if (item.type !== 'content') {
@@ -252,7 +252,7 @@ function toolResultContent(update: ToolCallUpdate): HeyBuddyContentBlock[] {
 
 function apiContentBlockFromAcpContentBlock(
   content: AcpContentBlock
-): HeyBuddyContentBlock | undefined {
+): AIBuddyContentBlock | undefined {
   switch (content.type) {
     case 'text':
       return {
@@ -297,7 +297,7 @@ function apiContentBlockFromAcpContentBlock(
 
 function apiResourceContentsFromAcpResource(
   resource: Extract<AcpContentBlock, { type: 'resource' }>['resource']
-): Extract<HeyBuddyContentBlock, { type: 'resource' }>['resource'] {
+): Extract<AIBuddyContentBlock, { type: 'resource' }>['resource'] {
   if ('text' in resource) {
     return {
       uri: resource.uri,
@@ -341,7 +341,7 @@ interface DesktopMcpAppMeta extends Record<string, unknown> {
 }
 
 type ToolResultValue = {
-  content: HeyBuddyContentBlock[];
+  content: AIBuddyContentBlock[];
   structuredContent?: unknown;
   isError: boolean;
   _meta?: DesktopMcpAppMeta;
@@ -352,12 +352,12 @@ function mcpAppMetadata(update: ToolCallUpdate): DesktopMcpAppMeta | undefined {
     return undefined;
   }
 
-  const heybuddy = update._meta.heybuddy;
-  if (!isRecord(heybuddy) || !isRecord(heybuddy.mcpApp)) {
+  const aibuddy = update._meta.aibuddy;
+  if (!isRecord(aibuddy) || !isRecord(aibuddy.mcpApp)) {
     return undefined;
   }
 
-  const resourceUri = heybuddy.mcpApp.resourceUri;
+  const resourceUri = aibuddy.mcpApp.resourceUri;
   if (typeof resourceUri !== 'string') {
     return undefined;
   }
@@ -367,11 +367,11 @@ function mcpAppMetadata(update: ToolCallUpdate): DesktopMcpAppMeta | undefined {
       resourceUri,
     },
     extensionName:
-      typeof heybuddy.mcpApp.extensionName === 'string' ? heybuddy.mcpApp.extensionName : undefined,
-    toolName: typeof heybuddy.mcpApp.toolName === 'string' ? heybuddy.mcpApp.toolName : undefined,
+      typeof aibuddy.mcpApp.extensionName === 'string' ? aibuddy.mcpApp.extensionName : undefined,
+    toolName: typeof aibuddy.mcpApp.toolName === 'string' ? aibuddy.mcpApp.toolName : undefined,
     toolNameIsActual:
-      typeof heybuddy.mcpApp.toolNameIsActual === 'boolean'
-        ? heybuddy.mcpApp.toolNameIsActual
+      typeof aibuddy.mcpApp.toolNameIsActual === 'boolean'
+        ? aibuddy.mcpApp.toolNameIsActual
         : undefined,
   };
 }

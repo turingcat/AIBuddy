@@ -1,0 +1,28 @@
+{
+  "name": "@aibuddy/aibuddy-binary-darwin-arm64",
+  "version": "0.20.2",
+  "description": "AIBuddy binary for macOS ARM64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaif-goose/goose.git"
+  },
+  "bin": {
+    "aibuddy": "bin/aibuddy"
+  },
+  "keywords": [
+    "aibuddy",
+    "ai",
+    "agent",
+    "binary"
+  ],
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "files": [
+    "bin/aibuddy"
+  ]
+}

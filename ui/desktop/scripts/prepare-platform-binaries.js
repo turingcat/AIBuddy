@@ -41,7 +41,7 @@ const windowsFiles = [
     '*.exe',
     '*.dll',
     '*.cmd',
-    'heybuddy-npm/**/*'
+    'aibuddy-npm/**/*'
 ];
 
 // Helper function to check if file matches patterns
@@ -139,7 +139,7 @@ async function ensureWindowsUvBinaries(architecture) {
         return;
     }
 
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'heybuddy-uv-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aibuddy-uv-'));
     const zipPath = path.join(tmpDir, 'uv.zip');
     const extractDir = path.join(tmpDir, 'extract');
     fs.mkdirSync(extractDir, { recursive: true });
@@ -187,7 +187,7 @@ function cleanBinDirectory(targetPlatform) {
         const filePath = path.join(srcBinDir, file.name);
         
         if (targetPlatform === 'darwin' || targetPlatform === 'linux') {
-            const isLegacyBackendBinary = file.name === 'heybuddyd';
+            const isLegacyBackendBinary = file.name === 'aibuddyd';
             if (isLegacyBackendBinary || matchesPattern(file.name, windowsFiles)) {
                 const fileType = isLegacyBackendBinary ? 'legacy backend binary' : 'Windows file';
                 console.log(`Removing ${fileType}: ${file.name}`);

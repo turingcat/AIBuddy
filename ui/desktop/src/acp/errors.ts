@@ -9,11 +9,11 @@ export interface AcpCreditsExhaustedError {
 const CREDITS_EXHAUSTED_REASON = 'credits_exhausted';
 const AUTH_REQUIRED_CODE = -32000;
 
-// Kept in sync with RECIPE_PARAMS_CANCELLED_REASON in crates/heybuddy/src/acp/server/recipe.rs.
+// Kept in sync with RECIPE_PARAMS_CANCELLED_REASON in crates/aibuddy/src/acp/server/recipe.rs.
 const RECIPE_PARAMS_CANCELLED_REASON = 'recipe_params_cancelled';
 
 export const RECIPE_PARAMETER_SCOPES_UNSUPPORTED_MESSAGE =
-  'The connected HeyBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.';
+  'The connected AIBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.';
 
 export class RecipeParameterScopesUnsupportedError extends Error {
   constructor() {

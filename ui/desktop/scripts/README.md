@@ -1,22 +1,22 @@
-# HeyBuddyy
+# AIBuddyy
 
-Put `heybuddyy` in your $PATH if you want to launch via:
+Put `aibuddyy` in your $PATH if you want to launch via:
 
 ```
-heybuddyy .
+aibuddyy .
 ```
 
-This will open heybuddy GUI from any path you specify
+This will open aibuddy GUI from any path you specify
 
 # Unregister Deeplink Protocols (macos only)
 
-`unregister-deeplink-protocols.js` is a script to unregister the deeplink protocol used by heybuddy like `goose://`.
-This is handy when you want to test deeplinks with the development version of HeyBuddy.
+`unregister-deeplink-protocols.js` is a script to unregister the deeplink protocol used by aibuddy like `goose://`.
+This is handy when you want to test deeplinks with the development version of AIBuddy.
 
 # Usage
 
 To unregister the deeplink protocols, run the following command in your terminal:
-Then launch HeyBuddy again and your deeplinks should work from the latest launched heybuddy application as it is registered on startup.
+Then launch AIBuddy again and your deeplinks should work from the latest launched aibuddy application as it is registered on startup.
 
 ```bash
 node scripts/unregister-deeplink-protocols.js

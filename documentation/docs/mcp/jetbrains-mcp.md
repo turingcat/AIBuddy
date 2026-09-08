@@ -1,6 +1,6 @@
 ---
 title: JetBrains Extension
-description: Use JetBrains MCP Server as a heybuddy Extension
+description: Use JetBrains MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
@@ -11,7 +11,7 @@ import { PanelLeft } from 'lucide-react';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/1fP5elf9qQM" />
 
-This tutorial covers how to add the JetBrains extension to integrate with any JetBrains IDE. While heybuddy can use the [Developer extension](/docs/mcp/developer-mcp) for developer-centric tasks, the JetBrains extension provides a more integrated and project-aware way to work with code.
+This tutorial covers how to add the JetBrains extension to integrate with any JetBrains IDE. While aibuddy can use the [Developer extension](/docs/mcp/developer-mcp) for developer-centric tasks, the JetBrains extension provides a more integrated and project-aware way to work with code.
 
 ## Configuration
 
@@ -24,11 +24,11 @@ This tutorial covers how to add the JetBrains extension to integrate with any Je
 
     :::tip Quick Install
     <Tabs groupId="interface">
-      <TabItem value="ui" label="heybuddy Desktop" default>
+      <TabItem value="ui" label="aibuddy Desktop" default>
       Use `Add custom extension` in Settings → Extensions with the URL from `Copy HTTP Stream Config` in your IDE.
       </TabItem>
-      <TabItem value="cli" label="heybuddy CLI">
-      Use `heybuddy configure` with the URL from `Copy HTTP Stream Config` in your IDE.
+      <TabItem value="cli" label="aibuddy CLI">
+      Use `aibuddy configure` with the URL from `Copy HTTP Stream Config` in your IDE.
       </TabItem>
     </Tabs>
     :::
@@ -43,25 +43,25 @@ This tutorial covers how to add the JetBrains extension to integrate with any Je
        3. Click `Copy HTTP Stream Config`
        4. Note the `url` value (e.g. `http://127.0.0.1:64344/stream`) — the port is auto-assigned and varies per IDE instance
 
-    2. Add the JetBrains extension to heybuddy using the URL from the config:
+    2. Add the JetBrains extension to aibuddy using the URL from the config:
 
        <Tabs groupId="interface">
-         <TabItem value="ui" label="heybuddy Desktop" default>
+         <TabItem value="ui" label="aibuddy Desktop" default>
            1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
            2. Click `Extensions` on the sidebar
            3. Click `Add custom extension`
            4. On the `Add custom extension` modal, enter the following:
               - **Extension Name**: JetBrains
               - **Type**: Streamable HTTP
-              - **Description**: Integrate heybuddy with any JetBrains IDE
+              - **Description**: Integrate aibuddy with any JetBrains IDE
               - **URL**: Paste the `url` from `Copy HTTP Stream Config`
            5. Click `Add Extension` to save the extension
            6. Navigate to the chat
          </TabItem>
-         <TabItem value="cli" label="heybuddy CLI">
+         <TabItem value="cli" label="aibuddy CLI">
            <CLIExtensionInstructions
              name="jetbrains"
-             description="Integrate heybuddy with any JetBrains IDE"
+             description="Integrate aibuddy with any JetBrains IDE"
              type="http"
              url="http://127.0.0.1:<PORT>/stream"
              timeout={300}
@@ -80,11 +80,11 @@ This tutorial covers how to add the JetBrains extension to integrate with any Je
 
     :::tip Quick Install
     <Tabs groupId="interface">
-      <TabItem value="ui" label="heybuddy Desktop" default>
+      <TabItem value="ui" label="aibuddy Desktop" default>
       Use `Add custom extension` in Settings → Extensions with the command from `Copy Stdio Config` in your IDE.
       </TabItem>
-      <TabItem value="cli" label="heybuddy CLI">
-      Use `heybuddy configure` with the command from `Copy Stdio Config` in your IDE.
+      <TabItem value="cli" label="aibuddy CLI">
+      Use `aibuddy configure` with the command from `Copy Stdio Config` in your IDE.
       </TabItem>
     </Tabs>
     :::
@@ -100,26 +100,26 @@ This tutorial covers how to add the JetBrains extension to integrate with any Je
        4. Click `OK` to save your changes and start the server
        5. Copy the `command`, `args`, and `env` values from the config
 
-    2. Add the JetBrains extension to heybuddy using the command from the config:
+    2. Add the JetBrains extension to aibuddy using the command from the config:
 
        <Tabs groupId="interface">
-         <TabItem value="ui" label="heybuddy Desktop" default>
+         <TabItem value="ui" label="aibuddy Desktop" default>
            1. Click the <PanelLeft className="inline" size={16} /> button in the top-left to open the sidebar
            2. Click `Extensions` on the sidebar
            3. Click `Add custom extension`
            4. On the `Add custom extension` modal, enter the following:
               - **Extension Name**: JetBrains
               - **Type**: STDIO
-              - **Description**: Integrate heybuddy with any JetBrains IDE
+              - **Description**: Integrate aibuddy with any JetBrains IDE
               - **Command**: Combine the `command` and `args` from your IDE's Stdio config into a single command string
               - **Environment Variables**: Add `IJ_MCP_SERVER_PORT` with the port value from the `env` section of your copied Stdio config
            5. Click `Add Extension` to save the extension
            6. Navigate to the chat
          </TabItem>
-         <TabItem value="cli" label="heybuddy CLI">
+         <TabItem value="cli" label="aibuddy CLI">
            <CLIExtensionInstructions
              name="jetbrains"
-             description="Integrate heybuddy with any JetBrains IDE"
+             description="Integrate aibuddy with any JetBrains IDE"
              type="stdio"
              command="YOUR_COMMAND_AND_ARGS_FROM_IDE"
              timeout={300}
@@ -140,38 +140,38 @@ This tutorial covers how to add the JetBrains extension to integrate with any Je
 In this example, I'm going to upgrade a Java project to the latest LTS version.
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
    1. Open [IntelliJ](https://www.jetbrains.com/idea/download) (JetBrains' Java and Kotlin IDE)
-   2. Open a new session in heybuddy Desktop
+   2. Open a new session in aibuddy Desktop
    :::note
-   You will interact with two separate apps: the heybuddy Desktop app and the IntelliJ IDE.
+   You will interact with two separate apps: the aibuddy Desktop app and the IntelliJ IDE.
    :::
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Open [IntelliJ](https://www.jetbrains.com/idea/download) (JetBrains' Java and Kotlin IDE)
-  2. Open a terminal within your IDE and start a new heybuddy session:
+  2. Open a terminal within your IDE and start a new aibuddy session:
 
   ```sh
-  heybuddy session
+  aibuddy session
   ```
 
   </TabItem>
 </Tabs>
 
 :::tip
-When using heybuddy to refactor code, it's recommended to commit your code to version control _before_ making changes. This way, you have a clean snapshot to compare against, making it easy to review heybuddy's modifications, revert if needed, and track improvements.
+When using aibuddy to refactor code, it's recommended to commit your code to version control _before_ making changes. This way, you have a clean snapshot to compare against, making it easy to review aibuddy's modifications, revert if needed, and track improvements.
 :::
 
-### heybuddy Prompt
+### aibuddy Prompt
 ```
 using the JetBrains IDE tools, upgrade this project to use the latest Java LTS version and refactor the codebase to use newer Java features where beneficial.
 ```
 
-After 2 minutes, heybuddy was done with the upgrade! 🎉
+After 2 minutes, aibuddy was done with the upgrade! 🎉
 
-### heybuddy Output
+### aibuddy Output
 
 ```md
 I'll make several improvements to modernize this codebase to use Java 21 (latest LTS) features. Here are the changes I'll implement:
@@ -250,7 +250,7 @@ The codebase is now using the latest Java LTS version (21) and incorporates many
 
 
 
-Using the JetBrains extension provided several advantages and made it easier for heybuddy to:
+Using the JetBrains extension provided several advantages and made it easier for aibuddy to:
 - navigate through the codebase
 - track changes
 - make consistent modifications across files

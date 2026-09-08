@@ -6,7 +6,7 @@ export async function getDiagnosticsReport(
   level: DiagnosticsLevel
 ): Promise<DiagnosticsReport> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.diagnosticsGet_unstable({
+  const response = await client.aibuddy.diagnosticsGet_unstable({
     sessionId,
     level,
   });

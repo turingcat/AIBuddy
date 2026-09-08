@@ -1,0 +1,28 @@
+{
+  "name": "@aibuddy/aibuddy-binary-win32-x64",
+  "version": "0.20.2",
+  "description": "AIBuddy binary for Windows x64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaif-goose/goose.git"
+  },
+  "bin": {
+    "aibuddy": "bin/aibuddy.exe"
+  },
+  "keywords": [
+    "aibuddy",
+    "ai",
+    "agent",
+    "binary"
+  ],
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin/aibuddy.exe"
+  ]
+}

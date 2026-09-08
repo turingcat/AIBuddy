@@ -21,7 +21,7 @@ vi.mock('./ChatInputCard', () => ({
   ChatInputCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('./ConfigContext', () => ({ useConfig: () => ({ extensionsList: [] }) }));
-vi.mock('./LoadingGoose', () => ({ default: () => null }));
+vi.mock('./LoadingAIBuddy', () => ({ default: () => null }));
 vi.mock('../sessions', () => ({ createSession: mocks.createSession }));
 vi.mock('../utils/workingDir', () => ({
   getInitialWorkingDir: () => '/workspace',
@@ -57,7 +57,7 @@ describe('Hub', () => {
     renderHub();
 
     expect(screen.getByText('早上好，我是AIBuddy')).toBeInTheDocument();
-    expect(screen.queryByText(/HeyBuddy|广林 AI 助手/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/AIBuddy|广林 AI 助手/)).not.toBeInTheDocument();
   });
 
   it.each([

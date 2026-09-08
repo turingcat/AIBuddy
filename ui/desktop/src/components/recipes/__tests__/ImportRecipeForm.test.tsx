@@ -4,7 +4,7 @@ import { IntlTestWrapper } from '../../../i18n/test-utils';
 import ImportRecipeForm from '../ImportRecipeForm';
 
 const recipeMocks = vi.hoisted(() => ({
-  recipeDeeplinkPrefix: () => 'heybuddy://recipe',
+  recipeDeeplinkPrefix: () => 'aibuddy://recipe',
   parseDeeplink: vi.fn(),
   parseRecipeFromFile: vi.fn(),
 }));

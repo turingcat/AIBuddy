@@ -5,7 +5,7 @@ import type {
   LocalInferenceModelDownloadRequest_unstable,
   LocalInferenceModelDto,
   LocalInferenceModelSettingsDto,
-} from '@heybuddy/heybuddy-sdk';
+} from '@aibuddy/aibuddy-sdk';
 import { getAcpClient } from './acpConnection';
 
 export type LocalModelResponse = LocalInferenceModelDto;
@@ -28,13 +28,13 @@ export type RepoVariantsResponse = {
 
 export async function listLocalModels(): Promise<LocalModelResponse[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceModelsList_unstable({});
+  const response = await client.aibuddy.localInferenceModelsList_unstable({});
   return response.models;
 }
 
 export async function downloadHfModel(request: DownloadModelRequest): Promise<string> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceModelsDownload_unstable(request);
+  const response = await client.aibuddy.localInferenceModelsDownload_unstable(request);
   return response.modelId;
 }
 
@@ -42,28 +42,28 @@ export async function getLocalModelDownloadProgress(
   modelId: string
 ): Promise<DownloadProgress | null> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceModelsDownloadProgress_unstable({ modelId });
+  const response = await client.aibuddy.localInferenceModelsDownloadProgress_unstable({ modelId });
   return response.progress ?? null;
 }
 
 export async function cancelLocalModelDownload(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.localInferenceModelsDownloadCancel_unstable({ modelId });
+  await client.aibuddy.localInferenceModelsDownloadCancel_unstable({ modelId });
 }
 
 export async function deleteLocalModel(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.localInferenceModelsDelete_unstable({ modelId });
+  await client.aibuddy.localInferenceModelsDelete_unstable({ modelId });
 }
 
 export async function evictLocalModel(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.localInferenceModelsEvict_unstable({ modelId });
+  await client.aibuddy.localInferenceModelsEvict_unstable({ modelId });
 }
 
 export async function getModelSettings(modelId: string): Promise<ModelSettings> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceModelsSettingsRead_unstable({ modelId });
+  const response = await client.aibuddy.localInferenceModelsSettingsRead_unstable({ modelId });
   return response.settings;
 }
 
@@ -72,7 +72,7 @@ export async function updateModelSettings(
   settings: ModelSettings
 ): Promise<ModelSettings> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceModelsSettingsUpdate_unstable({
+  const response = await client.aibuddy.localInferenceModelsSettingsUpdate_unstable({
     modelId,
     settings,
   });
@@ -81,13 +81,13 @@ export async function updateModelSettings(
 
 export async function searchHfModels(query: string, limit?: number): Promise<HfModelInfo[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceHuggingfaceSearch_unstable({ query, limit });
+  const response = await client.aibuddy.localInferenceHuggingfaceSearch_unstable({ query, limit });
   return response.models;
 }
 
 export async function getRepoFiles(repoId: string): Promise<RepoVariantsResponse> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceHuggingfaceRepoVariants_unstable({ repoId });
+  const response = await client.aibuddy.localInferenceHuggingfaceRepoVariants_unstable({ repoId });
   return {
     variants: response.variants,
     recommendedIndex: response.recommendedIndex ?? null,
@@ -99,6 +99,6 @@ export async function getRepoFiles(repoId: string): Promise<RepoVariantsResponse
 
 export async function listBuiltinChatTemplates(): Promise<string[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.localInferenceChatTemplatesBuiltinList_unstable({});
+  const response = await client.aibuddy.localInferenceChatTemplatesBuiltinList_unstable({});
   return response.templates;
 }

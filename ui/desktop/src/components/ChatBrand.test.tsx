@@ -11,6 +11,6 @@ describe('ChatBrand', () => {
       'https://tflow.online'
     );
     expect(screen.getByRole('img', { name: 'AIBuddy' })).toBeInTheDocument();
-    expect(screen.queryByText('HeyBuddy')).not.toBeInTheDocument();
+    expect(screen.queryByText('AIBuddy')).not.toBeInTheDocument();
   });
 });

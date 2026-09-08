@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-# heybuddy CLI and Server Docker Image
+# aibuddy CLI and Server Docker Image
 # Multi-stage build for minimal final image size
 
 # Build stage
@@ -31,7 +31,7 @@ ENV CARGO_PROFILE_RELEASE_LTO=true
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1
 ENV CARGO_PROFILE_RELEASE_OPT_LEVEL=z
 ENV CARGO_PROFILE_RELEASE_STRIP=true
-RUN cargo build --release --package heybuddy-cli
+RUN cargo build --release --package aibuddy-cli
 
 # Runtime stage - minimal Debian
 FROM debian:bookworm-slim@sha256:b1a741487078b369e78119849663d7f1a5341ef2768798f7b7406c4240f86aef
@@ -50,27 +50,27 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy binary from builder
-COPY --from=builder /build/target/release/heybuddy /usr/local/bin/heybuddy
+COPY --from=builder /build/target/release/aibuddy /usr/local/bin/aibuddy
 
 # Create non-root user
-RUN useradd -m -u 1000 -s /bin/bash heybuddy && \
-    mkdir -p /home/heybuddy/.config/heybuddy && \
-    chown -R heybuddy:heybuddy /home/heybuddy
+RUN useradd -m -u 1000 -s /bin/bash aibuddy && \
+    mkdir -p /home/aibuddy/.config/aibuddy && \
+    chown -R aibuddy:aibuddy /home/aibuddy
 
 # Set up environment
 ENV PATH="/usr/local/bin:${PATH}"
-ENV HOME="/home/heybuddy"
+ENV HOME="/home/aibuddy"
 
 # Switch to non-root user
-USER heybuddy
-WORKDIR /home/heybuddy
+USER aibuddy
+WORKDIR /home/aibuddy
 
-# Default to heybuddy CLI
-ENTRYPOINT ["/usr/local/bin/heybuddy"]
+# Default to aibuddy CLI
+ENTRYPOINT ["/usr/local/bin/aibuddy"]
 CMD ["--help"]
 
 # Labels for metadata
-LABEL org.opencontainers.image.title="heybuddy"
-LABEL org.opencontainers.image.description="heybuddy CLI"
+LABEL org.opencontainers.image.title="aibuddy"
+LABEL org.opencontainers.image.description="aibuddy CLI"
 LABEL org.opencontainers.image.vendor="AAIF"
 LABEL org.opencontainers.image.source="https://github.com/aaif-goose/goose"

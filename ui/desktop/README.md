@@ -1,13 +1,13 @@
-# heybuddy Desktop App
+# aibuddy Desktop App
 
-Native desktop app for heybuddy built with [Electron](https://www.electronjs.org/) and [ReactJS](https://react.dev/). 
+Native desktop app for aibuddy built with [Electron](https://www.electronjs.org/) and [ReactJS](https://react.dev/). 
 
 # Building and running
-heybuddy uses [Hermit](https://github.com/cashapp/hermit) to manage dependencies, so you will need to have it installed and activated.
+aibuddy uses [Hermit](https://github.com/cashapp/hermit) to manage dependencies, so you will need to have it installed and activated.
 
 ```
 git clone git@github.com:aaif-goose/goose.git
-cd heybuddy
+cd aibuddy
 source ./bin/activate-hermit
 cd ui/desktop
 pnpm install
@@ -36,22 +36,22 @@ sudo dnf install dpkg-dev fakeroot
 
 # Building notes
 
-This is an Electron Forge app using Vite and React. The desktop app launches the bundled `heybuddy` CLI binary and talks to its ACP server.
+This is an Electron Forge app using Vite and React. The desktop app launches the bundled `aibuddy` CLI binary and talks to its ACP server.
 
 ## Building for different platforms
 
 ### macOS
-`pnpm run bundle:default` will give you a heybuddy.app/zip which is signed/notarized but only if you set up the env vars as per `forge.config.ts` (you can empty out the section on osxSign if you don't want to sign it) - this will have all defaults.
+`pnpm run bundle:default` will give you a aibuddy.app/zip which is signed/notarized but only if you set up the env vars as per `forge.config.ts` (you can empty out the section on osxSign if you don't want to sign it) - this will have all defaults.
 
-`pnpm run bundle:preconfigured` will make a heybuddy.app/zip signed and notarized, but use the following:
+`pnpm run bundle:preconfigured` will make a aibuddy.app/zip signed and notarized, but use the following:
 
 ```python
-            f"        process.env.HEYBUDDY_PROVIDER__TYPE = '{os.getenv("HEYBUDDY_BUNDLE_TYPE")}';",
-            f"        process.env.HEYBUDDY_PROVIDER__HOST = '{os.getenv("HEYBUDDY_BUNDLE_HOST")}';",
-            f"        process.env.HEYBUDDY_PROVIDER__MODEL = '{os.getenv("HEYBUDDY_BUNDLE_MODEL")}';"
+            f"        process.env.AIBUDDY_PROVIDER__TYPE = '{os.getenv("AIBUDDY_BUNDLE_TYPE")}';",
+            f"        process.env.AIBUDDY_PROVIDER__HOST = '{os.getenv("AIBUDDY_BUNDLE_HOST")}';",
+            f"        process.env.AIBUDDY_PROVIDER__MODEL = '{os.getenv("AIBUDDY_BUNDLE_MODEL")}';"
 ```
 
-This allows you to set for example HEYBUDDY_PROVIDER__TYPE to be "databricks" by default if you want (so when people start heybuddy.app - they will get that out of the box). There is no way to set an api key in that bundling as that would be a terrible idea, so only use providers that can do oauth (like databricks can), otherwise stick to default heybuddy.
+This allows you to set for example AIBUDDY_PROVIDER__TYPE to be "databricks" by default if you want (so when people start aibuddy.app - they will get that out of the box). There is no way to set an api key in that bundling as that would be a terrible idea, so only use providers that can do oauth (like databricks can), otherwise stick to default aibuddy.
 
 ### Linux
 For Linux builds, first ensure you have the required system dependencies installed (see above), then:
@@ -59,13 +59,13 @@ For Linux builds, first ensure you have the required system dependencies install
 1. Build the Rust binary:
 ```bash
 cd ../..  # Go to project root
-cargo build --release -p heybuddy-cli --bin heybuddy
+cargo build --release -p aibuddy-cli --bin aibuddy
 ```
 
 2. Copy the binary to the expected location:
 ```bash
 mkdir -p src/bin
-cp ../../target/release/heybuddy src/bin/
+cp ../../target/release/aibuddy src/bin/
 ```
 
 3. Build the application:
@@ -83,7 +83,7 @@ pnpm run make --targets=@electron-forge/maker-rpm --arch=x64
 pnpm run make --targets=@electron-forge/maker-flatpak --arch=x64
 ```
 
-The `--arch` option controls the Electron architecture only; it does not rebuild the Rust `heybuddy` binary. To create an ARM64 package, run these steps on an ARM64 Linux host so `cargo build` produces an ARM64 `heybuddy` binary, then replace `--arch=x64` with `--arch=arm64`. Do not package an ARM64 Electron application with the x64 `heybuddy` binary produced on an x64 host.
+The `--arch` option controls the Electron architecture only; it does not rebuild the Rust `aibuddy` binary. To create an ARM64 package, run these steps on an ARM64 Linux host so `cargo build` produces an ARM64 `aibuddy` binary, then replace `--arch=x64` with `--arch=arm64`. Do not package an ARM64 Electron application with the x64 `aibuddy` binary produced on an x64 host.
 
 Electron Forge writes packages to architecture-specific directories:
 
@@ -93,7 +93,7 @@ Electron Forge writes packages to architecture-specific directories:
 | DEB | `out/make/deb/x64/*_amd64.deb` | `out/make/deb/arm64/*_arm64.deb` |
 | RPM | `out/make/rpm/x64/*.x86_64.rpm` | `out/make/rpm/arm64/*.arm64.rpm` |
 | Flatpak | `out/make/flatpak/x86_64/*.flatpak` | `out/make/flatpak/aarch64/*.flatpak` |
-| Application | `out/HeyBuddy-linux-x64/` | `out/HeyBuddy-linux-arm64/` |
+| Application | `out/AIBuddy-linux-x64/` | `out/AIBuddy-linux-arm64/` |
 
 ### Windows
 Use the existing Windows build process as documented.
@@ -104,11 +104,11 @@ Use the existing Windows build process as documented.
 From the project root, start the ACP backend:
 
 ```bash
-HEYBUDDY_SERVER__SECRET_KEY=test cargo run -p heybuddy-cli --bin heybuddy -- serve --platform desktop --enable-scheduler --host 127.0.0.1 --port 3000
+AIBUDDY_SERVER__SECRET_KEY=test cargo run -p aibuddy-cli --bin aibuddy -- serve --platform desktop --enable-scheduler --host 127.0.0.1 --port 3000
 ```
 
 Then start the desktop app from `ui/desktop`:
 
 ```bash
-HEYBUDDY_EXTERNAL_BACKEND=true HEYBUDDY_EXTERNAL_BACKEND_URL=http://127.0.0.1:3000 HEYBUDDY_SERVER__SECRET_KEY=test pnpm run start-gui
+AIBUDDY_EXTERNAL_BACKEND=true AIBUDDY_EXTERNAL_BACKEND_URL=http://127.0.0.1:3000 AIBUDDY_SERVER__SECRET_KEY=test pnpm run start-gui
 ```

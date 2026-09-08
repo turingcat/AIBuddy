@@ -7,7 +7,7 @@ export interface InboundProtocolUrl {
 }
 
 export function getInboundProtocolSchemes(): string[] {
-  return [getAppProtocol(), 'goose'];
+  return [getAppProtocol(), 'aibuddy'];
 }
 
 export function parseInboundProtocolUrl(value: string): InboundProtocolUrl | null {

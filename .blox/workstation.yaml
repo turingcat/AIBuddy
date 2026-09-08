@@ -1,6 +1,6 @@
 # The ACP endpoint binds 0.0.0.0, so it requires a secret key; a random one is
-# generated and printed per launch unless HEYBUDDY_SERVER__SECRET_KEY is set.
+# generated and printed per launch unless AIBUDDY_SERVER__SECRET_KEY is set.
 run:
   - name: ACP Server
-    command: 'export HEYBUDDY_SERVER__SECRET_KEY="${HEYBUDDY_SERVER__SECRET_KEY:-$(openssl rand -hex 32)}"; echo "ACP secret key: $HEYBUDDY_SERVER__SECRET_KEY"; exec heybuddy serve --platform desktop --host 0.0.0.0 --port 3284'
+    command: 'export AIBUDDY_SERVER__SECRET_KEY="${AIBUDDY_SERVER__SECRET_KEY:-$(openssl rand -hex 32)}"; echo "ACP secret key: $AIBUDDY_SERVER__SECRET_KEY"; exec aibuddy serve --platform desktop --host 0.0.0.0 --port 3284'
     port: 3284

@@ -1,22 +1,22 @@
 ---
 title: Ophis Extension
-description: Add Ophis as a heybuddy Extension to swap tokens with natural-language intents
+description: Add Ophis as a aibuddy Extension to swap tokens with natural-language intents
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 
-This tutorial covers how to add [Ophis](https://ophis.fi) as a heybuddy extension so heybuddy can turn natural-language swap requests into executable orders across supported chains.
+This tutorial covers how to add [Ophis](https://ophis.fi) as a aibuddy extension so aibuddy can turn natural-language swap requests into executable orders across supported chains.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
     [Launch the installer](goose://extension?type=streamable_http&url=https%3A%2F%2Fmcp.ophis.fi%2Fmcp&id=ophis&name=Ophis&description=Natural-language%20intent%20DEX%20aggregator%20with%20a%20keyless%20MCP%20server%20for%20AI%20agents)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
-    Use `heybuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
+  <TabItem value="cli" label="aibuddy CLI">
+    Use `aibuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
 
     **Endpoint URL**
     ```
@@ -35,8 +35,8 @@ The MCP server is keyless and requires no API key or environment variables. It e
 ## Configuration
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-    <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="ophis"
       extensionName="Ophis"
       description="Natural-language intent DEX aggregator with a keyless MCP server for AI agents"
@@ -44,7 +44,7 @@ The MCP server is keyless and requires no API key or environment variables. It e
       url="https://mcp.ophis.fi/mcp"
     />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Ophis"
       description="Natural-language intent DEX aggregator with a keyless MCP server for AI agents"
@@ -56,7 +56,7 @@ The MCP server is keyless and requires no API key or environment variables. It e
 
 ## Example Usage
 
-Once Ophis is configured, you can describe a swap in plain language and ask heybuddy to prepare an order. Here are some examples:
+Once Ophis is configured, you can describe a swap in plain language and ask aibuddy to prepare an order. Here are some examples:
 
 **Parse an intent**
 ```

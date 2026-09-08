@@ -34,11 +34,11 @@ import { withSub2apiSession } from './sub2apiAuth';
 import { readCredentials, writeCredentials, clearCredentials } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
-import { startGooseServe } from './gooseServe';
-import { buildGooseServeEnv } from './gooseServeEnv';
+import { startAIBuddyServe } from './aibuddyServe';
+import { buildAIBuddyServeEnv } from './aibuddyServeEnv';
 import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
-import { HeyBuddyServeLeaseRegistry, type HeyBuddyServeLease } from './heybuddyServeLeaseRegistry';
+import { AIBuddyServeLeaseRegistry, type AIBuddyServeLease } from './aibuddyServeLeaseRegistry';
 import { createAuthSessionTransition } from './authSessionTransition';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
 import { expandTilde } from './utils/pathUtils';
@@ -46,7 +46,7 @@ import log from './utils/logger';
 import { ensureWinShims } from './utils/winShims';
 import { addRecentDir, loadRecentDirs } from './utils/recentDirs';
 import { formatAppName, errorMessage, formatErrorForLogging } from './utils/conversionUtils';
-import { isRetiredHeyBuddyChatApp } from './utils/retiredApps';
+import { isRetiredAIBuddyChatApp } from './utils/retiredApps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings, getKeyboardShortcuts } from './utils/settings';
 import * as crypto from 'crypto';
@@ -69,26 +69,26 @@ import {
 import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
-import type { HeyBuddyApp } from './types/apps';
+import type { AIBuddyApp } from './types/apps';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { WEB_PROTOCOLS } from './utils/urlSecurity';
 import { openExternalUrl } from './utils/openExternalUrl';
 import { buildCSP } from './utils/csp';
 import { resolveWorkingDir } from './utils/workingDir';
-import { applyLegacyHeyBuddyEnvironment } from './legacyEnv';
+import { applyLegacyAIBuddyEnvironment } from './legacyEnv';
 import {
   DesktopFileAccess,
   isAuthorizedFileAccessRequest,
   readSelectedRecipe,
 } from './desktopFileAccess';
 
-applyLegacyHeyBuddyEnvironment(process.env);
+applyLegacyAIBuddyEnvironment(process.env);
 
 // =======================================================================
 // Native menu localization
 // -----------------------------------------------------------------------
 function detectMenuLocale(): string {
-  return getConfiguredHeyBuddyLocale() ?? 'en';
+  return getConfiguredAIBuddyLocale() ?? 'en';
 }
 
 function menuT(label: string): string {
@@ -118,7 +118,7 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const {
-  goosePathRoot: GOOSE_PATH_ROOT,
+  aibuddyPathRoot: AIBUDDY_PATH_ROOT,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
   startupLogsDir: STARTUP_LOGS_DIR,
@@ -143,9 +143,9 @@ function getSettings(): Settings {
     return {
       ...defaultSettings,
       ...stored,
-      externalHeyBuddyd: {
-        ...defaultSettings.externalHeyBuddyd,
-        ...(stored.externalHeyBuddyd ?? {}),
+      externalAIBuddyd: {
+        ...defaultSettings.externalAIBuddyd,
+        ...(stored.externalAIBuddyd ?? {}),
       },
       keyboardShortcuts: {
         ...defaultSettings.keyboardShortcuts,
@@ -162,14 +162,14 @@ function updateSettings(modifier: (settings: Settings) => void): void {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 }
 
-function getConfiguredHeyBuddyLocale(): string | undefined {
+function getConfiguredAIBuddyLocale(): string | undefined {
   const language = getSettings().language;
   if (isValidLanguageSetting(language) && language !== 'system') {
     return language;
   }
 
-  if (process.env.HEYBUDDY_LOCALE) {
-    return process.env.HEYBUDDY_LOCALE;
+  if (process.env.AIBUDDY_LOCALE) {
+    return process.env.AIBUDDY_LOCALE;
   }
 
   try {
@@ -312,7 +312,7 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
 });
 
 app.whenReady().then(() => {
-  appConfig.HEYBUDDY_LOCALE = getConfiguredHeyBuddyLocale();
+  appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
 });
 
 // Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
@@ -797,12 +797,12 @@ interface BundledConfig {
 
 const getBundledConfig = (): BundledConfig => {
   //{env-macro-start}//
-  //needed when heybuddy is bundled for a specific provider
+  //needed when aibuddy is bundled for a specific provider
   //{env-macro-end}//
   return {
-    defaultProvider: process.env.HEYBUDDY_DEFAULT_PROVIDER,
-    defaultModel: process.env.HEYBUDDY_DEFAULT_MODEL,
-    version: process.env.HEYBUDDY_VERSION,
+    defaultProvider: process.env.AIBUDDY_DEFAULT_PROVIDER,
+    defaultModel: process.env.AIBUDDY_DEFAULT_MODEL,
+    version: process.env.AIBUDDY_VERSION,
   };
 };
 
@@ -819,16 +819,16 @@ interface ExternalBackend {
 }
 
 const getExternalBackendUrlFromEnv = (): string | null => {
-  if (!process.env.HEYBUDDY_EXTERNAL_BACKEND) {
+  if (!process.env.AIBUDDY_EXTERNAL_BACKEND) {
     return null;
   }
 
-  const configuredUrl = process.env.HEYBUDDY_EXTERNAL_BACKEND_URL?.trim();
+  const configuredUrl = process.env.AIBUDDY_EXTERNAL_BACKEND_URL?.trim();
   if (configuredUrl) {
     return configuredUrl;
   }
 
-  return `http://127.0.0.1:${process.env.HEYBUDDY_PORT || '3000'}`;
+  return `http://127.0.0.1:${process.env.AIBUDDY_PORT || '3000'}`;
 };
 
 const getExternalBackendFromEnv = (): ExternalBackend | null => {
@@ -837,10 +837,10 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
     return null;
   }
 
-  const secret = process.env.HEYBUDDY_SERVER__SECRET_KEY;
+  const secret = process.env.AIBUDDY_SERVER__SECRET_KEY;
   if (!secret) {
     throw new Error(
-      'HEYBUDDY_SERVER__SECRET_KEY must be set when using HEYBUDDY_EXTERNAL_BACKEND. ' +
+      'AIBUDDY_SERVER__SECRET_KEY must be set when using AIBUDDY_EXTERNAL_BACKEND. ' +
         'Set it to the same value on both the server and the desktop client.'
     );
   }
@@ -853,8 +853,8 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
 };
 
 const getServerSecret = (settings: Settings): string => {
-  if (settings.externalHeyBuddyd?.enabled && settings.externalHeyBuddyd.secret) {
-    return settings.externalHeyBuddyd.secret;
+  if (settings.externalAIBuddyd?.enabled && settings.externalAIBuddyd.secret) {
+    return settings.externalAIBuddyd.secret;
   }
   return GENERATED_SECRET;
 };
@@ -864,17 +864,17 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
   if (envBackend) {
     return {
       ...envBackend,
-      workingDir: settings.externalHeyBuddyd?.workingDir,
+      workingDir: settings.externalAIBuddyd?.workingDir,
     };
   }
 
-  if (settings.externalHeyBuddyd?.enabled && settings.externalHeyBuddyd.url) {
+  if (settings.externalAIBuddyd?.enabled && settings.externalAIBuddyd.url) {
     return {
       source: 'settings',
-      url: settings.externalHeyBuddyd.url,
+      url: settings.externalAIBuddyd.url,
       secret: getServerSecret(settings),
-      certFingerprint: settings.externalHeyBuddyd.certFingerprint,
-      workingDir: settings.externalHeyBuddyd.workingDir,
+      certFingerprint: settings.externalAIBuddyd.certFingerprint,
+      workingDir: settings.externalAIBuddyd.workingDir,
     };
   }
 
@@ -884,32 +884,32 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
 const getExternalBackendForCsp = (settings: Settings) => {
   const envUrl = getExternalBackendUrlFromEnv();
   if (!envUrl) {
-    return settings.externalHeyBuddyd;
+    return settings.externalAIBuddyd;
   }
 
   return {
-    ...settings.externalHeyBuddyd,
+    ...settings.externalAIBuddyd,
     enabled: true,
     url: envUrl,
   };
 };
 
 let appConfig = {
-  GOOSE_DEFAULT_PROVIDER: defaultProvider,
-  GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PATH_ROOT,
-  GOOSE_WORKING_DIR: '',
+  AIBUDDY_DEFAULT_PROVIDER: defaultProvider,
+  AIBUDDY_DEFAULT_MODEL: defaultModel,
+  AIBUDDY_PATH_ROOT,
+  AIBUDDY_WORKING_DIR: '',
   // Whether the window is bound to an external backend (fixed at window
-  // creation via heybuddyServeLeases) and which URL it is bound to.
-  HEYBUDDY_EXTERNAL_BACKEND: false,
-  HEYBUDDY_EXTERNAL_BACKEND_URL: '',
-  HEYBUDDY_EXTERNAL_BACKEND_SOURCE: '',
+  // creation via aibuddyServeLeases) and which URL it is bound to.
+  AIBUDDY_EXTERNAL_BACKEND: false,
+  AIBUDDY_EXTERNAL_BACKEND_URL: '',
+  AIBUDDY_EXTERNAL_BACKEND_SOURCE: '',
   // Start with the env-var override; the OS region locale is filled in after app.ready
   // (see updateLocaleFromSystem below) since getSystemLocale() cannot be called earlier.
-  HEYBUDDY_LOCALE: process.env.HEYBUDDY_LOCALE || undefined,
-  // If HEYBUDDY_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
-  HEYBUDDY_ALLOWLIST_WARNING: process.env.HEYBUDDY_ALLOWLIST_WARNING === 'true',
-  HEYBUDDY_DISABLE_NOSTR_SHARING: process.env.HEYBUDDY_DISABLE_NOSTR_SHARING === 'true',
+  AIBUDDY_LOCALE: process.env.AIBUDDY_LOCALE || undefined,
+  // If AIBUDDY_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
+  AIBUDDY_ALLOWLIST_WARNING: process.env.AIBUDDY_ALLOWLIST_WARNING === 'true',
+  AIBUDDY_DISABLE_NOSTR_SHARING: process.env.AIBUDDY_DISABLE_NOSTR_SHARING === 'true',
 };
 
 const windowMap = new Map<number, BrowserWindow>();
@@ -940,7 +940,7 @@ function getRegularWindows(): BrowserWindow[] {
   return [...windowMap.values()].filter((w) => !w.isDestroyed());
 }
 
-const heybuddyServeLeases = new HeyBuddyServeLeaseRegistry(log);
+const aibuddyServeLeases = new AIBuddyServeLeaseRegistry(log);
 
 const windowPowerSaveBlockers = new Map<number, number>(); // windowId -> blockerId
 // Track pending initial messages per window
@@ -1014,8 +1014,8 @@ const createChat = async (
 
       if (response === 0) {
         updateSettings((s) => {
-          if (s.externalHeyBuddyd) {
-            s.externalHeyBuddyd.enabled = false;
+          if (s.externalAIBuddyd) {
+            s.externalAIBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1028,7 +1028,7 @@ const createChat = async (
 
   const serverSecret = externalBackend ? externalBackend.secret : GENERATED_SECRET;
   let workingDir = resolveWorkingDir(externalBackend?.workingDir, dir, os.homedir());
-  let heybuddyServeLease: HeyBuddyServeLease | null = null;
+  let aibuddyServeLease: AIBuddyServeLease | null = null;
 
   if (externalBackend) {
     let externalCertificateTrust: BackendCertificateTrustRegistration | null = null;
@@ -1056,7 +1056,7 @@ const createChat = async (
           title: 'External Backend Unreachable',
           message: `Could not connect to external backend at ${externalBaseUrl}`,
           detail:
-            'The external backend must be running and the configured secret must match HEYBUDDY_SERVER__SECRET_KEY on the server.',
+            'The external backend must be running and the configured secret must match AIBUDDY_SERVER__SECRET_KEY on the server.',
           buttons: canDisableExternalBackend
             ? ['Disable External Backend & Retry', 'Quit']
             : ['Quit'],
@@ -1066,8 +1066,8 @@ const createChat = async (
 
         if (canDisableExternalBackend && response === 0) {
           updateSettings((s) => {
-            if (s.externalHeyBuddyd) {
-              s.externalHeyBuddyd.enabled = false;
+            if (s.externalAIBuddyd) {
+              s.externalAIBuddyd.enabled = false;
             }
           });
           return createChat(app, options);
@@ -1079,7 +1079,7 @@ const createChat = async (
 
       const leaseCertificateTrust = externalCertificateTrust;
       externalCertificateTrust = null;
-      heybuddyServeLease = heybuddyServeLeases.createExternal(
+      aibuddyServeLease = aibuddyServeLeases.createExternal(
         acpWebSocketUrlFromHttpBase(externalBaseUrl, serverSecret),
         serverSecret,
         leaseCertificateTrust ? async () => leaseCertificateTrust.release() : undefined
@@ -1102,8 +1102,8 @@ const createChat = async (
 
       if (canDisableExternalBackend && response === 0) {
         updateSettings((s) => {
-          if (s.externalHeyBuddyd) {
-            s.externalHeyBuddyd.enabled = false;
+          if (s.externalAIBuddyd) {
+            s.externalAIBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1117,17 +1117,17 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const siteRuntimeEnv = buildGooseServeEnv(
+    const siteRuntimeEnv = buildAIBuddyServeEnv(
       readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
-      GOOSE_PATH_ROOT
+      AIBUDDY_PATH_ROOT
     );
-    let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
+    let aibuddyServeResult: Awaited<ReturnType<typeof startAIBuddyServe>>;
     try {
-      heybuddyServeResult = await startHeyBuddyServe({
+      aibuddyServeResult = await startAIBuddyServe({
         serverSecret,
         dir: workingDir,
         tls: true,
-        env: { ...siteRuntimeEnv, GOOSE_PATH_ROOT },
+        env: { ...siteRuntimeEnv, AIBUDDY_PATH_ROOT },
         loginShellPath,
         isPackaged: app.isPackaged,
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
@@ -1135,31 +1135,31 @@ const createChat = async (
         diagnosticsDir: STARTUP_LOGS_DIR,
         readinessFetch: net.fetch as unknown as typeof globalThis.fetch,
       });
-      if (!heybuddyServeResult.certFingerprint) {
-        await heybuddyServeResult.cleanup();
+      if (!aibuddyServeResult.certFingerprint) {
+        await aibuddyServeResult.cleanup();
         throw new Error(
-          'heybuddy serve started with TLS but did not return a certificate fingerprint'
+          'aibuddy serve started with TLS but did not return a certificate fingerprint'
         );
       }
 
-      const localCertFingerprint = normalizeFingerprint(heybuddyServeResult.certFingerprint);
+      const localCertFingerprint = normalizeFingerprint(aibuddyServeResult.certFingerprint);
       if (
         localCertificateTrust.trust.fingerprint &&
         localCertificateTrust.trust.fingerprint !== localCertFingerprint
       ) {
-        await heybuddyServeResult.cleanup();
-        throw new Error('heybuddy serve TLS certificate fingerprint did not match readiness probe');
+        await aibuddyServeResult.cleanup();
+        throw new Error('aibuddy serve TLS certificate fingerprint did not match readiness probe');
       }
       localCertificateTrust.trust.fingerprint = localCertFingerprint;
     } catch (error) {
       localCertificateTrust.release();
-      log.error('heybuddy serve failed to start', error);
+      log.error('aibuddy serve failed to start', error);
       dialog.showMessageBoxSync({
         type: 'error',
         title: `${getAppDisplayName()} Failed to Start`,
         message: 'The backend server failed to start.',
         detail: [
-          'Backend: heybuddy serve',
+          'Backend: aibuddy serve',
           'Readiness check: HTTPS GET /status',
           `Startup error:\n${errorMessage(error)}`,
         ].join('\n\n'),
@@ -1169,26 +1169,26 @@ const createChat = async (
       return;
     }
 
-    workingDir = heybuddyServeResult.workingDir;
-    const cleanupHeyBuddyServe = heybuddyServeResult.cleanup;
-    heybuddyServeResult.cleanup = async () => {
+    workingDir = aibuddyServeResult.workingDir;
+    const cleanupAIBuddyServe = aibuddyServeResult.cleanup;
+    aibuddyServeResult.cleanup = async () => {
       try {
-        await cleanupHeyBuddyServe();
+        await cleanupAIBuddyServe();
       } finally {
         localCertificateTrust.release();
       }
     };
-    heybuddyServeLease = heybuddyServeLeases.create(heybuddyServeResult, serverSecret);
+    aibuddyServeLease = aibuddyServeLeases.create(aibuddyServeResult, serverSecret);
   }
 
-  const cleanupUnregisteredHeyBuddyServeLease = async () => {
-    if (!heybuddyServeLease) {
+  const cleanupUnregisteredAIBuddyServeLease = async () => {
+    if (!aibuddyServeLease) {
       return;
     }
 
-    const lease = heybuddyServeLease;
-    heybuddyServeLease = null;
-    await heybuddyServeLeases.cleanupLease(lease);
+    const lease = aibuddyServeLease;
+    aibuddyServeLease = null;
+    await aibuddyServeLeases.cleanupLease(lease);
   };
 
   let mainWindowState: ReturnType<typeof windowStateKeeper>;
@@ -1248,13 +1248,13 @@ const createChat = async (
         additionalArguments: [
           JSON.stringify({
             ...appConfig,
-            HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
-            HEYBUDDY_WORKING_DIR: workingDir,
-            HEYBUDDY_EXTERNAL_BACKEND: externalBackend !== null,
-            HEYBUDDY_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
-            HEYBUDDY_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
+            AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
+            AIBUDDY_WORKING_DIR: workingDir,
+            AIBUDDY_EXTERNAL_BACKEND: externalBackend !== null,
+            AIBUDDY_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
+            AIBUDDY_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
             REQUEST_DIR: dir,
-            HEYBUDDY_VERSION: version,
+            AIBUDDY_VERSION: version,
             recipeDeeplink: recipeDeeplink,
             recipeId: recipeId,
             recipeParameters: recipeParameters,
@@ -1269,17 +1269,17 @@ const createChat = async (
       },
     });
   } catch (error) {
-    await cleanupUnregisteredHeyBuddyServeLease();
+    await cleanupUnregisteredAIBuddyServeLease();
     throw error;
   }
 
-  if (heybuddyServeLease) {
-    const lease = heybuddyServeLease;
+  if (aibuddyServeLease) {
+    const lease = aibuddyServeLease;
     mainWindow.once('closed', () => {
-      void heybuddyServeLeases.releaseWindow(mainWindow.id);
+      void aibuddyServeLeases.releaseWindow(mainWindow.id);
     });
-    heybuddyServeLeases.attachWindow(mainWindow.id, lease);
-    heybuddyServeLease = null;
+    aibuddyServeLeases.attachWindow(mainWindow.id, lease);
+    aibuddyServeLease = null;
   }
 
   if (!app.isPackaged) {
@@ -1358,7 +1358,7 @@ const createChat = async (
 
   // Handle new window creation for links (fallback for any links not handled by onClick)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void openExternalUrl(url, mainWindow, getConfiguredHeyBuddyLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredAIBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
     return { action: 'deny' };
@@ -1369,7 +1369,7 @@ const createChat = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mainWindow.webContents.on('new-window' as any, function (event: any, url: string) {
     event.preventDefault();
-    void openExternalUrl(url, mainWindow, getConfiguredHeyBuddyLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredAIBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
   });
@@ -1522,7 +1522,7 @@ const createLauncher = () => {
       additionalArguments: [
         JSON.stringify({
           ...appConfig,
-          HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
+          AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
         }),
       ],
       partition: 'persist:goose',
@@ -1679,7 +1679,7 @@ const openDirectoryDialog = async (): Promise<OpenDialogReturnValue> => {
   if (currentWindow) {
     try {
       const currentWorkingDir = await currentWindow.webContents.executeJavaScript(
-        `window.appConfig ? window.appConfig.get('HEYBUDDY_WORKING_DIR') : null`
+        `window.appConfig ? window.appConfig.get('AIBUDDY_WORKING_DIR') : null`
       );
 
       if (currentWorkingDir && typeof currentWorkingDir === 'string') {
@@ -1874,7 +1874,7 @@ ipcMain.on('react-ready', (event) => {
 
 ipcMain.handle('open-external', async (event, url: string) => {
   const senderWindow = BrowserWindow.fromWebContents(event.sender) ?? undefined;
-  return openExternalUrl(url, senderWindow, getConfiguredHeyBuddyLocale());
+  return openExternalUrl(url, senderWindow, getConfiguredAIBuddyLocale());
 });
 
 ipcMain.handle('directory-chooser', async () => {
@@ -1910,7 +1910,7 @@ const validSettingKeys: Set<string> = new Set([
   'enableWakelock',
   'enableNotifications',
   'spellcheckEnabled',
-  'externalHeyBuddyd',
+  'externalAIBuddyd',
   'globalShortcut',
   'keyboardShortcuts',
   'theme',
@@ -1939,7 +1939,7 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 
   if (key === 'language') {
-    appConfig.HEYBUDDY_LOCALE = getConfiguredHeyBuddyLocale();
+    appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
   }
 
   // Re-register shortcuts if keyboard shortcuts changed
@@ -1987,7 +1987,7 @@ ipcMain.handle('get-secret-key', (event) => {
   if (!windowId) {
     return null;
   }
-  return heybuddyServeLeases.getSecretKey(windowId) ?? null;
+  return aibuddyServeLeases.getSecretKey(windowId) ?? null;
 });
 
 ipcMain.handle('get-acp-url', async (event) => {
@@ -1995,7 +1995,7 @@ ipcMain.handle('get-acp-url', async (event) => {
   if (!windowId) {
     return null;
   }
-  return heybuddyServeLeases.getAcpUrl(windowId) ?? null;
+  return aibuddyServeLeases.getAcpUrl(windowId) ?? null;
 });
 
 // Handle menu bar icon visibility
@@ -2209,10 +2209,10 @@ ipcMain.handle('select-file-or-directory', async (_event, defaultPath?: string) 
 
 ipcMain.handle('select-recipe-file', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  const pathRoot = appConfig.HEYBUDDY_PATH_ROOT as string | undefined;
+  const pathRoot = appConfig.AIBUDDY_PATH_ROOT as string | undefined;
   const recipeDirectory = pathRoot
     ? path.join(pathRoot, 'config', 'recipes')
-    : path.join(os.homedir(), '.config', 'heybuddy', 'recipes');
+    : path.join(os.homedir(), '.config', 'aibuddy', 'recipes');
   let defaultPath = os.homedir();
   try {
     if ((await fs.stat(recipeDirectory)).isDirectory()) {
@@ -2234,14 +2234,14 @@ ipcMain.handle('select-recipe-file', async (event) => {
   return readSelectedRecipe(result.filePaths[0]);
 });
 
-ipcMain.handle('read-heybuddyhints', async (event) => {
+ipcMain.handle('read-aibuddyhints', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.readHeyBuddyhints(senderWindow.id);
+  return desktopFileAccess.readAIBuddyhints(senderWindow.id);
 });
 
-ipcMain.handle('write-heybuddyhints', async (event, content) => {
+ipcMain.handle('write-aibuddyhints', async (event, content) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.writeHeyBuddyhints(senderWindow.id, content);
+  return desktopFileAccess.writeAIBuddyhints(senderWindow.id, content);
 });
 
 // Native picker tailored for session imports: shows hidden files (so users can
@@ -2749,14 +2749,14 @@ async function appMain() {
       }
 
       // Create the About menu item with a submenu
-      const aboutHeyBuddyMenuItem = new MenuItem({
+      const aboutAIBuddyMenuItem = new MenuItem({
         label: menuT('About {app}'),
         submenu: Menu.buildFromTemplate([]), // Start with an empty submenu for About
       });
 
       // Add the Version menu item (display only) to the About submenu
-      if (aboutHeyBuddyMenuItem.submenu) {
-        aboutHeyBuddyMenuItem.submenu.append(
+      if (aboutAIBuddyMenuItem.submenu) {
+        aboutAIBuddyMenuItem.submenu.append(
           new MenuItem({
             label: `Version ${version || app.getVersion()}`,
             enabled: false,
@@ -2764,7 +2764,7 @@ async function appMain() {
         );
       }
 
-      helpMenu.submenu.append(aboutHeyBuddyMenuItem);
+      helpMenu.submenu.append(aboutAIBuddyMenuItem);
     }
   }
 
@@ -2921,7 +2921,7 @@ async function appMain() {
 
   const refreshAuthSession = createAuthSessionTransition({
     listWindows: () => BrowserWindow.getAllWindows(),
-    cleanupBackends: () => heybuddyServeLeases.cleanupAll(),
+    cleanupBackends: () => aibuddyServeLeases.cleanupAll(),
     createReplacementWindow: () => createNewWindow(app),
   });
 
@@ -2956,11 +2956,11 @@ async function appMain() {
     }
   });
 
-  // 重启前先清理 heybuddy serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
+  // 重启前先清理 aibuddy serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
   // @author logic
   // @date 2026-08-13
   ipcMain.on('restart-app', async () => {
-    await heybuddyServeLeases.cleanupAll();
+    await aibuddyServeLeases.cleanupAll();
     app.relaunch();
     app.exit(0);
   });
@@ -2971,7 +2971,7 @@ async function appMain() {
   });
 
   ipcMain.on('get-app-locale', (event) => {
-    event.returnValue = getConfiguredHeyBuddyLocale();
+    event.returnValue = getConfiguredAIBuddyLocale();
   });
 
   ipcMain.handle('open-directory-in-explorer', async (_event, path: string) => {
@@ -2983,9 +2983,9 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('launch-app', async (event, heybuddyApp: HeyBuddyApp) => {
+  ipcMain.handle('launch-app', async (event, aibuddyApp: AIBuddyApp) => {
     try {
-      if (isRetiredHeyBuddyChatApp(heybuddyApp)) {
+      if (isRetiredAIBuddyChatApp(aibuddyApp)) {
         throw new Error('This built-in Chat app is no longer supported.');
       }
 
@@ -2995,13 +2995,13 @@ async function appMain() {
       }
 
       const launchingWindowId = launchingWindow.id;
-      const launchingHeyBuddyServeLease = heybuddyServeLeases.get(launchingWindowId);
-      if (!launchingHeyBuddyServeLease) {
+      const launchingAIBuddyServeLease = aibuddyServeLeases.get(launchingWindowId);
+      if (!launchingAIBuddyServeLease) {
         throw new Error('No backend lease found for launching window');
       }
 
       const launchingWorkingDir = await launchingWindow.webContents
-        .executeJavaScript(`window.appConfig ? window.appConfig.get('HEYBUDDY_WORKING_DIR') : null`)
+        .executeJavaScript(`window.appConfig ? window.appConfig.get('AIBUDDY_WORKING_DIR') : null`)
         .catch((error) => {
           console.warn('Failed to get working directory from launching window:', error);
           return undefined;
@@ -3012,10 +3012,10 @@ async function appMain() {
         app.getPath('home')
       );
       const appWindow = new BrowserWindow({
-        title: formatAppName(heybuddyApp.name),
-        width: heybuddyApp.width ?? 800,
-        height: heybuddyApp.height ?? 600,
-        resizable: heybuddyApp.resizable ?? true,
+        title: formatAppName(aibuddyApp.name),
+        width: aibuddyApp.width ?? 800,
+        height: aibuddyApp.height ?? 600,
+        resizable: aibuddyApp.resizable ?? true,
         useContentSize: true,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
@@ -3025,32 +3025,32 @@ async function appMain() {
           additionalArguments: [
             JSON.stringify({
               ...appConfig,
-              HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
-              HEYBUDDY_WORKING_DIR: workingDir,
-              HEYBUDDY_VERSION: version,
+              AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
+              AIBUDDY_WORKING_DIR: workingDir,
+              AIBUDDY_VERSION: version,
             }),
           ],
           partition: 'persist:goose',
         },
       });
 
-      heybuddyServeLeases.attachWindow(appWindow.id, launchingHeyBuddyServeLease);
+      aibuddyServeLeases.attachWindow(appWindow.id, launchingAIBuddyServeLease);
 
-      appWindows.set(heybuddyApp.name, appWindow);
+      appWindows.set(aibuddyApp.name, appWindow);
 
       appWindow.on('closed', () => {
-        void heybuddyServeLeases.releaseWindow(appWindow.id);
-        appWindows.delete(heybuddyApp.name);
+        void aibuddyServeLeases.releaseWindow(appWindow.id);
+        appWindows.delete(aibuddyApp.name);
       });
 
-      const extensionName = heybuddyApp.mcpServers?.[0] ?? '';
+      const extensionName = aibuddyApp.mcpServers?.[0] ?? '';
 
       const url = getAppUrl();
 
       const searchParams = new URLSearchParams();
-      searchParams.set('resourceUri', heybuddyApp.uri);
+      searchParams.set('resourceUri', aibuddyApp.uri);
       searchParams.set('extensionName', extensionName);
-      searchParams.set('appName', heybuddyApp.name);
+      searchParams.set('appName', aibuddyApp.name);
       searchParams.set('workingDir', workingDir);
 
       url.hash = `/standalone-app?${searchParams.toString()}`;
@@ -3062,12 +3062,12 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('refresh-app', async (_event, heybuddyApp: HeyBuddyApp) => {
+  ipcMain.handle('refresh-app', async (_event, aibuddyApp: AIBuddyApp) => {
     try {
-      const appWindow = appWindows.get(heybuddyApp.name);
+      const appWindow = appWindows.get(aibuddyApp.name);
       if (!appWindow || appWindow.isDestroyed()) {
         console.log(
-          `App window for '${heybuddyApp.name}' not found or destroyed, skipping refresh`
+          `App window for '${aibuddyApp.name}' not found or destroyed, skipping refresh`
         );
         return;
       }
@@ -3113,11 +3113,11 @@ app.whenReady().then(async () => {
 });
 
 async function getAllowList(): Promise<string[]> {
-  if (!process.env.HEYBUDDY_ALLOWLIST) {
+  if (!process.env.AIBUDDY_ALLOWLIST) {
     return [];
   }
 
-  const response = await fetch(process.env.HEYBUDDY_ALLOWLIST);
+  const response = await fetch(process.env.AIBUDDY_ALLOWLIST);
 
   if (!response.ok) {
     throw new Error(
@@ -3143,10 +3143,10 @@ async function getAllowList(): Promise<string[]> {
 }
 
 app.on('will-quit', async () => {
-  const heybuddyServeLeaseCount = heybuddyServeLeases.activeLeaseCount();
-  if (heybuddyServeLeaseCount > 0) {
-    log.info(`App quitting, cleaning up ${heybuddyServeLeaseCount} backend lease(s)`);
-    await heybuddyServeLeases.cleanupAll();
+  const aibuddyServeLeaseCount = aibuddyServeLeases.activeLeaseCount();
+  if (aibuddyServeLeaseCount > 0) {
+    log.info(`App quitting, cleaning up ${aibuddyServeLeaseCount} backend lease(s)`);
+    await aibuddyServeLeases.cleanupAll();
   }
 
   for (const [windowId, blockerId] of windowPowerSaveBlockers.entries()) {

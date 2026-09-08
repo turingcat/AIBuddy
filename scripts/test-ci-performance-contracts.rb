@@ -30,24 +30,24 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     {
       "spec-version" => "2025-11-25",
       "conformance-version" => "0.1.16",
-      "baseline" => "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml",
     },
     {
       "spec-version" => "2025-11-25",
       "conformance-version" => "0.2.0-alpha.10",
-      "baseline" => "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml",
     },
     {
       "spec-version" => "2026-07-28",
       "conformance-version" => "0.2.0-alpha.10",
-      "baseline" => "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml",
     },
   ].freeze
   CI_REQUIRED_CHECK_NAMES = {
     "rust-format" => "Check Rust Code Format",
     "rust-build-and-test" => "Build and Test Rust Project",
-    "rust-compat-uniffi" => "Check UniFFI Feature (goose-sdk)",
-    "rust-compat-roaming" => "Build and Test Roaming Feature (goose-cli)",
+    "rust-compat-uniffi" => "Check UniFFI Feature (aibuddy-sdk)",
+    "rust-compat-roaming" => "Build and Test Roaming Feature (aibuddy-cli)",
     "rust-build-and-test-tls" => "Build and Test TLS Backends",
     "rust-build-windows" => "Build Rust Project on Windows",
     "rust-msrv" => "Check MSRV",
@@ -106,8 +106,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "Cargo.lock",
       "rust-toolchain.toml",
       ".cargo/**",
-      "crates/heybuddy/**",
-      "crates/heybuddy-acp-macros/**",
+      "crates/aibuddy/**",
+      "crates/aibuddy-acp-macros/**",
       "ui/sdk/**",
       "ui/package.json",
       "ui/pnpm-lock.yaml",
@@ -122,13 +122,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "crates/**",
       "build-windows.ps1",
     ],
-    "uniffi" => %w[Cargo.toml Cargo.lock rust-toolchain.toml .cargo/** crates/goose-sdk/** crates/goose-sdk-types/** crates/goose-providers/** crates/goose-context-management/**],
+    "uniffi" => %w[Cargo.toml Cargo.lock rust-toolchain.toml .cargo/** crates/aibuddy-sdk/** crates/aibuddy-sdk-types/** crates/aibuddy-providers/** crates/aibuddy-context-management/**],
     "roaming" => %w[
       Cargo.toml Cargo.lock rust-toolchain.toml .cargo/**
-      crates/goose-roaming/** crates/goose-cli/** crates/goose/**
-      crates/goose-mcp/** crates/goose-providers/** crates/goose-context-management/**
-      crates/goose-download-manager/** crates/goose-sdk-types/** crates/goose-agent/**
-      crates/goose-acp-macros/** crates/goose-provider-types/** crates/goose-local-inference/**
+      crates/aibuddy-roaming/** crates/aibuddy-cli/** crates/aibuddy/**
+      crates/aibuddy-mcp/** crates/aibuddy-providers/** crates/aibuddy-context-management/**
+      crates/aibuddy-download-manager/** crates/aibuddy-sdk-types/** crates/aibuddy-agent/**
+      crates/aibuddy-acp-macros/** crates/aibuddy-provider-types/** crates/aibuddy-local-inference/**
     ],
     "workflow-config" => [
       ".github/actions/**",
@@ -232,19 +232,19 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       },
     ]
 
-    assert_equal "windows-latest", workflow.dig("jobs", "build-goose-windows", "runs-on")
+    assert_equal "windows-latest", workflow.dig("jobs", "build-aibuddy-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "build-desktop-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "package-desktop-windows", "runs-on")
-    %w[build-goose-windows build-desktop-windows package-desktop-windows].each do |job_name|
+    %w[build-aibuddy-windows build-desktop-windows package-desktop-windows].each do |job_name|
       matrix = workflow.dig("jobs", job_name, "strategy", "matrix", "include")
       expected = expected_matrix
-      if job_name == "build-goose-windows"
+      if job_name == "build-aibuddy-windows"
         features = %w[aws-providers,nostr,otel,rustls-tls,system-keyring code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update]
         expected = expected_matrix.zip(features).map { |entry, value| entry.merge("cargo_features" => value) }
       end
       assert_equal expected, matrix
     end
-    build = workflow.dig("jobs", "build-goose-windows", "steps").find { |step| step["run"].to_s.include?("cargo build") }
+    build = workflow.dig("jobs", "build-aibuddy-windows", "steps").find { |step| step["run"].to_s.include?("cargo build") }
     assert_equal "${{ matrix.cargo_features }}", build.dig("env", "CARGO_FEATURES")
     assert_includes build.fetch("run"), "--no-default-features --features $env:CARGO_FEATURES"
     refute_match(/local-inference/, text)
@@ -443,12 +443,12 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     refute jobs.key?("rust-compatibility")
     uniffi = job_run_commands("ci.yml", "rust-compat-uniffi").join("\n")
     roaming = job_run_commands("ci.yml", "rust-compat-roaming").join("\n")
-    assert_includes uniffi, "cargo check -p goose-sdk --features uniffi --locked"
-    assert_includes uniffi, "cargo test -p goose-sdk --features uniffi --locked"
+    assert_includes uniffi, "cargo check -p aibuddy-sdk --features uniffi --locked"
+    assert_includes uniffi, "cargo test -p aibuddy-sdk --features uniffi --locked"
     refute_includes uniffi, "--features roaming"
-    assert_includes roaming, "cargo test --locked -p goose-roaming"
-    assert_includes roaming, "cargo build --locked -p goose-cli --features roaming"
-    assert_includes roaming, "cargo test --locked -p goose-cli --features roaming --test roam_acp_client"
+    assert_includes roaming, "cargo test --locked -p aibuddy-roaming"
+    assert_includes roaming, "cargo build --locked -p aibuddy-cli --features roaming"
+    assert_includes roaming, "cargo test --locked -p aibuddy-cli --features roaming --test roam_acp_client"
     refute_includes roaming, "--features uniffi"
   end
 
@@ -457,13 +457,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     filter = workflow.dig("jobs", "changes", "steps").find { |step| step["id"] == "filter" }
     paths = YAML.safe_load(filter.dig("with", "filters")).fetch("roaming")
     dependencies = %w[
-      goose goose-cli goose-roaming goose-mcp goose-providers goose-context-management
-      goose-download-manager goose-sdk-types goose-agent goose-acp-macros
-      goose-provider-types goose-local-inference
+      aibuddy aibuddy-cli aibuddy-roaming aibuddy-mcp aibuddy-providers aibuddy-context-management
+      aibuddy-download-manager aibuddy-sdk-types aibuddy-agent aibuddy-acp-macros
+      aibuddy-provider-types aibuddy-local-inference
     ]
     cases = dependencies.to_h { |crate| ["crates/#{crate}/src/lib.rs", true] }
-    cases["crates/goose/src/agents/agent.rs"] = true
-    %w[goose-sdk goose-server goose-test goose-test-support].each do |crate|
+    cases["crates/aibuddy/src/agents/agent.rs"] = true
+    %w[aibuddy-sdk aibuddy-server aibuddy-test aibuddy-test-support].each do |crate|
       cases["crates/#{crate}/src/lib.rs"] = false
     end
     cases.each do |path, relevant|
@@ -501,7 +501,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     refute job.fetch("steps").any? { |step| step["name"] == "Check Windows CLI" }
     build = job.fetch("steps").find { |step| step["name"] == "Build Windows CLI" }
     refute build.key?("if")
-    assert_includes build.fetch("run"), "cargo build --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc"
+    assert_includes build.fetch("run"), "cargo build --locked -p aibuddy-cli --bin aibuddy --target x86_64-pc-windows-msvc"
   end
 
   def test_ci_required_check_names_remain_stable
@@ -896,7 +896,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_release_workflows_retain_macos_arm64_and_windows_x32_x64_targets
     macos_workflow = load_workflow("bundle-macos.yml")
     windows_matrix = load_workflow("bundle-windows.yml")
-      .dig("jobs", "build-goose-windows", "strategy", "matrix", "include")
+      .dig("jobs", "build-aibuddy-windows", "strategy", "matrix", "include")
 
     assert_equal "aarch64-apple-darwin", macos_workflow.dig("env", "MACOS_TARGET"),
                  "bundle-macos.yml must retain the macOS ARM64 release target"
@@ -963,9 +963,9 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def test_internal_transfer_artifacts_expire_after_one_day
     {
-      "bundle-macos.yml" => ["internal-heybuddy-aarch64-apple-darwin"],
+      "bundle-macos.yml" => ["internal-aibuddy-aarch64-apple-darwin"],
       "bundle-windows.yml" => [
-        "internal-goose-${{ matrix.artifact_arch }}",
+        "internal-aibuddy-${{ matrix.artifact_arch }}",
         "internal-windows-unsigned-${{ matrix.artifact_arch }}",
       ],
     }.each do |workflow_name, artifact_names|

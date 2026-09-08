@@ -1,38 +1,38 @@
 ---
 title: Chat Recall Extension
-description: Search conversation history and load session summaries across all your heybuddy sessions
+description: Search conversation history and load session summaries across all your aibuddy sessions
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PlatformExtensionNote } from '@site/src/components/PlatformExtensionNote';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
-The Chat Recall extension helps heybuddy remember past conversations by searching across your session history. When you need context from previous work, heybuddy can search for relevant conversations or load summaries of specific sessions.
+The Chat Recall extension helps aibuddy remember past conversations by searching across your session history. When you need context from previous work, aibuddy can search for relevant conversations or load summaries of specific sessions.
 
-heybuddy automatically uses Chat Recall when you reference past work or ask questions that require historical context.
+aibuddy automatically uses Chat Recall when you reference past work or ask questions that require historical context.
 
 ## Configuration
 
 <PlatformExtensionNote defaultEnabled={false} />
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Chatrecall"
     description="Search conversation history across all your sessions"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -48,17 +48,17 @@ heybuddy automatically uses Chat Recall when you reference past work or ask ques
 
 ## Example Usage
 
-Chat Recall can search across all sessions using keywords. Results are grouped by session and ordered by recency, and can be filtered by date. Alternatively, you can provide [session IDs](/docs/guides/heybuddy-cli-commands#session-list-options) to load summaries of specific sessions.
+Chat Recall can search across all sessions using keywords. Results are grouped by session and ordered by recency, and can be filtered by date. Alternatively, you can provide [session IDs](/docs/guides/aibuddy-cli-commands#session-list-options) to load summaries of specific sessions.
 
-Let's ask heybuddy to find recent conversations about a topic:
+Let's ask aibuddy to find recent conversations about a topic:
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 What did we discuss about database migrations last week?
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 I found discussions about database migrations in your recent sessions. Here's what we covered:
@@ -87,5 +87,5 @@ Both sessions were focused on safely updating the database schema in production.
 :::
 
 :::info
-Compacted sessions from heybuddy versions prior to v1.14.0 may not be searchable due to a change in how conversation history is stored.
+Compacted sessions from aibuddy versions prior to v1.14.0 may not be searchable due to a change in how conversation history is stored.
 :::

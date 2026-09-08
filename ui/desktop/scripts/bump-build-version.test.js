@@ -93,8 +93,8 @@ describe('validateTargetVersion', () => {
 describe('applyPackageJsonVersion', () => {
   const packageJsonContent = [
     '{',
-    '  "name": "heybuddy-app",',
-    '  "productName": "HeyBuddy",',
+    '  "name": "aibuddy-app",',
+    '  "productName": "AIBuddy",',
     '  "version": "1.45.0",',
     '  "scripts": {',
     '    "print": "echo \\"version: 9.9.9\\""',
@@ -216,7 +216,7 @@ describe('CLI 端到端', () => {
   const os = require('node:os');
   const path = require('node:path');
 
-  const PACKAGE_FIXTURE = '{\n  "name": "heybuddy-app",\n  "version": "1.45.0"\n}\n';
+  const PACKAGE_FIXTURE = '{\n  "name": "aibuddy-app",\n  "version": "1.45.0"\n}\n';
   const CARGO_FIXTURE = '[workspace]\nmembers = ["crates/*"]\n\n[workspace.package]\nversion = "1.45.0"\n';
 
   // 在临时目录复刻脚本的相对布局：<root>/a/b/scripts/bump-build-version.js
@@ -293,7 +293,7 @@ describe('CLI 端到端', () => {
 });
 
 describe('runCli 注入式调用（进程内覆盖 CLI 分支）', () => {
-  const PACKAGE_FIXTURE = '{\n  "name": "heybuddy-app",\n  "version": "1.45.0"\n}\n';
+  const PACKAGE_FIXTURE = '{\n  "name": "aibuddy-app",\n  "version": "1.45.0"\n}\n';
   const CARGO_FIXTURE = '[workspace.package]\nversion = "1.45.0"\n';
 
   // 构造内存 IO：files 为路径到内容的映射，记录输出与失败信息

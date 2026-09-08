@@ -1,7 +1,7 @@
 ---
 title: Managing Sessions
 hide_title: true
-description: Manage your session lifecycle and ongoing interactions with heybuddy
+description: Manage your session lifecycle and ongoing interactions with aibuddy
 ---
 
 import Card from '@site/src/components/Card';
@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 <h1 className={styles.pageTitle}>Managing Sessions</h1>
 <p className={styles.pageDescription}>
-  Sessions are your continuous interactions with heybuddy. Each session maintains context and conversation history, enabling heybuddy to understand your ongoing work and provide relevant assistance.
+  Sessions are your continuous interactions with aibuddy. Each session maintains context and conversation history, enabling aibuddy to understand your ongoing work and provide relevant assistance.
 </p>
 
 <div className={styles.categorySection}>
@@ -24,7 +24,7 @@ import TabItem from '@theme/TabItem';
     />
     <Card 
       title="In-Session Actions"
-      description="Discover features you can use to share information and communicate with heybuddy during sessions."
+      description="Discover features you can use to share information and communicate with aibuddy during sessions."
       link="/docs/guides/sessions/in-session-actions"
     />
     <Card 
@@ -38,9 +38,9 @@ import TabItem from '@theme/TabItem';
   <h2 className={styles.categoryTitle}>📝 Featured Blog Posts</h2>
   <div className={styles.cardGrid}>
     <Card
-      title="6 Essential Tips for Working with heybuddy"
+      title="6 Essential Tips for Working with aibuddy"
       description="Learn how focused sessions, step-by-step guidance, and refining your prompts can lead to more productive sessions."
-      link="/blog/2025/03/06/heybuddy-tips"
+      link="/blog/2025/03/06/aibuddy-tips"
     />
     <Card
       title="AI Prompting 101: How to Get the Best Responses from Your AI Agent"
@@ -49,7 +49,7 @@ import TabItem from '@theme/TabItem';
     />
     <Card
       title="The AI Skeptic’s Guide to Context Windows"
-      description="Learn how context windows, tokens, and heybuddy help you manage memory and long conversations."
+      description="Learn how context windows, tokens, and aibuddy help you manage memory and long conversations."
       link="/blog/2025/08/18/understanding-context-windows"
     />
   </div>

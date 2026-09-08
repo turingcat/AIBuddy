@@ -1,9 +1,9 @@
 name: Model Tool Call Conformance
 
 # Sweeps many models and reports which ones can actually drive an MCP tool call
-# through heybuddy. This is deliberately NOT a PR gate: it exercises third-party
+# through aibuddy. This is deliberately NOT a PR gate: it exercises third-party
 # models over the network, so a failure here usually means a provider or model
-# regressed, not that a heybuddy change broke. Running it on a schedule keeps the
+# regressed, not that a aibuddy change broke. Running it on a schedule keeps the
 # signal without turning unrelated PRs red.
 on:
   schedule:
@@ -53,17 +53,17 @@ jobs:
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
 
       - name: Build Binary
-        run: cargo build --locked --bin heybuddy
+        run: cargo build --locked --bin aibuddy
 
       - name: Run OpenRouter Tool Call Sweep
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
-          HEYBUDDY_BIN: ${{ github.workspace }}/target/debug/heybuddy
+          AIBUDDY_BIN: ${{ github.workspace }}/target/debug/aibuddy
         run: |
-          mkdir -p /tmp/heybuddy-home
+          mkdir -p /tmp/aibuddy-home
           if [ -n "${{ inputs.models }}" ]; then
             bash scripts/test_openrouter_toolcalls.sh \
               --models "${{ inputs.models }}" \

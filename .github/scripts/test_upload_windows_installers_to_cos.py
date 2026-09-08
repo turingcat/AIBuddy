@@ -79,14 +79,14 @@ if fail_on and any(fail_on in argument for argument in sys.argv[1:]):
         self.assertEqual(
             [call[-1] for call in calls],
             [
-                "cos://heybuddy-1252724067/aibuddy/stable/AIBuddy-windows-x32-setup.exe",
-                "cos://heybuddy-1252724067/aibuddy/stable/AIBuddy-windows-x64-setup.exe",
+                "cos://aibuddy-1252724067/aibuddy/stable/AIBuddy-windows-x32-setup.exe",
+                "cos://aibuddy-1252724067/aibuddy/stable/AIBuddy-windows-x64-setup.exe",
             ],
         )
         for call, installer in zip(calls, INSTALLERS, strict=True):
             self.assertIn("cp", call)
             self.assertIn(installer, call)
-            self.assertIn("heybuddy-1252724067.cos.ap-guangzhou.myqcloud.com", call)
+            self.assertIn("aibuddy-1252724067.cos.ap-guangzhou.myqcloud.com", call)
             self.assertIn("--customized", call)
             self.assertFalse(any("acl" in argument.lower() for argument in call))
             self.assertFalse(any("grant-" in argument.lower() for argument in call))

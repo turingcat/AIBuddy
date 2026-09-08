@@ -1,17 +1,17 @@
 ---
 title: Auto Visualiser Extension
-description: Add automatic data visualization to heybuddy
+description: Add automatic data visualization to aibuddy
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 import ImageCarousel from '@site/src/components/ImageCarousel';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/txh6DlzPwNo" />
 
-The Auto Visualiser extension enables heybuddy to automatically generate interactive data visualizations directly in your conversation. This built-in extension uses MCP Apps to render charts, graphs, maps, and diagrams inline in heybuddy Desktop.
+The Auto Visualiser extension enables aibuddy to automatically generate interactive data visualizations directly in your conversation. This built-in extension uses MCP Apps to render charts, graphs, maps, and diagrams inline in aibuddy Desktop.
 
 This guide will cover enabling and using the Auto Visualiser MCP Server.
 
@@ -19,22 +19,22 @@ This guide will cover enabling and using the Auto Visualiser MCP Server.
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Auto Visualiser"
     description="Automatically generate interactive data visualizations"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like you configure?
   │  Toggle Extensions 
@@ -50,12 +50,12 @@ This guide will cover enabling and using the Auto Visualiser MCP Server.
 
 
 :::info
-Auto Visualiser now uses [MCP Apps](/docs/tutorials/building-mcp-apps), which means visualizations can render inline in chat and expand into fullscreen or picture-in-picture modes in heybuddy Desktop.
+Auto Visualiser now uses [MCP Apps](/docs/tutorials/building-mcp-apps), which means visualizations can render inline in chat and expand into fullscreen or picture-in-picture modes in aibuddy Desktop.
 :::
 
 ## Visualization Types
 
-The Auto Visualiser automatically detects when data would benefit from visualization and chooses the most appropriate chart or diagram type. It renders those visualizations as interactive MCP Apps inside heybuddy Desktop.
+The Auto Visualiser automatically detects when data would benefit from visualization and chooses the most appropriate chart or diagram type. It renders those visualizations as interactive MCP Apps inside aibuddy Desktop.
 
 | Chart Type | Description | Detected When Prompt Implies |
 |------------|-------------|------------------------------|
@@ -82,9 +82,9 @@ The Auto Visualiser automatically detects when data would benefit from visualiza
 
 ### Features
 
-- **Automatic Detection**: heybuddy intelligently chooses the best visualization type for your data
+- **Automatic Detection**: aibuddy intelligently chooses the best visualization type for your data
 - **Interactive Components**: All visualizations are interactive with hover effects, zooming, and drilling capabilities
-- **MCP Apps Rendering**: Visualizations render as MCP Apps directly in heybuddy Desktop
+- **MCP Apps Rendering**: Visualizations render as MCP Apps directly in aibuddy Desktop
 - **Multiple Display Modes**: Visualizations can appear inline and expand into fullscreen or picture-in-picture modes
 - **Multiple Chart Support**: Can render multiple visualizations in a single response
 - **Customizable Styling**: Supports custom colors, labels, and formatting options
@@ -92,7 +92,7 @@ The Auto Visualiser automatically detects when data would benefit from visualiza
 
 ## How It Works
 
-When heybuddy decides that your data should be visualized, the Auto Visualiser extension returns an MCP App for the selected chart type. heybuddy Desktop then renders that app directly in the conversation.
+When aibuddy decides that your data should be visualized, the Auto Visualiser extension returns an MCP App for the selected chart type. aibuddy Desktop then renders that app directly in the conversation.
 
 Depending on the visualization, you can:
 
@@ -103,10 +103,10 @@ Depending on the visualization, you can:
 
 ## Example Usage
 
-In this example, I'll have heybuddy analyze some sales data and automatically visualize it using the Auto Visualiser extension.
+In this example, I'll have aibuddy analyze some sales data and automatically visualize it using the Auto Visualiser extension.
 
 
-### heybuddy Prompt
+### aibuddy Prompt
 ```
 I have quarterly sales data for different product categories. Can you help me understand:
 1. The hierarchical breakdown of revenue across our nested product categories
@@ -119,7 +119,7 @@ Here's the data:
 - Home & Garden: Q1: $80k, Q2: $95k, Q3: $110k, Q4: $125k
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 
@@ -172,7 +172,7 @@ Would you like me to create additional visualizations or dive deeper into any sp
 
 - **Visualization not appearing**: Ensure the Auto Visualiser extension is enabled and your data follows the expected format.
 
-- **Visualization opens but does not fit well inline**: Try fullscreen mode in heybuddy Desktop for more space.
+- **Visualization opens but does not fit well inline**: Try fullscreen mode in aibuddy Desktop for more space.
 
 - **Data format errors**: Check that your data structure matches the required schema for the visualization type. The extension provides detailed error messages to guide you.
 

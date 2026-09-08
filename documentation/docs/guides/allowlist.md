@@ -1,19 +1,19 @@
 ---
 sidebar_position: 90
-title: heybuddy Extension Allowlist
+title: aibuddy Extension Allowlist
 sidebar_label: Extension Allowlist
 ---
 
-heybuddy is an extensible framework that, by default, allows you to install any MCP server. However, you may want stricter controls on which MCP servers can be installed as extensions (e.g. in a corporate setting). 
+aibuddy is an extensible framework that, by default, allows you to install any MCP server. However, you may want stricter controls on which MCP servers can be installed as extensions (e.g. in a corporate setting). 
 
-This guide explains how you can create an **allowlist** of safe extensions that work with heybuddy Desktop and CLI. An allowlist lets administrators control which MCP servers can be installed as heybuddy extensions. When enabled, heybuddy will only install extensions that are on the list, and will block installation of any others.
+This guide explains how you can create an **allowlist** of safe extensions that work with aibuddy Desktop and CLI. An allowlist lets administrators control which MCP servers can be installed as aibuddy extensions. When enabled, aibuddy will only install extensions that are on the list, and will block installation of any others.
 
 ## How It Works
 
 1. The allowlist is a YAML file that contains a list of allowed extension commands.
-2. heybuddy fetches the allowlist from a URL specified by the `HEYBUDDY_ALLOWLIST` environment variable.
-3. The allowlist is fetched when first needed and is cached. It is refetched on every restart of heybuddy.
-4. When a user attempts to install an extension, heybuddy checks the MCP server's installation command against the allowlist.
+2. aibuddy fetches the allowlist from a URL specified by the `AIBUDDY_ALLOWLIST` environment variable.
+3. The allowlist is fetched when first needed and is cached. It is refetched on every restart of aibuddy.
+4. When a user attempts to install an extension, aibuddy checks the MCP server's installation command against the allowlist.
 5. If the command is not in the allowlist, the extension installation is rejected.
 
 ## Configuration
@@ -51,10 +51,10 @@ After creating the allowlist, you must deploy it to a URL.
 
 ### 2. Set Environment Variable
 
-Create an environment variable called `HEYBUDDY_ALLOWLIST` and set the value to the URL of your YAML file:
+Create an environment variable called `AIBUDDY_ALLOWLIST` and set the value to the URL of your YAML file:
 
 ```bash
-export HEYBUDDY_ALLOWLIST=https://example.com/goose-allowlist.yaml
+export AIBUDDY_ALLOWLIST=https://example.com/goose-allowlist.yaml
 ```
 
 You can also add this export to your shell configuration file (On a Mac, it's your `~/.bashrc` or `~/.zshrc` file). 
@@ -81,7 +81,7 @@ To effectively use the allowlist with exact matching:
 
 If extensions are being rejected unexpectedly:
 
-1. Check if the `HEYBUDDY_ALLOWLIST` environment variable is set correctly.
+1. Check if the `AIBUDDY_ALLOWLIST` environment variable is set correctly.
 2. Verify that the allowlist file is accessible from the server.
 3. Ensure the allowlist file is properly formatted YAML.
 4. Check [server logs](/docs/guides/logs) for any errors related to fetching or parsing the allowlist.

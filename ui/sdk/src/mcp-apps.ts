@@ -10,63 +10,63 @@ import type {
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
 
-export const HEYBUDDY_MCP_UI_EXTENSION_ID = "io.modelcontextprotocol/ui" as const;
+export const AIBUDDY_MCP_UI_EXTENSION_ID = "io.modelcontextprotocol/ui" as const;
 
-export interface HeyBuddyMcpUiExtensionSettings {
+export interface AIBuddyMcpUiExtensionSettings {
   mimeTypes: string[];
 }
 
-export interface HeyBuddyMcpHostCapabilities {
-  extensions: Record<string, HeyBuddyMcpUiExtensionSettings>;
+export interface AIBuddyMcpHostCapabilities {
+  extensions: Record<string, AIBuddyMcpUiExtensionSettings>;
 }
 
-export type HeyBuddyToolUiMetadata = Extract<
+export type AIBuddyToolUiMetadata = Extract<
   McpUiAppToolConfig["_meta"],
   { ui: unknown }
 >["ui"];
 
-export type HeyBuddyToolMetadata = NonNullable<Tool["_meta"]> & {
-  ui?: HeyBuddyToolUiMetadata;
-  heybuddy_extension?: string;
+export type AIBuddyToolMetadata = NonNullable<Tool["_meta"]> & {
+  ui?: AIBuddyToolUiMetadata;
+  aibuddy_extension?: string;
 };
 
-export type HeyBuddySessionTool = Tool & {
-  meta?: HeyBuddyToolMetadata;
-  _meta?: HeyBuddyToolMetadata;
+export type AIBuddySessionTool = Tool & {
+  meta?: AIBuddyToolMetadata;
+  _meta?: AIBuddyToolMetadata;
 };
 
-export type HeyBuddyTextResourceContents = TextResourceContents;
+export type AIBuddyTextResourceContents = TextResourceContents;
 
-export type HeyBuddyBlobResourceContents = BlobResourceContents;
+export type AIBuddyBlobResourceContents = BlobResourceContents;
 
-export type HeyBuddyResourceContents = TextResourceContents | BlobResourceContents;
+export type AIBuddyResourceContents = TextResourceContents | BlobResourceContents;
 
-export type HeyBuddyReadResourceResult = ReadResourceResult;
+export type AIBuddyReadResourceResult = ReadResourceResult;
 
-export type HeyBuddyResourceMetadata = NonNullable<
+export type AIBuddyResourceMetadata = NonNullable<
   Extract<NonNullable<McpUiAppResourceConfig["_meta"]>, { ui?: unknown }>["ui"]
 >;
 
-export interface HeyBuddyMcpAppToolPayload {
+export interface AIBuddyMcpAppToolPayload {
   toolName: string;
   extensionName: string;
   resourceUri: string;
-  toolMeta?: HeyBuddyToolMetadata;
-  resourceResult?: HeyBuddyReadResourceResult | null;
+  toolMeta?: AIBuddyToolMetadata;
+  resourceResult?: AIBuddyReadResourceResult | null;
   readError?: string;
 }
 
-export interface HeyBuddyToolCallUpdateMeta {
-  heybuddy?: {
-    mcpApp?: HeyBuddyMcpAppToolPayload;
+export interface AIBuddyToolCallUpdateMeta {
+  aibuddy?: {
+    mcpApp?: AIBuddyMcpAppToolPayload;
     [key: string]: unknown;
   };
   [key: string]: unknown;
 }
 
-export const DEFAULT_HEYBUDDY_MCP_HOST_CAPABILITIES: HeyBuddyMcpHostCapabilities = {
+export const DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES: AIBuddyMcpHostCapabilities = {
   extensions: {
-    [HEYBUDDY_MCP_UI_EXTENSION_ID]: {
+    [AIBUDDY_MCP_UI_EXTENSION_ID]: {
       mimeTypes: [RESOURCE_MIME_TYPE],
     },
   },

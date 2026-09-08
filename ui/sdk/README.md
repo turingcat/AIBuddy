@@ -1,19 +1,19 @@
-# @heybuddy/heybuddy-sdk
+# @aibuddy/aibuddy-sdk
 
-TypeScript client library for the HeyBuddy Agent Client Protocol (ACP).
+TypeScript client library for the AIBuddy Agent Client Protocol (ACP).
 
 This package provides:
 
-- TypeScript types and Zod validators for HeyBuddy ACP extension methods
-- A client for communicating with the HeyBuddy ACP server
+- TypeScript types and Zod validators for AIBuddy ACP extension methods
+- A client for communicating with the AIBuddy ACP server
 
 ## Installation
 
 ```bash
-npm install @heybuddy/heybuddy-sdk @agentclientprotocol/sdk
+npm install @aibuddy/aibuddy-sdk @agentclientprotocol/sdk
 ```
 
-The native `heybuddy` binaries are distributed as optional dependencies
+The native `aibuddy` binaries are distributed as optional dependencies
 and will be automatically installed for your platform.
 
 ## Development
@@ -53,12 +53,12 @@ npm run build
 npm link
 
 # In the consuming project
-npm link @heybuddy/heybuddy-sdk
+npm link @aibuddy/aibuddy-sdk
 ```
 
 ### Schema Generation
 
-The TypeScript types are generated from Rust schemas defined in `crates/heybuddy`.
+The TypeScript types are generated from Rust schemas defined in `crates/aibuddy`.
 The build process:
 
 1. Builds the `generate-acp-schema` Rust binary
@@ -74,17 +74,17 @@ npm run build:schema
 
 ## Native Binary Packages
 
-Platform-specific npm packages for the `heybuddy` binary are located in
-`ui/heybuddy-binary/`:
+Platform-specific npm packages for the `aibuddy` binary are located in
+`ui/aibuddy-binary/`:
 
 | Package                           | Platform            |
 | --------------------------------- | ------------------- |
-| `@heybuddy/heybuddy-binary-darwin-arm64` | macOS Apple Silicon |
-| `@heybuddy/heybuddy-binary-linux-arm64` | Linux ARM64 |
-| `@heybuddy/heybuddy-binary-linux-x64` | Linux x64 |
-| `@heybuddy/heybuddy-binary-win32-x64` | Windows x64 |
+| `@aibuddy/aibuddy-binary-darwin-arm64` | macOS Apple Silicon |
+| `@aibuddy/aibuddy-binary-linux-arm64` | Linux ARM64 |
+| `@aibuddy/aibuddy-binary-linux-x64` | Linux x64 |
+| `@aibuddy/aibuddy-binary-win32-x64` | Windows x64 |
 
-These are published separately from `@heybuddy/heybuddy-sdk`.
+These are published separately from `@aibuddy/aibuddy-sdk`.
 
 ### Building Native Binaries
 
@@ -112,13 +112,13 @@ For manual publishing:
 
 This will:
 
-1. Build and publish `@heybuddy/heybuddy-sdk`
+1. Build and publish `@aibuddy/aibuddy-sdk`
 2. Publish all native binary packages
 
 ## Usage
 
-Compose the ACP client with the standard ACP SDK, then use `HeyBuddyExtClient` for
-typed HeyBuddy extension methods:
+Compose the ACP client with the standard ACP SDK, then use `AIBuddyExtClient` for
+typed AIBuddy extension methods:
 
 ```typescript
 import {
@@ -127,12 +127,12 @@ import {
   PROTOCOL_VERSION,
 } from "@agentclientprotocol/sdk";
 import { createWebSocketStream } from "@agentclientprotocol/sdk/experimental/ws-client";
-import { HeyBuddyExtClient } from "@heybuddy/heybuddy-sdk";
+import { AIBuddyExtClient } from "@aibuddy/aibuddy-sdk";
 
 const app = createAcpClient({ name: "my-client" });
 const stream = createWebSocketStream("ws://localhost:3000/acp");
 const connection = app.connect(stream);
-const heybuddy = new HeyBuddyExtClient(connection.agent);
+const aibuddy = new AIBuddyExtClient(connection.agent);
 
 await connection.agent.request(methods.agent.initialize, {
   protocolVersion: PROTOCOL_VERSION,
@@ -140,7 +140,7 @@ await connection.agent.request(methods.agent.initialize, {
   clientCapabilities: {},
 });
 
-const providers = await heybuddy.providersList_unstable({ providerIds: [] });
+const providers = await aibuddy.providersList_unstable({ providerIds: [] });
 ```
 
 See the [main documentation](../../README.md) for more details.

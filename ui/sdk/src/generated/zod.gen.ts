@@ -67,7 +67,7 @@ export const zMcpServer = z.union([
     zMcpServerStdio
 ]);
 
-export const zHeyBuddyExtension = z.union([
+export const zAIBuddyExtension = z.union([
     z.object({
         name: z.string(),
         description: z.string().nullish(),
@@ -105,7 +105,7 @@ export const zHeyBuddyExtension = z.union([
  */
 export const zAddSessionExtensionRequest_unstable = z.object({
     sessionId: z.string(),
-    extension: zHeyBuddyExtension
+    extension: zAIBuddyExtension
 });
 
 /**
@@ -177,7 +177,7 @@ export const zSetToolPermissionsResponse_unstable = z.record(z.string(), z.unkno
 /**
  * Call a tool from an extension.
  */
-export const zHeyBuddyToolCallRequest_unstable = z.object({
+export const zAIBuddyToolCallRequest_unstable = z.object({
     sessionId: z.string(),
     name: z.string(),
     arguments: z.unknown().optional().default(null)
@@ -186,7 +186,7 @@ export const zHeyBuddyToolCallRequest_unstable = z.object({
 /**
  * Tool call response.
  */
-export const zHeyBuddyToolCallResponse_unstable = z.object({
+export const zAIBuddyToolCallResponse_unstable = z.object({
     content: z.array(z.unknown()).optional().default([]),
     structuredContent: z.unknown().optional(),
     isError: z.boolean(),
@@ -262,7 +262,7 @@ export const zSessionSystemPromptMode = z.union([
 /**
  * Set, append, or clear system prompt text for a session.
  *
- * `mode: "set"` replaces HeyBuddy's base system prompt. `mode: "append"` adds an
+ * `mode: "set"` replaces AIBuddy's base system prompt. `mode: "append"` adds an
  * instruction under "Additional Instructions". Reusing a key replaces the
  * previous value for that mode/key; sending empty text clears it.
  */
@@ -422,7 +422,7 @@ export const zDiagnosticsGetResponse_unstable = z.object({
 });
 
 /**
- * List all available HeyBuddy prompt templates.
+ * List all available AIBuddy prompt templates.
  */
 export const zListPromptsRequest_unstable = z.record(z.string(), z.unknown());
 
@@ -442,7 +442,7 @@ export const zListPromptsResponse_unstable = z.object({
 });
 
 /**
- * Read a HeyBuddy prompt template.
+ * Read a AIBuddy prompt template.
  */
 export const zGetPromptRequest_unstable = z.object({
     name: z.string()
@@ -456,7 +456,7 @@ export const zGetPromptResponse_unstable = z.object({
 });
 
 /**
- * Save a custom HeyBuddy prompt template.
+ * Save a custom AIBuddy prompt template.
  */
 export const zSavePromptRequest_unstable = z.object({
     name: z.string(),
@@ -468,7 +468,7 @@ export const zPromptOperationResponse_unstable = z.object({
 });
 
 /**
- * Reset a HeyBuddy prompt template to its default content.
+ * Reset a AIBuddy prompt template to its default content.
  */
 export const zResetPromptRequest_unstable = z.object({
     name: z.string()
@@ -479,8 +479,8 @@ export const zResetPromptRequest_unstable = z.object({
  */
 export const zGetConfigExtensionsRequest_unstable = z.record(z.string(), z.unknown());
 
-export const zHeyBuddyExtensionEntry = z.object({
-    extension: zHeyBuddyExtension,
+export const zAIBuddyExtensionEntry = z.object({
+    extension: zAIBuddyExtension,
     enabled: z.boolean(),
     configKey: z.string().nullish()
 });
@@ -489,27 +489,27 @@ export const zHeyBuddyExtensionEntry = z.object({
  * List configured extensions and any warnings.
  */
 export const zGetConfigExtensionsResponse_unstable = z.object({
-    extensions: z.array(zHeyBuddyExtensionEntry),
+    extensions: z.array(zAIBuddyExtensionEntry),
     warnings: z.array(z.string()).optional().default([])
 });
 
 /**
- * Persist a new extension to the user's global heybuddy config.
+ * Persist a new extension to the user's global aibuddy config.
  */
 export const zAddConfigExtensionRequest_unstable = z.object({
-    extension: zHeyBuddyExtension,
+    extension: zAIBuddyExtension,
     enabled: z.boolean().optional().default(false)
 });
 
 /**
- * Remove a persisted extension from the user's global heybuddy config.
+ * Remove a persisted extension from the user's global aibuddy config.
  */
 export const zRemoveConfigExtensionRequest_unstable = z.object({
     configKey: z.string()
 });
 
 /**
- * Set the `enabled` flag for a persisted extension in the user's global heybuddy config.
+ * Set the `enabled` flag for a persisted extension in the user's global aibuddy config.
  */
 export const zSetConfigExtensionEnabledRequest_unstable = z.object({
     configKey: z.string(),
@@ -521,7 +521,7 @@ export const zGetSessionExtensionsRequest_unstable = z.object({
 });
 
 export const zSessionExtensionEntry = z.object({
-    extension: zHeyBuddyExtension,
+    extension: zAIBuddyExtension,
     extensionKey: z.string()
 });
 
@@ -715,7 +715,7 @@ export const zProviderCatalogTemplateResponse_unstable = z.object({
 });
 
 /**
- * Create a custom provider backed by HeyBuddy's declarative provider store.
+ * Create a custom provider backed by AIBuddy's declarative provider store.
  */
 export const zCustomProviderCreateRequest_unstable = z.object({
     engine: z.string(),
@@ -792,7 +792,7 @@ export const zCustomProviderReadResponse_unstable = z.object({
 });
 
 /**
- * Update a custom provider backed by HeyBuddy's declarative provider store.
+ * Update a custom provider backed by AIBuddy's declarative provider store.
  */
 export const zCustomProviderUpdateRequest_unstable = z.object({
     providerId: z.string(),
@@ -816,7 +816,7 @@ export const zCustomProviderUpdateResponse_unstable = z.object({
 });
 
 /**
- * Delete a custom provider from HeyBuddy's declarative provider store.
+ * Delete a custom provider from AIBuddy's declarative provider store.
  */
 export const zCustomProviderDeleteRequest_unstable = z.object({
     providerId: z.string()
@@ -910,7 +910,7 @@ export const zProviderConfigAuthenticateRequest_unstable = z.object({
 });
 
 /**
- * List provider credentials stored locally by HeyBuddy.
+ * List provider credentials stored locally by AIBuddy.
  */
 export const zProviderSecretsListRequest_unstable = z.record(z.string(), z.unknown());
 
@@ -975,7 +975,7 @@ export const zCanonicalModelInfoResponse_unstable = z.object({
 
 export const zPreferenceKey = z.enum([
     'autoCompactThreshold',
-    'heybuddyThinkingEffort',
+    'aibuddyThinkingEffort',
     'voiceAutoSubmitPhrases',
     'voiceDictationProvider',
     'voiceDictationPreferredMic'
@@ -1031,7 +1031,7 @@ export const zConfigReadAllResponse_unstable = z.object({
 });
 
 /**
- * Read HeyBuddy default provider and model configuration.
+ * Read AIBuddy default provider and model configuration.
  */
 export const zDefaultsReadRequest_unstable = z.record(z.string(), z.unknown());
 
@@ -1041,7 +1041,7 @@ export const zDefaultsReadResponse_unstable = z.object({
 });
 
 /**
- * Save HeyBuddy default provider and model configuration.
+ * Save AIBuddy default provider and model configuration.
  */
 export const zDefaultsSaveRequest_unstable = z.object({
     providerId: z.string(),
@@ -1049,17 +1049,17 @@ export const zDefaultsSaveRequest_unstable = z.object({
 });
 
 /**
- * Clear HeyBuddy default provider and model configuration.
+ * Clear AIBuddy default provider and model configuration.
  */
 export const zDefaultsClearRequest_unstable = z.record(z.string(), z.unknown());
 
 /**
  * Sources that onboarding knows how to discover and import.
  */
-export const zOnboardingImportSourceKind = z.enum(['heybuddy_config', 'claude_desktop']);
+export const zOnboardingImportSourceKind = z.enum(['aibuddy_config', 'claude_desktop']);
 
 /**
- * Scan for existing HeyBuddy and compatible app data that onboarding can import.
+ * Scan for existing AIBuddy and compatible app data that onboarding can import.
  */
 export const zOnboardingImportScanRequest_unstable = z.object({
     sources: z.array(zOnboardingImportSourceKind).optional().default([])
@@ -1113,7 +1113,7 @@ export const zExportSessionRequest_unstable = z.object({
 });
 
 /**
- * Export session response — raw JSON of the heybuddy session with `conversation`,
+ * Export session response — raw JSON of the aibuddy session with `conversation`,
  * or a markdown transcript when `format` is `markdown`.
  */
 export const zExportSessionResponse_unstable = z.object({
@@ -1206,8 +1206,8 @@ export const zRecipeExtensionDto = z.union([
 ]);
 
 export const zRecipeSettingsDto = z.object({
-    heybuddy_provider: z.string().nullish(),
-    heybuddy_model: z.string().nullish(),
+    aibuddy_provider: z.string().nullish(),
+    aibuddy_model: z.string().nullish(),
     temperature: z.number().nullish(),
     max_turns: z.int().gte(0).nullish()
 });
@@ -1562,7 +1562,7 @@ export const zCreateSourceRequest_unstable = z.object({
 });
 
 /**
- * A source discovered by HeyBuddy. Filesystem sources use an on-disk path;
+ * A source discovered by AIBuddy. Filesystem sources use an on-disk path;
  * built-in sources use a stable synthetic path. Sources may be either
  * `global` (shared across all projects) or project-specific.
  */
@@ -1696,7 +1696,7 @@ export const zExportSourceResponse_unstable = z.object({
 });
 
 /**
- * Import a source from a JSON export payload produced by `_heybuddy/unstable/sources/export`.
+ * Import a source from a JSON export payload produced by `_aibuddy/unstable/sources/export`.
  * The imported source is written into the explicit target scope; on name
  * collisions a `-imported` suffix is appended.
  */
@@ -2080,7 +2080,7 @@ export const zCostSourceData = z.union([
 
 /**
  * Wire mirror of the conversation `MessageUsage` (this crate cannot depend on
- * heybuddy-provider-types); field names and serde casing MUST stay in parity.
+ * aibuddy-provider-types); field names and serde casing MUST stay in parity.
  */
 export const zMessageUsageData = z.object({
     inputTokens: z.int().nullish(),
@@ -2105,32 +2105,32 @@ export const zMessageUsageUpdate = z.object({
 });
 
 /**
- * Discriminated union of heybuddy-specific session update payloads.
+ * Discriminated union of aibuddy-specific session update payloads.
  * Variant tag matches ACP's convention (`sessionUpdate: "<snake_case>"`).
  *
  * `discriminator.mapping` is what makes TS codegen (`@hey-api/openapi-ts`)
  * emit the correct snake_case tag value even when this enum has a single
  * variant. Add a mapping entry per variant.
  */
-export const zHeyBuddySessionUpdate = z.discriminatedUnion('sessionUpdate', [
+export const zAIBuddySessionUpdate = z.discriminatedUnion('sessionUpdate', [
     zSessionUsageUpdate.extend({ sessionUpdate: z.literal('usage_update') }),
     zStatusMessageUpdate.extend({ sessionUpdate: z.literal('status_message') }),
     zMessageUsageUpdate.extend({ sessionUpdate: z.literal('message_usage') })
 ]);
 
 /**
- * HeyBuddy-custom session update notification — a parallel to ACP's
- * `session/update` carrying heybuddy-specific update variants.
+ * AIBuddy-custom session update notification — a parallel to ACP's
+ * `session/update` carrying aibuddy-specific update variants.
  */
-export const zHeyBuddySessionNotification_unstable = z.object({
+export const zAIBuddySessionNotification_unstable = z.object({
     sessionId: z.string(),
-    update: zHeyBuddySessionUpdate
+    update: zAIBuddySessionUpdate
 });
 
 /**
  * Dedicated provider notification for OAuth device-code flow.
  * Sent during provider authentication when the ACP client supports
- * `heybuddy.customNotifications` — avoids a fake empty session ID.
+ * `aibuddy.customNotifications` — avoids a fake empty session ID.
  */
 export const zProviderDeviceCodeNotification_unstable = z.object({
     providerId: z.string(),
@@ -2161,7 +2161,7 @@ export const zExtRequest = z.object({
             zRemoveSessionExtensionRequest_unstable,
             zGetToolsRequest_unstable,
             zSetToolPermissionsRequest_unstable,
-            zHeyBuddyToolCallRequest_unstable,
+            zAIBuddyToolCallRequest_unstable,
             zReadResourceRequest_unstable,
             zAppsListRequest_unstable,
             zAppsExportRequest_unstable,
@@ -2278,7 +2278,7 @@ export const zExtResponse = z.union([
                 zEmptyResponse,
                 zGetToolsResponse_unstable,
                 zSetToolPermissionsResponse_unstable,
-                zHeyBuddyToolCallResponse_unstable,
+                zAIBuddyToolCallResponse_unstable,
                 zReadResourceResponse_unstable,
                 zAppsListResponse_unstable,
                 zAppsExportResponse_unstable,
@@ -2368,7 +2368,7 @@ export const zExtNotification = z.object({
     method: z.string(),
     params: z.union([
         z.union([
-            zHeyBuddySessionNotification_unstable,
+            zAIBuddySessionNotification_unstable,
             zProviderDeviceCodeNotification_unstable
         ]),
         z.record(z.string(), z.unknown())

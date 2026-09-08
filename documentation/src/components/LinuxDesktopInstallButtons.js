@@ -38,8 +38,8 @@ const LinuxDesktopInstallButtons = () => {
       try {
         const arch = await detectLinuxArch();
         const tokens = ARCH_ASSET_TOKENS[arch];
-        const cacheKey = `heybuddy-release-cache-${arch}`;
-        const cacheTimeKey = `heybuddy-release-cache-time-${arch}`;
+        const cacheKey = `aibuddy-release-cache-${arch}`;
+        const cacheTimeKey = `aibuddy-release-cache-time-${arch}`;
 
         // Check cache first (1 hour expiry)
         const cached = localStorage.getItem(cacheKey);
@@ -91,7 +91,7 @@ const LinuxDesktopInstallButtons = () => {
 
   return (
     <div>
-      <p>Click one of the buttons below to download heybuddy Desktop for Linux:</p>
+      <p>Click one of the buttons below to download aibuddy Desktop for Linux:</p>
       <div className="pill-button" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <Link
           className="button button--primary button--lg"

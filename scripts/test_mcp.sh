@@ -2,8 +2,8 @@
 set -e
 
 if [ -z "$SKIP_BUILD" ]; then
-  echo "Building heybuddy..."
-  cargo build --bin heybuddy
+  echo "Building aibuddy..."
+  cargo build --bin aibuddy
   echo ""
 else
   echo "Skipping build (SKIP_BUILD is set)..."
@@ -11,10 +11,10 @@ else
 fi
 
 SCRIPT_DIR=$(pwd)
-HEYBUDDY_BIN="$SCRIPT_DIR/target/debug/heybuddy"
+AIBUDDY_BIN="$SCRIPT_DIR/target/debug/aibuddy"
 
-TEST_PROVIDER=${HEYBUDDY_PROVIDER:-anthropic}
-TEST_MODEL=${HEYBUDDY_MODEL:-claude-haiku-4-5-20251001}
+TEST_PROVIDER=${AIBUDDY_PROVIDER:-anthropic}
+TEST_MODEL=${AIBUDDY_MODEL:-claude-haiku-4-5-20251001}
 
 RESULTS=()
 
@@ -53,8 +53,8 @@ extensions:
 EOF
 
 TMPFILE=$(mktemp)
-(cd "$TESTDIR" && HEYBUDDY_PROVIDER="$TEST_PROVIDER" HEYBUDDY_MODEL="$TEST_MODEL" \
-    "$HEYBUDDY_BIN" run --recipe recipe.yaml 2>&1) | tee "$TMPFILE"
+(cd "$TESTDIR" && AIBUDDY_PROVIDER="$TEST_PROVIDER" AIBUDDY_MODEL="$TEST_MODEL" \
+    "$AIBUDDY_BIN" run --recipe recipe.yaml 2>&1) | tee "$TMPFILE"
 
 if grep -qE "(add \| test_mcp)|(▸.*add.*test_mcp)" "$TMPFILE" && grep -q "100" "$TMPFILE"; then
     echo "✓ FastMCP stderr test passed"

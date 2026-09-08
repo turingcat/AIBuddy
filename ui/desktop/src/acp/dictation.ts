@@ -2,7 +2,7 @@ import type {
   DictationDownloadProgress,
   DictationLocalModelStatus,
   DictationProviderStatusEntry,
-} from '@heybuddy/heybuddy-sdk';
+} from '@aibuddy/aibuddy-sdk';
 import { getAcpClient } from './acpConnection';
 
 export type { DictationProviderStatusEntry };
@@ -13,7 +13,7 @@ export type LocalDictationDownloadProgress = DictationDownloadProgress;
 
 export async function getDictationConfig(): Promise<DictationProviders> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.dictationConfig_unstable({});
+  const response = await client.aibuddy.dictationConfig_unstable({});
   return response.providers ?? {};
 }
 
@@ -23,35 +23,35 @@ export async function transcribeDictation(
   provider: string
 ): Promise<string> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.dictationTranscribe_unstable({ audio, mimeType, provider });
+  const response = await client.aibuddy.dictationTranscribe_unstable({ audio, mimeType, provider });
   return response.text;
 }
 
 export async function listLocalDictationModels(): Promise<LocalDictationModel[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.dictationModelsList_unstable({});
+  const response = await client.aibuddy.dictationModelsList_unstable({});
   return response.models;
 }
 
 export async function downloadLocalDictationModel(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.dictationModelsDownload_unstable({ modelId });
+  await client.aibuddy.dictationModelsDownload_unstable({ modelId });
 }
 
 export async function getLocalDictationModelDownloadProgress(
   modelId: string
 ): Promise<LocalDictationDownloadProgress | null> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.dictationModelsDownloadProgress_unstable({ modelId });
+  const response = await client.aibuddy.dictationModelsDownloadProgress_unstable({ modelId });
   return response.progress ?? null;
 }
 
 export async function cancelLocalDictationModelDownload(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.dictationModelsCancel_unstable({ modelId });
+  await client.aibuddy.dictationModelsCancel_unstable({ modelId });
 }
 
 export async function deleteLocalDictationModel(modelId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.dictationModelsDelete_unstable({ modelId });
+  await client.aibuddy.dictationModelsDelete_unstable({ modelId });
 }

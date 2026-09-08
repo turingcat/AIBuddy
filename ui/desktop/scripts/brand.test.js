@@ -25,7 +25,7 @@ describe('resolveBrand', () => {
   it('does not use APP_EDITION', () => {
     const { resolveBrand } = require('./brand');
     const previousEdition = process.env.APP_EDITION;
-    process.env.APP_EDITION = 'heybuddy';
+    process.env.APP_EDITION = 'aibuddy';
 
     expect(resolveBrand().productName).toBe('AIBuddy');
 

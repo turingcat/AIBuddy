@@ -1,16 +1,16 @@
 export const configLabels: Record<string, string> = {
-  // heybuddy settings
-  HEYBUDDY_PROVIDER: 'Provider',
-  HEYBUDDY_MODEL: 'Model',
-  HEYBUDDY_TEMPERATURE: 'Temperature',
-  HEYBUDDY_MODE: 'Mode',
-  HEYBUDDY_PLANNER_PROVIDER: 'Planner Provider',
-  HEYBUDDY_PLANNER_MODEL: 'Planner Model',
-  HEYBUDDY_TOOLSHIM: 'Tool Shim',
-  HEYBUDDY_TOOLSHIM_OLLAMA_MODEL: 'Tool Shim Ollama Model',
-  HEYBUDDY_CLI_MIN_PRIORITY: 'CLI Min Priority',
-  HEYBUDDY_ALLOWLIST: 'Allow List',
-  HEYBUDDY_RECIPE_GITHUB_REPO: 'Recipe GitHub Repo',
+  // aibuddy settings
+  AIBUDDY_PROVIDER: 'Provider',
+  AIBUDDY_MODEL: 'Model',
+  AIBUDDY_TEMPERATURE: 'Temperature',
+  AIBUDDY_MODE: 'Mode',
+  AIBUDDY_PLANNER_PROVIDER: 'Planner Provider',
+  AIBUDDY_PLANNER_MODEL: 'Planner Model',
+  AIBUDDY_TOOLSHIM: 'Tool Shim',
+  AIBUDDY_TOOLSHIM_OLLAMA_MODEL: 'Tool Shim Ollama Model',
+  AIBUDDY_CLI_MIN_PRIORITY: 'CLI Min Priority',
+  AIBUDDY_ALLOWLIST: 'Allow List',
+  AIBUDDY_RECIPE_GITHUB_REPO: 'Recipe GitHub Repo',
 
   // security settings
   SECURITY_PROMPT_ENABLED: 'Prompt Injection Detection Enabled',

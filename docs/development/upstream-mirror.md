@@ -28,7 +28,7 @@ import { prepareMirror } from './tools/rebrand/src/mirror.mjs';
 const result = await prepareMirror({
   cwd: repository,
   snapshotDir,
-  branch: 'upstream/heybuddy-mirror',
+  branch: 'upstream/aibuddy-mirror',
   dryRun: true,
 });
 ```
@@ -44,7 +44,7 @@ const result = await prepareMirror({
 - writes non-dry-run blobs through temporary files outside the source worktree
   and `.git`, passing literal paths to `git hash-object -w`; an isolated
   temporary Git index is still used for the tree, never the repository index;
-- omits only `.heybuddy-rebrand.json` from the mirror tree and rejects tracked
+- omits only `.aibuddy-rebrand.json` from the mirror tree and rejects tracked
   `.git` paths;
 - records source commit/tree, transformed tree, output digest, and transform
   identity in commit trailers; and
@@ -66,7 +66,7 @@ import { appendMirror } from './tools/rebrand/src/mirror.mjs';
 const result = await appendMirror({
   cwd: repository,
   snapshotDir: nextSnapshotDir,
-  branch: 'upstream/heybuddy-mirror',
+  branch: 'upstream/aibuddy-mirror',
   parentMirror: previousMirrorCommit,
   expectedRef: previousMirrorCommit,
   dryRun: true,
@@ -101,7 +101,7 @@ const review = await establishBridge({
 
 The default result describes the proposed bridge and its product parent tree;
 it does not create an `ours` bridge or update a ref. The helper requires the
-current branch to be exactly `feat/heybuddy-branding`, `HEAD` to equal
+current branch to be exactly `feat/aibuddy-branding`, `HEAD` to equal
 `expectedProductCommit`, a clean tracked worktree and index, and no untracked
 files. Rejecting untracked tooling or documentation is intentional because
 those files can hide an incomplete migration review.

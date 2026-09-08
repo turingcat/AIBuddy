@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { HeyBuddySessionNotification_unstable } from '@heybuddy/heybuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import type { TokenState } from '../types/chat';
 import { ChatState } from '../types/chatState';
@@ -63,8 +63,8 @@ export interface AcpChatSessionActions {
   deleteSnapshot(sessionId: string): void;
 
   applyAcpSessionNotification(notification: SessionNotification): AcpChatSessionSnapshot;
-  applyAcpHeyBuddySessionNotification(
-    notification: HeyBuddySessionNotification_unstable
+  applyAcpAIBuddySessionNotification(
+    notification: AIBuddySessionNotification_unstable
   ): AcpChatSessionSnapshot;
   applyPermissionRequest(request: AcpPermissionRequest): AcpChatSessionSnapshot;
   cancelPermissionRequest(
@@ -472,10 +472,10 @@ function createAcpChatSessionStoreInternal(): AcpChatSessionStoreInternal {
     return notify(notification.sessionId, entry);
   };
 
-  const applyAcpHeyBuddySessionNotification: AcpChatSessionActions['applyAcpHeyBuddySessionNotification'] =
+  const applyAcpAIBuddySessionNotification: AcpChatSessionActions['applyAcpAIBuddySessionNotification'] =
     (notification) => {
       const entry = getOrCreateEntry(notification.sessionId);
-      const changes = entry.adapter.applyHeyBuddy(notification);
+      const changes = entry.adapter.applyAIBuddy(notification);
       // Same session-load replay fast path as applyAcpSessionNotification.
       if (entry.chatState === ChatState.LoadingConversation && entry.lastSnapshot) {
         applyChatStateChanges(
@@ -565,7 +565,7 @@ function createAcpChatSessionStoreInternal(): AcpChatSessionStoreInternal {
     clearActivePromptAttempt,
     isCurrentPromptAttempt,
     applyAcpSessionNotification,
-    applyAcpHeyBuddySessionNotification,
+    applyAcpAIBuddySessionNotification,
     applyPermissionRequest,
     cancelPermissionRequest,
     applyElicitationRequest,
@@ -622,7 +622,7 @@ function actionsFromStore(store: AcpChatSessionStoreInternal): AcpChatSessionAct
   return {
     deleteSnapshot: store.deleteSnapshot,
     applyAcpSessionNotification: store.applyAcpSessionNotification,
-    applyAcpHeyBuddySessionNotification: store.applyAcpHeyBuddySessionNotification,
+    applyAcpAIBuddySessionNotification: store.applyAcpAIBuddySessionNotification,
     applyPermissionRequest: store.applyPermissionRequest,
     cancelPermissionRequest: store.cancelPermissionRequest,
     applyElicitationRequest: store.applyElicitationRequest,

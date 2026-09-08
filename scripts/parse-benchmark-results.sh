@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Script to parse heybuddy-bench results and check for failures
+# Script to parse aibuddy-bench results and check for failures
 
 set -e
 

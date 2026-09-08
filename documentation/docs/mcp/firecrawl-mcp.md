@@ -1,25 +1,25 @@
 ---
 title: Firecrawl Extension
-description: Add Firecrawl MCP Server as a heybuddy Extension
+description: Add Firecrawl MCP Server as a aibuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://youtube.com/embed/_rKBFLREVcM" /> 
 
 
-This tutorial will get you started with the [Firecrawl MCP Server](https://github.com/firecrawl/firecrawl-mcp-server) as a heybuddy extension to enable powerful web scraping, crawling, and search capabilities for AI agents.
+This tutorial will get you started with the [Firecrawl MCP Server](https://github.com/firecrawl/firecrawl-mcp-server) as a aibuddy extension to enable powerful web scraping, crawling, and search capabilities for AI agents.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=firecrawl-mcp&id=firecrawl&name=Firecrawl&description=Web%20scraping%20and%20crawling%20capabilities&env=FIRECRAWL_API_KEY%3DYour%20API%20Key)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   npx -y firecrawl-mcp
@@ -39,8 +39,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="firecrawl"
     extensionName="Firecrawl"
     description="Web scraping and crawling capabilities"
@@ -51,7 +51,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     apiKeyLinkText="Firecrawl API Key"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="firecrawl"
       description="Web scraping and crawling capabilities"
@@ -79,13 +79,13 @@ The Firecrawl MCP server provides comprehensive web scraping and crawling capabi
 - **Site Crawling**: Crawl entire websites or specific sections with customizable depth
 - **Search Integration**: Search across crawled content with advanced filtering
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 I'm building a multiplayer game and trying to decide between Photon and Unity Netcode. Can you scrape their official documentation and recent comparison articles to help me understand the pros and cons of each platform, including performance, pricing, ease of use, and scalability?
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 ```
 I'll help you research Photon and Unity Netcode by scraping their official documentation and finding recent comparison articles. Let me start by gathering information from both platforms' official sites and then look for comparison articles.

@@ -3,7 +3,7 @@ import { useForm } from '@tanstack/react-form';
 import { generateDeepLink } from '../../recipe';
 import type { Recipe, Parameter, RecipeExtension, RecipeSettings } from '../../recipe';
 import { Check, ExternalLink, Play, Save, X } from 'lucide-react';
-import { HeyBuddies } from '../icons/HeyBuddies';
+import { AIBuddies } from '../icons/AIBuddies';
 import Copy from '../icons/Copy';
 import { Button } from '../ui/button';
 
@@ -139,8 +139,8 @@ export default function CreateEditRecipeModal({
         jsonSchema: recipe.response?.json_schema
           ? JSON.stringify(recipe.response.json_schema, null, 2)
           : '',
-        model: recipe.settings?.heybuddy_model ?? undefined,
-        provider: recipe.settings?.heybuddy_provider ?? undefined,
+        model: recipe.settings?.aibuddy_model ?? undefined,
+        provider: recipe.settings?.aibuddy_provider ?? undefined,
         extensions: recipe.extensions || undefined,
         subRecipes: (recipe.sub_recipes || []).map((sr) => ({
           name: sr.name,
@@ -277,14 +277,14 @@ export default function CreateEditRecipeModal({
       ...(recipe?.settings || {}),
     };
     if (model !== undefined) {
-      mergedSettings.heybuddy_model = model || null;
-    } else if ('heybuddy_model' in mergedSettings) {
-      delete mergedSettings.heybuddy_model;
+      mergedSettings.aibuddy_model = model || null;
+    } else if ('aibuddy_model' in mergedSettings) {
+      delete mergedSettings.aibuddy_model;
     }
     if (provider !== undefined) {
-      mergedSettings.heybuddy_provider = provider || null;
-    } else if ('heybuddy_provider' in mergedSettings) {
-      delete mergedSettings.heybuddy_provider;
+      mergedSettings.aibuddy_provider = provider || null;
+    } else if ('aibuddy_provider' in mergedSettings) {
+      delete mergedSettings.aibuddy_provider;
     }
     const settings = Object.values(mergedSettings).some(
       (value) => value !== undefined && value !== null
@@ -499,7 +499,7 @@ export default function CreateEditRecipeModal({
         <div className="flex items-center justify-between p-6 border-b border-border-primary">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-background-primary rounded-full flex items-center justify-center">
-              <HeyBuddies className="w-6 h-6" />
+              <AIBuddies className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-xl font-medium text-text-primary">

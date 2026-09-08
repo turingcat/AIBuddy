@@ -143,8 +143,8 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
   );
 
   const getFallbackModelAndProvider = useCallback(async () => {
-    const configuredProvider = window.appConfig.get('HEYBUDDY_DEFAULT_PROVIDER') as string;
-    const model = window.appConfig.get('HEYBUDDY_DEFAULT_MODEL') as string;
+    const configuredProvider = window.appConfig.get('AIBUDDY_DEFAULT_PROVIDER') as string;
+    const model = window.appConfig.get('AIBUDDY_DEFAULT_MODEL') as string;
     if (configuredProvider && model) {
       try {
         await acpSaveDefaults(configuredProvider, model);
@@ -188,20 +188,20 @@ export const ModelAndProviderProvider: React.FC<ModelAndProviderProviderProps> =
 
   const getCurrentModelAndProviderForDisplay = useCallback(async () => {
     const modelProvider = await getCurrentModelAndProvider();
-    const heybuddyModel = modelProvider.model;
-    const heybuddyProvider = modelProvider.provider;
+    const aibuddyModel = modelProvider.model;
+    const aibuddyProvider = modelProvider.provider;
 
     // lookup display name
     let metadata: ProviderMetadata;
 
     try {
-      metadata = await getProviderMetadata(String(heybuddyProvider));
+      metadata = await getProviderMetadata(String(aibuddyProvider));
     } catch {
-      return { model: heybuddyModel, provider: heybuddyProvider };
+      return { model: aibuddyModel, provider: aibuddyProvider };
     }
     const providerDisplayName = metadata.display_name;
 
-    return { model: heybuddyModel, provider: providerDisplayName };
+    return { model: aibuddyModel, provider: providerDisplayName };
   }, [getCurrentModelAndProvider]);
 
   const getCurrentModelDisplayName = useCallback(async () => {

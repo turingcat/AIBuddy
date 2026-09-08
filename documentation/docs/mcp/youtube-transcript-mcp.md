@@ -1,24 +1,24 @@
 ---
 title: YouTube Transcript Extension
-description: Add YouTube Transcript MCP Server as a heybuddy Extension for accessing YouTube video transcripts
+description: Add YouTube Transcript MCP Server as a aibuddy Extension for accessing YouTube video transcripts
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/N38u7hZqZJg" />
 
-This tutorial covers how to add the [YouTube Transcript MCP Server](https://github.com/jkawamoto/mcp-youtube-transcript) as a heybuddy extension to enable fetching and working with YouTube video transcripts.
+This tutorial covers how to add the [YouTube Transcript MCP Server](https://github.com/jkawamoto/mcp-youtube-transcript) as a aibuddy extension to enable fetching and working with YouTube video transcripts.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=uvx&arg=--from&arg=git%2Bhttps%3A%2F%2Fgithub.com%2Fjkawamoto%2Fmcp-youtube-transcript&arg=mcp-youtube-transcript&id=youtube-transcript-mcp&name=YouTube%20Transcript&description=Access%20YouTube%20video%20transcripts)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   **Command**
   ```sh
   uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript
@@ -35,8 +35,8 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyDesktopInstaller
     extensionId="youtube-transcript-mcp"
     extensionName="YouTube Transcript"
     description="Access YouTube video transcripts"
@@ -44,7 +44,7 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
     args={["--from", "git+https://github.com/jkawamoto/mcp-youtube-transcript", "mcp-youtube-transcript"]}
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="YouTube Transcript"
       description="Access YouTube video transcripts"
@@ -57,13 +57,13 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 
 The YouTube Transcript extension allows you to fetch and work with transcripts from YouTube videos. You'll need the video ID from the YouTube URL you want to get the transcript for.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 Get me the transcript for this YouTube video: https://www.youtube.com/watch?v=dQw4w9WgXcQ
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 :::note CLI
 I'll help you get the transcript for that video. The video ID is "dQw4w9WgXcQ". Let me fetch the transcript for you.

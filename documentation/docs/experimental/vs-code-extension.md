@@ -1,43 +1,43 @@
 ---
-title: heybuddy for VS Code Extension
+title: aibuddy for VS Code Extension
 sidebar_label: VS Code Extension
 sidebar_position: 4
 ---
 
-import IconHeyBuddy from "@site/src/components/icons/heybuddy";
+import IconAIBuddy from "@site/src/components/icons/aibuddy";
 
-The [heybuddy for VS Code extension](https://marketplace.visualstudio.com/items?itemName=block.vscode-goose) lets you interact with heybuddy directly within VS Code.
+The [aibuddy for VS Code extension](https://marketplace.visualstudio.com/items?itemName=block.vscode-goose) lets you interact with aibuddy directly within VS Code.
 
 :::warning Experimental Feature
-heybuddy for VS Code is in active development. Behavior and configuration may change in future releases.
+aibuddy for VS Code is in active development. Behavior and configuration may change in future releases.
 :::
 
-The extension uses the [Agent Client Protocol (ACP)](/docs/guides/acp-clients) to communicate with heybuddy.
+The extension uses the [Agent Client Protocol (ACP)](/docs/guides/acp-clients) to communicate with aibuddy.
 
 ## Install the Extension
 
 :::info Prerequisites
 - [VS Code](https://code.visualstudio.com/) version 1.95.0 or higher
-- [heybuddy CLI](/docs/getting-started/installation)
+- [aibuddy CLI](/docs/getting-started/installation)
 :::
 
 1. Go to [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=block.vscode-goose)
 2. Click `Install`
 3. On the popup window, click `Open Visual Studio Code`
 4. In Visual Studio Code, click `Install`
-5. Click the <IconHeyBuddy className="inline" size={16} /> icon in the Activity Bar to open the side panel and start chatting with heybuddy
+5. Click the <IconAIBuddy className="inline" size={16} /> icon in the Activity Bar to open the side panel and start chatting with aibuddy
 
-## Share Context with heybuddy
+## Share Context with aibuddy
 
-There are two ways to provide context to heybuddy.
+There are two ways to provide context to aibuddy.
 
 ### Send Selected Code
 
 1. Select the code you want to discuss in your editor
-2. Send the selection to heybuddy:
+2. Send the selection to aibuddy:
    - macOS: `Cmd+Shift+G`
    - Windows/Linux: `Ctrl+Shift+G`
-   - Right-click and choose `Send to heybuddy`
+   - Right-click and choose `Send to aibuddy`
 
 The selected code will appear as a context chip above the chat input.
 
@@ -52,21 +52,21 @@ The attached file will appear as a context chip above the chat input.
 
 ## Example Usage
 
-The heybuddy for VS Code extension connects directly to your editor, letting you manage files, projects, and workflows with AI. It includes the following features:
+The aibuddy for VS Code extension connects directly to your editor, letting you manage files, projects, and workflows with AI. It includes the following features:
 
 - Interactive chat UI with streaming responses
-- Access to heybuddy's AI capabilities and enabled extensions
+- Access to aibuddy's AI capabilities and enabled extensions
 - Session management with history replay
 - Context sharing and visual context chips in the chat UI
 - Clipboard tools to copy code snippets/responses for easy sharing
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
-Update the contributing guide at /heybuddy/CONTRIBUTING.md with instructions on how to start docusaurus dev server
+Update the contributing guide at /aibuddy/CONTRIBUTING.md with instructions on how to start docusaurus dev server
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 ```
 

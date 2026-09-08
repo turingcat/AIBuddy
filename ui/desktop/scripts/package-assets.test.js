@@ -19,11 +19,11 @@ function makePackageTree(platform, omittedAsset) {
     fs.mkdirSync(path.dirname(executable), { recursive: true });
     fs.writeFileSync(executable, '');
     fs.mkdirSync(path.join(resources, 'bin'), { recursive: true });
-    fs.writeFileSync(path.join(resources, 'bin', 'goose'), '');
+    fs.writeFileSync(path.join(resources, 'bin', 'aibuddy'), '');
   } else {
     fs.mkdirSync(path.join(resources, 'bin'), { recursive: true });
     fs.writeFileSync(path.join(root, 'AIBuddy.exe'), '');
-    fs.writeFileSync(path.join(resources, 'bin', 'goose.exe'), '');
+    fs.writeFileSync(path.join(resources, 'bin', 'aibuddy.exe'), '');
   }
 
   const assetsDir = path.join(resources, 'aibuddy');
@@ -50,7 +50,7 @@ describe('packaged AIBuddy asset contracts', () => {
     ]);
   });
 
-  it('requires the macOS Goose Nostr compatibility scheme', () => {
+  it('requires the macOS AIBuddy Nostr compatibility scheme', () => {
     expect(
       verifyInfoPlist(brand, {
         CFBundleIdentifier: brand.bundleId,
@@ -58,7 +58,7 @@ describe('packaged AIBuddy asset contracts', () => {
           { CFBundleURLName: brand.protocolName, CFBundleURLSchemes: [brand.protocol] },
         ],
       })
-    ).toEqual([expect.stringContaining('goose')]);
+    ).toEqual([expect.stringContaining('aibuddy')]);
   });
 
   it('uses the AIBuddy icon for the Windows installer', () => {

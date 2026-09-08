@@ -1,14 +1,14 @@
 import type { MCPServer } from "../types/server";
 
-export function getHeyBuddyInstallLink(server: MCPServer): string {
+export function getAIBuddyInstallLink(server: MCPServer): string {
   if (server.is_builtin) {
     const queryParams = [
-      'cmd=heybuddy',
+      'cmd=aibuddy',
       'arg=mcp',
       `arg=${encodeURIComponent(server.id)}`,
       `description=${encodeURIComponent(server.id)}`
     ].join('&');
-    return `heybuddy://extension?${queryParams}`;
+    return `aibuddy://extension?${queryParams}`;
   }
 
   // Handle the case where the command is a URL
@@ -32,7 +32,7 @@ export function getHeyBuddyInstallLink(server: MCPServer): string {
         ),
     ].join("&");
   
-    return `heybuddy://extension?${queryParams}`;
+    return `aibuddy://extension?${queryParams}`;
   }
   
   const parts = server.command.split(" ");
@@ -52,5 +52,5 @@ export function getHeyBuddyInstallLink(server: MCPServer): string {
       ),
   ].join("&");
 
-  return `heybuddy://extension?${queryParams}`;
+  return `aibuddy://extension?${queryParams}`;
 }

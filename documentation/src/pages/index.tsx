@@ -4,17 +4,17 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 
 import styles from "./index.module.css";
-import { HeyBuddyLogo } from "../components/HeyBuddyLogo";
+import { AIBuddyLogo } from "../components/AIBuddyLogo";
 
 function HeroSection() {
   return (
     <header className={styles.hero}>
       <div className={styles.heroInner}>
         <div className={styles.heroBadge}>
-          Open Source · Apache 2.0 · Fork of heybuddy (Agentic AI Foundation)
+          Open Source · Apache 2.0 · Fork of aibuddy (Agentic AI Foundation)
         </div>
         <div className={styles.heroLogo}>
-          <HeyBuddyLogo />
+          <AIBuddyLogo />
         </div>
         <p className={styles.heroSubtitle}>
           Your native open source AI agent. Desktop app, CLI, and API — for code,
@@ -25,7 +25,7 @@ function HeroSection() {
             className="button button--primary button--lg"
             to="docs/getting-started/installation"
           >
-            Install HeyBuddy
+            Install AIBuddy
           </Link>
           <Link
             className={`button button--outline button--lg ${styles.secondaryButton}`}
@@ -75,9 +75,9 @@ function FeaturesSection() {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <h2 className={styles.sectionTitle}>What HeyBuddy does</h2>
+        <h2 className={styles.sectionTitle}>What AIBuddy does</h2>
         <p className={styles.sectionSubtitle}>
-          HeyBuddy is a general-purpose AI agent that runs on your machine. Not
+          AIBuddy is a general-purpose AI agent that runs on your machine. Not
           just for code — use it for research, writing, automation, data
           analysis, or anything you need to get done.
         </p>
@@ -141,7 +141,7 @@ function FeaturesSection() {
             title="MCP Apps"
             description={
               <p>
-                Extensions can render interactive UIs directly inside HeyBuddy
+                Extensions can render interactive UIs directly inside AIBuddy
                 Desktop — buttons, forms, visualizations. A new way to build{" "}
                 <Link to="/docs/tutorials/building-mcp-apps">
                   agent-powered tools
@@ -202,18 +202,18 @@ function StandardsSection() {
             <h3>Agent Client Protocol</h3>
             <p>
               <a href="https://agentclientprotocol.com/" target="_blank" rel="noopener">ACP</a>{" "}
-              is a standard for communicating with coding agents. HeyBuddy works
+              is a standard for communicating with coding agents. AIBuddy works
               as an ACP server — connect from Zed, JetBrains, or VS Code — and
               can use ACP agents like Claude Code and Codex as providers.
             </p>
-            <Link to="/docs/guides/acp-clients">HeyBuddy as ACP server →</Link>
+            <Link to="/docs/guides/acp-clients">AIBuddy as ACP server →</Link>
           </div>
           <div className={styles.standardCard}>
-            <h3>Built on heybuddy</h3>
+            <h3>Built on aibuddy</h3>
             <p>
-              HeyBuddy is a private fork of{" "}
+              AIBuddy is a private fork of{" "}
               <a href="https://github.com/aaif-goose/goose" target="_blank" rel="noopener">
-                heybuddy
+                aibuddy
               </a>
               , an open source project of the{" "}
               <a href="https://aaif.io/" target="_blank" rel="noopener">
@@ -243,7 +243,7 @@ function CommunitySection() {
         </p>
         <div className={styles.communityGrid}>
           <a
-            href="https://github.com/turingcat/HeyBuddy"
+            href="https://github.com/turingcat/AIBuddy"
             target="_blank"
             rel="noopener"
             className={styles.communityCard}

@@ -31,8 +31,8 @@ const i18n = defineMessages({
     id: 'groupedExtensionLoadingToast.failedToAddExtension',
     defaultMessage: 'Failed to add extension',
   },
-  askHeyBuddy: {
-    id: 'groupedExtensionLoadingToast.askHeyBuddy',
+  askAIBuddy: {
+    id: 'groupedExtensionLoadingToast.askAIBuddy',
     defaultMessage: 'Ask {appName}',
   },
   copied: {
@@ -177,7 +177,7 @@ export function GroupedExtensionLoadingToast({
                                   );
                                 }}
                               >
-                                {intl.formatMessage(i18n.askHeyBuddy)}
+                                {intl.formatMessage(i18n.askAIBuddy)}
                               </Button>
                             )}
                             <Button

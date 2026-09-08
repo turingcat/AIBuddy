@@ -2,22 +2,22 @@
 sidebar_position: 9
 title: ACP Providers
 sidebar_label: ACP Providers
-description: Use ACP agents like Claude Code and Codex as heybuddy providers with extension support
+description: Use ACP agents like Claude Code and Codex as aibuddy providers with extension support
 ---
 
 # ACP Providers
 
-heybuddy supports [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) agents as providers. ACP is a standard protocol for communicating with coding agents, and there's a growing [registry](https://github.com/agentclientprotocol/registry) of agents that implement it.
+aibuddy supports [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) agents as providers. ACP is a standard protocol for communicating with coding agents, and there's a growing [registry](https://github.com/agentclientprotocol/registry) of agents that implement it.
 
-ACP providers pass heybuddy [extensions](/docs/getting-started/using-extensions) through to the agent as MCP servers, so the agent can call your extensions directly.
+ACP providers pass aibuddy [extensions](/docs/getting-started/using-extensions) through to the agent as MCP servers, so the agent can call your extensions directly.
 
 :::tip Use Your Existing Subscriptions
-ACP providers let you use heybuddy with your existing Claude Code or ChatGPT Plus/Pro subscriptions — no per-token API costs. They are the recommended replacement for the deprecated [CLI providers](/docs/guides/cli-providers).
+ACP providers let you use aibuddy with your existing Claude Code or ChatGPT Plus/Pro subscriptions — no per-token API costs. They are the recommended replacement for the deprecated [CLI providers](/docs/guides/cli-providers).
 :::
 
 :::warning Limitations
-- **No session fork or resume**: You can start new sessions, but `heybuddy session resume` and `heybuddy session fork` are not supported yet.
-- **ACP session ID differs from heybuddy session ID**: Telemetry fields may not correlate across the two.
+- **No session fork or resume**: You can start new sessions, but `aibuddy session resume` and `aibuddy session fork` are not supported yet.
+- **ACP session ID differs from aibuddy session ID**: Telemetry fields may not correlate across the two.
 :::
 
 ## Available ACP Providers
@@ -43,7 +43,7 @@ Wraps [claude-agent-acp](https://github.com/agentclientprotocol/claude-agent-acp
 
 ### Codex ACP
 
-Use heybuddy with ChatGPT Plus/Pro or OpenAI API credits via the [codex-acp](https://github.com/agentclientprotocol/codex-acp) adapter.
+Use aibuddy with ChatGPT Plus/Pro or OpenAI API credits via the [codex-acp](https://github.com/agentclientprotocol/codex-acp) adapter.
 
 **Requirements:**
 - Node.js and npm
@@ -79,14 +79,14 @@ Wraps `pi-acp`, an ACP adapter for Pi. Uses your existing Pi installation.
 
    Run `amp` and follow the authentication prompts.
 
-4. **Configure heybuddy**
+4. **Configure aibuddy**
 
    Set the provider environment variable:
    ```bash
-   export HEYBUDDY_PROVIDER=amp-acp
+   export AIBUDDY_PROVIDER=amp-acp
    ```
 
-   Or configure through the heybuddy CLI using `heybuddy configure`.
+   Or configure through the aibuddy CLI using `aibuddy configure`.
 
 ### Claude ACP
 
@@ -100,17 +100,17 @@ Wraps `pi-acp`, an ACP adapter for Pi. Uses your existing Pi installation.
 
    Ensure your Claude CLI is authenticated and working
 
-3. **Configure heybuddy**
+3. **Configure aibuddy**
 
    Set the provider environment variable:
    ```bash
-   export HEYBUDDY_PROVIDER=claude-acp
+   export AIBUDDY_PROVIDER=claude-acp
    ```
 
-   Or configure through the heybuddy CLI using `heybuddy configure`:
+   Or configure through the aibuddy CLI using `aibuddy configure`:
 
    ```bash
-   ┌   heybuddy-configure
+   ┌   aibuddy-configure
    │
    ◇  What would you like to configure?
    │  Configure Providers
@@ -152,18 +152,18 @@ Wraps `pi-acp`, an ACP adapter for Pi. Uses your existing Pi installation.
 
    Run `codex` and follow the authentication prompts. A compatible existing Codex login can be reused.
 
-4. **Configure heybuddy**
+4. **Configure aibuddy**
 
    Set the provider and use `current` to let Codex choose its default model:
    ```bash
-   export HEYBUDDY_PROVIDER=codex-acp
-   export HEYBUDDY_MODEL=current
+   export AIBUDDY_PROVIDER=codex-acp
+   export AIBUDDY_MODEL=current
    ```
 
-   Or configure through the heybuddy CLI using `heybuddy configure`:
+   Or configure through the aibuddy CLI using `aibuddy configure`:
 
    ```bash
-   ┌   heybuddy-configure
+   ┌   aibuddy-configure
    │
    ◇  What would you like to configure?
    │  Configure Providers
@@ -177,7 +177,7 @@ Wraps `pi-acp`, an ACP adapter for Pi. Uses your existing Pi installation.
    │  current
    ```
 
-Replacing the npm package does not change `~/.codex` or require recreating your heybuddy configuration. heybuddy does not replace the package automatically.
+Replacing the npm package does not change `~/.codex` or require recreating your aibuddy configuration. aibuddy does not replace the package automatically.
 
 ### Pi ACP
 
@@ -189,21 +189,21 @@ Replacing the npm package does not change `~/.codex` or require recreating your 
 
    Run `pi` and follow the authentication prompts.
 
-3. **Configure heybuddy**
+3. **Configure aibuddy**
 
    Set the provider environment variable:
    ```bash
-   export HEYBUDDY_PROVIDER=pi-acp
+   export AIBUDDY_PROVIDER=pi-acp
    ```
 
-   Or configure through the heybuddy CLI using `heybuddy configure`.
+   Or configure through the aibuddy CLI using `aibuddy configure`.
 
 ## Usage Examples
 
 ### Basic Usage
 
 ```bash
-heybuddy session
+aibuddy session
 ```
 
 ### Using with Extensions
@@ -211,13 +211,13 @@ heybuddy session
 Extensions configured via `--with-extension` or `--with-streamable-http-extension` are passed through to the ACP agent:
 
 ```bash
-HEYBUDDY_PROVIDER=claude-acp heybuddy run \
+AIBUDDY_PROVIDER=claude-acp aibuddy run \
   --with-extension 'npx -y @modelcontextprotocol/server-everything' \
   -t 'Use the echo tool to say hello'
 ```
 
 ```bash
-HEYBUDDY_PROVIDER=codex-acp heybuddy run \
+AIBUDDY_PROVIDER=codex-acp aibuddy run \
   --with-streamable-http-extension 'https://mcp.kiwi.com' \
   -t 'Search for flights from BKI to SYD tomorrow'
 ```
@@ -228,24 +228,24 @@ HEYBUDDY_PROVIDER=codex-acp heybuddy run \
 
 | Environment Variable | Description       | Default   |
 |----------------------|-------------------|-----------|
-| `HEYBUDDY_PROVIDER`     | Set to `amp-acp`  | None      |
-| `HEYBUDDY_MODEL`        | Model to use      | `current` |
-| `HEYBUDDY_MODE`         | Permission mode   | `auto`    |
+| `AIBUDDY_PROVIDER`     | Set to `amp-acp`  | None      |
+| `AIBUDDY_MODEL`        | Model to use      | `current` |
+| `AIBUDDY_MODE`         | Permission mode   | `auto`    |
 
 ### Claude ACP Configuration
 
 | Environment Variable | Description         | Default   |
 |----------------------|---------------------|-----------|
-| `HEYBUDDY_PROVIDER`     | Set to `claude-acp` | None      |
-| `HEYBUDDY_MODEL`        | Model to use        | `default` |
-| `HEYBUDDY_MODE`         | Permission mode     | `auto`    |
+| `AIBUDDY_PROVIDER`     | Set to `claude-acp` | None      |
+| `AIBUDDY_MODEL`        | Model to use        | `default` |
+| `AIBUDDY_MODE`         | Permission mode     | `auto`    |
 
 **Known Models:**
 - `default` (opus)
 - `sonnet`
 - `haiku`
 
-**Permission Modes (`HEYBUDDY_MODE`):**
+**Permission Modes (`AIBUDDY_MODE`):**
 
 | Mode            | Session Mode        | Behavior                                              |
 |-----------------|---------------------|-------------------------------------------------------|
@@ -260,15 +260,15 @@ See [claude-agent-acp](https://github.com/agentclientprotocol/claude-agent-acp) 
 
 | Environment Variable | Description        | Default   |
 |----------------------|--------------------|-----------|
-| `HEYBUDDY_PROVIDER`     | Set to `codex-acp` | None      |
-| `HEYBUDDY_MODEL`        | Model to use       | `current` |
-| `HEYBUDDY_MODE`         | Permission mode    | `auto`    |
+| `AIBUDDY_PROVIDER`     | Set to `codex-acp` | None      |
+| `AIBUDDY_MODEL`        | Model to use       | `current` |
+| `AIBUDDY_MODE`         | Permission mode    | `auto`    |
 
 Codex ACP reports its available models dynamically. Keep `current` to use Codex's default, or select a discovered model explicitly.
 
-**Permission Modes (`HEYBUDDY_MODE`):**
+**Permission Modes (`AIBUDDY_MODE`):**
 
-| heybuddy mode      | Codex ACP mode      |
+| aibuddy mode      | Codex ACP mode      |
 |-----------------|---------------------|
 | `auto`          | `agent-full-access` |
 | `smart-approve` | `agent`             |
@@ -281,9 +281,9 @@ See [codex-acp](https://github.com/agentclientprotocol/codex-acp) for session mo
 
 | Environment Variable | Description      | Default   |
 |----------------------|------------------|-----------|
-| `HEYBUDDY_PROVIDER`     | Set to `pi-acp`  | None      |
-| `HEYBUDDY_MODEL`        | Model to use     | `current` |
-| `HEYBUDDY_MODE`         | Permission mode  | `auto`    |
+| `AIBUDDY_PROVIDER`     | Set to `pi-acp`  | None      |
+| `AIBUDDY_MODEL`        | Model to use     | `current` |
+| `AIBUDDY_MODE`         | Permission mode  | `auto`    |
 
 ## Error Handling
 
@@ -294,4 +294,4 @@ ACP providers depend on external binaries, so ensure:
 - Subscription limits are not exceeded
 - Node.js and npm are installed (for npm-distributed adapters)
 
-If heybuddy can't find the binary, session startup will fail with an error. Run `which <binary>` to verify installation.
+If aibuddy can't find the binary, session startup will fail with an error. Run `which <binary>` to verify installation.

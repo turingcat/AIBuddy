@@ -4,7 +4,7 @@ import type { LoginCredentials } from './credentials';
 import type { AIBuddyAuthResult } from './aibuddyAuthIpc';
 import type { AIBuddySettingsResult } from './sub2apiAuth';
 import type { BalanceResult } from './balance';
-import type { GooseApp } from './types/apps';
+import type { AIBuddyApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
 import type { OpenExternalUrlResult } from './utils/urlSecurity';
@@ -116,8 +116,8 @@ export type ElectronAPI = {
   } | null>;
   getBinaryPath: (binaryName: string) => Promise<string>;
   selectRecipeFile: () => Promise<FileResponse | null>;
-  readHeyBuddyhints: () => Promise<FileResponse>;
-  writeHeyBuddyhints: (content: string) => Promise<boolean>;
+  readAIBuddyhints: () => Promise<FileResponse>;
+  writeAIBuddyhints: (content: string) => Promise<boolean>;
   writeFile: (directory: string, content: string) => Promise<boolean>;
   ensureDirectory: (dirPath: string) => Promise<boolean>;
   listFiles: (dirPath: string, extension?: string) => Promise<string[]>;
@@ -164,8 +164,8 @@ export type ElectronAPI = {
   hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
   recordRecipeHash: (recipe: Recipe) => Promise<boolean>;
   openDirectoryInExplorer: (directoryPath: string) => Promise<boolean>;
-  launchApp: (app: HeyBuddyApp) => Promise<void>;
-  refreshApp: (app: HeyBuddyApp) => Promise<void>;
+  launchApp: (app: AIBuddyApp) => Promise<void>;
+  refreshApp: (app: AIBuddyApp) => Promise<void>;
   closeApp: (appName: string) => Promise<void>;
   addRecentDir: (dir: string) => Promise<boolean>;
   listRecentDirs: () => Promise<string[]>;
@@ -231,8 +231,8 @@ const electronAPI: ElectronAPI = {
   selectImportSessionFile: () => ipcRenderer.invoke('select-import-session-file'),
   getBinaryPath: (binaryName: string) => ipcRenderer.invoke('get-binary-path', binaryName),
   selectRecipeFile: () => ipcRenderer.invoke('select-recipe-file'),
-  readHeyBuddyhints: () => ipcRenderer.invoke('read-heybuddyhints'),
-  writeHeyBuddyhints: (content: string) => ipcRenderer.invoke('write-heybuddyhints', content),
+  readAIBuddyhints: () => ipcRenderer.invoke('read-aibuddyhints'),
+  writeAIBuddyhints: (content: string) => ipcRenderer.invoke('write-aibuddyhints', content),
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
   ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
@@ -316,7 +316,7 @@ const electronAPI: ElectronAPI = {
     return ipcRenderer.invoke('open-external', url);
   },
   getVersion: (): string => {
-    return config.HEYBUDDY_VERSION || ipcRenderer.sendSync('get-app-version') || '';
+    return config.AIBUDDY_VERSION || ipcRenderer.sendSync('get-app-version') || '';
   },
   restartApp: (): void => {
     ipcRenderer.send('restart-app');
@@ -328,8 +328,8 @@ const electronAPI: ElectronAPI = {
   recordRecipeHash: (recipe: Recipe) => ipcRenderer.invoke('record-recipe-hash', recipe),
   openDirectoryInExplorer: (directoryPath: string) =>
     ipcRenderer.invoke('open-directory-in-explorer', directoryPath),
-  launchApp: (app: HeyBuddyApp) => ipcRenderer.invoke('launch-app', app),
-  refreshApp: (app: HeyBuddyApp) => ipcRenderer.invoke('refresh-app', app),
+  launchApp: (app: AIBuddyApp) => ipcRenderer.invoke('launch-app', app),
+  refreshApp: (app: AIBuddyApp) => ipcRenderer.invoke('refresh-app', app),
   closeApp: (appName: string) => ipcRenderer.invoke('close-app', appName),
   addRecentDir: (dir: string) => ipcRenderer.invoke('add-recent-dir', dir),
   listRecentDirs: () => ipcRenderer.invoke('list-recent-dirs'),
@@ -356,15 +356,15 @@ const electronAPI: ElectronAPI = {
 
 function getAppLocale(): unknown {
   try {
-    return ipcRenderer.sendSync('get-app-locale') ?? config.HEYBUDDY_LOCALE;
+    return ipcRenderer.sendSync('get-app-locale') ?? config.AIBUDDY_LOCALE;
   } catch {
-    return config.HEYBUDDY_LOCALE;
+    return config.AIBUDDY_LOCALE;
   }
 }
 
 const appConfigAPI: AppConfigAPI = {
-  get: (key: string) => (key === 'HEYBUDDY_LOCALE' ? getAppLocale() : config[key]),
-  getAll: () => ({ ...config, HEYBUDDY_LOCALE: getAppLocale() }),
+  get: (key: string) => (key === 'AIBUDDY_LOCALE' ? getAppLocale() : config[key]),
+  getAll: () => ({ ...config, AIBUDDY_LOCALE: getAppLocale() }),
 };
 
 // Expose the APIs

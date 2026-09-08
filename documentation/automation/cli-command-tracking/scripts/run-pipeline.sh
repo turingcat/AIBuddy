@@ -10,7 +10,7 @@
 
 set -e
 
-HEYBUDDY_REPO=${HEYBUDDY_REPO:-"$HOME/Development/heybuddy"}
+AIBUDDY_REPO=${AIBUDDY_REPO:-"$HOME/Development/aibuddy"}
 
 # Function to get release tags using gh CLI
 get_latest_release() {
@@ -18,7 +18,7 @@ get_latest_release() {
         gh release list --repo aaif-goose/goose --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null
     else
         # Fallback: get latest version tag from git
-        cd "$HEYBUDDY_REPO" && git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
+        cd "$AIBUDDY_REPO" && git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1
     fi
 }
 
@@ -27,7 +27,7 @@ get_previous_release() {
         gh release list --repo aaif-goose/goose --limit 2 --json tagName --jq '.[].tagName' 2>/dev/null | sed -n '2p'
     else
         # Fallback: get second-latest version tag from git
-        cd "$HEYBUDDY_REPO" && git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p'
+        cd "$AIBUDDY_REPO" && git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p'
     fi
 }
 
@@ -110,8 +110,8 @@ if [ "$HAS_CHANGES" = "true" ]; then
     echo ""
     echo "Step 4: Synthesizing CLI changes documentation..."
     
-    # Run heybuddy and capture output, filtering out session logs
-    heybuddy run --recipe ../recipes/synthesize-cli-changes.yaml 2>&1 | \
+    # Run aibuddy and capture output, filtering out session logs
+    aibuddy run --recipe ../recipes/synthesize-cli-changes.yaml 2>&1 | \
         sed -E 's/\x1B\[[0-9;]*[mK]//g' | \
         grep -v "^starting session" | \
         grep -v "^    session id:" | \
@@ -124,9 +124,9 @@ if [ "$HAS_CHANGES" = "true" ]; then
         grep -v "^Description:" | \
         cat -s > cli-changes.md.tmp
 
-    # If the pipeline fails, surface the heybuddy error (grep can exit 1 when it matches nothing)
+    # If the pipeline fails, surface the aibuddy error (grep can exit 1 when it matches nothing)
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
-        echo "✗ Failed to synthesize CLI changes (heybuddy run failed)" >&2
+        echo "✗ Failed to synthesize CLI changes (aibuddy run failed)" >&2
         exit 1
     fi
     
@@ -135,7 +135,7 @@ if [ "$HAS_CHANGES" = "true" ]; then
         mv cli-changes.md.tmp cli-changes.md
         echo "✓ Generated cli-changes.md ($(wc -l < cli-changes.md) lines)"
     elif [ -f cli-changes.md ] && [ -s cli-changes.md ]; then
-        # File was written directly by heybuddy
+        # File was written directly by aibuddy
         rm -f cli-changes.md.tmp
         echo "✓ Generated cli-changes.md ($(wc -l < cli-changes.md) lines)"
     else
@@ -148,10 +148,10 @@ if [ "$HAS_CHANGES" = "true" ]; then
     echo "Step 5: Updating CLI commands documentation..."
     
     # Set environment variables for the update recipe
-    export CLI_COMMANDS_PATH="${HEYBUDDY_REPO}/documentation/docs/guides/heybuddy-cli-commands.md"
+    export CLI_COMMANDS_PATH="${AIBUDDY_REPO}/documentation/docs/guides/aibuddy-cli-commands.md"
     
     # Run the update recipe
-    heybuddy run --recipe ../recipes/update-cli-commands.yaml 2>&1 | \
+    aibuddy run --recipe ../recipes/update-cli-commands.yaml 2>&1 | \
         sed -E 's/\x1B\[[0-9;]*[mK]//g' | \
         grep -v "^starting session" | \
         grep -v "^    session id:" | \
@@ -165,7 +165,7 @@ if [ "$HAS_CHANGES" = "true" ]; then
         cat -s
 
     if [ ${PIPESTATUS[0]} -ne 0 ]; then
-        echo "✗ Failed to update documentation (heybuddy run failed)" >&2
+        echo "✗ Failed to update documentation (aibuddy run failed)" >&2
         exit 1
     fi
     

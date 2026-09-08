@@ -24,17 +24,17 @@ export function expandTilde(filePath: string): string {
   return filePath;
 }
 
-export function resolveHeyBuddyPathRoot(value: string | undefined): string | undefined {
+export function resolveAIBuddyPathRoot(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed) {
     return undefined;
   }
 
   const expanded = expandTilde(trimmed);
-  return isAbsoluteHeyBuddyPath(expanded) ? expanded : undefined;
+  return isAbsoluteAIBuddyPath(expanded) ? expanded : undefined;
 }
 
-export function isAbsoluteHeyBuddyPath(
+export function isAbsoluteAIBuddyPath(
   filePath: string,
   platform: 'win32' | 'posix' = process.platform === 'win32' ? 'win32' : 'posix'
 ): boolean {
@@ -46,12 +46,12 @@ export function isAbsoluteHeyBuddyPath(
   return path.win32.isAbsolute(filePath) && root.length > 1;
 }
 
-export function sanitizeHeyBuddyPathRoot(env: { HEYBUDDY_PATH_ROOT?: string }): string | undefined {
-  const pathRoot = resolveHeyBuddyPathRoot(env.HEYBUDDY_PATH_ROOT);
+export function sanitizeAIBuddyPathRoot(env: { AIBUDDY_PATH_ROOT?: string }): string | undefined {
+  const pathRoot = resolveAIBuddyPathRoot(env.AIBUDDY_PATH_ROOT);
   if (pathRoot) {
-    env.HEYBUDDY_PATH_ROOT = pathRoot;
+    env.AIBUDDY_PATH_ROOT = pathRoot;
   } else {
-    delete env.HEYBUDDY_PATH_ROOT;
+    delete env.AIBUDDY_PATH_ROOT;
   }
   return pathRoot;
 }

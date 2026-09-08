@@ -4,7 +4,7 @@ import type {
   RecipeListEntryDto,
   RecipeParameterDto,
   RecipeSettingsDto,
-} from '@heybuddy/heybuddy-sdk';
+} from '@aibuddy/aibuddy-sdk';
 import {
   decodeRecipe as acpDecodeRecipe,
   encodeRecipe as acpEncodeRecipe,

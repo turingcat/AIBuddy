@@ -1,6 +1,6 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolListItem } from '@heybuddy/heybuddy-sdk';
-import type { HeyBuddyApp } from '../types/apps';
+import type { ToolListItem } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddyApp } from '../types/apps';
 import { getAcpClient } from './acpConnection';
 import { normalizeAcpError } from './errors';
 
@@ -63,21 +63,21 @@ function flattenReadResourceResult(result: unknown, fallbackUri: string): McpApp
   };
 }
 
-function acpApp(value: unknown): HeyBuddyApp | null {
+function acpApp(value: unknown): AIBuddyApp | null {
   if (!isRecord(value)) return null;
-  return value as HeyBuddyApp;
+  return value as AIBuddyApp;
 }
 
-export async function listMcpApps(sessionId?: string): Promise<HeyBuddyApp[]> {
+export async function listMcpApps(sessionId?: string): Promise<AIBuddyApp[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.appsList_unstable(sessionId ? { sessionId } : {});
-  return (response.apps ?? []).map(acpApp).filter((app): app is HeyBuddyApp => !!app);
+  const response = await client.aibuddy.appsList_unstable(sessionId ? { sessionId } : {});
+  return (response.apps ?? []).map(acpApp).filter((app): app is AIBuddyApp => !!app);
 }
 
 export async function exportMcpApp(name: string): Promise<string> {
   try {
     const client = await getAcpClient();
-    const response = await client.heybuddy.appsExport_unstable({ name });
+    const response = await client.aibuddy.appsExport_unstable({ name });
     return response.html;
   } catch (error) {
     throw normalizeAcpError(error, 'Failed to export app');
@@ -87,7 +87,7 @@ export async function exportMcpApp(name: string): Promise<string> {
 export async function importMcpApp(html: string): Promise<void> {
   try {
     const client = await getAcpClient();
-    await client.heybuddy.appsImport_unstable({ html });
+    await client.aibuddy.appsImport_unstable({ html });
   } catch (error) {
     throw normalizeAcpError(error, 'Failed to import app');
   }
@@ -96,7 +96,7 @@ export async function importMcpApp(html: string): Promise<void> {
 export async function deleteMcpApp(name: string): Promise<void> {
   try {
     const client = await getAcpClient();
-    await client.heybuddy.appsDelete_unstable({ name });
+    await client.aibuddy.appsDelete_unstable({ name });
   } catch (error) {
     throw normalizeAcpError(error, 'Failed to delete app');
   }
@@ -107,7 +107,7 @@ export async function listMcpAppTools(
   extensionName?: string
 ): Promise<McpAppTool[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.toolsList_unstable({ sessionId });
+  const response = await client.aibuddy.toolsList_unstable({ sessionId });
   const tools = response.tools;
   if (!extensionName) return tools;
 
@@ -121,7 +121,7 @@ export async function readMcpAppResource(
   uri: string
 ): Promise<McpAppResourceResponse> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.resourcesRead_unstable({
+  const response = await client.aibuddy.resourcesRead_unstable({
     sessionId,
     uri,
     extensionName,
@@ -137,7 +137,7 @@ export async function callMcpAppTool(
 ): Promise<CallToolResult> {
   const fullToolName = `${extensionName}__${name}`;
   const client = await getAcpClient();
-  const response = await client.heybuddy.toolsCall_unstable({
+  const response = await client.aibuddy.toolsCall_unstable({
     sessionId,
     name: fullToolName,
     arguments: args || {},

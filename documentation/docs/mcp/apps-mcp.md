@@ -6,41 +6,41 @@ description: Create, manage, and launch custom HTML apps in standalone windows
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PlatformExtensionNote } from '@site/src/components/PlatformExtensionNote';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
 The Apps extension lets you create, manage, and launch simple custom apps through chat. This feature is ideal for:
 - Quick utilities and tools like calculators and converters
 - Data visualizations like graphs and dashboards
 - Simple games and interactive widgets
 
-Custom apps are single-file HTML applications with JavaScript, CSS, and HTML (no external dependencies or npm packages). They're exposed as [MCP App resources](/docs/guides/interactive-chat/mcp-ui) that run in standalone, sandboxed windows that you can launch from the `Apps` page or by asking heybuddy in chat.
+Custom apps are single-file HTML applications with JavaScript, CSS, and HTML (no external dependencies or npm packages). They're exposed as [MCP App resources](/docs/guides/interactive-chat/mcp-ui) that run in standalone, sandboxed windows that you can launch from the `Apps` page or by asking aibuddy in chat.
 
 You can create, modify, and delete apps through chat without needing to edit files directly. Behind the scenes, the Apps extension stores each app as an HTML file in:
 
-- **macOS/Linux:** `~/.local/share/heybuddy/apps/`
-- **Windows:** `%APPDATA%\Block\heybuddy\data\apps\`
+- **macOS/Linux:** `~/.local/share/aibuddy/apps/`
+- **Windows:** `%APPDATA%\Block\aibuddy\data\apps\`
 
 ## Configuration
 
 <PlatformExtensionNote/>
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Apps"
-    description="Create and manage custom heybuddy apps through chat. Apps are HTML/CSS/JavaScript and run in sandboxed windows."
+    description="Create and manage custom aibuddy apps through chat. Apps are HTML/CSS/JavaScript and run in sandboxed windows."
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -56,17 +56,17 @@ You can create, modify, and delete apps through chat without needing to edit fil
 
 ## Example Usage
 
-Let's ask heybuddy to create a utility app.
+Let's ask aibuddy to create a utility app.
 
 :::info LLM
 Anthropic's Claude Sonnet 4.5 was used for this example.
 :::
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 > _Create a JSON formatter app_
 
-### heybuddy Output
+### aibuddy Output
 
 :::note Desktop
 I'll create a JSON formatter app for you. This will be a useful tool for formatting, validating, and beautifying JSON data.
@@ -96,4 +96,4 @@ Here's what the JSON formatter looks like:
 
 [![JSON Formatter App](/img/apps-extension-results.png)](/img/apps-extension-results.png)
 
-The first iteration of my app looks and works great, but you can just ask heybuddy to add features, change the styling, and more!
+The first iteration of my app looks and works great, but you can just ask aibuddy to add features, change the styling, and more!

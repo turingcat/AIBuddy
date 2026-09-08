@@ -3,7 +3,7 @@ const path = require('path');
 const matter = require('gray-matter');
 
 const DOCS_DIR = path.join(__dirname, '..', 'docs');
-const OUTPUT_FILE = path.join(__dirname, '..', 'static', 'heybuddy-docs-map.md');
+const OUTPUT_FILE = path.join(__dirname, '..', 'static', 'aibuddy-docs-map.md');
 
 function getTitle(frontmatter, content) {
   if (frontmatter.title) {
@@ -48,7 +48,7 @@ async function main() {
     { name: 'Guides', pattern: 'guides/**/*.{md,mdx}' },
   ];
 
-  let output = `# heybuddy Documentation Map
+  let output = `# aibuddy Documentation Map
 
 > Auto-generated. Last updated: ${new Date().toISOString().split('T')[0]}
 

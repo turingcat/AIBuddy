@@ -7,7 +7,7 @@ Community Stars Analysis Script for aaif-goose/goose repository
 
 This script analyzes GitHub contributor statistics and generates rankings for:
 - Top 5 Community All-Stars (External contributors)
-- Top 5 Team Stars (Block employees, non-heybuddy team)
+- Top 5 Team Stars (Block employees, non-aibuddy team)
 - Monthly Leaderboard (all eligible contributors)
 
 The script automatically:
@@ -102,9 +102,9 @@ def load_team_lists():
             sys.exit(1)
 
     # Parse the team lists
-    heybuddy_maintainers = set()
-    block_non_heybuddy = set()
-    external_heybuddy = set()
+    aibuddy_maintainers = set()
+    block_non_aibuddy = set()
+    external_aibuddy = set()
     bots = set()
 
     current_section = None
@@ -114,28 +114,28 @@ def load_team_lists():
         # Skip comments and empty lines
         if not line or line.startswith("#"):
             # Check for section headers in comments
-            if "# HeyBuddy Maintainers" in line:
-                current_section = "heybuddy_maintainers"
-            elif "# Block, non-heybuddy" in line:
-                current_section = "block_non_heybuddy"
-            elif "# External, heybuddy" in line:
-                current_section = "external_heybuddy"
+            if "# AIBuddy Maintainers" in line:
+                current_section = "aibuddy_maintainers"
+            elif "# Block, non-aibuddy" in line:
+                current_section = "block_non_aibuddy"
+            elif "# External, aibuddy" in line:
+                current_section = "external_aibuddy"
             elif "# Bots" in line:
                 current_section = "bots"
             continue
 
         # Add username to appropriate set (lowercase for case-insensitive matching)
         username = line.lower()
-        if current_section == "heybuddy_maintainers":
-            heybuddy_maintainers.add(username)
-        elif current_section == "block_non_heybuddy":
-            block_non_heybuddy.add(username)
-        elif current_section == "external_heybuddy":
-            external_heybuddy.add(username)
+        if current_section == "aibuddy_maintainers":
+            aibuddy_maintainers.add(username)
+        elif current_section == "block_non_aibuddy":
+            block_non_aibuddy.add(username)
+        elif current_section == "external_aibuddy":
+            external_aibuddy.add(username)
         elif current_section == "bots":
             bots.add(username)
 
-    return heybuddy_maintainers, block_non_heybuddy, external_heybuddy, bots
+    return aibuddy_maintainers, block_non_aibuddy, external_aibuddy, bots
 
 
 def parse_date_range(date_input):
@@ -201,7 +201,7 @@ def main():
         sys.exit(1)
 
     # Load team lists
-    heybuddy_maintainers, block_non_heybuddy, external_heybuddy, bots = load_team_lists()
+    aibuddy_maintainers, block_non_aibuddy, external_aibuddy, bots = load_team_lists()
 
     # Load GitHub data
     github_data_file = "/tmp/github_contributors.json"
@@ -305,8 +305,8 @@ def main():
         # Skip excluded categories (case-insensitive matching)
         if (
             username_lower in bots
-            or username_lower in heybuddy_maintainers
-            or username_lower in external_heybuddy
+            or username_lower in aibuddy_maintainers
+            or username_lower in external_aibuddy
         ):
             continue
 
@@ -326,9 +326,9 @@ def main():
         if period_commits > 0:
             total_lines = period_additions + period_deletions
 
-            # Categorize (only Block non-heybuddy and External now)
-            if username_lower in block_non_heybuddy:
-                category = "block_non_heybuddy"
+            # Categorize (only Block non-aibuddy and External now)
+            if username_lower in block_non_aibuddy:
+                category = "block_non_aibuddy"
             else:
                 # Check if user is in a Block org (with caching)
                 if username not in checked_orgs:
@@ -337,7 +337,7 @@ def main():
                     time.sleep(0.1)
 
                 if checked_orgs[username]:
-                    category = "block_non_heybuddy"
+                    category = "block_non_aibuddy"
                     print(f"  ✓ Detected Block employee: @{username}", file=sys.stderr)
                 else:
                     category = "external"
@@ -358,7 +358,7 @@ def main():
     contributor_stats.sort(key=lambda x: x["score"], reverse=True)
 
     # Separate by category
-    block_list = [c for c in contributor_stats if c["category"] == "block_non_heybuddy"]
+    block_list = [c for c in contributor_stats if c["category"] == "block_non_aibuddy"]
     external_list = [c for c in contributor_stats if c["category"] == "external"]
 
     # Get top 5 from each
@@ -385,7 +385,7 @@ def main():
         print("No external contributors found for this period.")
 
     print()
-    print("⭐ TOP 5 TEAM STARS (Block, non-heybuddy)")
+    print("⭐ TOP 5 TEAM STARS (Block, non-aibuddy)")
     print("-" * 70)
     if top_internal:
         for i, contrib in enumerate(top_internal, 1):
@@ -410,10 +410,10 @@ def main():
     print()
     print("=" * 70)
     print(
-        f"Total contributors (excluding bots, heybuddy maintainers, external heybuddy): {len(contributor_stats)}"
+        f"Total contributors (excluding bots, aibuddy maintainers, external aibuddy): {len(contributor_stats)}"
     )
     print(f"  External: {len(external_list)}")
-    print(f"  Block (non-heybuddy): {len(block_list)}")
+    print(f"  Block (non-aibuddy): {len(block_list)}")
     print("=" * 70)
 
 

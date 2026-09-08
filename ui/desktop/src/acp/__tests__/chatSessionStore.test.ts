@@ -55,7 +55,7 @@ function permissionRequest(sessionId: string, toolCallId = 'tool-1'): AcpPermiss
         },
       ],
       _meta: {
-        heybuddy: {
+        aibuddy: {
           toolCall: {
             toolName: 'edit_file',
           },
@@ -139,7 +139,7 @@ function userSteerChunkNotification(
         text,
       },
       _meta: {
-        heybuddy: {
+        aibuddy: {
           messageId,
           steer: true,
         },
@@ -154,7 +154,7 @@ function activeRunNotification(sessionId: string, activeRunId: string | null): S
     update: {
       sessionUpdate: 'session_info_update',
       _meta: {
-        heybuddy: {
+        aibuddy: {
           activeRunId,
         },
       },
@@ -168,7 +168,7 @@ function queuedSteerNotification(sessionId: string, messageId: string): SessionN
     update: {
       sessionUpdate: 'session_info_update',
       _meta: {
-        heybuddy: {
+        aibuddy: {
           queuedSteer: { messageId, runId: 'run-1' },
         },
       },

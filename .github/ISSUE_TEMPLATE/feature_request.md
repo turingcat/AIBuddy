@@ -21,4 +21,4 @@ Add any other context or screenshots about the feature request here.
 
 - [x] I have verified this does not duplicate an existing feature request
 
-Do not begin implementation until the issue reaches **Ready** on the [HeyBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1).
+Do not begin implementation until the issue reaches **Ready** on the [AIBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1).

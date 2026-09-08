@@ -142,14 +142,14 @@ function getProviders(): ProviderConfig[] {
       models: ['gpt-4.1'],
       available: () =>
         hasEnv('GITHUB_COPILOT_TOKEN') ||
-        hasFile(path.join(os.homedir(), '.config/heybuddy/github_copilot_token.json')),
+        hasFile(path.join(os.homedir(), '.config/aibuddy/github_copilot_token.json')),
     },
     {
       provider: 'chatgpt_codex',
       models: ['gpt-5.4'],
       available: () =>
         hasEnv('CHATGPT_CODEX_TOKEN') ||
-        hasFile(path.join(os.homedir(), '.config/heybuddy/chatgpt_codex/tokens.json')),
+        hasFile(path.join(os.homedir(), '.config/aibuddy/chatgpt_codex/tokens.json')),
     },
     {
       provider: 'claude-code',
@@ -214,19 +214,19 @@ function shouldSkipProvider(provider: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Build heybuddy binary
+// Build aibuddy binary
 // ---------------------------------------------------------------------------
 
-export function buildHeyBuddy(): string {
+export function buildAIBuddy(): string {
   if (!process.env.SKIP_BUILD) {
-    console.error('Building heybuddy...');
-    execSync('cargo build --bin heybuddy', { stdio: 'inherit' });
+    console.error('Building aibuddy...');
+    execSync('cargo build --bin aibuddy', { stdio: 'inherit' });
     console.error('');
   } else {
     console.error('Skipping build (SKIP_BUILD is set)...');
     console.error('');
   }
-  return path.resolve(process.cwd(), '..', '..', 'target/debug/heybuddy');
+  return path.resolve(process.cwd(), '..', '..', 'target/debug/aibuddy');
 }
 
 // ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ function registerTests(label: string, cases: TestCase[], fn: ProviderTestFn): vo
   }
 
   if (flaky.length > 0) {
-    // Use a longer vitest timeout (90s) so the internal runHeyBuddy timeout (55s)
+    // Use a longer vitest timeout (90s) so the internal runAIBuddy timeout (55s)
     // fires first — that rejection is catchable and the test passes as "allowed".
     test.concurrent.for(flaky)(
       `${label} — $provider / $model (flaky)`,
@@ -359,11 +359,11 @@ export function providerTest(cases: TestCase[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Utility: run heybuddy binary and capture output
+// Utility: run aibuddy binary and capture output
 // ---------------------------------------------------------------------------
 
-export function runHeyBuddy(
-  heybuddyBin: string,
+export function runAIBuddy(
+  aibuddyBin: string,
   cwd: string,
   prompt: string,
   builtins: string,
@@ -373,11 +373,11 @@ export function runHeyBuddy(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const child: ChildProcess = spawn(
-      heybuddyBin,
+      aibuddyBin,
       ['run', '--text', prompt, '--with-builtin', builtins],
       {
         cwd,
-        env: { ...process.env, ...env, HEYBUDDY_MODE: 'auto' },
+        env: { ...process.env, ...env, AIBUDDY_MODE: 'auto' },
         stdio: ['ignore', 'pipe', 'pipe'],
       }
     );
@@ -389,7 +389,7 @@ export function runHeyBuddy(
       if (!settled) {
         settled = true;
         child.kill('SIGKILL');
-        reject(new Error(`heybuddy timed out after ${timeoutMs}ms\n\nPartial output:\n${output}`));
+        reject(new Error(`aibuddy timed out after ${timeoutMs}ms\n\nPartial output:\n${output}`));
       }
     }, timeoutMs);
 

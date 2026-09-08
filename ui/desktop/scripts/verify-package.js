@@ -20,7 +20,7 @@ function verifyPackageTree(brand, platform, root) {
     platform === 'darwin'
       ? path.join(root, `${brand.productName}.app`, 'Contents', 'MacOS', brand.executableName)
       : path.join(root, `${brand.executableName}.exe`),
-    path.join(resourcesRoot, 'bin', platform === 'darwin' ? 'goose' : 'goose.exe'),
+    path.join(resourcesRoot, 'bin', platform === 'darwin' ? 'aibuddy' : 'aibuddy.exe'),
     ...['icon.icns', 'icon.ico', 'icon.png', 'iconTemplate.png', 'iconTemplate@2x.png'].map(
       (asset) => path.join(resourcesRoot, 'aibuddy', asset)
     ),
@@ -54,8 +54,8 @@ function verifyInfoPlist(brand, plist) {
       `CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected ${brand.protocol}`
     );
   }
-  if (!schemes.includes('goose')) {
-    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected goose`);
+  if (!schemes.includes('aibuddy')) {
+    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected aibuddy`);
   }
 
   return problems;

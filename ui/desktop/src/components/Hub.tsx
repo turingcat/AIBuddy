@@ -18,7 +18,7 @@ import { View, ViewOptions } from '../utils/navigationUtils';
 import { useConfig } from './ConfigContext';
 import { getEffectiveWorkingDir, getInitialWorkingDir } from '../utils/workingDir';
 import { createSession } from '../sessions';
-import LoadingHeyBuddy from './LoadingHeyBuddy';
+import LoadingAIBuddy from './LoadingAIBuddy';
 import { UserInput } from '../types/message';
 import {
   createNextChatExtensionDraft,
@@ -64,7 +64,7 @@ export default function Hub({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { time, meridiem, hour } = useClock();
 
-  // Re-resolve the working dir on mount: HEYBUDDY_WORKING_DIR is fixed at window
+  // Re-resolve the working dir on mount: AIBUDDY_WORKING_DIR is fixed at window
   // creation, so a configured remote directory may have changed since then.
   useEffect(() => {
     let active = true;
@@ -194,7 +194,7 @@ export default function Hub({
 
       {isCreatingSession && (
         <div className="absolute bottom-4 left-4 z-20 pointer-events-none">
-          <LoadingHeyBuddy chatState={ChatState.LoadingConversation} />
+          <LoadingAIBuddy chatState={ChatState.LoadingConversation} />
         </div>
       )}
     </div>

@@ -10,7 +10,7 @@ export type AcpChatStateChange =
       type: 'sessionInfo';
       name?: string;
       activeRunId?: string | null;
-      heybuddyMode?: string;
+      aibuddyMode?: string;
     }
   | { type: 'localSteerConfirmed'; messageId: string }
   | { type: 'notification'; notification: NotificationEvent };
@@ -23,7 +23,7 @@ export interface AdapterState {
 
 export type ToolCallState = Omit<ToolCallUpdate, '_meta'>;
 
-export interface HeyBuddyMessageMeta {
+export interface AIBuddyMessageMeta {
   messageId?: string;
   created?: number;
   outputTokenLimitReached?: boolean;
@@ -57,47 +57,47 @@ export function cloneMessage(message: Message): Message {
   };
 }
 
-export function getHeyBuddyMessageMeta(update: { _meta?: unknown }): HeyBuddyMessageMeta {
+export function getAIBuddyMessageMeta(update: { _meta?: unknown }): AIBuddyMessageMeta {
   if (!isRecord(update._meta)) {
     return {};
   }
 
-  const heybuddy = update._meta.heybuddy;
-  if (!isRecord(heybuddy)) {
+  const aibuddy = update._meta.aibuddy;
+  if (!isRecord(aibuddy)) {
     return {};
   }
 
-  const outputTokenLimitReached = heybuddy.outputTokenLimitReached === true;
+  const outputTokenLimitReached = aibuddy.outputTokenLimitReached === true;
 
   return {
-    created: typeof heybuddy.created === 'number' ? heybuddy.created : undefined,
-    messageId: typeof heybuddy.messageId === 'string' ? heybuddy.messageId : undefined,
+    created: typeof aibuddy.created === 'number' ? aibuddy.created : undefined,
+    messageId: typeof aibuddy.messageId === 'string' ? aibuddy.messageId : undefined,
     outputTokenLimitReached: outputTokenLimitReached ? true : undefined,
-    fallbackContent: heybuddy.fallbackContent === true ? true : undefined,
-    steer: heybuddy.steer === true ? true : undefined,
+    fallbackContent: aibuddy.fallbackContent === true ? true : undefined,
+    steer: aibuddy.steer === true ? true : undefined,
   };
 }
 
-export function getHeyBuddyActiveRunId(update: { _meta?: unknown }): string | null | undefined {
+export function getAIBuddyActiveRunId(update: { _meta?: unknown }): string | null | undefined {
   if (!isRecord(update._meta)) {
     return undefined;
   }
 
-  const heybuddy = update._meta.heybuddy;
-  if (!isRecord(heybuddy) || !('activeRunId' in heybuddy)) {
+  const aibuddy = update._meta.aibuddy;
+  if (!isRecord(aibuddy) || !('activeRunId' in aibuddy)) {
     return undefined;
   }
 
-  return typeof heybuddy.activeRunId === 'string' || heybuddy.activeRunId === null
-    ? heybuddy.activeRunId
+  return typeof aibuddy.activeRunId === 'string' || aibuddy.activeRunId === null
+    ? aibuddy.activeRunId
     : undefined;
 }
 
-export function getHeyBuddyQueuedSteer(update: { _meta?: unknown }): string | undefined {
+export function getAIBuddyQueuedSteer(update: { _meta?: unknown }): string | undefined {
   if (!isRecord(update._meta)) return undefined;
-  const heybuddy = update._meta.heybuddy;
-  if (!isRecord(heybuddy) || !isRecord(heybuddy.queuedSteer)) return undefined;
-  return typeof heybuddy.queuedSteer.messageId === 'string' ? heybuddy.queuedSteer.messageId : undefined;
+  const aibuddy = update._meta.aibuddy;
+  if (!isRecord(aibuddy) || !isRecord(aibuddy.queuedSteer)) return undefined;
+  return typeof aibuddy.queuedSteer.messageId === 'string' ? aibuddy.queuedSteer.messageId : undefined;
 }
 
 export function rawInputToArguments(rawInput: unknown): Record<string, unknown> {
@@ -109,15 +109,15 @@ export function toolIdentity(update: ToolCall | ToolCallUpdate): ToolIdentity {
     return {};
   }
 
-  const heybuddy = update._meta.heybuddy;
-  if (!isRecord(heybuddy) || !isRecord(heybuddy.toolCall)) {
+  const aibuddy = update._meta.aibuddy;
+  if (!isRecord(aibuddy) || !isRecord(aibuddy.toolCall)) {
     return {};
   }
 
   return {
-    toolName: typeof heybuddy.toolCall.toolName === 'string' ? heybuddy.toolCall.toolName : undefined,
+    toolName: typeof aibuddy.toolCall.toolName === 'string' ? aibuddy.toolCall.toolName : undefined,
     extensionName:
-      typeof heybuddy.toolCall.extensionName === 'string' ? heybuddy.toolCall.extensionName : undefined,
+      typeof aibuddy.toolCall.extensionName === 'string' ? aibuddy.toolCall.extensionName : undefined,
   };
 }
 

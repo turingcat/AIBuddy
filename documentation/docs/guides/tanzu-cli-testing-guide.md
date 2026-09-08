@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- heybuddy CLI built from the `feat/tanzu-ai-provider` branch
+- aibuddy CLI built from the `feat/tanzu-ai-provider` branch
 - A Tanzu AI Services endpoint and API key (single-model or multi-model plan)
 
 ## Locate the CLI Binary
@@ -10,28 +10,28 @@
 **macOS:**
 ```bash
 # If built from source:
-export HEYBUDDY_CLI=~/claude/heybuddy-fork/target/release/heybuddy
+export AIBUDDY_CLI=~/claude/aibuddy-fork/target/release/aibuddy
 
 # Verify:
-$HEYBUDDY_CLI --version
+$AIBUDDY_CLI --version
 ```
 
 **Linux:**
 ```bash
 # If installed via .deb:
-export HEYBUDDY_CLI=/usr/bin/heybuddy
+export AIBUDDY_CLI=/usr/bin/aibuddy
 
 # If built from source:
-export HEYBUDDY_CLI=~/heybuddy-fork/target/release/heybuddy
+export AIBUDDY_CLI=~/aibuddy-fork/target/release/aibuddy
 
 # Verify:
-$HEYBUDDY_CLI --version
+$AIBUDDY_CLI --version
 ```
 
 ## Test 1: Configure VMware Tanzu Platform Provider
 
 ```bash
-heybuddy configure
+aibuddy configure
 ```
 
 1. Select **Configure Providers**
@@ -50,7 +50,7 @@ heybuddy configure
 export TANZU_AI_ENDPOINT="https://genai-proxy.sys.tas-tdc.kuhn-labs.com/tanzu-Qwen3-Coder-30B-A3B-vllm-v1-f3b0d18"
 export TANZU_AI_API_KEY="<your-jwt-token>"
 
-heybuddy session
+aibuddy session
 ```
 
 Type a simple prompt:
@@ -66,10 +66,10 @@ Type a simple prompt:
 export TANZU_AI_ENDPOINT="https://genai-proxy.sys.tas-tdc.kuhn-labs.com/tanzu-all-models-a8a9e22"
 export TANZU_AI_API_KEY="<your-jwt-token>"
 
-heybuddy session
+aibuddy session
 ```
 
-**Expected:** Session starts with whichever model was selected during `heybuddy configure`.
+**Expected:** Session starts with whichever model was selected during `aibuddy configure`.
 
 ## Test 4: Verify Streaming
 
@@ -84,7 +84,7 @@ With streaming enabled (`supports_streaming: true`), responses should appear tok
 ## Test 5: Verify Dynamic Model Fetching
 
 ```bash
-heybuddy configure
+aibuddy configure
 ```
 
 Select **Configure Providers** > **VMware Tanzu Platform**.
@@ -97,14 +97,14 @@ Select **Configure Providers** > **VMware Tanzu Platform**.
 ### Missing API Key
 ```bash
 unset TANZU_AI_API_KEY
-heybuddy session
+aibuddy session
 ```
 **Expected:** Clear error message: "Required API key TANZU_AI_API_KEY is not set."
 
 ### Missing Endpoint
 ```bash
 unset TANZU_AI_ENDPOINT
-heybuddy session
+aibuddy session
 ```
 **Expected:** Clear error message about TANZU_AI_ENDPOINT not being set.
 
@@ -112,23 +112,23 @@ heybuddy session
 ```bash
 export TANZU_AI_ENDPOINT="https://genai-proxy.sys.example.com/nonexistent"
 export TANZU_AI_API_KEY="invalid-key"
-heybuddy session
+aibuddy session
 ```
 **Expected:** Connection or authentication error, not a crash.
 
 ## Test 7: Switch Between Plans
 
 1. Configure with multi-model endpoint, select a model, start a session, verify it works
-2. Run `heybuddy configure` again
+2. Run `aibuddy configure` again
 3. Change TANZU_AI_ENDPOINT to the single-model endpoint
 4. Select the single model
 5. Start a new session, verify it works
 
-**Expected:** Both plans work without needing to restart heybuddy.
+**Expected:** Both plans work without needing to restart aibuddy.
 
 ## Quick Curl Verification
 
-Before testing with heybuddy, you can verify endpoints directly:
+Before testing with aibuddy, you can verify endpoints directly:
 
 ```bash
 # Test models endpoint

@@ -2,13 +2,13 @@
 sidebar_position: 2
 title: Recipe Reference Guide
 sidebar_label: Recipe Reference
-description: Complete technical reference for creating and customizing recipes in heybuddy
+description: Complete technical reference for creating and customizing recipes in aibuddy
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-Recipes are reusable heybuddy configurations that package up instructions and settings so the setup can be easily shared and launched by others.
+Recipes are reusable aibuddy configurations that package up instructions and settings so the setup can be easily shared and launched by others.
 
 ## Recipe File Format
 
@@ -17,7 +17,7 @@ Recipes can be defined in:
 - `.json` files
 
 :::info
-`.yml` files aren't supported by heybuddy CLI.
+`.yml` files aren't supported by aibuddy CLI.
 :::
 
 See [Reusable Recipes](/docs/guides/recipes/session-recipes) to learn how to create, use, and manage recipes.
@@ -28,10 +28,10 @@ Recipes can be loaded from:
 
 1. Local filesystem:
    - Current directory
-   - Directories specified in [`HEYBUDDY_RECIPE_PATH`](/docs/guides/environment-variables#recipe-configuration) environment variable
+   - Directories specified in [`AIBUDDY_RECIPE_PATH`](/docs/guides/environment-variables#recipe-configuration) environment variable
    
 2. GitHub repositories:
-   - Configure using [`HEYBUDDY_RECIPE_GITHUB_REPO`](/docs/guides/environment-variables#recipe-configuration) configuration key
+   - Configure using [`AIBUDDY_RECIPE_GITHUB_REPO`](/docs/guides/environment-variables#recipe-configuration) configuration key
    - Requires GitHub CLI (`gh`) to be installed and authenticated
 
 ## Core Recipe Schema
@@ -42,9 +42,9 @@ Recipes follow this schema structure:
 |-------|------|----------|-------------|
 | `description` | String | ✅ | A detailed description of what the recipe does |
 | `instructions` | String | ✅*  | Template instructions that can include parameter substitutions |
-| `prompt` | String| ✅*   | A template prompt that can include parameter substitutions. Required in [headless](/docs/tutorials/headless-heybuddy) (non-interactive) mode. |
+| `prompt` | String| ✅*   | A template prompt that can include parameter substitutions. Required in [headless](/docs/tutorials/headless-aibuddy) (non-interactive) mode. |
 | `title` | String | ✅ | A short title describing the recipe |
-| [`activities`](#activities) | Array | - | List of example prompts that can include parameter substitutions. Activities appear as clickable bubbles in heybuddy Desktop. |
+| [`activities`](#activities) | Array | - | List of example prompts that can include parameter substitutions. Activities appear as clickable bubbles in aibuddy Desktop. |
 | [`extensions`](#extensions) | Array | - | List of extension configurations |
 | [`parameters`](#parameters) | Array | - | List of parameter definitions for dynamic recipes |
 | [`response`](#response) | Object | - | Structured output schema for automation workflows |
@@ -59,7 +59,7 @@ Recipes follow this schema structure:
 
 ### Activities
 
-The `activities` field defines an optional message and clickable activity bubbles (buttons) that appears when a recipe is opened in heybuddy Desktop.
+The `activities` field defines an optional message and clickable activity bubbles (buttons) that appears when a recipe is opened in aibuddy Desktop.
 
 :::info Desktop only
 Activities are a Desktop-only feature. When recipes with activities are run via the CLI or as a scheduled job, the `activities` field is ignored and has no effect on recipe execution.
@@ -163,14 +163,14 @@ The `extensions` field allows you to specify which Model Context Protocol (MCP) 
 | `args` | Array | List of arguments for the command |
 | `env_keys` | Array | (Optional) Names of environment variables required by the extension |
 | `timeout` | Number | Timeout in seconds |
-| `bundled` | Boolean | (Optional) Whether the extension is bundled with heybuddy |
+| `bundled` | Boolean | (Optional) Whether the extension is bundled with aibuddy |
 | `description` | String | Description of what the extension does |
 | `available_tools` | Array | List of tool names within the extension that will be available. When not specified all will be available |
 
 #### Extension Types
 
 - **`stdio`**: Standard I/O client with command and arguments
-- **`builtin`**: Built-in extension that is part of the bundled heybuddy MCP server
+- **`builtin`**: Built-in extension that is part of the bundled aibuddy MCP server
 - **`platform`**: Platform extensions that run in the agent process
 - **`streamable_http`**: Streamable HTTP client with URI endpoint
 
@@ -200,7 +200,7 @@ extensions:
       - mcp_codesearch@latest
     timeout: 300
     bundled: true
-    description: "Query https://codesearch.sqprod.co/ directly from heybuddy"
+    description: "Query https://codesearch.sqprod.co/ directly from aibuddy"
   
   - type: stdio
     name: presidio
@@ -235,7 +235,7 @@ extensions:
       "args": ["mcp_codesearch@latest"],
       "timeout": 300,
       "bundled": true,
-      "description": "Query https://codesearch.sqprod.co/ directly from heybuddy"
+      "description": "Query https://codesearch.sqprod.co/ directly from aibuddy"
     },
     {
       "type": "stdio",
@@ -263,7 +263,7 @@ extensions:
 
 #### Extension environment variables
 
-Extensions can declare the names of required environment variables in `env_keys`. heybuddy resolves these values when the extension starts, using an environment variable first and then heybuddy secret storage (the system keyring, or `secrets.yaml` when the keyring is disabled).
+Extensions can declare the names of required environment variables in `env_keys`. aibuddy resolves these values when the extension starts, using an environment variable first and then aibuddy secret storage (the system keyring, or `secrets.yaml` when the keyring is disabled).
 
 Recipe loading does not prompt for missing values. Configure them before starting the recipe; if a required value is unavailable, the extension reports an initialization error.
 
@@ -294,7 +294,7 @@ Parameter substitution uses Jinja-style template syntax with `{{ parameter_name 
 - `optional`: Can be omitted if a default value is specified
 - `user_prompt`: Will interactively prompt the user for input if not provided
 
-The `required` and `optional` parameters work best for recipes opened in heybuddy Desktop. If a value isn't provided for a `user_prompt` parameter, the parameter won't be substituted and may appear as literal `{{ parameter_name }}` text in the recipe output.
+The `required` and `optional` parameters work best for recipes opened in aibuddy Desktop. If a value isn't provided for a `user_prompt` parameter, the parameter won't be substituted and may appear as literal `{{ parameter_name }}` text in the recipe output.
 
 #### Input Types
 
@@ -302,7 +302,7 @@ The `required` and `optional` parameters work best for recipes opened in heybudd
 - `number`: Numeric values. Desktop UI provides number input validation
 - `boolean`: True/false values. Desktop UI shows dropdown with "True"/"False" options
 - `date`: Date values. Currently renders as text input
-- `file`: The parameter value should be a file path. heybuddy reads the file contents and substitutes the actual content (not the path) into the template
+- `file`: The parameter value should be a file path. aibuddy reads the file contents and substitutes the actual content (not the path) into the template
 - `select`: Dropdown selection with predefined options. Requires `options` field
 
 **Example:**
@@ -347,7 +347,7 @@ prompt: "Process {{ max_files }} files in {{ output_format }} format. Debug: {{ 
 
 #### Parameter Substitution in Desktop
 
-When a recipe with parameters is opened in heybuddy Desktop, users are presented with a **Recipe Parameters** dialog where they can:
+When a recipe with parameters is opened in aibuddy Desktop, users are presented with a **Recipe Parameters** dialog where they can:
 - Provide values for required parameters
 - Modify or accept default values for optional parameters  
 - Enter values for `user_prompt` parameters
@@ -356,12 +356,12 @@ Once parameter values are submitted, they are substituted into the recipe's `ins
 
 ### Response
 
-The `response` field enables recipes to enforce a final structured JSON output. When you specify a `json_schema`, heybuddy will:
+The `response` field enables recipes to enforce a final structured JSON output. When you specify a `json_schema`, aibuddy will:
 
 1. **Validate the output**: Validates the output JSON against your JSON schema with basic JSON schema validations
 2. **Final structured output**: Ensure the final output of the agent is a response matching your JSON structure
 
-This feature is designed for **non-interactive automation** to ensure consistent, parseable output. Recipes can produce structured output when run from either the heybuddy CLI or heybuddy Desktop. See [use cases and ideas for automation workflows](/docs/guides/recipes/session-recipes#structured-output-for-automation).
+This feature is designed for **non-interactive automation** to ensure consistent, parseable output. Recipes can produce structured output when run from either the aibuddy CLI or aibuddy Desktop. See [use cases and ideas for automation workflows](/docs/guides/recipes/session-recipes#structured-output-for-automation).
 
 #### Response Schema
 
@@ -484,8 +484,8 @@ retry:
 
 You can configure retry behavior globally using environment variables:
 
-- `HEYBUDDY_RECIPE_RETRY_TIMEOUT_SECONDS`: Global timeout for success check commands
-- `HEYBUDDY_RECIPE_ON_FAILURE_TIMEOUT_SECONDS`: Global timeout for on_failure commands
+- `AIBUDDY_RECIPE_RETRY_TIMEOUT_SECONDS`: Global timeout for success check commands
+- `AIBUDDY_RECIPE_ON_FAILURE_TIMEOUT_SECONDS`: Global timeout for on_failure commands
 
 These environment variables are overridden by recipe-specific timeout configurations.
 
@@ -497,8 +497,8 @@ The `settings` field allows you to configure the AI model and provider settings 
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `heybuddy_provider` | String | - | The AI provider to use (e.g., "anthropic", "openai") |
-| `heybuddy_model` | String | - | The specific model name to use |
+| `aibuddy_provider` | String | - | The AI provider to use (e.g., "anthropic", "openai") |
+| `aibuddy_model` | String | - | The specific model name to use |
 | `temperature` | Number | - | The temperature setting for the model (typically 0.0-1.0) |
 | `max_turns` | Number | - | Maximum number of turns for subagent tasks created by this recipe |
 
@@ -509,7 +509,7 @@ The `max_turns` setting controls how many iterations an agent can perform before
 **Configuration precedence (highest to lowest):**
 1. Subagent tool call override
 2. Recipe `settings.max_turns`
-3. `HEYBUDDY_SUBAGENT_MAX_TURNS` environment variable
+3. `AIBUDDY_SUBAGENT_MAX_TURNS` environment variable
 4. Default value (1000 for main recipes, 25 for subagents)
 
 **Common use cases:** Limit execution time for automated workflows, prevent runaway subagents, control resource usage in scheduled jobs.
@@ -518,21 +518,21 @@ The `max_turns` setting controls how many iterations an agent can perform before
 
 ```yaml
 settings:
-  heybuddy_provider: "anthropic"
-  heybuddy_model: "claude-sonnet-4-20250514"
+  aibuddy_provider: "anthropic"
+  aibuddy_model: "claude-sonnet-4-20250514"
   temperature: 0.7
   max_turns: 50
 ```
 
 ```yaml
 settings:
-  heybuddy_provider: "openai"
-  heybuddy_model: "gpt-4o"
+  aibuddy_provider: "openai"
+  aibuddy_model: "gpt-4o"
   temperature: 0.3
 ```
 
 :::note
-Settings specified in a recipe will override your default heybuddy configuration when that recipe is executed. If no settings are specified, heybuddy will use your configured defaults.
+Settings specified in a recipe will override your default aibuddy configuration when that recipe is executed. If no settings are specified, aibuddy will use your configured defaults.
 :::
 
 ### Subrecipes
@@ -566,7 +566,7 @@ sub_recipes:
 
 ## Desktop Metadata Fields
 
-Recipes saved from heybuddy Desktop include additional metadata fields. These fields are used by the Desktop app for organization and management but are ignored by CLI operations. 
+Recipes saved from aibuddy Desktop include additional metadata fields. These fields are used by the Desktop app for organization and management but are ignored by CLI operations. 
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -751,7 +751,7 @@ Built-in template parameters are automatically supported and don't need to be de
 
 ## Validation Rules
 
-Validation rules from [`validate_recipe.rs`](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/recipe/validate_recipe.rs) are enforced when loading recipes and used by the [`heybuddy recipe validate`](/docs/guides/heybuddy-cli-commands#recipe) subcommand:
+Validation rules from [`validate_recipe.rs`](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/recipe/validate_recipe.rs) are enforced when loading recipes and used by the [`aibuddy recipe validate`](/docs/guides/aibuddy-cli-commands#recipe) subcommand:
 
 ### Recipe-Level Validation
 
@@ -813,11 +813,11 @@ extensions:
       - mcp_codesearch@latest
     timeout: 300
     bundled: true
-    description: "Query codesearch directly from heybuddy"
+    description: "Query codesearch directly from aibuddy"
 
 settings:
-  heybuddy_provider: "anthropic"
-  heybuddy_model: "claude-sonnet-4-20250514"
+  aibuddy_provider: "anthropic"
+  aibuddy_model: "claude-sonnet-4-20250514"
   temperature: 0.7
   max_turns: 100
 
@@ -892,12 +892,12 @@ response:
       "args": ["mcp_codesearch@latest"],
       "timeout": 300,
       "bundled": true,
-      "description": "Query codesearch directly from heybuddy"
+      "description": "Query codesearch directly from aibuddy"
     }
   ],
   "settings": {
-    "heybuddy_provider": "anthropic",
-    "heybuddy_model": "claude-sonnet-4-20250514",
+    "aibuddy_provider": "anthropic",
+    "aibuddy_model": "claude-sonnet-4-20250514",
     "temperature": 0.7,
     "max_turns": 100
   },
@@ -949,7 +949,7 @@ Common errors to watch for:
 - Invalid extension configurations
 - Invalid retry configuration (missing required fields, invalid shell commands)
 
-When these occur, heybuddy will provide helpful error messages indicating what needs to be fixed.
+When these occur, aibuddy will provide helpful error messages indicating what needs to be fixed.
 
 ### Retry-Specific Errors
 
@@ -959,4 +959,4 @@ When these occur, heybuddy will provide helpful error messages indicating what n
 - **Missing required retry fields**: When `max_retries` or `checks` are not specified
 
 ## Learn More
-Check out the [Recipes](/docs/guides/recipes) guide for more docs, tools, and resources to help you master heybuddy recipes.
+Check out the [Recipes](/docs/guides/recipes) guide for more docs, tools, and resources to help you master aibuddy recipes.

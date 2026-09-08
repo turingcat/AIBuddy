@@ -1,12 +1,12 @@
-# HeyBuddy v1.49.0 Sync
+# AIBuddy v1.49.0 Sync
 
 - Upstream tag: `v1.49.0` (`71fc4be1ed729e26b1dc0a4466abdd03be548a53`).
-- HeyBuddy before sync: `d630adc1170157545e472d7fa6478c8b57c89610`.
+- AIBuddy before sync: `d630adc1170157545e472d7fa6478c8b57c89610`.
 - Integration: merge upstream history into `main`; no force update or push.
 
 ## Conflict Decisions
 
-- Keep HeyBuddy product identity and independent `1.0.6` version numbering.
+- Keep AIBuddy product identity and independent `1.0.6` version numbering.
 - Keep authentication, recharge, predefined models, product User-Agent, Chinese
   experience, inline tool images, and Windows x32/x64 packaging customizations.
 - Keep deleted upstream updater implementation, updater UI, extra locales, Maven
@@ -20,7 +20,7 @@
   Keep both Chinese greeting tests and upstream draft persistence tests.
 - Adopt upstream canonical model metadata and the HTTPS node-gyp tarball, updating
   lockfile snapshot references consistently.
-- Adapt the upstream recipe import test mock to HeyBuddy's deeplink helper.
+- Adapt the upstream recipe import test mock to AIBuddy's deeplink helper.
 - Refresh the retained default-extension prompt snapshot for the built-in web-search
   skill. Set the compaction test's half-full usage explicitly so local skill prompt
   length does not trigger compaction before the assertion under test.
@@ -30,8 +30,8 @@
 - Rust: `cargo fmt --all` and `cargo clippy --all-targets --locked -- -D warnings`
   passed with the repository-pinned Rust 1.96.1 toolchain. Two constant strings in
   an upstream test were changed from `format!` to equivalent string conversion.
-- Rust unit tests: 2,999 passed across heybuddy, heybuddy-agent, heybuddy-provider-types,
-  heybuddy-providers, and heybuddy-context-management, with `heybuddy/rustls-tls` enabled.
+- Rust unit tests: 2,999 passed across aibuddy, aibuddy-agent, aibuddy-provider-types,
+  aibuddy-providers, and aibuddy-context-management, with `aibuddy/rustls-tls` enabled.
   Tests ran with `--test-threads=1` because ACP tests mutate process-wide environment
   settings and one retry test failed intermittently during parallel runs.
 - Rust integration tests: 39 agent tests and 4 compaction tests passed with

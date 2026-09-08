@@ -1,10 +1,10 @@
 ---
-description: Learn how to create and use heybuddy recipes with this comprehensive tutorial covering prompts, parameters, and MCP servers
+description: Learn how to create and use aibuddy recipes with this comprehensive tutorial covering prompts, parameters, and MCP servers
 ---
 
 # Recipes
 
-heybuddy recipes are files that contain all the details to allow heybuddy to do one specific task. Since they are contained in just one file, they are easy to share through all the normal ways we share files, including version management systems like git. Let's get started with the simplest recipe possible.
+aibuddy recipes are files that contain all the details to allow aibuddy to do one specific task. Since they are contained in just one file, they are easy to share through all the normal ways we share files, including version management systems like git. Let's get started with the simplest recipe possible.
 
 ## The Simplest Recipe
 
@@ -27,14 +27,14 @@ prompt: |
 You can run it from the command line using:
 
 ```sh
-heybuddy run --recipe trip.yaml
+aibuddy run --recipe trip.yaml
 ```
 
 ## Extensions
 
-heybuddy recipes have a section where you can specify which [extensions](/docs/guides/recipes/recipe-reference#extensions) heybuddy can use during execution. heybuddy will only use the ones you specify. 
+aibuddy recipes have a section where you can specify which [extensions](/docs/guides/recipes/recipe-reference#extensions) aibuddy can use during execution. aibuddy will only use the ones you specify. 
 
-Let's say we want to make sure we have good weather during our Europe trip. We can just add a weather extension (this example uses the [weather-mcp-server](https://github.com/TuanKiri/weather-mcp-server) by TuanKiri under the MIT License) to our recipe, modify the prompt a bit and now heybuddy will check the weather before adding a city to our trip.
+Let's say we want to make sure we have good weather during our Europe trip. We can just add a weather extension (this example uses the [weather-mcp-server](https://github.com/TuanKiri/weather-mcp-server) by TuanKiri under the MIT License) to our recipe, modify the prompt a bit and now aibuddy will check the weather before adding a city to our trip.
 
 ```yaml
 title: Trip planner
@@ -76,29 +76,29 @@ parameters:
 Recipes use a template system that lets you insert variables like `{{ destination }}` which get filled in with the actual values you provide. Once you've updated the prompt with the right details, you can run your new recipe like this to get a plan for a 14 day trip to Africa:
 
 ```sh
-heybuddy run --recipe trip.yaml --params destination=Africa --params duration=14
+aibuddy run --recipe trip.yaml --params destination=Africa --params duration=14
 ```
 
 
 ## Settings
 
-By default, heybuddy uses the `temperature` and `model` you've already chosen, which usually works just fine. But sometimes you might want more control. For example, when performing a subjective task like planning a trip, it can help to turn up the `temperature` setting. Think of temperature like a creativity dial - the higher it is, the more varied and unexpected the results. If the first suggestion isn't quite right, the user can just run the recipe again to get a new one.
+By default, aibuddy uses the `temperature` and `model` you've already chosen, which usually works just fine. But sometimes you might want more control. For example, when performing a subjective task like planning a trip, it can help to turn up the `temperature` setting. Think of temperature like a creativity dial - the higher it is, the more varied and unexpected the results. If the first suggestion isn't quite right, the user can just run the recipe again to get a new one.
 
 You can also specify which AI provider and model to use for a specific recipe:
 
 ```yaml
 settings:
-  heybuddy_provider: "anthropic"
-  heybuddy_model: "claude-sonnet-4-20250514"
+  aibuddy_provider: "anthropic"
+  aibuddy_model: "claude-sonnet-4-20250514"
   temperature: 0.8
 ```
 
 The available settings are:
-- `heybuddy_provider`: The AI provider (e.g., "anthropic", "openai")
-- `heybuddy_model`: The specific model name
+- `aibuddy_provider`: The AI provider (e.g., "anthropic", "openai")
+- `aibuddy_model`: The specific model name
 - `temperature`: Controls creativity/randomness (0.0-1.0, higher = more creative)
 
-These settings will override your default heybuddy configuration when this recipe runs.
+These settings will override your default aibuddy configuration when this recipe runs.
 
 ## External Files
 
@@ -282,4 +282,4 @@ This itinerary offers a perfect blend of history, culture, and cuisine across th
 :::
 
 ## Learn More
-Check out the [Recipes](/docs/guides/recipes) guide for more docs, tools, and resources to help you master heybuddy recipes.
+Check out the [Recipes](/docs/guides/recipes) guide for more docs, tools, and resources to help you master aibuddy recipes.

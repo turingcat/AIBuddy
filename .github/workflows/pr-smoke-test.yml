@@ -75,13 +75,13 @@ jobs:
 
       - name: Build Binary for Smoke Tests
         run: |
-          cargo build --locked --bin heybuddy
+          cargo build --locked --bin aibuddy
 
-      - name: Upload heybuddy binary
+      - name: Upload aibuddy binary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: heybuddy-binary
-          path: target/debug/heybuddy
+          name: aibuddy-binary
+          path: target/debug/aibuddy
           retention-days: 1
 
   smoke-tests:
@@ -97,11 +97,11 @@ jobs:
       - name: Download Binary
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: heybuddy-binary
+          name: aibuddy-binary
           path: target/debug
 
       - name: Make Binary Executable
-        run: chmod +x target/debug/heybuddy
+        run: chmod +x target/debug/aibuddy
 
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -148,13 +148,13 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           TETRATE_API_KEY: ${{ secrets.TETRATE_API_KEY }}
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
           SKIP_PROVIDERS: ${{ vars.SKIP_PROVIDERS || '' }}
         run: |
-          mkdir -p $HOME/.local/share/heybuddy/sessions
-          mkdir -p $HOME/.config/heybuddy
+          mkdir -p $HOME/.local/share/aibuddy/sessions
+          mkdir -p $HOME/.config/aibuddy
           source ../../bin/activate-hermit && pnpm run test:integration:providers
         working-directory: ui/desktop
 
@@ -176,8 +176,8 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           TETRATE_API_KEY: ${{ secrets.TETRATE_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
         run: |
           bash scripts/test_mcp.sh
@@ -185,10 +185,10 @@ jobs:
       - name: Run Subrecipe Tests
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          HEYBUDDY_PROVIDER: anthropic
-          HEYBUDDY_MODEL: claude-sonnet-4-5-20250929
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          AIBUDDY_PROVIDER: anthropic
+          AIBUDDY_MODEL: claude-sonnet-4-5-20250929
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
         run: |
           bash scripts/test_subrecipes.sh
@@ -206,11 +206,11 @@ jobs:
       - name: Download Binary
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: heybuddy-binary
+          name: aibuddy-binary
           path: target/debug
 
       - name: Make Binary Executable
-        run: chmod +x target/debug/heybuddy
+        run: chmod +x target/debug/aibuddy
 
       - name: Resolve pnpm store path
         id: pnpm-store
@@ -247,13 +247,13 @@ jobs:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           TETRATE_API_KEY: ${{ secrets.TETRATE_API_KEY }}
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
           SKIP_PROVIDERS: ${{ vars.SKIP_PROVIDERS || '' }}
         run: |
-          mkdir -p $HOME/.local/share/heybuddy/sessions
-          mkdir -p $HOME/.config/heybuddy
+          mkdir -p $HOME/.local/share/aibuddy/sessions
+          mkdir -p $HOME/.config/aibuddy
           source ../../bin/activate-hermit && pnpm run test:integration:providers-code-exec
         working-directory: ui/desktop
 
@@ -270,11 +270,11 @@ jobs:
       - name: Download Binary
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: heybuddy-binary
+          name: aibuddy-binary
           path: target/debug
 
       - name: Make Binary Executable
-        run: chmod +x target/debug/heybuddy
+        run: chmod +x target/debug/aibuddy
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -287,12 +287,12 @@ jobs:
       - name: Run Compaction Tests
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          HEYBUDDY_PROVIDER: anthropic
-          HEYBUDDY_MODEL: claude-sonnet-4-5-20250929
-          HOME: /tmp/heybuddy-home
-          HEYBUDDY_DISABLE_KEYRING: 1
+          AIBUDDY_PROVIDER: anthropic
+          AIBUDDY_MODEL: claude-sonnet-4-5-20250929
+          HOME: /tmp/aibuddy-home
+          AIBUDDY_DISABLE_KEYRING: 1
           SKIP_BUILD: 1
         run: |
-          mkdir -p $HOME/.local/share/heybuddy/sessions
-          mkdir -p $HOME/.config/heybuddy
+          mkdir -p $HOME/.local/share/aibuddy/sessions
+          mkdir -p $HOME/.config/aibuddy
           bash scripts/test_compaction.sh

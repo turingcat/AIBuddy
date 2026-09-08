@@ -1,6 +1,6 @@
 # build-windows.ps1
-# Build HeyBuddy Desktop for Windows with VMware Tanzu Platform provider
-# Run this script from the root of the heybuddy-fork repository in PowerShell
+# Build AIBuddy Desktop for Windows with VMware Tanzu Platform provider
+# Run this script from the root of the aibuddy-fork repository in PowerShell
 #
 # Prerequisites:
 #   - Git (https://git-scm.com/download/win)
@@ -9,12 +9,12 @@
 #   - pnpm: npm install -g pnpm
 #
 # Usage:
-#   cd C:\path\to\heybuddy-fork
+#   cd C:\path\to\aibuddy-fork
 #   .\scripts\build-windows.ps1
 
 $ErrorActionPreference = "Stop"
 
-Write-Host "=== HeyBuddy Windows Build Script ===" -ForegroundColor Cyan
+Write-Host "=== AIBuddy Windows Build Script ===" -ForegroundColor Cyan
 Write-Host ""
 
 # Check prerequisites
@@ -42,7 +42,7 @@ Write-Host ""
 # Step 1: Clone or update repo
 Write-Host "[2/7] Building Rust backend (release)..." -ForegroundColor Yellow
 Write-Host "  This may take 5-15 minutes on first build..."
-cargo build --release -p heybuddy-cli --bin heybuddy
+cargo build --release -p aibuddy-cli --bin aibuddy
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Rust build failed!" -ForegroundColor Red
     exit 1
@@ -55,12 +55,12 @@ Write-Host "[3/7] Copying binaries to desktop app..." -ForegroundColor Yellow
 $binDir = "ui\desktop\src\bin"
 if (-not (Test-Path $binDir)) { New-Item -ItemType Directory -Path $binDir -Force | Out-Null }
 
-$heybuddyBinary = "target\release\heybuddy.exe"
-if (-not (Test-Path $heybuddyBinary)) {
-    Write-Host "Backend binary not found: $heybuddyBinary" -ForegroundColor Red
+$aibuddyBinary = "target\release\aibuddy.exe"
+if (-not (Test-Path $aibuddyBinary)) {
+    Write-Host "Backend binary not found: $aibuddyBinary" -ForegroundColor Red
     exit 1
 }
-Copy-Item $heybuddyBinary "$binDir\" -Force
+Copy-Item $aibuddyBinary "$binDir\" -Force
 # Copy required DLLs if they exist (from cross-compilation)
 Get-ChildItem "target\release\*.dll" -ErrorAction SilentlyContinue | ForEach-Object {
     Copy-Item $_.FullName "$binDir\" -Force
@@ -81,10 +81,10 @@ Write-Host "  Dependencies installed." -ForegroundColor Green
 Write-Host ""
 
 # Step 4: Build desktop assets
-Write-Host "[5/7] Building HeyBuddy SDK, clearing Vite cache, and compiling i18n messages..." -ForegroundColor Yellow
-pnpm run build-heybuddy-sdk
+Write-Host "[5/7] Building AIBuddy SDK, clearing Vite cache, and compiling i18n messages..." -ForegroundColor Yellow
+pnpm run build-aibuddy-sdk
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "HeyBuddy SDK build or Vite cache cleanup failed!" -ForegroundColor Red
+    Write-Host "AIBuddy SDK build or Vite cache cleanup failed!" -ForegroundColor Red
     Pop-Location
     exit 1
 }
@@ -98,7 +98,7 @@ Write-Host "  Desktop assets built." -ForegroundColor Green
 Write-Host ""
 
 # Step 5: Package
-Write-Host "[6/7] Packaging HeyBuddy Desktop..." -ForegroundColor Yellow
+Write-Host "[6/7] Packaging AIBuddy Desktop..." -ForegroundColor Yellow
 pnpm exec electron-forge package
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Packaging failed!" -ForegroundColor Red
@@ -126,10 +126,10 @@ Write-Host ""
 # Done
 Write-Host "=== Build Complete ===" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Packaged app:  ui\desktop\out\HeyBuddy-win32-x64\HeyBuddy.exe" -ForegroundColor Green
+Write-Host "Packaged app:  ui\desktop\out\AIBuddy-win32-x64\AIBuddy.exe" -ForegroundColor Green
 Write-Host "Installer:     ui\desktop\out\make\" -ForegroundColor Green
 Write-Host ""
 Write-Host "To run the app directly:" -ForegroundColor Yellow
-Write-Host "  .\ui\desktop\out\HeyBuddy-win32-x64\HeyBuddy.exe"
+Write-Host "  .\ui\desktop\out\AIBuddy-win32-x64\AIBuddy.exe"
 Write-Host ""
 Write-Host "To install, find the .exe installer in ui\desktop\out\make\"

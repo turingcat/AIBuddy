@@ -1,23 +1,23 @@
 ---
 title: Rendex Extension
-description: Add Rendex MCP Server as a heybuddy Extension for Screenshots, PDFs, and HTML-to-Image Rendering
+description: Add Rendex MCP Server as a aibuddy Extension for Screenshots, PDFs, and HTML-to-Image Rendering
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
-This tutorial covers how to add the [Rendex MCP Server](https://github.com/copperline-labs/rendex-mcp) as a heybuddy extension to capture screenshots, generate PDFs, and render HTML to images from any webpage or raw HTML — useful for archiving UIs, generating invoices and reports, producing OG images, and giving heybuddy a reliable "see the web" capability without spinning up a full browser automation stack.
+This tutorial covers how to add the [Rendex MCP Server](https://github.com/copperline-labs/rendex-mcp) as a aibuddy extension to capture screenshots, generate PDFs, and render HTML to images from any webpage or raw HTML — useful for archiving UIs, generating invoices and reports, producing OG images, and giving aibuddy a reliable "see the web" capability without spinning up a full browser automation stack.
 
 ## Configuration
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   [Launch the installer](goose://extension?type=streamable_http&url=https%3A%2F%2Fmcp.rendex.dev%2Fmcp&id=rendex-mcp&name=Rendex&description=Capture%20screenshots%2C%20generate%20PDFs%2C%20and%20render%20HTML%20to%20images%20via%20AI%20agents&header=Authorization%3DBearer%20YOUR_RENDEX_API_KEY)
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
   Add a `Remote Extension (Streamable HTTP)` extension type with:
 
   **Endpoint URL**
@@ -34,8 +34,8 @@ This tutorial covers how to add the [Rendex MCP Server](https://github.com/coppe
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-    <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="rendex-mcp"
       extensionName="Rendex"
       description="Capture screenshots, generate PDFs, and render HTML to images via AI agents"
@@ -49,7 +49,7 @@ This tutorial covers how to add the [Rendex MCP Server](https://github.com/coppe
     />
   </TabItem>
 
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="Rendex"
       description="Capture screenshots, generate PDFs, and render HTML to images via AI agents"
@@ -72,7 +72,7 @@ This tutorial covers how to add the [Rendex MCP Server](https://github.com/coppe
 
 Let's use the Rendex extension to generate an invoice PDF from raw HTML and archive a product page.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 1. Render this HTML as an A4 PDF with 1cm margins:
@@ -94,7 +94,7 @@ Let's use the Rendex extension to generate an invoice PDF from raw HTML and arch
 3. Return both results so I can save them
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 ```
 I'll generate the invoice PDF first, then capture the HN page.

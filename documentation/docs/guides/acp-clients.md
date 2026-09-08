@@ -1,128 +1,128 @@
 ---
 sidebar_position: 105
-title: Using heybuddy in ACP Clients
-sidebar_label: heybuddy in ACP Clients
+title: Using aibuddy in ACP Clients
+sidebar_label: aibuddy in ACP Clients
 ---
 
-Client applications that support the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) can connect natively to heybuddy. This integration allows you to seamlessly interact with heybuddy directly from the client.
+Client applications that support the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/) can connect natively to aibuddy. This integration allows you to seamlessly interact with aibuddy directly from the client.
 
 :::warning Experimental Feature
-ACP is an emerging specification that enables clients to communicate with AI agents like heybuddy. This feature has limited adoption and may evolve as the protocol develops.
+ACP is an emerging specification that enables clients to communicate with AI agents like aibuddy. This feature has limited adoption and may evolve as the protocol develops.
 :::
 
 ## How It Works
-After you configure heybuddy as an agent in the ACP client, you gain access to heybuddy's core agent functionality, including its extensions and tools. heybuddy also automatically loads any [configured MCP servers](#using-mcp-servers-from-acp-clients) from your ACP client alongside its own extensions, making their tools available without additional configuration.
+After you configure aibuddy as an agent in the ACP client, you gain access to aibuddy's core agent functionality, including its extensions and tools. aibuddy also automatically loads any [configured MCP servers](#using-mcp-servers-from-acp-clients) from your ACP client alongside its own extensions, making their tools available without additional configuration.
 
-The client manages the heybuddy lifecycle automatically, including:
+The client manages the aibuddy lifecycle automatically, including:
 
-- **Initialization**: The client runs the `heybuddy acp` command to initialize the connection
-- **Communication**: The client communicates with heybuddy over stdio using JSON-RPC
+- **Initialization**: The client runs the `aibuddy acp` command to initialize the connection
+- **Communication**: The client communicates with aibuddy over stdio using JSON-RPC
 - **Multiple Sessions**: The client manages multiple concurrent conversations, each with isolated state
 - **Model and Mode Switching**: The client can switch models and modes mid-session without restarting
-- **File Operations**: The client handles file reads and writes, so heybuddy sees changes not yet saved to disk and edits show as native diffs
+- **File Operations**: The client handles file reads and writes, so aibuddy sees changes not yet saved to disk and edits show as native diffs
 - **Terminal**: The client runs commands in its own terminal, so output appears alongside the conversation
 
 :::info Session Persistence
-ACP sessions are saved to heybuddy's session history where you can access and manage them using heybuddy. Access to session history in ACP clients might vary.
+ACP sessions are saved to aibuddy's session history where you can access and manage them using aibuddy. Access to session history in ACP clients might vary.
 :::
 
 :::tip Reference Implementation
-The [heybuddy for VS Code](/docs/experimental/vs-code-extension) extension uses ACP to communicate with heybuddy. See the [vscode-heybuddy](https://github.com/aaif-goose/vscode-goose) repository for implementation details.
+The [aibuddy for VS Code](/docs/experimental/vs-code-extension) extension uses ACP to communicate with aibuddy. See the [vscode-aibuddy](https://github.com/aaif-goose/vscode-goose) repository for implementation details.
 :::
 
 ## Setup in ACP Clients
-Any editor or IDE that supports ACP can connect to heybuddy as an agent server. Check the [official ACP clients list](https://agentclientprotocol.com/overview/clients) for available clients with links to their documentation.
+Any editor or IDE that supports ACP can connect to aibuddy as an agent server. Check the [official ACP clients list](https://agentclientprotocol.com/overview/clients) for available clients with links to their documentation.
 
 ### Example: Zed Editor Setup
 
-ACP was originally developed by [Zed](https://zed.dev/). Zed offers two ways to add heybuddy, and you can use either one.
+ACP was originally developed by [Zed](https://zed.dev/). Zed offers two ways to add aibuddy, and you can use either one.
 
 #### Option 1: Install from the ACP Registry (recommended)
 
-heybuddy is published in the [ACP Registry](https://agentclientprotocol.com/registry), and Zed 1.5.0 and later has built-in registry support, so it can download and run heybuddy for you, with no manual configuration and no pre-installed CLI required.
+aibuddy is published in the [ACP Registry](https://agentclientprotocol.com/registry), and Zed 1.5.0 and later has built-in registry support, so it can download and run aibuddy for you, with no manual configuration and no pre-installed CLI required.
 
 1. Open Zed
 2. Open Agent Settings
 3. Click `Add Agent`, then choose `Install from Registry`
-4. Select `heybuddy`
+4. Select `aibuddy`
 
-A registry-installed heybuddy runs the same `heybuddy acp` server and reads your existing heybuddy configuration, so your providers, models, and extensions carry over. Zed keeps the installed version up to date for you.
+A registry-installed aibuddy runs the same `aibuddy acp` server and reads your existing aibuddy configuration, so your providers, models, and extensions carry over. Zed keeps the installed version up to date for you.
 
-#### Option 2: Configure heybuddy as a Custom Agent
+#### Option 2: Configure aibuddy as a Custom Agent
 
-Use a custom agent if you want to run your own heybuddy binary (for example, a local development build) or pass environment overrides.
+Use a custom agent if you want to run your own aibuddy binary (for example, a local development build) or pass environment overrides.
 
 ##### Prerequisites
 
-Ensure you have both Zed and heybuddy CLI installed:
+Ensure you have both Zed and aibuddy CLI installed:
 
 - **Zed**: Download from [zed.dev](https://zed.dev/)
-- **heybuddy CLI**: Follow the [installation guide](/docs/getting-started/installation)
+- **aibuddy CLI**: Follow the [installation guide](/docs/getting-started/installation)
 
-  - Verify heybuddy is installed: `heybuddy --version`
+  - Verify aibuddy is installed: `aibuddy --version`
 
-  - Temporarily run `heybuddy acp` to test that ACP support is working:
+  - Temporarily run `aibuddy acp` to test that ACP support is working:
 
     ```bash
-    heybuddy acp
+    aibuddy acp
     ```
 
     Press `Ctrl+C` to exit the test.
 
-##### Add heybuddy to Your Zed Settings
+##### Add aibuddy to Your Zed Settings
 
 1. Open Zed
 2. Open Agent Settings, click `Add Agent`, then choose `Add Custom Agent`. Zed scaffolds an `agent_servers` entry and opens your settings file
-3. Edit the entry so it runs heybuddy:
+3. Edit the entry so it runs aibuddy:
 
 ```json
 {
   "agent_servers": {
-    "heybuddy": {
+    "aibuddy": {
       "type": "custom",
-      "command": "heybuddy",
+      "command": "aibuddy",
       "args": ["acp"]
     }
   },
 }
 ```
 
-You should now be able to interact with heybuddy directly in Zed. Your ACP sessions use the same extensions that are enabled in your heybuddy configuration, and your tools (Developer, Computer Controller, etc.) work the same way as in regular heybuddy sessions.
+You should now be able to interact with aibuddy directly in Zed. Your ACP sessions use the same extensions that are enabled in your aibuddy configuration, and your tools (Developer, Computer Controller, etc.) work the same way as in regular aibuddy sessions.
 
-#### Start Using heybuddy in Zed
+#### Start Using aibuddy in Zed
 
-After adding heybuddy with either option above:
+After adding aibuddy with either option above:
 
 1. **Open the Agent Panel**: Click the sparkles agent icon in Zed's status bar
 2. **Create New Thread**: Click the `+` button to show thread options
-3. **Select heybuddy**: Choose `New heybuddy` to start a new conversation with heybuddy
-4. **Start Chatting**: Interact with heybuddy directly from the agent panel
+3. **Select aibuddy**: Choose `New aibuddy` to start a new conversation with aibuddy
+4. **Start Chatting**: Interact with aibuddy directly from the agent panel
 
 #### Advanced Configuration
 
 ##### Overriding Provider and Model
 
-By default, heybuddy will use the provider and model defined in your [configuration file](/docs/guides/config-files). You can override this for specific ACP configurations using the `HEYBUDDY_PROVIDER` and `HEYBUDDY_MODEL` environment variables.
+By default, aibuddy will use the provider and model defined in your [configuration file](/docs/guides/config-files). You can override this for specific ACP configurations using the `AIBUDDY_PROVIDER` and `AIBUDDY_MODEL` environment variables.
 
-The following Zed settings example configures two heybuddy agent instances. This is useful for:
+The following Zed settings example configures two aibuddy agent instances. This is useful for:
 - Comparing model performance on the same task
 - Using cost-effective models for simple tasks and powerful models for complex ones
 
 ```json
 {
   "agent_servers": {
-    "heybuddy": {
+    "aibuddy": {
       "type": "custom",
-      "command": "heybuddy",
+      "command": "aibuddy",
       "args": ["acp"]
     },
-    "heybuddy (GPT-4o)": {
+    "aibuddy (GPT-4o)": {
       "type": "custom",
-      "command": "heybuddy",
+      "command": "aibuddy",
       "args": ["acp"],
       "env": {
-        "HEYBUDDY_PROVIDER": "openai",
-        "HEYBUDDY_MODEL": "gpt-4o"
+        "AIBUDDY_PROVIDER": "openai",
+        "AIBUDDY_MODEL": "gpt-4o"
       }
     }
   },
@@ -131,7 +131,7 @@ The following Zed settings example configures two heybuddy agent instances. This
 
 ## Using MCP Servers from ACP Clients
 
-MCP servers configured in the ACP client's `context_servers` are automatically available to heybuddy. This allows you to use those MCP servers when using both native client features and the heybuddy agent integration.
+MCP servers configured in the ACP client's `context_servers` are automatically available to aibuddy. This allows you to use those MCP servers when using both native client features and the aibuddy agent integration.
 
 **Example (Zed):**
 
@@ -148,49 +148,49 @@ MCP servers configured in the ACP client's `context_servers` are automatically a
     }
   },
   "agent_servers": {
-    "heybuddy": {
+    "aibuddy": {
       "type": "custom",
-      "command": "heybuddy",
+      "command": "aibuddy",
       "args": ["acp"]
     }
   },
 }
 ```
 
-To find out what tools are available, just ask heybuddy while it's running in the client.
+To find out what tools are available, just ask aibuddy while it's running in the client.
 
 :::info
-All MCP servers in `context_servers` are automatically available to heybuddy, provided that they use stdio (command-based) or HTTP transports. heybuddy doesn't support servers that use the deprecated SSE transport.
+All MCP servers in `context_servers` are automatically available to aibuddy, provided that they use stdio (command-based) or HTTP transports. aibuddy doesn't support servers that use the deprecated SSE transport.
 
-If a server in `context_servers` has the same name as a heybuddy extension, heybuddy uses its own [configuration](/docs/guides/config-files).
+If a server in `context_servers` has the same name as a aibuddy extension, aibuddy uses its own [configuration](/docs/guides/config-files).
 :::
 
 ## TUI Client (Deprecated)
 
 :::warning Deprecated
-The experimental terminal UI (TUI) client, formerly published to npm as `@heybuddy/heybuddy`, is no longer maintained and has been removed. Use the [CLI](/docs/getting-started/installation) or the desktop app instead.
+The experimental terminal UI (TUI) client, formerly published to npm as `@aibuddy/aibuddy`, is no longer maintained and has been removed. Use the [CLI](/docs/getting-started/installation) or the desktop app instead.
 :::
 
 ## Server Authentication
 
-Set the `HEYBUDDY_SERVER__SECRET_KEY` environment variable to authenticate the ACP endpoint. `heybuddy serve` refuses to start without this secret unless you explicitly pass `--dangerously-unauthenticated`:
+Set the `AIBUDDY_SERVER__SECRET_KEY` environment variable to authenticate the ACP endpoint. `aibuddy serve` refuses to start without this secret unless you explicitly pass `--dangerously-unauthenticated`:
 
 ```bash
-HEYBUDDY_SERVER__SECRET_KEY='a-long-random-secret' heybuddy serve
+AIBUDDY_SERVER__SECRET_KEY='a-long-random-secret' aibuddy serve
 ```
 
 Clients authenticate by sending the token in the `X-Secret-Key` header, or as a `?token=` query parameter for WebSocket connections (the browser WebSocket API can't set custom headers). Requests without a matching token receive `401 Unauthorized`, including WebSocket handshakes.
 
-ACP WebSocket Origin validation allows loopback web origins by default. For `heybuddy serve`, ACP CORS follows the same policy. If you pass any `--allowed-origin` values, that explicit list replaces the default loopback origins, so include every origin the client needs:
+ACP WebSocket Origin validation allows loopback web origins by default. For `aibuddy serve`, ACP CORS follows the same policy. If you pass any `--allowed-origin` values, that explicit list replaces the default loopback origins, so include every origin the client needs:
 
 ```bash
-HEYBUDDY_SERVER__SECRET_KEY='a-long-random-secret' heybuddy serve \
+AIBUDDY_SERVER__SECRET_KEY='a-long-random-secret' aibuddy serve \
   --allowed-origin 'http://localhost:5173' \
   --allowed-origin 'app://localhost' \
   --allowed-origin 'https://app.example'
 ```
 
-For local development only, `heybuddy serve --dangerously-unauthenticated` starts without a secret and logs a warning. Do not use this mode with shell-capable builtins enabled unless the server is isolated from untrusted browser traffic.
+For local development only, `aibuddy serve --dangerously-unauthenticated` starts without a secret and logs a warning. Do not use this mode with shell-capable builtins enabled unless the server is isolated from untrusted browser traffic.
 
 ### Single Prompt Mode
 
@@ -212,7 +212,7 @@ npm start -- --text "What files are in this directory?"
 
 ### Permission Dialog
 
-When heybuddy requests permission to use a tool, a dialog appears with these options:
+When aibuddy requests permission to use a tool, a dialog appears with these options:
 
 | Key | Action |
 |-----|--------|
@@ -233,8 +233,8 @@ import chooseYourIde from '@site/blog/2025-10-24-intro-to-agent-client-protocol-
   items={[
     {
       type: 'video',
-      title: 'Intro to Agent Client Protocol (ACP) | Vibe Code with heybuddy',
-      description: 'Watch how ACP lets you seamlessly integrate heybuddy into your code editor to streamline fragmented workflows.',
+      title: 'Intro to Agent Client Protocol (ACP) | Vibe Code with aibuddy',
+      description: 'Watch how ACP lets you seamlessly integrate aibuddy into your code editor to streamline fragmented workflows.',
       thumbnailUrl: 'https://img.youtube.com/vi/Hvu5KDTb6JE/maxresdefault.jpg',
       linkUrl: 'https://www.youtube.com/watch?v=Hvu5KDTb6JE',
       date: '2025-10-16',
@@ -243,7 +243,7 @@ import chooseYourIde from '@site/blog/2025-10-24-intro-to-agent-client-protocol-
    {
       type: 'blog',
       title: 'Intro to Agent Client Protocol (ACP): The Standard for AI Agent-Editor Integration',
-      description: 'Learn how to integrate AI agents like heybuddy directly into your code editor via ACP, eliminating window-switching and vendor lock-in.',
+      description: 'Learn how to integrate AI agents like aibuddy directly into your code editor via ACP, eliminating window-switching and vendor lock-in.',
       thumbnailUrl: chooseYourIde,
       linkUrl: '/blog/2025/10/24/intro-to-agent-client-protocol-acp',
       date: '2025-10-24',

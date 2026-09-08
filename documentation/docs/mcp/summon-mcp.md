@@ -6,16 +6,16 @@ description: Load sources and delegate tasks to subagents
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PlatformExtensionNote } from '@site/src/components/PlatformExtensionNote';
-import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
+import AIBuddyBuiltinInstaller from '@site/src/components/AIBuddyBuiltinInstaller';
 
-The Summon extension lets you load reusable task sources into heybuddy's context and delegate work to [subagents](/docs/guides/context-engineering/subagents).
+The Summon extension lets you load reusable task sources into aibuddy's context and delegate work to [subagents](/docs/guides/context-engineering/subagents).
 
 You can load different types of sources:
 - [**Recipes**](/docs/guides/recipes) - Automated task definitions with prompts and parameters
 - **Agents** - Reusable agent definitions stored in agent directories
 - **Subrecipes** - Recipe-local tasks available from the current recipe
 
-This is useful when you want heybuddy to reuse a task definition, hand work to another agent, or run read-only research in parallel. Skills are loaded by the separate [Skills platform extension](/docs/guides/context-engineering/using-skills).
+This is useful when you want aibuddy to reuse a task definition, hand work to another agent, or run read-only research in parallel. Skills are loaded by the separate [Skills platform extension](/docs/guides/context-engineering/using-skills).
 
 :::info
 This extension is available in v1.25.0+.
@@ -26,22 +26,22 @@ This extension is available in v1.25.0+.
 <PlatformExtensionNote/>
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-  <HeyBuddyBuiltinInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+  <AIBuddyBuiltinInstaller
     extensionName="Summon"
     description="Load sources and delegate tasks to subagents"
   />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   heybuddy-configure 
+  ┌   aibuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -73,13 +73,13 @@ instructions: |
 prompt: Draft release notes for the current branch.
 ```
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 Use summon to delegate the release-notes recipe for this branch.
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 ```
 ─── delegate | summon ───────────────────────────────────────
@@ -97,7 +97,7 @@ The release-notes subagent reviewed the branch and drafted release notes:
 
 ## Common Summon Commands
 
-Ask heybuddy to use Summon in natural language, or call the tools directly:
+Ask aibuddy to use Summon in natural language, or call the tools directly:
 
 ```text
 load()

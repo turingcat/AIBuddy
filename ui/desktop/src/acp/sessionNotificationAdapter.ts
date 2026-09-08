@@ -1,4 +1,4 @@
-import type { HeyBuddySessionNotification_unstable } from '@heybuddy/heybuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import type { Message } from '../types/message';
 import {
@@ -6,7 +6,7 @@ import {
   applyElicitationStatus as applyElicitationStatusToState,
   type ElicitationStatus,
 } from './adapter/elicitations';
-import { applyHeyBuddySessionNotification } from './adapter/heybuddySessionNotifications';
+import { applyAIBuddySessionNotification } from './adapter/aibuddySessionNotifications';
 import { applyContentChunk, applyThoughtChunk } from './adapter/messages';
 import {
   applyPermissionRequest as applyPermissionRequestToState,
@@ -16,8 +16,8 @@ import {
   type AcpChatStateChange,
   type AdapterState,
   cloneMessage,
-  getHeyBuddyActiveRunId,
-  getHeyBuddyQueuedSteer,
+  getAIBuddyActiveRunId,
+  getAIBuddyQueuedSteer,
 } from './adapter/shared';
 import { applyToolCall, applyToolCallUpdate } from './adapter/tools';
 import type { AcpElicitationRequest } from './elicitationRequests';
@@ -27,7 +27,7 @@ export type { AcpChatStateChange } from './adapter/shared';
 
 export interface AcpSessionNotificationAdapter {
   apply(notification: SessionNotification): AcpChatStateChange[];
-  applyHeyBuddy(notification: HeyBuddySessionNotification_unstable): AcpChatStateChange[];
+  applyAIBuddy(notification: AIBuddySessionNotification_unstable): AcpChatStateChange[];
   applyPermissionRequest(request: AcpPermissionRequest): AcpChatStateChange[];
   cancelPermissionRequest(toolCallId: string, generation: string): AcpChatStateChange[];
   applyElicitationRequest(request: AcpElicitationRequest): AcpChatStateChange[];
@@ -49,8 +49,8 @@ export function createAcpSessionNotificationAdapter(
     apply(notification) {
       return applyAcpSessionNotification(state, notification);
     },
-    applyHeyBuddy(notification) {
-      return applyHeyBuddySessionNotification(state, notification);
+    applyAIBuddy(notification) {
+      return applyAIBuddySessionNotification(state, notification);
     },
     applyPermissionRequest(request) {
       return applyPermissionRequestToState(state, request);
@@ -88,8 +88,8 @@ function applyAcpSessionNotification(
     case 'tool_call_update':
       return applyToolCallUpdate(state, update);
     case 'session_info_update': {
-      const activeRunId = getHeyBuddyActiveRunId(update);
-      const queuedSteerMessageId = getHeyBuddyQueuedSteer(update);
+      const activeRunId = getAIBuddyActiveRunId(update);
+      const queuedSteerMessageId = getAIBuddyQueuedSteer(update);
       const changes: AcpChatStateChange[] = [];
 
       if (update.title || activeRunId !== undefined) {

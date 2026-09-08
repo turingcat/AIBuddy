@@ -37,10 +37,10 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "Justfile",
             "ui/desktop/package.json",
             "documentation/src/components/MacDesktopInstallButtons.js",
-            "crates/goose-cli/src/commands/update.rs",
-            "crates/goose-sdk/scripts/maven-resource-prefix.sh",
-            "crates/goose-sdk/scripts/prepare-maven-package.sh",
-            "crates/goose-sdk/maven/README.md",
+            "crates/aibuddy-cli/src/commands/update.rs",
+            "crates/aibuddy-sdk/scripts/maven-resource-prefix.sh",
+            "crates/aibuddy-sdk/scripts/prepare-maven-package.sh",
+            "crates/aibuddy-sdk/maven/README.md",
             "documentation/src/components/SupportedEnvironments.js",
             "flake.nix",
             "ui/scripts/publish.sh",
@@ -57,7 +57,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "copy-binary-intel",
             "intel_mac",
             "macos-15-intel",
-            "HeyBuddy_intel_mac",
+            "AIBuddy_intel_mac",
             "macOS Intel",
             "macos-x86_64",
             "darwin-x86-64",
@@ -99,7 +99,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertIn("electron_arch: ia32", workflow)
         self.assertIn("electron_arch: x64", workflow)
         self.assertIn('pnpm run package:windows -- --arch="${ELECTRON_ARCH}"', workflow)
-        self.assertIn("internal-goose-${{ matrix.artifact_arch }}", workflow)
+        self.assertIn("internal-aibuddy-${{ matrix.artifact_arch }}", workflow)
         self.assertIn("internal-windows-unsigned-${{ matrix.artifact_arch }}", workflow)
         self.assertNotIn("package-cli-windows:", workflow)
         self.assertNotIn("package_cli", workflow)
@@ -115,11 +115,11 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertIn("portableFileName", workflow)
         self.assertIn("steps.package-windows-zip.outputs.portable_file_name", workflow)
         self.assertIn("steps.package-windows-installer.outputs.setup_file_name", workflow)
-        self.assertNotIn("HeyBuddy-win32-x64", workflow)
+        self.assertNotIn("AIBuddy-win32-x64", workflow)
 
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(
-            (ROOT / "ui/heybuddy-binary/heybuddy-binary-darwin-x64/package.json").exists()
+            (ROOT / "ui/aibuddy-binary/aibuddy-binary-darwin-x64/package.json").exists()
         )
 
 

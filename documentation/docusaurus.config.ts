@@ -19,12 +19,12 @@ type SidebarItem = {
 };
 
 const config: Config = {
-  title: "HeyBuddy | Your open source AI agent",
+  title: "AIBuddy | Your open source AI agent",
   tagline: "your local AI agent, automating engineering tasks seamlessly",
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  // TODO: no HeyBuddy docs site is deployed yet — replace with the real origin once one exists.
+  // TODO: no AIBuddy docs site is deployed yet — replace with the real origin once one exists.
   url: "https://example.com/",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
@@ -33,7 +33,7 @@ const config: Config = {
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: "turingcat", // Usually your GitHub org/user name.
-  projectName: "HeyBuddy", // Usually your repo name.
+  projectName: "AIBuddy", // Usually your repo name.
 
   onBrokenLinks: "throw",
 
@@ -151,8 +151,8 @@ const config: Config = {
       {
         redirects: [
           {
-            from: "/docs/getting-started/using-heybuddy-free",
-            to: "/docs/getting-started/providers#using-heybuddy-for-free",
+            from: "/docs/getting-started/using-aibuddy-free",
+            to: "/docs/getting-started/providers#using-aibuddy-for-free",
           },
           {
             from: "/v1/docs/getting-started/providers",
@@ -187,7 +187,7 @@ const config: Config = {
             to: "/docs/mcp/computer-controller-mcp",
           },
           {
-            from: "/docs/guides/managing-heybuddy-sessions",
+            from: "/docs/guides/managing-aibuddy-sessions",
             to: "/docs/guides/sessions/session-management",
           },
           {
@@ -195,7 +195,7 @@ const config: Config = {
             to: "/docs/guides/sessions/smart-context-management",
           },
           {
-            from: "/docs/guides/share-heybuddy-sessions",
+            from: "/docs/guides/share-aibuddy-sessions",
             to: "/docs/guides/recipes/session-recipes",
           },
           {
@@ -223,8 +223,8 @@ const config: Config = {
             to: "/docs/guides/managing-tools/adjust-tool-output",
           },
           {
-            from: "/docs/guides/heybuddy-in-docker",
-            to: "/docs/tutorials/heybuddy-in-docker",
+            from: "/docs/guides/aibuddy-in-docker",
+            to: "/docs/tutorials/aibuddy-in-docker",
           },
           {
             from: "/docs/guides/multi-model/creating-plans",
@@ -251,12 +251,12 @@ const config: Config = {
             to: "/docs/guides/context-engineering/prompt-templates",
           },
           {
-            from: "/docs/guides/heybuddy-permissions",
-            to: "/docs/guides/managing-tools/heybuddy-permissions",
+            from: "/docs/guides/aibuddy-permissions",
+            to: "/docs/guides/managing-tools/aibuddy-permissions",
           },
           {
-            from: "/docs/guides/using-heybuddyhints",
-            to: "/docs/guides/context-engineering/using-heybuddyhints",
+            from: "/docs/guides/using-aibuddyhints",
+            to: "/docs/guides/context-engineering/using-aibuddyhints",
           },
           {
             from: "/docs/guides/managing-tools/hooks",
@@ -430,9 +430,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: "HeyBuddy",
+      title: "AIBuddy",
       logo: {
-        alt: "HeyBuddy Logo",
+        alt: "AIBuddy Logo",
         src: "img/logo_light.png",
         srcDark: "img/logo_dark.png",
       },
@@ -474,7 +474,7 @@ const config: Config = {
         },
 
         {
-          href: "https://github.com/turingcat/HeyBuddy",
+          href: "https://github.com/turingcat/AIBuddy",
           label: "GitHub",
           position: "right",
         },
@@ -486,7 +486,7 @@ const config: Config = {
           title: "Quick Links",
           items: [
             {
-              label: "Install HeyBuddy",
+              label: "Install AIBuddy",
               to: "docs/getting-started/installation",
             },
             {
@@ -504,12 +504,12 @@ const config: Config = {
             },
             {
               label: "GitHub",
-              href: "https://github.com/turingcat/HeyBuddy",
+              href: "https://github.com/turingcat/AIBuddy",
             },
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} HeyBuddy contributors. Based on <a href="https://github.com/aaif-goose/goose">heybuddy</a>, © AAIF (Agentic AI Foundation).`,
+      copyright: `Copyright © ${new Date().getFullYear()} AIBuddy contributors. Based on <a href="https://github.com/aaif-goose/goose">aibuddy</a>, © AAIF (Agentic AI Foundation).`,
     },
     prism: {
       theme: prismThemes.github,

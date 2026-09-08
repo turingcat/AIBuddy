@@ -1,4 +1,4 @@
-# heybuddy Documentation
+# aibuddy Documentation
 # https://goose-docs.ai/
 
 User-agent: *

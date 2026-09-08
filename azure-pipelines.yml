@@ -29,13 +29,13 @@ steps:
 
   - powershell: |
       $env:CARGO_INCREMENTAL = "0"
-      cargo build --locked -p heybuddy-cli --bin heybuddy --target x86_64-pc-windows-msvc
+      cargo build --locked -p aibuddy-cli --bin aibuddy --target x86_64-pc-windows-msvc
       if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-      $binary = "target\x86_64-pc-windows-msvc\debug\heybuddy.exe"
+      $binary = "target\x86_64-pc-windows-msvc\debug\aibuddy.exe"
       if (-not (Test-Path $binary)) { throw "Windows binary not found: $binary" }
       New-Item -ItemType Directory -Force "$(Build.ArtifactStagingDirectory)\windows-x64" | Out-Null
-      Copy-Item $binary "$(Build.ArtifactStagingDirectory)\windows-x64\heybuddy.exe"
+      Copy-Item $binary "$(Build.ArtifactStagingDirectory)\windows-x64\aibuddy.exe"
     displayName: Build Windows x64 CLI
 
   - publish: $(Build.ArtifactStagingDirectory)\windows-x64

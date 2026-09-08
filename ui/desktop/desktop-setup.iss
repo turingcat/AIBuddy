@@ -58,7 +58,7 @@ ArchitecturesAllowed={#MyArchitecturesAllowed}
 ArchitecturesInstallIn64BitMode=x64compatible
 #endif
 PrivilegesRequired=admin
-; 升级/卸载时自动关闭正在运行的应用（含其 heybuddy serve 子进程）
+; 升级/卸载时自动关闭正在运行的应用（含其 aibuddy serve 子进程）
 CloseApplications=yes
 
 [Languages]
@@ -70,7 +70,7 @@ Name: "chinesesimplified"; MessagesFile: "ChineseSimplified.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-; SourceDir 为 build-windows.ps1 整理好的完整应用目录（electron + resources + heybuddy.exe）
+; SourceDir 为 build-windows.ps1 整理好的完整应用目录（electron + resources + aibuddy.exe）
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]

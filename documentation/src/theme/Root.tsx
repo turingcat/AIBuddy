@@ -31,7 +31,7 @@ export default function Root({ children }: Props): JSX.Element {
             lineHeight: '1.3',
           }}
         >
-          ✨ NO KEYBOARDS ALLOWED HACKATHON✨ : build next-gen interfaces with heybuddy and win prizes.{' '}
+          ✨ NO KEYBOARDS ALLOWED HACKATHON✨ : build next-gen interfaces with aibuddy and win prizes.{' '}
           <a
             href="https://nokeyboardsallowed.dev"
             target="_blank"

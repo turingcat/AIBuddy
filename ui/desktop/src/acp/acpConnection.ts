@@ -1,24 +1,24 @@
-import { DEFAULT_HEYBUDDY_MCP_HOST_CAPABILITIES } from '@heybuddy/heybuddy-sdk';
+import { DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES } from '@aibuddy/aibuddy-sdk';
 import { methods, PROTOCOL_VERSION, type InitializeResponse } from '@agentclientprotocol/sdk';
 import { createWebSocketStream } from '@agentclientprotocol/sdk/experimental/ws-client';
 import packageJson from '../../package.json';
-import { HEYBUDDY_SERVE_EXITED_USER_MESSAGE } from '../heybuddyServeLeaseRegistry';
+import { AIBUDDY_SERVE_EXITED_USER_MESSAGE } from '../aibuddyServeLeaseRegistry';
 import {
-  handleAcpHeyBuddySessionNotification,
+  handleAcpAIBuddySessionNotification,
   handleAcpProviderDeviceCodeNotification,
   handleAcpSessionNotification,
 } from './chatNotifications';
 import { requestAcpElicitation } from './elicitationRequests';
 import {
-  connectHeyBuddyAcpClient,
-  type HeyBuddyAcpCallbacks,
-  type HeyBuddyAcpClient,
-} from './heybuddyAcpClient';
+  connectAIBuddyAcpClient,
+  type AIBuddyAcpCallbacks,
+  type AIBuddyAcpClient,
+} from './aibuddyAcpClient';
 import { requestAcpPermission } from './permissionRequests';
 import { requestAcpRecipeParams } from './recipeParamRequests';
 
 type AcpConnection = {
-  client: HeyBuddyAcpClient;
+  client: AIBuddyAcpClient;
   initializeResponse: InitializeResponse;
 };
 
@@ -35,7 +35,7 @@ let connectionGeneration = 0;
 let recovering = false;
 const recoveryListeners = new Set<AcpRecoveryListener>();
 
-export async function getAcpClient(): Promise<HeyBuddyAcpClient> {
+export async function getAcpClient(): Promise<AIBuddyAcpClient> {
   return (await getConnection()).client;
 }
 
@@ -84,7 +84,7 @@ function recoverConnection(immediate: boolean): void {
   const generation = connectionGeneration;
   const recoveryAttempt = immediate
     ? openConnection(generation).catch((error) => {
-        if (generation !== connectionGeneration || isHeyBuddyServeExitedError(error)) {
+        if (generation !== connectionGeneration || isAIBuddyServeExitedError(error)) {
           throw error;
         }
         return retryWithBackoff(generation);
@@ -136,20 +136,20 @@ async function openConnection(generation: number): Promise<AcpConnection> {
 
   // Electron treats an explicitly passed undefined protocol as a subprotocol.
   const stream = createWebSocketStream(wsUrl, { protocols: [] });
-  const client = connectHeyBuddyAcpClient(stream, createClientCallbacks());
+  const client = connectAIBuddyAcpClient(stream, createClientCallbacks());
 
   try {
     const initializeResponse = await withTimeout(
       client.connection.agent.request(methods.agent.initialize, {
         protocolVersion: ACP_V1_PROTOCOL_VERSION,
         _meta: {
-          'heybuddy/useLoginShellPath': true,
+          'aibuddy/useLoginShellPath': true,
         },
         clientCapabilities: {
           elicitation: { form: {} },
           _meta: {
-            heybuddy: {
-              mcpHostCapabilities: DEFAULT_HEYBUDDY_MCP_HOST_CAPABILITIES,
+            aibuddy: {
+              mcpHostCapabilities: DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES,
               customNotifications: true,
               recipeParameterRequests: true,
             },
@@ -198,7 +198,7 @@ async function retryWithBackoff(generation: number): Promise<AcpConnection> {
     try {
       return await openConnection(generation);
     } catch (error) {
-      if (generation !== connectionGeneration || isHeyBuddyServeExitedError(error)) {
+      if (generation !== connectionGeneration || isAIBuddyServeExitedError(error)) {
         throw error;
       }
     }
@@ -207,21 +207,21 @@ async function retryWithBackoff(generation: number): Promise<AcpConnection> {
   throw new Error('ACP connection attempt is no longer current');
 }
 
-function isHeyBuddyServeExitedError(error: unknown): boolean {
-  return error instanceof Error && error.message.includes(HEYBUDDY_SERVE_EXITED_USER_MESSAGE);
+function isAIBuddyServeExitedError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes(AIBUDDY_SERVE_EXITED_USER_MESSAGE);
 }
 
 function delay(delayMs: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delayMs));
 }
 
-function createClientCallbacks(): HeyBuddyAcpCallbacks {
+function createClientCallbacks(): AIBuddyAcpCallbacks {
   return {
     requestPermission: requestAcpPermission,
     unstable_createElicitation: requestAcpElicitation,
     unstable_sessionRecipeRequestParams: requestAcpRecipeParams,
     sessionUpdate: handleAcpSessionNotification,
-    unstable_sessionUpdate: handleAcpHeyBuddySessionNotification,
+    unstable_sessionUpdate: handleAcpAIBuddySessionNotification,
     unstable_providerDeviceCode: handleAcpProviderDeviceCodeNotification,
   };
 }

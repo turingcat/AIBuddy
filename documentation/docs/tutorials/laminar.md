@@ -1,16 +1,16 @@
 ---
-description: Integrate heybuddy with Laminar to observe performance
+description: Integrate aibuddy with Laminar to observe performance
 ---
 
 # Observability with Laminar
 
-This tutorial covers how to integrate heybuddy with Laminar to trace your heybuddy sessions and understand how the agent is performing.
+This tutorial covers how to integrate aibuddy with Laminar to trace your aibuddy sessions and understand how the agent is performing.
 
 ## What is Laminar
 
 [Laminar](https://laminar.sh/) is an open-source observability platform purpose-built for AI agents. It traces LLM calls, tool execution, and custom functions so you can debug, evaluate, and improve agent behavior.
 
-## Why Laminar for heybuddy
+## Why Laminar for aibuddy
 
 - High-signal traces for LLM calls, tools, and sub-agents.
 - Replay any span in the Playground to compare prompts and models.
@@ -21,9 +21,9 @@ This tutorial covers how to integrate heybuddy with Laminar to trace your heybud
 
 Sign up for Laminar Cloud at [laminar.sh](https://laminar.sh) or self-host Laminar from the [open-source repo](https://github.com/lmnr-ai/lmnr). Grab your project API key.
 
-## Configure heybuddy to export OTLP to Laminar
+## Configure aibuddy to export OTLP to Laminar
 
-heybuddy exports OpenTelemetry data over OTLP/HTTP. Point the exporter to Laminar and provide your API key as an authorization header.
+aibuddy exports OpenTelemetry data over OTLP/HTTP. Point the exporter to Laminar and provide your API key as an authorization header.
 
 ### Laminar Cloud
 
@@ -48,10 +48,10 @@ If your self-hosted instance does not require auth, you can omit `OTEL_EXPORTER_
 If you do not see traces, try setting the endpoint to the explicit OTLP path, such as `https://api.lmnr.ai/v1/traces` or `http://localhost:8000/v1/traces`.
 :::
 
-## Run heybuddy with Laminar enabled
+## Run aibuddy with Laminar enabled
 
-Start heybuddy normally. With the OTLP environment variables set, Laminar will capture traces of your heybuddy sessions and tool execution.
+Start aibuddy normally. With the OTLP environment variables set, Laminar will capture traces of your aibuddy sessions and tool execution.
 
 _[Example trace (public) in Laminar](https://laminar.sh/shared/traces/63010af0-cf31-b8b6-0d77-fc9924bcaa4c)_
 
-![heybuddy trace in Laminar](../assets/guides/laminar.png)
+![aibuddy trace in Laminar](../assets/guides/laminar.png)

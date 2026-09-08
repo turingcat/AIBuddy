@@ -1,14 +1,14 @@
 ---
 title: Spraay x402 Extension
-description: Add Spraay x402 MCP Server as a heybuddy Extension for batch crypto payments, onchain data, and AI model access
+description: Add Spraay x402 MCP Server as a aibuddy Extension for batch crypto payments, onchain data, and AI model access
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-This tutorial covers how to add the [Spraay x402 MCP Server](https://github.com/plagtech/spraay-x402-mcp) as a heybuddy extension for batch cryptocurrency payments, onchain data, and AI model access on Base.
+This tutorial covers how to add the [Spraay x402 MCP Server](https://github.com/plagtech/spraay-x402-mcp) as a aibuddy extension for batch cryptocurrency payments, onchain data, and AI model access on Base.
 
-With the Spraay extension, heybuddy can send ETH and ERC-20 tokens to up to **200 recipients in a single transaction**, query live token prices, check wallet balances, resolve ENS names, get swap quotes, and chat with 200+ AI models — all pay-per-call via the [x402 protocol](https://x402.org).
+With the Spraay extension, aibuddy can send ETH and ERC-20 tokens to up to **200 recipients in a single transaction**, query live token prices, check wallet balances, resolve ENS names, get swap quotes, and chat with 200+ AI models — all pay-per-call via the [x402 protocol](https://x402.org).
 
 ## Supported Tools
 
@@ -49,7 +49,7 @@ npm run build
 ### Configuration
 
 <Tabs>
-<TabItem value="ui" label="heybuddy Desktop">
+<TabItem value="ui" label="aibuddy Desktop">
 
 1. Click the **Extensions** icon in the sidebar
 2. Click **Add custom extension**
@@ -63,16 +63,16 @@ npm run build
    - **Value**: Your wallet private key (with USDC on Base)
 
 </TabItem>
-<TabItem value="cli" label="heybuddy CLI">
+<TabItem value="cli" label="aibuddy CLI">
 
 ```
-heybuddy configure
+aibuddy configure
 ```
 
 Choose **Add Extension** → **Command-line Extension** and configure:
 
 ```
-┌   heybuddy-configure
+┌   aibuddy-configure
 │
 │   ◇  What would you like to call this extension?
 │   spraay
@@ -106,7 +106,7 @@ Choose **Add Extension** → **Command-line Extension** and configure:
 What's the current price of ETH on Base?
 ```
 
-heybuddy will use the `spraay_prices` tool to fetch live onchain prices from Uniswap V3.
+aibuddy will use the `spraay_prices` tool to fetch live onchain prices from Uniswap V3.
 
 ### Check Wallet Balances
 
@@ -114,7 +114,7 @@ heybuddy will use the `spraay_prices` tool to fetch live onchain prices from Uni
 Check the USDC balance of vitalik.eth
 ```
 
-heybuddy will use `spraay_resolve` to resolve the ENS name, then `spraay_balances` to fetch balances.
+aibuddy will use `spraay_resolve` to resolve the ENS name, then `spraay_balances` to fetch balances.
 
 ### Get a Swap Quote
 
@@ -122,7 +122,7 @@ heybuddy will use `spraay_resolve` to resolve the ENS name, then `spraay_balance
 Get me a swap quote for 100 USDC to WETH on Base
 ```
 
-heybuddy will use `spraay_swap_quote` to fetch a live quote from Uniswap V3.
+aibuddy will use `spraay_swap_quote` to fetch a live quote from Uniswap V3.
 
 ### Batch Send USDC
 
@@ -133,7 +133,7 @@ Send 10 USDC each to these wallets:
 0xFBb1b73C4f0BDa4f67dcA266ce6Ef42f520fBB98
 ```
 
-heybuddy will use `spraay_batch_execute` to process all payments in a single transaction.
+aibuddy will use `spraay_batch_execute` to process all payments in a single transaction.
 
 ### Chat with AI Models
 
@@ -141,11 +141,11 @@ heybuddy will use `spraay_batch_execute` to process all payments in a single tra
 Using spraay, ask GPT-4 to explain what x402 is
 ```
 
-heybuddy will use `spraay_chat` to query from 200+ available AI models.
+aibuddy will use `spraay_chat` to query from 200+ available AI models.
 
 ## How It Works
 
-1. You ask heybuddy → heybuddy calls a Spraay tool (e.g. `spraay_prices`)
+1. You ask aibuddy → aibuddy calls a Spraay tool (e.g. `spraay_prices`)
 2. MCP server sends request to `gateway.spraay.app`
 3. Gateway returns HTTP 402 + payment requirements
 4. x402 client auto-signs USDC payment on Base

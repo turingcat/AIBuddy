@@ -1,28 +1,28 @@
 ---
 title: VMware AIops Extension
-description: Add vmware-aiops MCP Server as a heybuddy Extension for natural language VMware vCenter/ESXi operations
+description: Add vmware-aiops MCP Server as a aibuddy Extension for natural language VMware vCenter/ESXi operations
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 
-This tutorial covers how to add [vmware-aiops](https://github.com/zw008/VMware-AIops) as a heybuddy extension, enabling natural language management of VMware vCenter and ESXi infrastructure. With this extension, heybuddy can list VMs, check health, power on/off machines, deploy from templates, run commands inside VMs, and orchestrate multi-step operations with automatic rollback.
+This tutorial covers how to add [vmware-aiops](https://github.com/zw008/VMware-AIops) as a aibuddy extension, enabling natural language management of VMware vCenter and ESXi infrastructure. With this extension, aibuddy can list VMs, check health, power on/off machines, deploy from templates, run commands inside VMs, and orchestrate multi-step operations with automatic rollback.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
     Install vmware-aiops first:
     ```sh
     uv tool install vmware-aiops
-    vmware-aiops mcp-config install --agent heybuddy
+    vmware-aiops mcp-config install --agent aibuddy
     ```
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     ```sh
     uv tool install vmware-aiops
-    vmware-aiops mcp-config install --agent heybuddy
+    vmware-aiops mcp-config install --agent aibuddy
     ```
   </TabItem>
 </Tabs>
@@ -59,11 +59,11 @@ chmod 600 ~/.vmware-aiops/.env
 vmware-aiops doctor
 ```
 
-**Step 3: Add to heybuddy**
+**Step 3: Add to aibuddy**
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
-    <HeyBuddyDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="vmware-aiops"
       extensionName="VMware AIops"
       description="Natural language VMware vCenter/ESXi monitoring and operations"
@@ -75,7 +75,7 @@ vmware-aiops doctor
       ]}
     />
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="vmware-aiops"
       description="Natural language VMware vCenter/ESXi monitoring and operations"
@@ -96,9 +96,9 @@ vmware-aiops doctor
 
 ## Example Usage
 
-In this example, I'll use heybuddy to perform a daily health check across my vCenter environment and remediate a disk space issue on a VM — all via natural language.
+In this example, I'll use aibuddy to perform a daily health check across my vCenter environment and remediate a disk space issue on a VM — all via natural language.
 
-### heybuddy Prompt
+### aibuddy Prompt
 
 ```
 Check the health of my vCenter environment. Show any active alarms and
@@ -106,7 +106,7 @@ powered-off VMs that haven't been used recently. If datastore usage is
 above 85%, tell me which VMs are using the most space.
 ```
 
-### heybuddy Output
+### aibuddy Output
 
 ```
 I'll start with a full health check of your vCenter environment.

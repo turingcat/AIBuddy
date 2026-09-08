@@ -8,7 +8,7 @@ export interface StartupTraceEvent {
   details?: Record<string, unknown>;
 }
 
-export interface HeyBuddyServeStartupDiagnostics {
+export interface AIBuddyServeStartupDiagnostics {
   attemptId: string;
   startedAt: string;
   binaryPath: string | null;
@@ -26,9 +26,9 @@ export interface HeyBuddyServeStartupDiagnostics {
   events: StartupTraceEvent[];
 }
 
-export interface HeyBuddyServeStartupTrace {
+export interface AIBuddyServeStartupTrace {
   diagnosticsPath: string;
-  diagnostics: HeyBuddyServeStartupDiagnostics;
+  diagnostics: AIBuddyServeStartupDiagnostics;
   record: (name: string, details?: Record<string, unknown>) => void;
   flush: () => void;
 }
@@ -43,13 +43,13 @@ export const appendTail = (target: string[], lines: string[]) => {
   }
 };
 
-const cleanupHeyBuddyServeStartupDiagnostics = (diagnosticsDir: string) => {
+const cleanupAIBuddyServeStartupDiagnostics = (diagnosticsDir: string) => {
   const startupLogs = fs
     .readdirSync(diagnosticsDir, { withFileTypes: true })
     .filter(
       (entry) =>
         entry.isFile() &&
-        entry.name.startsWith('heybuddy-serve-startup-') &&
+        entry.name.startsWith('aibuddy-serve-startup-') &&
         entry.name.endsWith('.json')
     )
     .map((entry) => {
@@ -66,22 +66,22 @@ const cleanupHeyBuddyServeStartupDiagnostics = (diagnosticsDir: string) => {
   }
 };
 
-export const createHeyBuddyServeStartupDiagnostics = (
+export const createAIBuddyServeStartupDiagnostics = (
   diagnosticsDir: string | undefined,
   workingDir: string
-): HeyBuddyServeStartupTrace | null => {
+): AIBuddyServeStartupTrace | null => {
   if (!diagnosticsDir) {
     return null;
   }
 
   fs.mkdirSync(diagnosticsDir, { recursive: true });
-  cleanupHeyBuddyServeStartupDiagnostics(diagnosticsDir);
+  cleanupAIBuddyServeStartupDiagnostics(diagnosticsDir);
   const startedAt = new Date();
-  const attemptId = `heybuddy-serve-startup-${startedAt.toISOString().replace(/:/g, '-')}-${process.pid}.json`;
+  const attemptId = `aibuddy-serve-startup-${startedAt.toISOString().replace(/:/g, '-')}-${process.pid}.json`;
   const diagnosticsPath = path.join(diagnosticsDir, attemptId);
   const monotonicStart = Date.now();
 
-  const diagnostics: HeyBuddyServeStartupDiagnostics = {
+  const diagnostics: AIBuddyServeStartupDiagnostics = {
     attemptId,
     startedAt: startedAt.toISOString(),
     binaryPath: null,

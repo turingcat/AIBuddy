@@ -6,7 +6,7 @@
 from current main, review and test their changes, then merge normally. No product
 development is performed in a generated-only branch.
 
-The initial migration is being prepared in `feat/heybuddy-branding`. Do not merge
+The initial migration is being prepared in `feat/aibuddy-branding`. Do not merge
 unconverted upstream sources into a renamed product tree or overwrite product
 sources with a pristine upstream snapshot.
 
@@ -26,7 +26,7 @@ node tools/rebrand/cli.mjs verify --output <generated-directory>
 ```
 
 Output directories must be new and outside source worktrees. Generation never
-updates Git refs. `.heybuddy-rebrand.json` records input commit/tree, pinned tool
+updates Git refs. `.aibuddy-rebrand.json` records input commit/tree, pinned tool
 identity, mappings, preservation decisions, formatting stages and file digests.
 Any unresolved entry blocks generation. Existing output is never overwritten.
 
@@ -43,9 +43,9 @@ applied directly to formatted output.
 ## Preservation Rules
 
 - First-party packages, modules, identifiers, commands and normal product text use
-  HeyBuddy. Plural Geese becomes HeyBuddies to avoid colliding with Goose symbols.
+  AIBuddy. Plural AIBuddies becomes AIBuddies to avoid colliding with AIBuddy symbols.
 - Copyright/license notices and real upstream/external URLs remain accurate.
-- Published third-party dependency `v8-goose` and Rust binding `v8_goose` remain
+- Published third-party dependency `v8-aibuddy` and Rust binding `v8_goose` remain
   unchanged. Local workspace crates are renamed.
 - Historical data/keychain/browser partition identities are explicit exceptions
   until a tested data migration is approved. Never rename another installation's

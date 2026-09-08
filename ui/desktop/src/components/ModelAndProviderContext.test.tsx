@@ -105,7 +105,7 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     mocks.getProviderDisplayName.mockReturnValue('');
     mocks.getSnapshot.mockReturnValue(undefined);
     mocks.appConfigGet.mockImplementation((key: string) =>
-      key === 'GOOSE_DEFAULT_PROVIDER' ? 'aibuddy' : undefined
+      key === 'AIBUDDY_DEFAULT_PROVIDER' ? 'aibuddy' : undefined
     );
 
     (window as unknown as { appConfig: { get: typeof mocks.appConfigGet } }).appConfig = {

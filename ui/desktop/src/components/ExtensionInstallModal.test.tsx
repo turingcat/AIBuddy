@@ -43,7 +43,7 @@ describe('ExtensionInstallModal', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockElectron.getConfig.mockReturnValue({
-      HEYBUDDY_ALLOWLIST_WARNING: false,
+      AIBUDDY_ALLOWLIST_WARNING: false,
     });
   });
 
@@ -60,7 +60,7 @@ describe('ExtensionInstallModal', () => {
       const eventHandler = getAddExtensionEventHandler();
 
       await act(async () => {
-        await eventHandler({}, 'heybuddy://extension?cmd=npx&arg=test-extension&name=TestExt');
+        await eventHandler({}, 'aibuddy://extension?cmd=npx&arg=test-extension&name=TestExt');
       });
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('ExtensionInstallModal', () => {
       const eventHandler = getAddExtensionEventHandler();
 
       await act(async () => {
-        await eventHandler({}, 'heybuddy://extension?cmd=npx&arg=test-extension&name=AllowedExt');
+        await eventHandler({}, 'aibuddy://extension?cmd=npx&arg=test-extension&name=AllowedExt');
       });
 
       expect(screen.getByText('Confirm Extension Installation')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('ExtensionInstallModal', () => {
 
     it('should handle warning mode', async () => {
       mockElectron.getConfig.mockReturnValue({
-        HEYBUDDY_ALLOWLIST_WARNING: true,
+        AIBUDDY_ALLOWLIST_WARNING: true,
       });
       mockElectron.getAllowedExtensions.mockResolvedValue(['uvx allowed-package']);
 
@@ -97,7 +97,7 @@ describe('ExtensionInstallModal', () => {
       await act(async () => {
         await eventHandler(
           {},
-          'heybuddy://extension?cmd=npx&arg=untrusted-extension&name=UntrustedExt'
+          'aibuddy://extension?cmd=npx&arg=untrusted-extension&name=UntrustedExt'
         );
       });
 
@@ -114,7 +114,7 @@ describe('ExtensionInstallModal', () => {
       const eventHandler = getAddExtensionEventHandler();
 
       await act(async () => {
-        await eventHandler({}, 'heybuddy://extension?cmd=npx&arg=blocked-extension&name=BlockedExt');
+        await eventHandler({}, 'aibuddy://extension?cmd=npx&arg=blocked-extension&name=BlockedExt');
       });
 
       expect(screen.getByText('Extension Installation Blocked')).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe('ExtensionInstallModal', () => {
       const eventHandler = getAddExtensionEventHandler();
 
       await act(async () => {
-        await eventHandler({}, 'heybuddy://extension?cmd=npx&arg=test&name=Test');
+        await eventHandler({}, 'aibuddy://extension?cmd=npx&arg=test&name=Test');
       });
 
       expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('ExtensionInstallModal', () => {
       const eventHandler = getAddExtensionEventHandler();
 
       await act(async () => {
-        await eventHandler({}, 'heybuddy://extension?cmd=npx&arg=test&name=Test');
+        await eventHandler({}, 'aibuddy://extension?cmd=npx&arg=test&name=Test');
       });
 
       await act(async () => {
@@ -162,7 +162,7 @@ describe('ExtensionInstallModal', () => {
       });
 
       expect(addExtensionFromDeepLink).toHaveBeenCalledWith(
-        'heybuddy://extension?cmd=npx&arg=test&name=Test',
+        'aibuddy://extension?cmd=npx&arg=test&name=Test',
         mockAddExtension,
         expect.any(Function)
       );

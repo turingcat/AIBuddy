@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Builds the heybuddy binary for target platforms and places them
- * into the corresponding npm package directories under ui/heybuddy-binary/.
+ * Builds the aibuddy binary for target platforms and places them
+ * into the corresponding npm package directories under ui/aibuddy-binary/.
  *
  * Usage:
  *   npm run build:native              # build for current platform only
@@ -20,7 +20,7 @@ import { mkdirSync, copyFileSync, chmodSync, existsSync } from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const ROOT = resolve(__dirname, "../../..");
-const NATIVE_DIR = resolve(ROOT, "ui/heybuddy-binary");
+const NATIVE_DIR = resolve(ROOT, "ui/aibuddy-binary");
 
 const RUST_TARGETS: Record<string, string> = {
   "darwin-arm64": "aarch64-apple-darwin",
@@ -49,17 +49,17 @@ function buildTarget(platform: string): void {
     throw new Error(`Unknown platform: ${platform}`);
   }
 
-  const pkgDir = resolve(NATIVE_DIR, `heybuddy-binary-${platform}`);
+  const pkgDir = resolve(NATIVE_DIR, `aibuddy-binary-${platform}`);
   const binDir = resolve(pkgDir, "bin");
 
-  console.log(`==> Building heybuddy for ${platform} (${rustTarget})`);
+  console.log(`==> Building aibuddy for ${platform} (${rustTarget})`);
 
   try {
     const featureArgs = platform.startsWith("linux-")
       ? " --features vulkan"
       : "";
     execSync(
-      `cargo build --release --target ${rustTarget} --bin heybuddy${featureArgs}`,
+      `cargo build --release --target ${rustTarget} --bin aibuddy${featureArgs}`,
       {
         cwd: ROOT,
         stdio: "inherit",
@@ -73,7 +73,7 @@ function buildTarget(platform: string): void {
   mkdirSync(binDir, { recursive: true });
 
   const ext = platform.startsWith("win32") ? ".exe" : "";
-  const binaryName = `heybuddy${ext}`;
+  const binaryName = `aibuddy${ext}`;
   const srcPath = resolve(ROOT, "target", rustTarget, "release", binaryName);
   const destPath = resolve(binDir, binaryName);
 
@@ -128,7 +128,7 @@ async function main() {
     buildTarget(currentPlatform);
   }
 
-  console.log("==> Done. Native packages staged in ui/heybuddy-binary/");
+  console.log("==> Done. Native packages staged in ui/aibuddy-binary/");
 }
 
 main().catch((err) => {

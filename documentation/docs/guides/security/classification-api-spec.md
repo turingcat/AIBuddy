@@ -4,7 +4,7 @@ title: Classification API Specification
 description: API specification for self-hosting ML-based prompt injection detection endpoints.
 ---
 
-This API specification defines the API that heybuddy uses for ML-based [prompt injection detection](/docs/guides/security/prompt-injection-detection).
+This API specification defines the API that aibuddy uses for ML-based [prompt injection detection](/docs/guides/security/prompt-injection-detection).
 
 :::info For Self-Hosting Only
 This API specification is intended as a reference for users who want to self-host their own model and classification endpoint.
@@ -12,7 +12,7 @@ This API specification is intended as a reference for users who want to self-hos
 If you're using an existing inference service like Hugging Face, you can just configure it in your [prompt injection detection](/docs/guides/security/prompt-injection-detection) settings.
 :::
 
-heybuddy requires a classification endpoint that can analyze text and return a score indicating the likelihood of prompt injection. This API follows the Hugging Face Inference API format for text classification, making it compatible with [Hugging Face Inference Endpoints](https://huggingface.co/docs/inference-providers/providers/hf-inference).
+aibuddy requires a classification endpoint that can analyze text and return a score indicating the likelihood of prompt injection. This API follows the Hugging Face Inference API format for text classification, making it compatible with [Hugging Face Inference Endpoints](https://huggingface.co/docs/inference-providers/providers/hf-inference).
 
 ## Security & Privacy Considerations
 **Warning:** When using ML-based prompt injection detection, all tool call content and user messages sent for classification will be transmitted to the configured endpoint. This may include sensitive or confidential information.
@@ -73,10 +73,10 @@ Analyzes text for prompt injection and returns classification results.
 - `"SAFE"` or `"LABEL_0"`: Indicates safe/benign text
 - Implementations SHOULD return results sorted by score (highest first)
 
-**heybuddy's Usage:**
-- heybuddy looks for the label with the highest score
+**aibuddy's Usage:**
+- aibuddy looks for the label with the highest score
 - If the top label is `"INJECTION"` (or `"LABEL_1"`), the score is used as the injection confidence
-- If the top label is `"SAFE"` (or `"LABEL_0"`), heybuddy uses `1.0 - score` as the injection confidence
+- If the top label is `"SAFE"` (or `"LABEL_0"`), aibuddy uses `1.0 - score` as the injection confidence
 
 #### Status Codes
 

@@ -60,7 +60,7 @@ const mockSettings: Record<string, unknown> = {
     findPrevious: 'CommandOrControl+Shift+G',
     alwaysOnTop: 'CommandOrControl+Shift+T',
   },
-  externalHeyBuddyd: {
+  externalAIBuddyd: {
     enabled: false,
     url: '',
     secret: '',

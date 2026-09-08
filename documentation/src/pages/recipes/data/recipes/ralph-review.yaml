@@ -9,7 +9,7 @@ instructions: |
   
   You are a DIFFERENT MODEL than the worker. Your fresh perspective catches mistakes.
   
-  STATE FILES (in .heybuddy/ralph/):
+  STATE FILES (in .aibuddy/ralph/):
   - task.md = The original task (READ THIS FIRST)
   - work-summary.txt = What the worker claims to have done
   - work-complete.txt = Exists if worker claims task is complete
@@ -27,25 +27,25 @@ instructions: |
   - DO reject if tests fail
   
   OUTPUT:
-  If approved: echo "SHIP" > .heybuddy/ralph/review-result.txt
+  If approved: echo "SHIP" > .aibuddy/ralph/review-result.txt
   If needs work: 
-    echo "REVISE" > .heybuddy/ralph/review-result.txt
-    echo "specific feedback" > .heybuddy/ralph/review-feedback.txt
+    echo "REVISE" > .aibuddy/ralph/review-result.txt
+    echo "specific feedback" > .aibuddy/ralph/review-feedback.txt
 
 prompt: |
   ## Ralph Review Phase
   
-  1. Read the task: `cat .heybuddy/ralph/task.md`
-  2. Read work summary: `cat .heybuddy/ralph/work-summary.txt`
-  3. Check if complete: `cat .heybuddy/ralph/work-complete.txt 2>/dev/null`
+  1. Read the task: `cat .aibuddy/ralph/task.md`
+  2. Read work summary: `cat .aibuddy/ralph/work-summary.txt`
+  3. Check if complete: `cat .aibuddy/ralph/work-complete.txt 2>/dev/null`
   4. Examine the actual files created/modified
   5. Run verification (tests, build, etc.)
   6. Decide: SHIP or REVISE
   
-  If SHIP: `echo "SHIP" > .heybuddy/ralph/review-result.txt`
+  If SHIP: `echo "SHIP" > .aibuddy/ralph/review-result.txt`
   If REVISE: 
-    `echo "REVISE" > .heybuddy/ralph/review-result.txt`
-    `echo "specific feedback" > .heybuddy/ralph/review-feedback.txt`
+    `echo "REVISE" > .aibuddy/ralph/review-result.txt`
+    `echo "specific feedback" > .aibuddy/ralph/review-feedback.txt`
 
 extensions:
   - type: builtin

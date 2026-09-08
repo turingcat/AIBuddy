@@ -3,8 +3,8 @@ import { createSession } from '../sessions';
 import type { ExtensionConfig } from '../types/extensions';
 import type { Session } from '../types/session';
 import type { FixedExtensionEntry } from '../components/ConfigContext';
-import type { HeyBuddyExtension, HeyBuddyExtensionEntry } from '@heybuddy/heybuddy-sdk';
-import { getConfiguredHeyBuddyExtensions } from '../acp/extensions';
+import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-sdk';
+import { getConfiguredAIBuddyExtensions } from '../acp/extensions';
 import { acpChatSessionController } from '../acp/chatSessionController';
 import { beginConfiguredRecipeParameterScope } from '../acp/recipeParamRequests';
 import { getAcpFeatureCapabilities } from '../acp/capabilities';
@@ -13,7 +13,7 @@ vi.mock('../acp/extensions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../acp/extensions')>();
   return {
     ...actual,
-    getConfiguredHeyBuddyExtensions: vi.fn(),
+    getConfiguredAIBuddyExtensions: vi.fn(),
   };
 });
 
@@ -52,18 +52,18 @@ const configuredExtension = (name: string, enabled: boolean): FixedExtensionEntr
   enabled,
 });
 
-const heybuddyExtension = (name: string): HeyBuddyExtension => ({
+const aibuddyExtension = (name: string): AIBuddyExtension => ({
   type: 'builtin',
   name,
   description: `${name} extension`,
 });
 
-const heybuddyExtensionEntry = (name: string): HeyBuddyExtensionEntry => ({
-  extension: heybuddyExtension(name),
+const aibuddyExtensionEntry = (name: string): AIBuddyExtensionEntry => ({
+  extension: aibuddyExtension(name),
   enabled: true,
 });
 
-const mockedGetConfiguredHeyBuddyExtensions = vi.mocked(getConfiguredHeyBuddyExtensions);
+const mockedGetConfiguredAIBuddyExtensions = vi.mocked(getConfiguredAIBuddyExtensions);
 const mockedCreateAcpSession = vi.mocked(acpChatSessionController.createSession);
 const mockedBeginConfiguredRecipeParameterScope = vi.mocked(beginConfiguredRecipeParameterScope);
 const mockedGetAcpFeatureCapabilities = vi.mocked(getAcpFeatureCapabilities);
@@ -71,10 +71,10 @@ const finishConfiguredRecipeParameterScope = vi.fn();
 
 describe('createSession ACP session extensions', () => {
   beforeEach(() => {
-    mockedGetConfiguredHeyBuddyExtensions.mockReset();
-    mockedGetConfiguredHeyBuddyExtensions.mockResolvedValue([
-      heybuddyExtensionEntry('developer'),
-      heybuddyExtensionEntry('memory'),
+    mockedGetConfiguredAIBuddyExtensions.mockReset();
+    mockedGetConfiguredAIBuddyExtensions.mockResolvedValue([
+      aibuddyExtensionEntry('developer'),
+      aibuddyExtensionEntry('memory'),
     ]);
     mockedCreateAcpSession.mockReset();
     mockedCreateAcpSession.mockResolvedValue(testSession);
@@ -96,8 +96,8 @@ describe('createSession ACP session extensions', () => {
       extensionConfigs: [extensionConfig('developer')],
     });
 
-    expect(mockedGetConfiguredHeyBuddyExtensions).toHaveBeenCalledOnce();
-    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [heybuddyExtension('developer')], {
+    expect(mockedGetConfiguredAIBuddyExtensions).toHaveBeenCalledOnce();
+    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [aibuddyExtension('developer')], {
       recipeDeeplink: undefined,
       recipeId: undefined,
       recipeParameterScopeId: undefined,
@@ -110,8 +110,8 @@ describe('createSession ACP session extensions', () => {
       allExtensions: [configuredExtension('developer', true), configuredExtension('memory', false)],
     });
 
-    expect(mockedGetConfiguredHeyBuddyExtensions).toHaveBeenCalledOnce();
-    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [heybuddyExtension('developer')], {
+    expect(mockedGetConfiguredAIBuddyExtensions).toHaveBeenCalledOnce();
+    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [aibuddyExtension('developer')], {
       recipeDeeplink: undefined,
       recipeId: undefined,
       recipeParameterScopeId: undefined,
@@ -123,7 +123,7 @@ describe('createSession ACP session extensions', () => {
       allExtensions: [configuredExtension('developer', false)],
     });
 
-    expect(mockedGetConfiguredHeyBuddyExtensions).not.toHaveBeenCalled();
+    expect(mockedGetConfiguredAIBuddyExtensions).not.toHaveBeenCalled();
     expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [], {
       recipeDeeplink: undefined,
       recipeId: undefined,
@@ -132,11 +132,11 @@ describe('createSession ACP session extensions', () => {
   });
 
   it('scopes startup parameters to recipe deeplink session creation', async () => {
-    await createSession('/tmp', { recipeDeeplink: 'heybuddy://recipe?url=example' });
+    await createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' });
 
     expect(mockedBeginConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
     expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [], {
-      recipeDeeplink: 'heybuddy://recipe?url=example',
+      recipeDeeplink: 'aibuddy://recipe?url=example',
       recipeId: undefined,
       recipeParameterScopeId: 'scope-1',
     });
@@ -147,7 +147,7 @@ describe('createSession ACP session extensions', () => {
     mockedCreateAcpSession.mockRejectedValueOnce(new Error('session creation failed'));
 
     await expect(
-      createSession('/tmp', { recipeDeeplink: 'heybuddy://recipe?url=example' })
+      createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' })
     ).rejects.toThrow('session creation failed');
 
     expect(mockedBeginConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
@@ -155,11 +155,11 @@ describe('createSession ACP session extensions', () => {
   });
 
   it('finishes the deeplink parameter scope when extension lookup fails', async () => {
-    mockedGetConfiguredHeyBuddyExtensions.mockRejectedValueOnce(new Error('extension lookup failed'));
+    mockedGetConfiguredAIBuddyExtensions.mockRejectedValueOnce(new Error('extension lookup failed'));
 
     await expect(
       createSession('/tmp', {
-        recipeDeeplink: 'heybuddy://recipe?url=example',
+        recipeDeeplink: 'aibuddy://recipe?url=example',
         extensionConfigs: [extensionConfig('developer')],
       })
     ).rejects.toThrow('extension lookup failed');
@@ -169,16 +169,16 @@ describe('createSession ACP session extensions', () => {
     expect(finishConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
   });
 
-  it('reports incompatible HeyBuddy servers before sending scoped parameters', async () => {
+  it('reports incompatible AIBuddy servers before sending scoped parameters', async () => {
     mockedGetAcpFeatureCapabilities.mockResolvedValueOnce({
       localInference: false,
       recipeParameterScopes: false,
     });
 
     await expect(
-      createSession('/tmp', { recipeDeeplink: 'heybuddy://recipe?url=example' })
+      createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' })
     ).rejects.toThrow(
-      'The connected HeyBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
+      'The connected AIBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
     );
 
     expect(mockedCreateAcpSession).not.toHaveBeenCalled();

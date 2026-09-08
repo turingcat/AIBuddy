@@ -5371,7 +5371,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy"
+name = "aibuddy"
 version = "1.0.6"
 dependencies = [
  "agent-client-protocol",
@@ -5408,14 +5408,14 @@ dependencies = [
  "fs2",
  "futures",
  "gethostname",
- "heybuddy-acp-macros",
- "heybuddy-agent",
- "heybuddy-context-management",
- "heybuddy-download-manager",
- "heybuddy-mcp",
- "heybuddy-providers",
- "heybuddy-sdk-types",
- "heybuddy-test-support",
+ "aibuddy-acp-macros",
+ "aibuddy-agent",
+ "aibuddy-context-management",
+ "aibuddy-download-manager",
+ "aibuddy-mcp",
+ "aibuddy-providers",
+ "aibuddy-sdk-types",
+ "aibuddy-test-support",
  "http 1.5.0",
  "icu_calendar",
  "icu_locale",
@@ -5510,7 +5510,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-acp-macros"
+name = "aibuddy-acp-macros"
 version = "1.0.6"
 dependencies = [
  "quote",
@@ -5518,13 +5518,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-agent"
+name = "aibuddy-agent"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
  "async-trait",
  "futures",
- "heybuddy-provider-types",
+ "aibuddy-provider-types",
  "rmcp 3.1.4",
  "serde_json",
  "tokio",
@@ -5535,7 +5535,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-cli"
+name = "aibuddy-cli"
 version = "1.0.6"
 dependencies = [
  "agent-client-protocol",
@@ -5560,10 +5560,10 @@ dependencies = [
  "etcetera",
  "fs2",
  "futures",
- "heybuddy",
- "heybuddy-mcp",
- "heybuddy-providers",
- "heybuddy-roaming",
+ "aibuddy",
+ "aibuddy-mcp",
+ "aibuddy-providers",
+ "aibuddy-roaming",
  "indicatif",
  "libc",
  "ntapi",
@@ -5598,12 +5598,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-context-management"
+name = "aibuddy-context-management"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
  "async-trait",
- "heybuddy-providers",
+ "aibuddy-providers",
  "include_dir",
  "minijinja",
  "rmcp 3.1.4",
@@ -5614,7 +5614,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-download-manager"
+name = "aibuddy-download-manager"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
@@ -5626,7 +5626,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-local-inference"
+name = "aibuddy-local-inference"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
@@ -5639,9 +5639,9 @@ dependencies = [
  "etcetera",
  "fs2",
  "futures",
- "heybuddy-download-manager",
- "heybuddy-provider-types",
- "heybuddy-sdk-types",
+ "aibuddy-download-manager",
+ "aibuddy-provider-types",
+ "aibuddy-sdk-types",
  "hf-hub",
  "include_dir",
  "llama-cpp-2",
@@ -5663,7 +5663,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-mcp"
+name = "aibuddy-mcp"
 version = "1.0.6"
 dependencies = [
  "anyhow",
@@ -5691,7 +5691,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-provider-types"
+name = "aibuddy-provider-types"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
@@ -5720,7 +5720,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-providers"
+name = "aibuddy-providers"
 version = "0.1.0-alpha.6"
 dependencies = [
  "anyhow",
@@ -5730,8 +5730,8 @@ dependencies = [
  "env-lock",
  "flate2",
  "futures",
- "heybuddy-local-inference",
- "heybuddy-provider-types",
+ "aibuddy-local-inference",
+ "aibuddy-provider-types",
  "include_dir",
  "pem 4.0.0",
  "pkcs8 0.11.0",
@@ -5752,7 +5752,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-roaming"
+name = "aibuddy-roaming"
 version = "1.0.6"
 dependencies = [
  "anyhow",
@@ -5772,7 +5772,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-sdk"
+name = "aibuddy-sdk"
 version = "0.1.0-alpha.6"
 dependencies = [
  "agent-client-protocol",
@@ -5780,9 +5780,9 @@ dependencies = [
  "anyhow",
  "base64 0.23.1",
  "futures",
- "heybuddy-context-management",
- "heybuddy-providers",
- "heybuddy-sdk-types",
+ "aibuddy-context-management",
+ "aibuddy-providers",
+ "aibuddy-sdk-types",
  "rmcp 3.1.4",
  "serde_json",
  "thiserror 2.0.20",
@@ -5792,7 +5792,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-sdk-types"
+name = "aibuddy-sdk-types"
 version = "0.1.0-alpha.6"
 dependencies = [
  "agent-client-protocol",
@@ -5803,7 +5803,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-test"
+name = "aibuddy-test"
 version = "1.0.6"
 dependencies = [
  "clap",
@@ -5811,7 +5811,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "heybuddy-test-support"
+name = "aibuddy-test-support"
 version = "1.0.6"
 dependencies = [
  "axum",

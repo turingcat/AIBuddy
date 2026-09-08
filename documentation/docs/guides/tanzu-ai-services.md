@@ -1,6 +1,6 @@
 ---
 title: VMware Tanzu Platform
-description: Connect heybuddy to VMware Tanzu Platform AI Services
+description: Connect aibuddy to VMware Tanzu Platform AI Services
 ---
 
 import Tabs from '@theme/Tabs';
@@ -8,14 +8,14 @@ import TabItem from '@theme/TabItem';
 
 # VMware Tanzu Platform
 
-[VMware Tanzu Platform](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/ai-services/10-3/ai/index.html) provides enterprise-managed LLM access through AI Services. heybuddy connects to VMware Tanzu Platform as an OpenAI-compatible provider, supporting both **single-model** and **multi-model** service plans with streaming enabled by default.
+[VMware Tanzu Platform](https://techdocs.broadcom.com/us/en/vmware-tanzu/platform/ai-services/10-3/ai/index.html) provides enterprise-managed LLM access through AI Services. aibuddy connects to VMware Tanzu Platform as an OpenAI-compatible provider, supporting both **single-model** and **multi-model** service plans with streaming enabled by default.
 
 ## Prerequisites
 
 - A VMware Tanzu Platform (TAS) foundation with GenAI tile installed and configured
 - Access to a CF org/space where the `genai` service is available in the marketplace
 - The CF CLI (`cf`) installed and authenticated (`cf login`)
-- heybuddy v1.28.0 or later
+- aibuddy v1.28.0 or later
 
 ## Step 1: Check Available Plans
 
@@ -66,13 +66,13 @@ cf services
 Create a service key to generate API credentials:
 
 ```sh
-cf create-service-key my-qwen-coder my-heybuddy-key --wait
+cf create-service-key my-qwen-coder my-aibuddy-key --wait
 ```
 
 Then retrieve the credentials:
 
 ```sh
-cf service-key my-qwen-coder my-heybuddy-key
+cf service-key my-qwen-coder my-aibuddy-key
 ```
 
 ### Single-Model Plan Output
@@ -124,17 +124,17 @@ From the service key output, you need two values from the **`credentials.endpoin
 | **API Key** | `credentials.endpoint.api_key` | `eyJhbGciOi...` (JWT token) |
 
 :::warning Use `credentials.endpoint.api_base`, not `credentials.api_base`
-Single-model plans include a top-level `credentials.api_base` field that has an `/openai` suffix. **Do not use this value.** Always use `credentials.endpoint.api_base` (without `/openai`), because heybuddy automatically appends the correct path.
+Single-model plans include a top-level `credentials.api_base` field that has an `/openai` suffix. **Do not use this value.** Always use `credentials.endpoint.api_base` (without `/openai`), because aibuddy automatically appends the correct path.
 
 Using the wrong value would produce a double-path URL like `.../openai/openai/v1/chat/completions`.
 :::
 
-## Step 5: Configure heybuddy
+## Step 5: Configure aibuddy
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="heybuddy Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
 
-  1. Open heybuddy Desktop
+  1. Open aibuddy Desktop
   2. Click the sidebar button, then **Settings** > **Models** > **Configure providers**
   3. Find **VMware Tanzu Platform** in the provider list and click **Configure**
   4. Enter your values:
@@ -144,12 +144,12 @@ Using the wrong value would produce a double-path URL like `.../openai/openai/v1
   6. Select a model from the dynamically fetched list
 
   </TabItem>
-  <TabItem value="cli" label="heybuddy CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-  ### Option 1: Using `heybuddy configure`
+  ### Option 1: Using `aibuddy configure`
 
   ```sh
-  heybuddy configure
+  aibuddy configure
   ```
 
   1. Select **Configure Providers**
@@ -160,17 +160,17 @@ Using the wrong value would produce a double-path URL like `.../openai/openai/v1
 
   ### Option 2: Using environment variables
 
-  Set the following environment variables before launching heybuddy:
+  Set the following environment variables before launching aibuddy:
 
   ```sh
   export TANZU_AI_ENDPOINT="https://genai-proxy.sys.example.com/tanzu-my-model-abc1234"
   export TANZU_AI_API_KEY="eyJhbGciOi..."
   ```
 
-  Then start heybuddy:
+  Then start aibuddy:
 
   ```sh
-  heybuddy session
+  aibuddy session
   ```
 
   :::tip
@@ -182,12 +182,12 @@ Using the wrong value would produce a double-path URL like `.../openai/openai/v1
 
 ## Step 6: Select a Model
 
-heybuddy dynamically fetches available models from your Tanzu endpoint. After configuring the provider:
+aibuddy dynamically fetches available models from your Tanzu endpoint. After configuring the provider:
 
 - **Single-model plan**: The one available model will be listed (e.g., `Qwen/Qwen3-Coder-30B-A3B-Instruct-FP8`)
 - **Multi-model plan**: All models on the plan will be listed, and you can switch between them
 
-To change models later, use **Settings** > **Models** > **Switch models** in Desktop, or run `heybuddy configure` in the CLI.
+To change models later, use **Settings** > **Models** > **Switch models** in Desktop, or run `aibuddy configure` in the CLI.
 
 :::note
 Embedding-only models (e.g., `nomic-ai/nomic-embed-text-v2-moe`) will appear in the model list but cannot be used as a chat model.
@@ -199,7 +199,7 @@ Embedding-only models (e.g., `nomic-ai/nomic-embed-text-v2-moe`) will appear in 
 
 This means the API key is not being sent correctly. Common causes:
 
-1. **Environment variables not set**: If using heybuddy Desktop, env vars from your shell may not be inherited. Use the Settings UI to configure the provider instead.
+1. **Environment variables not set**: If using aibuddy Desktop, env vars from your shell may not be inherited. Use the Settings UI to configure the provider instead.
 2. **Wrong `api_base`**: Make sure you used `credentials.endpoint.api_base` (without `/openai`), not `credentials.api_base`.
 3. **Expired API key**: Tanzu API keys are JWT tokens that may expire. Generate a new service key with `cf create-service-key`.
 
@@ -239,6 +239,6 @@ Ensure the model name matches exactly (including the prefix, e.g., `Qwen/Qwen3-C
 To remove a service instance and its keys:
 
 ```sh
-cf delete-service-key my-qwen-coder my-heybuddy-key -f
+cf delete-service-key my-qwen-coder my-aibuddy-key -f
 cf delete-service my-qwen-coder -f
 ```

@@ -3,7 +3,7 @@
     {
       "version": "0.1.0-alpha.6",
       "docVersion": "0.1",
-      "source": "crates/heybuddy-sdk/src/bindings.rs",
+      "source": "crates/aibuddy-sdk/src/bindings.rs",
       "functions": [
         {
           "name": "anthropic_default_model",
@@ -37,7 +37,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -66,7 +66,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -95,7 +95,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -110,7 +110,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -141,7 +141,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -156,7 +156,7 @@
             }
           ],
           "returns": null,
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         },
         {
@@ -179,13 +179,13 @@
             }
           ],
           "returns": "Provider",
-          "throws": "HeyBuddyError",
+          "throws": "AIBuddyError",
           "isAsync": false
         }
       ],
       "items": [
         {
-          "name": "HeyBuddyError",
+          "name": "AIBuddyError",
           "kind": "error",
           "docs": "",
           "fields": [],
@@ -288,7 +288,7 @@
               "docs": "",
               "params": [],
               "returns": "u64",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": false
             },
             {
@@ -309,7 +309,7 @@
                 }
               ],
               "returns": null,
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": false
             }
           ]
@@ -769,7 +769,7 @@
               "fields": [
                 {
                   "name": "error",
-                  "type": "HeyBuddyStreamError",
+                  "type": "AIBuddyStreamError",
                   "default": null,
                   "docs": ""
                 }
@@ -779,13 +779,13 @@
           "methods": []
         },
         {
-          "name": "HeyBuddyStreamError",
+          "name": "AIBuddyStreamError",
           "kind": "record",
           "docs": "",
           "fields": [
             {
               "name": "kind",
-              "type": "HeyBuddyStreamErrorKind",
+              "type": "AIBuddyStreamErrorKind",
               "default": null,
               "docs": ""
             },
@@ -806,7 +806,7 @@
           "methods": []
         },
         {
-          "name": "HeyBuddyStreamErrorKind",
+          "name": "AIBuddyStreamErrorKind",
           "kind": "enum",
           "docs": "",
           "fields": [],
@@ -937,7 +937,7 @@
                 }
               ],
               "returns": "u64",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": true
             },
             {
@@ -970,7 +970,7 @@
                 }
               ],
               "returns": "ProviderStream",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": true
             },
             {
@@ -1003,7 +1003,7 @@
                 }
               ],
               "returns": "ProviderCompletion",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": true
             },
             {
@@ -1030,7 +1030,7 @@
                 }
               ],
               "returns": "CompactionSummary",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": true
             }
           ]
@@ -1134,7 +1134,7 @@
               "docs": "",
               "params": [],
               "returns": "Option<StreamChunk>",
-              "throws": "HeyBuddyError",
+              "throws": "AIBuddyError",
               "isAsync": true
             }
           ]

@@ -3,18 +3,18 @@ import type { MCPServer } from "@site/src/types/server";
 import Link from "@docusaurus/Link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getHeyBuddyInstallLink } from "@site/src/utils/install-links";
+import { getAIBuddyInstallLink } from "@site/src/utils/install-links";
 import { fetchGitHubStars, formatStarCount } from "@site/src/utils/github-stars";
 
 const getExtensionCommand = (server: MCPServer): string => {
   switch (server.type) {
     case "remote":
-      return `heybuddy session --with-remote-extension "${server.url}"`;
+      return `aibuddy session --with-remote-extension "${server.url}"`;
     case "streamable-http":
-      return `heybuddy session --with-streamable-http-extension "${server.url}"`;
+      return `aibuddy session --with-streamable-http-extension "${server.url}"`;
     case "local":
     default:
-      return `heybuddy session --with-extension "${server.command}"`;
+      return `aibuddy session --with-extension "${server.command}"`;
   }
 };
 
@@ -80,7 +80,7 @@ export function ServerCard({ server }: { server: MCPServer }) {
                     style={{ fontSize: "12px" }}
                     className="text-textSubtle leading-normal"
                   >
-                    Can be enabled on the Extensions page in heybuddy
+                    Can be enabled on the Extensions page in aibuddy
                   </span>
                   </div>
                 )}
@@ -135,13 +135,13 @@ export function ServerCard({ server }: { server: MCPServer }) {
                 {server.is_builtin ? (
                   <div
                     className="built-in-badge"
-                    title="This extension is built into heybuddy and can be enabled in the settings page"
+                    title="This extension is built into aibuddy and can be enabled in the settings page"
                   >
                     Built-in
                   </div>
                 ) : server.show_install_link !== false ? (
                   <a
-                    href={getHeyBuddyInstallLink(server)}
+                    href={getAIBuddyInstallLink(server)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="install-button"

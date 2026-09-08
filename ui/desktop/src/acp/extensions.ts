@@ -1,5 +1,5 @@
 import type { ExtensionConfig, ExtensionEntry } from '../types/extensions';
-import type { HeyBuddyExtension, HeyBuddyExtensionEntry } from '@heybuddy/heybuddy-sdk';
+import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-sdk';
 import { getAcpClient } from './acpConnection';
 
 export type ConfiguredExtensionEntry = ExtensionEntry & { configKey?: string };
@@ -9,7 +9,7 @@ export interface ConfiguredExtensionsResponse {
   warnings: string[];
 }
 
-export function heybuddyExtensionName(extension: HeyBuddyExtension): string {
+export function aibuddyExtensionName(extension: AIBuddyExtension): string {
   return extension.type === 'mcp' ? extension.server.name : extension.name;
 }
 
@@ -21,7 +21,7 @@ function availableToolsOrUndefined(availableTools?: string[] | null): string[] |
   return availableTools?.length ? availableTools : undefined;
 }
 
-export function heybuddyExtensionToExtensionConfig(extension: HeyBuddyExtension): ExtensionConfig | null {
+export function aibuddyExtensionToExtensionConfig(extension: AIBuddyExtension): ExtensionConfig | null {
   switch (extension.type) {
     case 'builtin':
     case 'platform':
@@ -67,34 +67,34 @@ export function heybuddyExtensionToExtensionConfig(extension: HeyBuddyExtension)
   }
 }
 
-function heybuddyExtensionEntryToExtensionEntry(
-  entry: HeyBuddyExtensionEntry
+function aibuddyExtensionEntryToExtensionEntry(
+  entry: AIBuddyExtensionEntry
 ): ConfiguredExtensionEntry | null {
-  const config = heybuddyExtensionToExtensionConfig(entry.extension);
+  const config = aibuddyExtensionToExtensionConfig(entry.extension);
   if (!config) {
     return null;
   }
   return { ...config, enabled: entry.enabled, configKey: entry.configKey ?? undefined };
 }
 
-export async function getConfiguredHeyBuddyExtensions(): Promise<HeyBuddyExtensionEntry[]> {
+export async function getConfiguredAIBuddyExtensions(): Promise<AIBuddyExtensionEntry[]> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.configExtensionsList_unstable({});
+  const response = await client.aibuddy.configExtensionsList_unstable({});
   return response.extensions;
 }
 
 export async function getConfiguredExtensions(): Promise<ConfiguredExtensionsResponse> {
   const client = await getAcpClient();
-  const response = await client.heybuddy.configExtensionsList_unstable({});
+  const response = await client.aibuddy.configExtensionsList_unstable({});
   return {
     extensions: response.extensions
-      .map(heybuddyExtensionEntryToExtensionEntry)
+      .map(aibuddyExtensionEntryToExtensionEntry)
       .filter((entry): entry is ConfiguredExtensionEntry => entry !== null),
     warnings: response.warnings ?? [],
   };
 }
 
-export function extensionConfigToHeyBuddyExtension(config: ExtensionConfig): HeyBuddyExtension | null {
+export function extensionConfigToAIBuddyExtension(config: ExtensionConfig): AIBuddyExtension | null {
   switch (config.type) {
     case 'builtin':
       return {
@@ -148,17 +148,17 @@ export function extensionConfigToHeyBuddyExtension(config: ExtensionConfig): Hey
 }
 
 export async function addConfigExtension(config: ExtensionConfig, enabled: boolean): Promise<void> {
-  const extension = extensionConfigToHeyBuddyExtension(config);
+  const extension = extensionConfigToAIBuddyExtension(config);
   if (!extension) {
     throw new Error(`Unsupported extension type for ACP: ${config.type}`);
   }
   const client = await getAcpClient();
-  await client.heybuddy.configExtensionsAdd_unstable({ extension, enabled });
+  await client.aibuddy.configExtensionsAdd_unstable({ extension, enabled });
 }
 
 export async function removeConfigExtension(configKey: string): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.configExtensionsRemove_unstable({ configKey });
+  await client.aibuddy.configExtensionsRemove_unstable({ configKey });
 }
 
 export async function setConfigExtensionEnabled(
@@ -166,5 +166,5 @@ export async function setConfigExtensionEnabled(
   enabled: boolean
 ): Promise<void> {
   const client = await getAcpClient();
-  await client.heybuddy.configExtensionsSetEnabled_unstable({ configKey, enabled });
+  await client.aibuddy.configExtensionsSetEnabled_unstable({ configKey, enabled });
 }
