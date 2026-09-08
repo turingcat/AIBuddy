@@ -1,0 +1,257 @@
+{
+  "version": 1,
+  "canonical": {
+    "lower": "aibuddy",
+    "title": "AIBuddy",
+    "upper": "AIBUDDY",
+    "pluralLower": "aibuddies",
+    "pluralTitle": "AIBuddies",
+    "pluralUpper": "AIBUDDIES",
+    "protocol": "aibuddy://",
+    "javascriptScope": "@aibuddy"
+  },
+  "ownedPackageScopes": [
+    "@aaif/goose",
+    "@heybuddy",
+    "@aibuddy"
+  ],
+  "preserve": {
+    "pathPrefixes": [
+      "tools/rebrand/",
+      "tools/aibuddy-rebrand/",
+      "docs/superpowers/specs/",
+      "docs/superpowers/plans/"
+    ],
+    "externalUrlPrefixes": [
+      "http://",
+      "https://",
+      "ws://",
+      "wss://",
+      "git+http://",
+      "git+https://",
+      "git+ws://",
+      "git+wss://"
+    ],
+    "ownedExternalUrlReplacements": [
+      {
+        "from": "github.com/turingcat/HeyBuddy",
+        "to": "github.com/turingcat/AIBuddy"
+      },
+      {
+        "from": "api.github.com/repos/turingcat/HeyBuddy",
+        "to": "api.github.com/repos/turingcat/AIBuddy"
+      }
+    ],
+    "runtimeIdentityKeys": [
+      "app_name",
+      "application_name",
+      "keyring_service",
+      "keyring_service_name",
+      "storage_service",
+      "storage_service_name",
+      "config_dir",
+      "config_path",
+      "data_dir",
+      "data_path",
+      "database_name",
+      "database_path"
+    ],
+    "legacyIdentifiers": [
+      "GOOSE_API_KEY",
+      "GOOSE_BASE_URL"
+    ],
+    "legacyIdentifierPatterns": [
+      "GOOSE_[A-Z0-9_]+"
+    ],
+    "externalIdentifiers": [
+      "aaif-goose",
+      "goose-ai-agent",
+      "v8_goose"
+    ],
+    "externalRepositorySlugs": [
+      "aaif-goose/goose",
+      "block/goose"
+    ],
+    "legalLinePatterns": [
+      "\\b(?:copyright|spdx-license-identifier|licensed under|all rights reserved)\\b",
+      "\\b(?:apache|mit|bsd|mozilla public) license\\b"
+    ],
+    "runtimeIdentityContexts": [
+      {
+        "pathPrefixes": [
+          "crates/aibuddy/src/config/",
+          "crates/heybuddy/src/config/",
+          "crates/goose/src/config/"
+        ],
+        "keys": []
+      }
+    ],
+    "legacyIdentifierContexts": [
+      {
+        "pathPrefixes": [
+          "crates/aibuddy/src/config/",
+          "crates/heybuddy/src/config/",
+          "crates/goose/src/config/"
+        ],
+        "keys": []
+      },
+      {
+        "paths": [
+          "crates/aibuddy-cli/src/cli.rs",
+          "crates/heybuddy-cli/src/cli.rs",
+          "crates/goose-cli/src/cli.rs",
+          "ui/desktop/src/legacyEnv.ts",
+          "ui/desktop/src/legacyEnv.test.ts"
+        ],
+        "keys": []
+      }
+    ],
+    "legacyProtocolContexts": [
+      {
+        "pathPrefixes": [
+          "crates/aibuddy/src/session/nostr_share.rs",
+          "crates/heybuddy/src/session/nostr_share.rs",
+          "crates/goose/src/session/nostr_share.rs"
+        ],
+        "keys": [],
+        "protocols": [
+          "goose://"
+        ]
+      }
+    ],
+    "persistentIdentityContexts": [
+      {
+        "paths": [
+          "ui/desktop/src/main.ts",
+          "ui/desktop/src/backendCertificateVerifier.test.ts"
+        ],
+        "keys": [],
+        "values": [
+          "persist:goose"
+        ]
+      }
+    ],
+    "externalRegistryPackageContexts": [
+      {
+        "paths": [
+          "vendor/v8/Cargo.toml",
+          "Cargo.lock"
+        ],
+        "identities": [
+          "v8-goose",
+          "v8_goose"
+        ],
+        "reason": "Published v8 registry dependency identity must remain unchanged."
+      }
+    ],
+    "cargoLockRegistryPackage": {
+      "table": "package",
+      "sourceKey": "source",
+      "sourcePrefixes": [
+        "registry+"
+      ],
+      "nameKey": "name",
+      "referenceKeys": [
+        "dependencies"
+      ]
+    },
+    "historicalAttributionContexts": [
+      {
+        "paths": [
+          "documentation/src/components/HomepageFeatures/index.tsx"
+        ],
+        "keys": [
+          "testimonial"
+        ],
+        "reason": "Historical testimonial attribution must remain accurate."
+      }
+    ],
+    "legacyFixtureRegexContexts": [
+      {
+        "paths": [
+          "ui/desktop/scripts/brand.test.js"
+        ],
+        "values": [
+          "goose.*heybuddy",
+          "goose.*aibuddy"
+        ],
+        "preserveSubstrings": [
+          "goose"
+        ],
+        "reason": "The negative fixture keeps the legacy Goose input while the canonical product name remains convertible."
+      }
+    ],
+    "sortedArrayContexts": [
+      {
+        "paths": [
+          "ui/desktop/src/aibuddyServeEnv.test.ts",
+          "ui/desktop/src/heybuddyServeEnv.test.ts",
+          "ui/desktop/src/gooseServeEnv.test.ts"
+        ],
+        "assertion": "toEqual",
+        "sortMethod": "sort",
+        "keyCall": "Object.keys",
+        "keyArgument": "env",
+        "reason": "Expected Object.keys(env).sort() values must remain sorted after renaming."
+      }
+    ],
+    "legacyFixtureLiteralContexts": [
+      {
+        "paths": [
+          "ui/desktop/scripts/brand.test.js"
+        ],
+        "match": "call-argument",
+        "callee": "resolveBrand",
+        "argumentIndex": 0,
+        "values": [
+          "goose"
+        ],
+        "reason": "Negative unsupported-edition fixture must retain the legacy Goose input literal."
+      },
+      {
+        "paths": [
+          "ui/desktop/scripts/windows-package.test.js",
+          "ui/desktop/src/brand.test.ts"
+        ],
+        "match": "array-element",
+        "callee": "it.each",
+        "argumentIndex": 0,
+        "values": [
+          "goose"
+        ],
+        "reason": "Negative unsupported-edition fixture must retain the legacy Goose input literal."
+      },
+      {
+        "paths": [
+          "ui/desktop/src/brand.test.ts"
+        ],
+        "match": "call-argument",
+        "callee": "vi.stubEnv",
+        "argumentIndex": 1,
+        "requiredArguments": [
+          "APP_EDITION"
+        ],
+        "values": [
+          "goose"
+        ],
+        "reason": "Negative unsupported-edition fixture must retain the legacy Goose input literal."
+      },
+      {
+        "paths": [
+          "crates/aibuddy-cli/src/logging.rs",
+          "crates/heybuddy-cli/src/logging.rs",
+          "crates/goose-cli/src/logging.rs"
+        ],
+        "match": "literal-value",
+        "values": [
+          "goose"
+        ],
+        "reason": "CLI logging test asserts the legacy persistent config directory identity."
+      }
+    ]
+  },
+  "assets": {
+    "binaryAction": "preserve",
+    "existingTargetMappingRequired": true
+  }
+}

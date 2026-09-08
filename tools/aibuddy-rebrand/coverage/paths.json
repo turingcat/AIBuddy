@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "coverageType": "bounded-decision-path",
+  "description": "Reviewed finite decision-path contract for the rebrand tool's public workflows.",
+  "approval": {
+    "status": "declared-reviewable",
+    "basis": "This inventory is intentionally finite and practical; a maintainer may review or revise the denominator before treating it as an accepted contract."
+  },
+  "gate": {
+    "threshold": 0.8,
+    "eligibleStatus": "ready"
+  },
+  "scope": {
+    "wholeCodebasePathCoverageClaim": false,
+    "measuredWorkflows": [
+      "inventory",
+      "generate",
+      "verify",
+      "apply",
+      "rules",
+      "format"
+    ],
+    "pendingWorkflows": [
+      "mirror"
+    ],
+    "exclusions": [
+      "mirror has no ready public implementation in tools/rebrand; its fixture Git graph tests are not counted as mirror workflow coverage",
+      "line, branch, function, and whole-codebase path coverage are not represented by this inventory"
+    ]
+  },
+  "workflows": [
+    {
+      "workflow": "inventory",
+      "status": "measured",
+      "module": "src/inventory.mjs",
+      "publicEntryPoints": [
+        "inventoryGitTree",
+        "writeInventoryReport"
+      ]
+    },
+    {
+      "workflow": "generate",
+      "status": "measured",
+      "module": "src/generate.mjs",
+      "publicEntryPoints": [
+        "generateSnapshot"
+      ]
+    },
+    {
+      "workflow": "verify",
+      "status": "measured",
+      "module": "src/verify.mjs",
+      "publicEntryPoints": [
+        "verifySnapshot"
+      ]
+    },
+    {
+      "workflow": "apply",
+      "status": "measured",
+      "module": "src/apply-snapshot.mjs",
+      "publicEntryPoints": [
+        "applySnapshot"
+      ]
+    },
+    {
+      "workflow": "rules",
+      "status": "measured",
+      "module": "src/rules.mjs",
+      "publicEntryPoints": [
+        "validateRuleSet",
+        "planEdits",
+        "applyEdits"
+      ]
+    },
+    {
+      "workflow": "format",
+      "status": "measured",
+      "module": "src/format.mjs",
+      "publicEntryPoints": [
+        "formatSnapshot"
+      ]
+    },
+    {
+      "workflow": "mirror",
+      "status": "pending",
+      "module": null,
+      "publicEntryPoints": [],
+      "reason": "No ready public mirror workflow exists in tools/rebrand; do not infer coverage from sync fixture tests."
+    }
+  ],
+  "paths": [
+    {
+      "pathId": "inventory.pinned-tree-candidate",
+      "workflow": "inventory",
+      "status": "ready",
+      "conditionSequence": [
+        "sourceRef resolves to a committed Git tree",
+        "working-tree edits and untracked files differ from the pinned tree",
+        "a tracked path or blob contains a candidate term"
+      ],
+      "expectedObservable": "Inventory uses the pinned commit and records lexical candidate evidence.",
+      "expectedResult": "The dirty or untracked file is absent and the committed README is a candidate.",
+      "testReference": "tests/coverage-paths.test.mjs#inventoryPinnedTreeCandidate"
+    },
+    {
+      "pathId": "inventory.excluded-root-and-special-entry",
+      "workflow": "inventory",
+      "status": "ready",
+      "conditionSequence": [
+        "tracked entries include an excluded artifact root",
+        "included entries contain binary, executable, and symlink modes",
+        "classification and exclusion are evaluated before candidate reporting"
+      ],
+      "expectedObservable": "Excluded roots are listed separately while special entries retain safe classifications.",
+      "expectedResult": "The dependency path is excluded; binary, executable, and safe symlink metadata is preserved.",
+      "testReference": "tests/coverage-paths.test.mjs#inventoryExcludedRootAndSpecialEntry"
+    },
+    {
+      "pathId": "inventory.report-location-and-collision-guard",
+      "workflow": "inventory",
+      "status": "ready",
+      "conditionSequence": [
+        "report destination is inside the source tree",
+        "report destination is outside the source tree and absent",
+        "the same report path is requested again"
+      ],
+      "expectedObservable": "Unsafe placement and overwrite are rejected, while a new external report is written.",
+      "expectedResult": "The first external write succeeds and the second write fails without replacement.",
+      "testReference": "tests/coverage-paths.test.mjs#inventoryReportLocationAndCollisionGuard"
+    },
+    {
+      "pathId": "generate.publishes-pinned-snapshot",
+      "workflow": "generate",
+      "status": "ready",
+      "conditionSequence": [
+        "sourceRef resolves and output destination is absent",
+        "transform returns entries with an empty unresolved list",
+        "staged output passes publication"
+      ],
+      "expectedObservable": "Generation publishes a provenance-marked snapshot from committed source bytes.",
+      "expectedResult": "The output verifies successfully and excludes dirty or untracked working-tree content.",
+      "testReference": "tests/coverage-paths.test.mjs#generatePublishesPinnedSnapshot"
+    },
+    {
+      "pathId": "generate.rejects-existing-destination",
+      "workflow": "generate",
+      "status": "ready",
+      "conditionSequence": [
+        "output destination already contains a published snapshot",
+        "generation is requested again for the same destination"
+      ],
+      "expectedObservable": "Generation refuses to replace an existing destination.",
+      "expectedResult": "The original provenance marker remains present and unchanged.",
+      "testReference": "tests/coverage-paths.test.mjs#generateRejectsExistingDestination"
+    },
+    {
+      "pathId": "generate.fails-closed-on-unresolved-transform",
+      "workflow": "generate",
+      "status": "ready",
+      "conditionSequence": [
+        "transform reports at least one unresolved item",
+        "publication has not started"
+      ],
+      "expectedObservable": "Generation fails closed before publishing unresolved output.",
+      "expectedResult": "No output directory is published.",
+      "testReference": "tests/coverage-paths.test.mjs#generateFailsClosedOnUnresolvedTransform"
+    },
+    {
+      "pathId": "verify.accepts-canonical-snapshot",
+      "workflow": "verify",
+      "status": "ready",
+      "conditionSequence": [
+        "output contains a canonical provenance marker",
+        "all output entries match the marker digests and modes"
+      ],
+      "expectedObservable": "Verification returns a valid snapshot result.",
+      "expectedResult": "The result is valid and reports the expected entry count.",
+      "testReference": "tests/coverage-paths.test.mjs#verifyAcceptsCanonicalSnapshot"
+    },
+    {
+      "pathId": "verify.rejects-mutated-snapshot-entry",
+      "workflow": "verify",
+      "status": "ready",
+      "conditionSequence": [
+        "a previously verified output entry is changed",
+        "verification recomputes the entry digest"
+      ],
+      "expectedObservable": "Verification rejects content that no longer matches provenance.",
+      "expectedResult": "The verification promise rejects with a provenance or digest error.",
+      "testReference": "tests/coverage-paths.test.mjs#verifyRejectsMutatedSnapshotEntry"
+    },
+    {
+      "pathId": "apply.dry-run-plan",
+      "workflow": "apply",
+      "status": "ready",
+      "conditionSequence": [
+        "verified snapshot source is an ancestor of the feature worktree",
+        "baseline paths are unchanged",
+        "dryRun remains true"
+      ],
+      "expectedObservable": "Apply computes rename and change sets without mutating the worktree.",
+      "expectedResult": "The plan contains the expected rename and no provenance marker is written to the worktree.",
+      "testReference": "tests/coverage-paths.test.mjs#applyDryRunPlan"
+    },
+    {
+      "pathId": "apply.mutates-feature-worktree",
+      "workflow": "apply",
+      "status": "ready",
+      "conditionSequence": [
+        "verified snapshot source is an ancestor of the feature worktree",
+        "baseline paths are unchanged",
+        "dryRun is false and destinations are safe"
+      ],
+      "expectedObservable": "Apply writes the verified snapshot atomically on the named feature branch.",
+      "expectedResult": "The renamed and changed files contain snapshot bytes and the provenance marker exists.",
+      "testReference": "tests/coverage-paths.test.mjs#applyMutatesFeatureWorktree"
+    },
+    {
+      "pathId": "apply.rejects-non-feature-branch",
+      "workflow": "apply",
+      "status": "ready",
+      "conditionSequence": [
+        "snapshot verification succeeds",
+        "the current worktree branch is not feat/*"
+      ],
+      "expectedObservable": "Apply refuses to mutate a non-feature branch.",
+      "expectedResult": "The operation rejects and the baseline file remains unchanged.",
+      "testReference": "tests/coverage-paths.test.mjs#applyRejectsNonFeatureBranch"
+    },
+    {
+      "pathId": "rules.plans-and-applies-literal-edits",
+      "workflow": "rules",
+      "status": "ready",
+      "conditionSequence": [
+        "a valid literal rule set selects a present UTF-8 file",
+        "expected match count equals the discovered matches",
+        "the plan source digest still matches during application"
+      ],
+      "expectedObservable": "Rules produce UTF-16 edit offsets and apply replacements without mutating the input object.",
+      "expectedResult": "Both literal occurrences are replaced and the original file map is unchanged.",
+      "testReference": "tests/coverage-paths.test.mjs#rulesPlansAndAppliesLiteralEdits"
+    },
+    {
+      "pathId": "rules.preserves-explicit-reference",
+      "workflow": "rules",
+      "status": "ready",
+      "conditionSequence": [
+        "rename and preserve rules both match the same reference",
+        "the preserve rule accounts for the occurrence"
+      ],
+      "expectedObservable": "Preservation suppresses the rename edit while retaining match accounting.",
+      "expectedResult": "The plan has zero edits and both rules report one match.",
+      "testReference": "tests/coverage-paths.test.mjs#rulesPreservesExplicitReference"
+    },
+    {
+      "pathId": "rules.rejects-stale-plan",
+      "workflow": "rules",
+      "status": "ready",
+      "conditionSequence": [
+        "a plan is created with source digests",
+        "the source file changes before applyEdits"
+      ],
+      "expectedObservable": "Application rejects a plan whose source digest is stale.",
+      "expectedResult": "The stale plan throws and no transformed result is returned.",
+      "testReference": "tests/coverage-paths.test.mjs#rulesRejectsStalePlan"
+    },
+    {
+      "pathId": "format.formats-selected-rust",
+      "workflow": "format",
+      "status": "ready",
+      "conditionSequence": [
+        "a valid Rust entry is selected",
+        "rustfmt accepts the selected bytes"
+      ],
+      "expectedObservable": "The selected Rust entry is formatted and receives formatter metadata.",
+      "expectedResult": "Formatted bytes differ from the compact input and the report names rustfmt.",
+      "testReference": "tests/coverage-paths.test.mjs#formatFormatsSelectedRust"
+    },
+    {
+      "pathId": "format.preserves-unselected-entries",
+      "workflow": "format",
+      "status": "ready",
+      "conditionSequence": [
+        "only one Rust path is selected",
+        "binary and symlink entries are not selected"
+      ],
+      "expectedObservable": "Unselected entries retain their bytes and modes.",
+      "expectedResult": "The binary and symlink entries are byte-for-byte unchanged.",
+      "testReference": "tests/coverage-paths.test.mjs#formatPreservesUnselectedEntries"
+    },
+    {
+      "pathId": "format.rejects-invalid-selection",
+      "workflow": "format",
+      "status": "ready",
+      "conditionSequence": [
+        "the selected Rust path is absent from the entries"
+      ],
+      "expectedObservable": "Formatting rejects an unknown selection before invoking rustfmt.",
+      "expectedResult": "The call throws an unknown-path validation error.",
+      "testReference": "tests/coverage-paths.test.mjs#formatRejectsInvalidSelection"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "Canonical first-party source-name to AIBuddy conversion map used for HeyBuddy upstream synchronization.",
+  "replacements": {
+    "HEYBUDDIES": "AIBUDDIES",
+    "HeyBuddies": "AIBuddies",
+    "heybuddies": "aibuddies",
+    "HEYBUDDY": "AIBUDDY",
+    "HeyBuddy": "AIBuddy",
+    "heybuddy": "aibuddy",
+    "GEESE": "AIBUDDIES",
+    "Geese": "AIBuddies",
+    "geese": "aibuddies",
+    "GOOSE": "AIBUDDY",
+    "Goose": "AIBuddy",
+    "goose": "aibuddy"
+  },
+  "packageScopes": {
+    "@aaif/aibuddy": "@aibuddy/aibuddy"
+  },
+  "provenanceFile": ".aibuddy-rebrand.json",
+  "mirrorBranch": "upstream/aibuddy-mirror",
+  "allowedApplyBranchPrefixes": [
+    "feat/",
+    "sync/"
+  ]
+}
