@@ -19,7 +19,6 @@ on:
         type: choice
         options:
           - x32
-          - x64
         default: x32
       artifact_retention_days:
         description: 'Days to retain the portable artifact'
@@ -45,45 +44,21 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.source_run_id }}
 
-      - name: Build Inno Setup extractor
+      - name: Install 32-bit Wine runtime
         shell: bash
-        env:
-          INNOEXTRACT_COMMIT: 376a13e7c41cc5528b6088d0dd16ec1b323a8d37
         run: |
           set -euo pipefail
+          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install --yes \
-            cmake \
-            g++ \
-            libboost-date-time-dev \
-            libboost-filesystem-dev \
-            libboost-iostreams-dev \
-            libboost-program-options-dev \
-            libboost-system-dev \
-            libbz2-dev \
-            liblzma-dev \
-            zlib1g-dev
+          sudo apt-get install --yes wine wine32:i386 xvfb
 
-          git init innoextract-src
-          git -C innoextract-src remote add origin https://github.com/dscho/innoextract.git
-          git -C innoextract-src fetch --depth=1 origin "$INNOEXTRACT_COMMIT"
-          git -C innoextract-src checkout --detach FETCH_HEAD
-
-          cmake \
-            -S innoextract-src \
-            -B innoextract-build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=OFF \
-            -DUSE_LTO=OFF
-          cmake --build innoextract-build --parallel 2
-
-          extractor="$(find innoextract-build -type f -name innoextract -perm -111 -print -quit)"
-          test -n "$extractor"
-          echo "INNOEXTRACT=$extractor" >> "$GITHUB_ENV"
-          "$extractor" --version
-
-      - name: Extract and validate installer
+      - name: Stage and validate portable files
         shell: bash
+        env:
+          WINEARCH: win32
+          WINEPREFIX: ${{ runner.temp }}/wine32
+          WINEDEBUG: -all
+          WINEDLLOVERRIDES: mscoree,mshtml=
         run: |
           set -euo pipefail
           ARCHITECTURE='${{ inputs.architecture }}'
@@ -94,37 +69,37 @@ jobs:
             exit 1
           fi
 
-          extract_status=0
-          "$INNOEXTRACT" --extract --output-dir extracted "${installers[0]}" || extract_status=$?
-          if (( extract_status != 0 )); then
-            echo "::warning title=Inno extraction warnings::innoextract exited with status $extract_status; validating extracted files before continuing"
-          fi
+          mkdir -p staged-app
+          xvfb-run -a wineboot --init
+          wineserver -w
+
+          installer_path="$(winepath -w "${installers[0]}")"
+          staging_path="$(winepath -w "$GITHUB_WORKSPACE/staged-app")"
+          xvfb-run -a wine "$installer_path" \
+            /VERYSILENT \
+            /SUPPRESSMSGBOXES \
+            /NORESTART \
+            /SP- \
+            /NOICONS \
+            "/DIR=$staging_path"
+          wineserver -w
+          find staged-app -maxdepth 1 -type f -iname 'unins*' -delete
 
           executables=(
-            'extracted/app/HeyBuddy.exe'
-            'extracted/app/resources/bin/goose.exe'
-            'extracted/app/resources/bin/uv.exe'
-            'extracted/app/resources/bin/uvx.exe'
+            'staged-app/HeyBuddy.exe'
+            'staged-app/resources/bin/goose.exe'
+            'staged-app/resources/bin/uv.exe'
+            'staged-app/resources/bin/uvx.exe'
           )
           for executable in "${executables[@]}"; do
             test -s "$executable"
             file_type="$(file -b "$executable")"
             printf '%s: %s (%s bytes)\n' "$executable" "$file_type" "$(stat -c %s "$executable")"
 
-            case "$ARCHITECTURE" in
-              x32)
-                if [[ "$file_type" != 'PE32 executable'* || "$file_type" == 'PE32+ executable'* ]]; then
-                  printf 'Executable is not Windows x32: %s: %s\n' "$executable" "$file_type" >&2
-                  exit 1
-                fi
-                ;;
-              x64)
-                if [[ "$file_type" != 'PE32+ executable'* ]]; then
-                  printf 'Executable is not Windows x64: %s: %s\n' "$executable" "$file_type" >&2
-                  exit 1
-                fi
-                ;;
-            esac
+            if [[ "$file_type" != 'PE32 executable'* || "$file_type" == 'PE32+ executable'* ]]; then
+              printf 'Executable is not Windows x32: %s: %s\n' "$executable" "$file_type" >&2
+              exit 1
+            fi
           done
 
       - name: Create portable archive
@@ -134,7 +109,7 @@ jobs:
         run: |
           set -euo pipefail
           archive="$GITHUB_WORKSPACE/HeyBuddy-windows-${ARCHITECTURE}-portable.zip"
-          (cd extracted/app && zip -r "$archive" .)
+          (cd staged-app && zip -r "$archive" .)
           sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256"
 
       - name: Upload portable artifact

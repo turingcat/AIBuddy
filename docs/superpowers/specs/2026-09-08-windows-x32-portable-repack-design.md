@@ -6,7 +6,7 @@ Create a downloadable Windows x32 portable ZIP from the successful installer art
 
 ## Workflow
 
-Add a manually dispatched workflow that accepts a source run ID, source artifact name, architecture, and retention period. It downloads the existing Actions artifact with the repository `GITHUB_TOKEN`, builds the pending upstream `innoextract` support for Inno Setup 6.4.2 through 7.0.2 from pinned commit `376a13e7c41cc5528b6088d0dd16ec1b323a8d37`, extracts the installer payload, and archives the extracted application contents at the ZIP root.
+Add a manually dispatched workflow that accepts a source run ID, source artifact name, architecture, and retention period. It downloads the existing Actions artifact with the repository `GITHUB_TOKEN`, creates a 32-bit Wine prefix on an Ubuntu runner, runs the x32 installer silently into an isolated staging directory, removes the generated uninstaller, and archives the staged application contents at the ZIP root.
 
 The initial dispatch uses:
 
@@ -18,7 +18,7 @@ The initial dispatch uses:
 
 ## Validation
 
-The extractor may return status 1 after warning that it could not read back multi-part files for its own checksum pass. That status is accepted only when `HeyBuddy.exe`, `resources/bin/goose.exe`, `resources/bin/uv.exe`, and `resources/bin/uvx.exe` all exist and are non-empty. For x32, `file` must identify all four executables as `PE32` and must not identify any as `PE32+`; x64 requires `PE32+`. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
+The workflow fails unless `HeyBuddy.exe`, `resources/bin/goose.exe`, `resources/bin/uv.exe`, and `resources/bin/uvx.exe` all exist and are non-empty. `file` must identify all four executables as `PE32` and must not identify any as `PE32+`. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
 
 ## Scope
 
