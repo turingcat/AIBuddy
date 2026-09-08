@@ -1,4 +1,4 @@
-name: Build goose release candidate
+name: Build heybuddy release candidate
 
 on:
   pull_request:
@@ -27,7 +27,7 @@ jobs:
           body: |
             ### macOS ARM64 Desktop App (Apple Silicon)
 
-            [📱 Download macOS Desktop App (arm64, unsigned)](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/Goose-darwin-arm64.zip)
+            [📱 Download macOS Desktop App (arm64, unsigned)](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/HeyBuddy-darwin-arm64.zip)
 
             **Instructions:**
             

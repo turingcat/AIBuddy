@@ -1,4 +1,4 @@
-# Regenerates the GDK API reference data from the goose-sdk UniFFI surface and
+# Regenerates the GDK API reference data from the heybuddy-sdk UniFFI surface and
 # opens a PR when it drifts from what is committed.
 #
 # The generator is deterministic and needs no build or API key, so this stays a
@@ -38,7 +38,7 @@ jobs:
           title: "docs: update GDK API reference"
           body: |
             Regenerated `documentation/src/data/gdk-api.json` from
-            `crates/goose-sdk/src/bindings.rs`.
+            `crates/heybuddy-sdk/src/bindings.rs`.
 
             - **Triggered by**: ${{ github.event_name }}
             - **Release**: ${{ github.event.release.tag_name || 'n/a' }}

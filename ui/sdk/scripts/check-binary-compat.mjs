@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// Compatibility smoke test: boot the freshly-built goose binary via `goose acp`
+// Compatibility smoke test: boot the freshly-built heybuddy binary via `heybuddy acp`
 // and call every read-only ACP method through the freshly-built SDK. The
 // generated client validates every response with Zod, so any schema drift
 // between the binary and the SDK client fails this check and blocks the
 // publish.
 //
 // Run with:
-//   GOOSE_BINARY=/path/to/goose node ui/sdk/scripts/check-binary-compat.mjs
+//   HEYBUDDY_BINARY=/path/to/heybuddy node ui/sdk/scripts/check-binary-compat.mjs
 //
 // Or via package script:
-//   GOOSE_BINARY=/path/to/goose pnpm --filter @aaif/goose-sdk run check:compat
+//   HEYBUDDY_BINARY=/path/to/heybuddy pnpm --filter @heybuddy/heybuddy-sdk run check:compat
 
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync, existsSync, statSync } from "node:fs";
@@ -27,15 +27,15 @@ if (!existsSync(SDK_DIST)) {
   process.exit(1);
 }
 
-const GOOSE_BINARY = process.env.GOOSE_BINARY;
-if (!GOOSE_BINARY || !existsSync(GOOSE_BINARY)) {
+const HEYBUDDY_BINARY = process.env.HEYBUDDY_BINARY;
+if (!HEYBUDDY_BINARY || !existsSync(HEYBUDDY_BINARY)) {
   console.error(
-    `[compat] GOOSE_BINARY must point to a built goose binary (got: ${GOOSE_BINARY ?? "<unset>"})`,
+    `[compat] HEYBUDDY_BINARY must point to a built heybuddy binary (got: ${HEYBUDDY_BINARY ?? "<unset>"})`,
   );
   process.exit(1);
 }
 
-const { GooseExtClient } = await import(join(SDK_DIST, "index.js"));
+const { HeyBuddyExtClient } = await import(join(SDK_DIST, "index.js"));
 const {
   client: createAcpClient,
   methods,
@@ -44,51 +44,51 @@ const {
 } = await import("@agentclientprotocol/sdk");
 
 // Each entry is a read-only ACP method we expect to succeed against a fresh,
-// unconfigured goose install. Platform-specific skips keep hardware-sensitive
+// unconfigured heybuddy install. Platform-specific skips keep hardware-sensitive
 // checks from turning local environment quirks into publish blockers.
 const READ_ONLY_CHECKS = [
   {
     name: "providersList_unstable",
-    call: (c) => c.goose.providersList_unstable({ providerIds: [] }),
+    call: (c) => c.heybuddy.providersList_unstable({ providerIds: [] }),
   },
   {
     name: "providersCatalogList_unstable",
-    call: (c) => c.goose.providersCatalogList_unstable({}),
+    call: (c) => c.heybuddy.providersCatalogList_unstable({}),
   },
   {
     name: "providersSetupCatalogList_unstable",
-    call: (c) => c.goose.providersSetupCatalogList_unstable({}),
+    call: (c) => c.heybuddy.providersSetupCatalogList_unstable({}),
   },
   {
     name: "defaultsRead_unstable",
-    call: (c) => c.goose.defaultsRead_unstable({}),
+    call: (c) => c.heybuddy.defaultsRead_unstable({}),
   },
   {
     name: "preferencesRead_unstable",
-    call: (c) => c.goose.preferencesRead_unstable({}),
+    call: (c) => c.heybuddy.preferencesRead_unstable({}),
   },
   {
     name: "sourcesList_unstable",
-    call: (c) => c.goose.sourcesList_unstable({}),
+    call: (c) => c.heybuddy.sourcesList_unstable({}),
   },
   {
     name: "dictationConfig_unstable",
     skipIf: () => process.platform === "darwin",
     skipReason:
       "skipped on macOS because local-inference Metal probing can panic before returning a schema response",
-    call: (c) => c.goose.dictationConfig_unstable({}),
+    call: (c) => c.heybuddy.dictationConfig_unstable({}),
   },
   {
     name: "dictationModelsList_unstable",
-    call: (c) => c.goose.dictationModelsList_unstable({}),
+    call: (c) => c.heybuddy.dictationModelsList_unstable({}),
   },
   {
     name: "configExtensionsList_unstable",
-    call: (c) => c.goose.configExtensionsList_unstable({}),
+    call: (c) => c.heybuddy.configExtensionsList_unstable({}),
   },
 ];
 
-const sandbox = mkdtempSync(join(tmpdir(), "goose-compat-"));
+const sandbox = mkdtempSync(join(tmpdir(), "heybuddy-compat-"));
 const env = {
   ...process.env,
   HOME: sandbox,
@@ -96,14 +96,14 @@ const env = {
   XDG_DATA_HOME: join(sandbox, ".local/share"),
   XDG_STATE_HOME: join(sandbox, ".local/state"),
   XDG_CACHE_HOME: join(sandbox, ".cache"),
-  GOOSE_CONFIG_DIR: join(sandbox, ".config/goose"),
+  HEYBUDDY_CONFIG_DIR: join(sandbox, ".config/heybuddy"),
 };
 
-console.log(`[compat] using binary: ${GOOSE_BINARY}`);
+console.log(`[compat] using binary: ${HEYBUDDY_BINARY}`);
 console.log(`[compat] sandbox HOME: ${sandbox}`);
-console.log(`[compat] binary size: ${statSync(GOOSE_BINARY).size} bytes`);
+console.log(`[compat] binary size: ${statSync(HEYBUDDY_BINARY).size} bytes`);
 
-const child = spawn(GOOSE_BINARY, ["acp"], {
+const child = spawn(HEYBUDDY_BINARY, ["acp"], {
   stdio: ["pipe", "pipe", "inherit"],
   env,
 });
@@ -112,12 +112,12 @@ let exitedEarly = false;
 child.on("exit", (code, signal) => {
   if (!exitedEarly) {
     console.error(
-      `[compat] goose acp exited unexpectedly (code=${code} signal=${signal})`,
+      `[compat] heybuddy acp exited unexpectedly (code=${code} signal=${signal})`,
     );
   }
 });
 child.on("error", (err) => {
-  console.error(`[compat] failed to spawn goose acp: ${err.message}`);
+  console.error(`[compat] failed to spawn heybuddy acp: ${err.message}`);
   process.exit(1);
 });
 
@@ -134,7 +134,7 @@ const app = createAcpClient({ name: "publish-npm-compat" })
 const connection = app.connect(stream);
 const client = {
   connection,
-  goose: new GooseExtClient(connection.agent),
+  heybuddy: new HeyBuddyExtClient(connection.agent),
 };
 
 let failed = 0;
@@ -193,7 +193,7 @@ if (failed > 0) {
     "[compat] This means the SDK's generated client schema doesn't match what",
   );
   console.error(
-    "[compat] the goose binary returns. Regenerate the SDK or fix the server DTO.",
+    "[compat] the heybuddy binary returns. Regenerate the SDK or fix the server DTO.",
   );
   process.exit(1);
 }

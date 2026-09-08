@@ -20,7 +20,7 @@ const messageUpdateCallbacks = vi.hoisted(
     >()
 );
 
-vi.mock('./GooseMessage', () => ({
+vi.mock('./HeyBuddyMessage', () => ({
   default: ({ message }: { message: Message }) => {
     const id = message.id ?? 'missing-id';
     renderCounts.set(id, (renderCounts.get(id) ?? 0) + 1);

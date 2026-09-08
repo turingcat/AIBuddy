@@ -2,7 +2,7 @@
 sidebar_position: 8
 title: CLI Providers
 sidebar_label: CLI Providers
-description: Use Claude Code, Codex, Cursor Agent, or Gemini CLI subscriptions in goose
+description: Use Claude Code, Codex, Cursor Agent, or Gemini CLI subscriptions in heybuddy
 ---
 
 # CLI Providers
@@ -11,19 +11,19 @@ description: Use Claude Code, Codex, Cursor Agent, or Gemini CLI subscriptions i
 The Claude Code (`claude-code`), Codex (`codex`), Gemini CLI (`gemini-cli`), and Gemini OAuth (`gemini_oauth`) providers are deprecated. Use the [ACP providers](/docs/guides/acp-providers) (`claude-acp`, `codex-acp`) instead for Claude and Codex. For Gemini, use the [Google provider](/docs/getting-started/providers#google-gemini) with a Gemini API key or [Vertex AI](https://cloud.google.com/vertex-ai). Deprecated providers remain available for backward compatibility only.
 :::
 
-goose can make use of pass-through providers that integrate with existing CLI tools from Anthropic, OpenAI, Cursor, and Google. These providers allow you to use your existing Claude Code, Codex, Cursor Agent, and Google Gemini CLI subscriptions through goose's interface, adding session management, persistence, and workflow integration capabilities to these tools. The Gemini OAuth provider is deprecated because Google no longer supports the underlying Code Assist login flow for some account types. See Google's [announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/) and [deprecation notice](https://developers.google.com/gemini-code-assist/docs/deprecations/code-assist-individuals).
+heybuddy can make use of pass-through providers that integrate with existing CLI tools from Anthropic, OpenAI, Cursor, and Google. These providers allow you to use your existing Claude Code, Codex, Cursor Agent, and Google Gemini CLI subscriptions through heybuddy's interface, adding session management, persistence, and workflow integration capabilities to these tools. The Gemini OAuth provider is deprecated because Google no longer supports the underlying Code Assist login flow for some account types. See Google's [announcement](https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/) and [deprecation notice](https://developers.google.com/gemini-code-assist/docs/deprecations/code-assist-individuals).
 
 :::warning Limitations
-These providers don’t fully support all goose features, may have platform or capability limitations, and can sometimes require advanced debugging if issues arise. They’re included here purely as a convenience.
+These providers don’t fully support all heybuddy features, may have platform or capability limitations, and can sometimes require advanced debugging if issues arise. They’re included here purely as a convenience.
 :::
 
 ## Why Use CLI Providers?
 
 CLI providers are useful if you:
 
-- already have a Claude Code, Codex, Cursor, or Google Gemini CLI subscription and want to use it through goose instead of paying per token
+- already have a Claude Code, Codex, Cursor, or Google Gemini CLI subscription and want to use it through heybuddy instead of paying per token
 - need session persistence to save, resume, and export conversation history
-- want to use goose recipes and scheduled tasks to create repeatable workflows
+- want to use heybuddy recipes and scheduled tasks to create repeatable workflows
 - prefer unified commands across different AI providers
 - want to [use multiple models together](#combining-with-planner-models) in your tasks
 
@@ -35,16 +35,16 @@ CLI providers are useful if you:
 - **Session organization**: Manage multiple conversation threads
 
 #### Workflow Integration  
-- **Recipe compatibility**: Use CLI providers in automated goose recipes
+- **Recipe compatibility**: Use CLI providers in automated heybuddy recipes
 - **Scheduling support**: Include in scheduled tasks and workflows
 - **Hybrid configurations**: Combine with planning mode and model-specific workflows
 
 #### Interface Consistency
-- **Unified commands**: Use the same `goose session` interface across all providers
-- **Consistent configuration**: Manage all providers through goose's configuration system
+- **Unified commands**: Use the same `heybuddy session` interface across all providers
+- **Consistent configuration**: Manage all providers through heybuddy's configuration system
 
 :::warning Extensions
-CLI providers do **not** give you access to goose's extension ecosystem (MCP servers, third-party integrations, etc.). They use their own built-in tools to prevent conflicts. If you need goose's extensions, use standard [API providers](/docs/getting-started/providers#available-providers) instead.
+CLI providers do **not** give you access to heybuddy's extension ecosystem (MCP servers, third-party integrations, etc.). They use their own built-in tools to prevent conflicts. If you need heybuddy's extensions, use standard [API providers](/docs/getting-started/providers#available-providers) instead.
 :::
 
 
@@ -57,7 +57,7 @@ The Claude Code provider integrates with Anthropic's [Claude CLI tool](https://c
 **Features:**
 - Uses Claude's latest models
 - 200,000 token context limit
-- Automatic filtering of goose extensions from system prompts (since Claude Code has its own tool ecosystem)
+- Automatic filtering of heybuddy extensions from system prompts (since Claude Code has its own tool ecosystem)
 - Streaming JSON (NDJSON) protocol for persistent, multi-turn sessions
 
 **Requirements:**
@@ -74,7 +74,7 @@ The Codex provider integrates with OpenAI's [Codex CLI tool](https://developers.
 - Configurable reasoning effort levels (`low`, `medium`, `high`, `xhigh`; `none` is only supported on non-codex models like `gpt-5.2`)
 - Optional skills support for enhanced capabilities
 - JSON output parsing for structured responses
-- Automatic filtering of goose extensions from system prompts
+- Automatic filtering of heybuddy extensions from system prompts
 
 **Requirements:**
 - Codex CLI tool installed (`npm i -g @openai/codex` or `brew install --cask codex`)
@@ -119,17 +119,17 @@ The Gemini CLI provider integrates with Google's [Gemini CLI tool](https://ai.go
    
    Ensure your Claude CLI is authenticated and working
 
-3. **Configure goose**
+3. **Configure heybuddy**
    
    Set the provider environment variable:
    ```bash
-   export GOOSE_PROVIDER=claude-code
+   export HEYBUDDY_PROVIDER=claude-code
    ```
    
-   Or configure through the goose CLI using `goose configure`:
+   Or configure through the heybuddy CLI using `heybuddy configure`:
 
    ```bash
-   ┌   goose-configure 
+   ┌   heybuddy-configure 
    │
    ◇  What would you like to configure?
    │  Configure Providers 
@@ -157,17 +157,17 @@ The Gemini CLI provider integrates with Google's [Gemini CLI tool](https://ai.go
 
    Run `codex` and follow the authentication prompts. You can use your ChatGPT account or API key.
 
-3. **Configure goose**
+3. **Configure heybuddy**
 
    Set the provider environment variable:
    ```bash
-   export GOOSE_PROVIDER=codex
+   export HEYBUDDY_PROVIDER=codex
    ```
 
-   Or configure through the goose CLI using `goose configure`:
+   Or configure through the heybuddy CLI using `heybuddy configure`:
 
    ```bash
-   ┌   goose-configure
+   ┌   heybuddy-configure
    │
    ◇  What would you like to configure?
    │  Configure Providers
@@ -191,18 +191,18 @@ The Gemini CLI provider integrates with Google's [Gemini CLI tool](https://ai.go
 
    Ensure your Cursor Agent is authenticated and working
 
-3. **Configure goose**
+3. **Configure heybuddy**
 
    Set the provider environment variable:
 
    ```bash
-   export GOOSE_PROVIDER=cursor-agent
+   export HEYBUDDY_PROVIDER=cursor-agent
    ```
 
-   Or configure through the goose CLI using `goose configure`:
+   Or configure through the heybuddy CLI using `heybuddy configure`:
 
    ```bash
-   ┌   goose-configure
+   ┌   heybuddy-configure
    │
    ◇  What would you like to configure?
    │  Configure Providers
@@ -226,17 +226,17 @@ The Gemini CLI provider integrates with Google's [Gemini CLI tool](https://ai.go
    
    Ensure your Gemini CLI is authenticated and working.
 
-3. **Configure goose**
+3. **Configure heybuddy**
    
    Set the provider environment variable:
    ```bash
-   export GOOSE_PROVIDER=gemini-cli
+   export HEYBUDDY_PROVIDER=gemini-cli
    ```
    
-   Or configure through the goose CLI using `goose configure`:
+   Or configure through the heybuddy CLI using `heybuddy configure`:
 
    ```bash
-   ┌   goose-configure 
+   ┌   heybuddy-configure 
    │
    ◇  What would you like to configure?
    │  Configure Providers 
@@ -254,10 +254,10 @@ The Gemini CLI provider integrates with Google's [Gemini CLI tool](https://ai.go
 
 ### Basic Usage
 
-Once configured, you can start a goose session using these providers just like any others:
+Once configured, you can start a heybuddy session using these providers just like any others:
 
 ```bash
-goose session
+heybuddy session
 ```
 
 ### Combining with Planner Models
@@ -266,12 +266,12 @@ CLI providers also work well with planning mode when you want one model for stra
 
 ```bash
 # Use Claude Code for execution, OpenAI for planning
-export GOOSE_PROVIDER=claude-code
-export GOOSE_MODEL=default
-export GOOSE_PLANNER_PROVIDER=openai
-export GOOSE_PLANNER_MODEL=gpt-4o
+export HEYBUDDY_PROVIDER=claude-code
+export HEYBUDDY_MODEL=default
+export HEYBUDDY_PLANNER_PROVIDER=openai
+export HEYBUDDY_PLANNER_MODEL=gpt-4o
 
-goose session
+heybuddy session
 ```
 
 ## Configuration Options
@@ -280,19 +280,19 @@ goose session
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
-| `GOOSE_PROVIDER` | Set to `claude-code` to use this provider | None |
-| `GOOSE_MODEL` | Model to use (only `sonnet` or `opus` are passed to CLI) | `claude-sonnet-4-20250514` |
+| `HEYBUDDY_PROVIDER` | Set to `claude-code` to use this provider | None |
+| `HEYBUDDY_MODEL` | Model to use (only `sonnet` or `opus` are passed to CLI) | `claude-sonnet-4-20250514` |
 | `CLAUDE_CODE_COMMAND` | Path to the Claude CLI command | `claude` |
 
 **Known Models:**
 
-The following models are recognized and passed to the Claude CLI via the `--model` flag. If `GOOSE_MODEL` is set to a value not in this list, no model flag is passed and Claude Code uses its default:
+The following models are recognized and passed to the Claude CLI via the `--model` flag. If `HEYBUDDY_MODEL` is set to a value not in this list, no model flag is passed and Claude Code uses its default:
 
 - `default` (opus)
 - `sonnet`
 - `haiku`
 
-**Permission Modes (`GOOSE_MODE`):**
+**Permission Modes (`HEYBUDDY_MODE`):**
 
 | Mode | Claude Code Flag | Behavior |
 |------|------------------|----------|
@@ -302,17 +302,17 @@ The following models are recognized and passed to the Claude CLI via the `--mode
 | `chat` | (none) | Default Claude Code behavior |
 
 :::tip Approve Mode Integration
-When using `approve` or `smart_approve` mode with Claude Code, goose routes Claude Code's permission prompts through goose's confirmation interface. This means:
+When using `approve` or `smart_approve` mode with Claude Code, heybuddy routes Claude Code's permission prompts through heybuddy's confirmation interface. This means:
 
-- **Sensitive operations** (file writes, shell commands, etc.) trigger approval prompts in goose
-- **You review and approve/deny** directly in the goose CLI or Desktop interface
+- **Sensitive operations** (file writes, shell commands, etc.) trigger approval prompts in heybuddy
+- **You review and approve/deny** directly in the heybuddy CLI or Desktop interface
 - **Denied operations** are communicated back to Claude Code, which adapts accordingly
 
-This provides a consistent permission experience across all goose providers while leveraging Claude Code's built-in safety checks.
+This provides a consistent permission experience across all heybuddy providers while leveraging Claude Code's built-in safety checks.
 
 Example with approve mode:
 ```bash
-GOOSE_PROVIDER=claude-code GOOSE_MODE=approve goose session
+HEYBUDDY_PROVIDER=claude-code HEYBUDDY_MODE=approve heybuddy session
 ```
 :::
 
@@ -320,15 +320,15 @@ GOOSE_PROVIDER=claude-code GOOSE_MODE=approve goose session
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
-| `GOOSE_PROVIDER` | Set to `cursor-agent` to use this provider | None |
+| `HEYBUDDY_PROVIDER` | Set to `cursor-agent` to use this provider | None |
 | `CURSOR_AGENT_COMMAND` | Path to the Cursor Agent command | `cursor-agent` |
 
 ### OpenAI Codex Configuration
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
-| `GOOSE_PROVIDER` | Set to `codex` to use this provider | None |
-| `GOOSE_MODEL` | Model to use (only known models are passed to CLI) | `gpt-5.2-codex` |
+| `HEYBUDDY_PROVIDER` | Set to `codex` to use this provider | None |
+| `HEYBUDDY_MODEL` | Model to use (only known models are passed to CLI) | `gpt-5.2-codex` |
 | `CODEX_COMMAND` | Path to the Codex CLI command | `codex` |
 | `CODEX_REASONING_EFFORT` | Reasoning effort level: `low`, `medium`, `high`, or `xhigh` (`none` is only supported on non-codex models like `gpt-5.2`) | `high` |
 | `CODEX_ENABLE_SKILLS` | Enable Codex skills: `true` or `false` | `true` |
@@ -336,7 +336,7 @@ GOOSE_PROVIDER=claude-code GOOSE_MODE=approve goose session
 
 **Known Models:**
 
-The following models are recognized and passed to the Codex CLI via the `-m` flag. If `GOOSE_MODEL` is set to a value not in this list, no model flag is passed and Codex uses its default:
+The following models are recognized and passed to the Codex CLI via the `-m` flag. If `HEYBUDDY_MODEL` is set to a value not in this list, no model flag is passed and Codex uses its default:
 
 - `gpt-5.2-codex` (400K context, auto-compacting)
 - `gpt-5.2` (400K context, auto-compacting)
@@ -347,7 +347,7 @@ The following models are recognized and passed to the Codex CLI via the `-m` fla
 These are the default models supported by Codex CLI v0.77.0. To access older or legacy models, you can run `codex -m <model_name>` directly or configure them in Codex's `config.toml`. See the [Codex CLI documentation](https://developers.openai.com/codex/cli) for details.
 :::
 
-**Permission Modes (`GOOSE_MODE`):**
+**Permission Modes (`HEYBUDDY_MODE`):**
 
 | Mode | Codex Flag | Behavior |
 |------|------------|----------|
@@ -360,20 +360,20 @@ These are the default models supported by Codex CLI v0.77.0. To access older or 
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
-| `GOOSE_PROVIDER` | Set to `gemini-cli` to use this provider | None |
+| `HEYBUDDY_PROVIDER` | Set to `gemini-cli` to use this provider | None |
 | `GEMINI_CLI_COMMAND` | Path to the Gemini CLI command | `gemini` |
 
 ## How It Works
 
 ### System Prompt Filtering
 
-The CLI providers automatically filter out goose's extension information from system prompts since these CLI tools have their own tool ecosystems. This prevents conflicts and ensures clean interaction with the underlying CLI tools.
+The CLI providers automatically filter out heybuddy's extension information from system prompts since these CLI tools have their own tool ecosystems. This prevents conflicts and ensures clean interaction with the underlying CLI tools.
 
 ### Message Translation
 
-- **Claude Code**: Converts goose messages to text content blocks with role prefixes (Human:/Assistant:), similar to Codex and Gemini CLI
+- **Claude Code**: Converts heybuddy messages to text content blocks with role prefixes (Human:/Assistant:), similar to Codex and Gemini CLI
 - **Codex**: Converts messages to simple text prompts with role prefixes (Human:/Assistant:), similar to Gemini CLI
-- **Cursor Agent**: Converts goose messages to Cursor's JSON message format, handling tool calls and responses appropriately
+- **Cursor Agent**: Converts heybuddy messages to Cursor's JSON message format, handling tool calls and responses appropriately
 - **Gemini CLI**: Converts messages to simple text prompts with role prefixes (Human:/Assistant:)
 
 ### Response Processing
@@ -395,4 +395,4 @@ CLI providers depend on external tools, so ensure:
 
 ---
 
-CLI providers offer a way to use existing AI tool subscriptions through goose's interface, adding session management and workflow integration capabilities. They're particularly valuable for users with existing CLI subscriptions who want unified session management and recipe integration.
+CLI providers offer a way to use existing AI tool subscriptions through heybuddy's interface, adding session management and workflow integration capabilities. They're particularly valuable for users with existing CLI subscriptions who want unified session management and recipe integration.

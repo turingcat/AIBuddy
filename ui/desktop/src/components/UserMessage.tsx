@@ -345,7 +345,7 @@ function UserMessage({ message, onMessageUpdate }: UserMessageProps) {
                   <div className="absolute w-40 font-mono right-0 text-xs text-text-secondary pt-1 transition-all duration-200 group-hover:-translate-y-4 group-hover:opacity-0">
                     {timestamp}
                   </div>
-                  <div className="absolute right-0 pt-1 flex items-center gap-2">
+                  <div className="absolute right-0 w-max pt-1 flex items-center gap-2">
                     <button
                       onClick={handleEditClick}
                       onKeyDown={(e) => {
@@ -354,14 +354,14 @@ function UserMessage({ message, onMessageUpdate }: UserMessageProps) {
                           handleEditClick();
                         }
                       }}
-                      className="flex items-center gap-1 text-xs text-text-secondary hover:cursor-pointer hover:text-text-primary transition-all duration-200 opacity-0 group-hover:opacity-100 -translate-y-4 group-hover:translate-y-0 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 rounded"
+                      className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs text-text-secondary hover:cursor-pointer hover:text-text-primary transition-all duration-200 opacity-0 group-hover:opacity-100 -translate-y-4 group-hover:translate-y-0 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-50 rounded"
                       aria-label={intl.formatMessage(i18n.editMessageAriaLabel, {
                         preview: `${textContent.substring(0, 50)}${textContent.length > 50 ? '...' : ''}`,
                       })}
                       aria-expanded={isEditing}
                       title={intl.formatMessage(i18n.editMessageTitle)}
                     >
-                      <Edit className="h-3 w-3" />
+                      <Edit className="h-[1em] w-[1em] shrink-0" />
                       <span>{intl.formatMessage(i18n.editButton)}</span>
                     </button>
                     <MessageCopyLink text={textContent} contentRef={contentRef} />

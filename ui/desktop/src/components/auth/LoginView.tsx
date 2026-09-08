@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { login } from '../../login';
-import { Goose } from '../icons/Goose';
+import { HeyBuddy } from '../icons/HeyBuddy';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Input } from '../ui/input';
@@ -34,7 +34,7 @@ function HeyBuddyLoginForm() {
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-background-primary px-4">
       <Card className="w-full max-w-sm p-6">
-        <Goose className="mx-auto mb-4 size-10" />
+        <HeyBuddy className="mx-auto mb-4 size-10" />
         <h1 className="mb-1 text-center text-xl font-light text-text-primary">登录 HeyBuddy</h1>
         <p className="mb-6 text-center text-sm text-text-secondary">请使用公司OA账号登录</p>
         <form onSubmit={handleSubmit} className="space-y-4">

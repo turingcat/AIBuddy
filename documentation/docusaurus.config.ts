@@ -151,8 +151,8 @@ const config: Config = {
       {
         redirects: [
           {
-            from: "/docs/getting-started/using-goose-free",
-            to: "/docs/getting-started/providers#using-goose-for-free",
+            from: "/docs/getting-started/using-heybuddy-free",
+            to: "/docs/getting-started/providers#using-heybuddy-for-free",
           },
           {
             from: "/v1/docs/getting-started/providers",
@@ -187,7 +187,7 @@ const config: Config = {
             to: "/docs/mcp/computer-controller-mcp",
           },
           {
-            from: "/docs/guides/managing-goose-sessions",
+            from: "/docs/guides/managing-heybuddy-sessions",
             to: "/docs/guides/sessions/session-management",
           },
           {
@@ -195,7 +195,7 @@ const config: Config = {
             to: "/docs/guides/sessions/smart-context-management",
           },
           {
-            from: "/docs/guides/share-goose-sessions",
+            from: "/docs/guides/share-heybuddy-sessions",
             to: "/docs/guides/recipes/session-recipes",
           },
           {
@@ -223,8 +223,8 @@ const config: Config = {
             to: "/docs/guides/managing-tools/adjust-tool-output",
           },
           {
-            from: "/docs/guides/goose-in-docker",
-            to: "/docs/tutorials/goose-in-docker",
+            from: "/docs/guides/heybuddy-in-docker",
+            to: "/docs/tutorials/heybuddy-in-docker",
           },
           {
             from: "/docs/guides/multi-model/creating-plans",
@@ -251,12 +251,12 @@ const config: Config = {
             to: "/docs/guides/context-engineering/prompt-templates",
           },
           {
-            from: "/docs/guides/goose-permissions",
-            to: "/docs/guides/managing-tools/goose-permissions",
+            from: "/docs/guides/heybuddy-permissions",
+            to: "/docs/guides/managing-tools/heybuddy-permissions",
           },
           {
-            from: "/docs/guides/using-goosehints",
-            to: "/docs/guides/context-engineering/using-goosehints",
+            from: "/docs/guides/using-heybuddyhints",
+            to: "/docs/guides/context-engineering/using-heybuddyhints",
           },
           {
             from: "/docs/guides/managing-tools/hooks",
@@ -509,7 +509,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} HeyBuddy contributors. Based on <a href="https://github.com/aaif-goose/goose">goose</a>, © AAIF (Agentic AI Foundation).`,
+      copyright: `Copyright © ${new Date().getFullYear()} HeyBuddy contributors. Based on <a href="https://github.com/aaif-goose/goose">heybuddy</a>, © AAIF (Agentic AI Foundation).`,
     },
     prism: {
       theme: prismThemes.github,

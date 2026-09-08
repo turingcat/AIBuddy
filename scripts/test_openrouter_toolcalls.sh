@@ -13,9 +13,9 @@ show_usage() {
   echo "  -h, --help               Show this help message"
   echo ""
   echo "Environment:"
-  echo "  OPENROUTER_API_KEY       Required by goose's OpenRouter provider"
+  echo "  OPENROUTER_API_KEY       Required by heybuddy's OpenRouter provider"
   echo "  OPENROUTER_HOST          Optional OpenRouter host (default: https://openrouter.ai)"
-  echo "  GOOSE_BIN                Optional goose binary path"
+  echo "  HEYBUDDY_BIN                Optional heybuddy binary path"
   echo "  SKIP_BUILD               Skip cargo build when set"
   echo ""
   echo "Examples:"
@@ -90,15 +90,15 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [[ -z "${SKIP_BUILD:-}" && -z "${GOOSE_BIN:-}" ]]; then
-  echo "Building goose..."
-  (cd "$REPO_ROOT" && cargo build --bin goose)
+if [[ -z "${SKIP_BUILD:-}" && -z "${HEYBUDDY_BIN:-}" ]]; then
+  echo "Building heybuddy..."
+  (cd "$REPO_ROOT" && cargo build --bin heybuddy)
   echo ""
 fi
 
-GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/goose}"
-if [[ ! -x "$GOOSE_BIN" ]]; then
-  echo "Error: goose binary not found or not executable: $GOOSE_BIN"
+HEYBUDDY_BIN="${HEYBUDDY_BIN:-$REPO_ROOT/target/debug/heybuddy}"
+if [[ ! -x "$HEYBUDDY_BIN" ]]; then
+  echo "Error: heybuddy binary not found or not executable: $HEYBUDDY_BIN"
   exit 1
 fi
 
@@ -137,12 +137,12 @@ def get_weather(
     location: Annotated[str, "City or place to check"],
 ) -> Annotated[str, "Weather report"]:
     """Get the current weather for a location."""
-    return f"GOOSE_TOOL_CALL_OK: The weather in {location} is 68 F and clear."
+    return f"HEYBUDDY_TOOL_CALL_OK: The weather in {location} is 68 F and clear."
 EOF
 
 cat > "$TESTDIR/recipe.yaml" << 'EOF'
 title: OpenRouter Tool Call Test
-description: Test a model can call a simple MCP tool through goose
+description: Test a model can call a simple MCP tool through heybuddy
 prompt: Use the get_weather tool to check the weather in San Francisco. Do not answer from memory.
 extensions:
   - name: weather
@@ -188,8 +188,8 @@ run_model() {
   local model="$1"
 
   if [[ "$RUN_TIMEOUT" -eq 0 ]]; then
-    GOOSE_MODE=auto GOOSE_PROVIDER=openrouter GOOSE_MODEL="$model" \
-      "$GOOSE_BIN" run --no-profile --max-turns 4 --recipe recipe.yaml
+    HEYBUDDY_MODE=auto HEYBUDDY_PROVIDER=openrouter HEYBUDDY_MODEL="$model" \
+      "$HEYBUDDY_BIN" run --no-profile --max-turns 4 --recipe recipe.yaml
     return $?
   fi
 
@@ -214,8 +214,8 @@ run_model() {
     exit($status & 127 ? 128 + ($status & 127) : $status >> 8);
   ' \
     "$RUN_TIMEOUT" \
-    env GOOSE_MODE=auto GOOSE_PROVIDER=openrouter GOOSE_MODEL="$model" \
-    "$GOOSE_BIN" run --no-profile --max-turns 4 --recipe recipe.yaml
+    env HEYBUDDY_MODE=auto HEYBUDDY_PROVIDER=openrouter HEYBUDDY_MODEL="$model" \
+    "$HEYBUDDY_BIN" run --no-profile --max-turns 4 --recipe recipe.yaml
 }
 
 echo "Testing ${#MODELS[@]} OpenRouter model(s)"
@@ -232,12 +232,12 @@ for model in "${MODELS[@]}"; do
 
   if (cd "$TESTDIR" && run_model "$model" 2>&1) | tee "$log_file"; then
     if error_summary=$(summarize_error "$log_file"); then
-      echo "✗ Goose reported an error for $model"
+      echo "✗ HeyBuddy reported an error for $model"
       echo "  $error_summary"
       RESULTS+=("✗ $model - $error_summary")
       OVERALL_SUCCESS=false
     elif grep -qE "(get_weather \| weather)|(▸.*get_weather.*weather)" "$log_file" && \
-      grep -Fq "GOOSE_TOOL_CALL_OK:" "$log_file"; then
+      grep -Fq "HEYBUDDY_TOOL_CALL_OK:" "$log_file"; then
       echo "✓ Tool call passed for $model"
       RESULTS+=("✓ $model")
     elif grep -qE "(get_weather \| weather)|(▸.*get_weather.*weather)" "$log_file"; then
@@ -251,14 +251,14 @@ for model in "${MODELS[@]}"; do
     fi
   else
     run_status=${PIPESTATUS[0]}
-    echo "✗ Goose run failed for $model"
+    echo "✗ HeyBuddy run failed for $model"
     if [[ "$run_status" -eq 124 ]]; then
       RESULTS+=("✗ $model - run timed out")
     elif error_summary=$(summarize_error "$log_file"); then
       echo "  $error_summary"
       RESULTS+=("✗ $model - $error_summary")
     else
-      RESULTS+=("✗ $model - goose run failed")
+      RESULTS+=("✗ $model - heybuddy run failed")
     fi
     OVERALL_SUCCESS=false
   fi

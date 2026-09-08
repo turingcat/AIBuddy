@@ -4,7 +4,7 @@ import { useProviderDeviceCode } from './useProviderDeviceCode';
 
 function dispatchDeviceCode(providerId: string, userCode: string) {
   window.dispatchEvent(
-    new CustomEvent('goose:device-code', {
+    new CustomEvent('heybuddy:device-code', {
       detail: {
         providerId,
         userCode,

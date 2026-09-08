@@ -13,7 +13,7 @@ import {
 } from '../../ui/dropdown-menu';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../ui/card';
-import ThemeSelector from '../../GooseSidebar/ThemeSelector';
+import ThemeSelector from '../../HeyBuddySidebar/ThemeSelector';
 import BlockLogoBlack from './icons/block-lockup_black.png';
 import BlockLogoWhite from './icons/block-lockup_white.png';
 import { trackSettingToggled } from '../../../utils/analytics';
@@ -465,7 +465,7 @@ export default function AppSettingsSection() {
               className="h-8 w-auto"
             />
             <span className="text-2xl font-mono text-black dark:text-white">
-              {String(window.appConfig.get('GOOSE_VERSION') || 'Development')}
+              {String(window.appConfig.get('HEYBUDDY_VERSION') || 'Development')}
             </span>
           </div>
         </CardContent>

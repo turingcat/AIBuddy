@@ -1,6 +1,6 @@
-# Building goose Desktop on Linux
+# Building heybuddy Desktop on Linux
 
-This guide covers building the goose Desktop application from source on various Linux distributions.
+This guide covers building the heybuddy Desktop application from source on various Linux distributions.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ sudo zypper install dpkg fakeroot gcc gcc-c++ make vulkan-headers vulkan-loader 
 **Android / Termux:**
 
 The `download_cli.sh` installer detects Termux and automatically selects the
-musl portable build (`GOOSE_LINUX_VARIANT=musl`). To install:
+musl portable build (`HEYBUDDY_LINUX_VARIANT=musl`). To install:
 
 ```bash
 curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
@@ -40,7 +40,7 @@ To build from source in Termux:
 
 ```bash
 pkg install rust cmake protobuf clang build-essential
-cargo build --release -p goose-cli --bin goose --no-default-features --features portable-default
+cargo build --release -p heybuddy-cli --bin heybuddy --no-default-features --features portable-default
 ```
 
 > **Note:** The musl/portable build disables `local-inference` (V8) and
@@ -60,15 +60,15 @@ Original PR: https://github.com/aaif-goose/goose/pull/3890
 ### 1. Clone and Setup
 ```bash
 git clone https://github.com/aaif-goose/goose.git
-cd goose
+cd heybuddy
 ```
 
 ### 2. Build
 
-Build Goose CLI:
+Build HeyBuddy CLI:
 
 ```bash
-cargo build --release -p goose-cli --bin goose
+cargo build --release -p heybuddy-cli --bin heybuddy
 ```
 
 This command should give you a list of possible packages in the
@@ -83,9 +83,9 @@ cargo test -p
 cd ui/desktop
 pnpm install
 
-# Copy the goose binary to the expected location
+# Copy the heybuddy binary to the expected location
 mkdir -p src/bin
-cp ../../target/release/goose src/bin/
+cp ../../target/release/heybuddy src/bin/
 ```
 
 ### 4. Build the Application
@@ -96,7 +96,7 @@ Works on all Linux distributions:
 pnpm run make --targets=@electron-forge/maker-zip
 ```
 
-Output: `out/make/zip/linux/x64/goose-linux-x64-{version}.zip`
+Output: `out/make/zip/linux/x64/heybuddy-linux-x64-{version}.zip`
 
 #### Option B: DEB Package
 For Debian/Ubuntu systems:
@@ -104,7 +104,7 @@ For Debian/Ubuntu systems:
 pnpm run make --targets=@electron-forge/maker-deb
 ```
 
-Output: `out/make/deb/x64/goose_{version}_amd64.deb`
+Output: `out/make/deb/x64/heybuddy_{version}_amd64.deb`
 
 #### Option C: Both Formats
 ```bash
@@ -115,12 +115,12 @@ pnpm run make
 
 #### From Build Directory
 ```bash
-./out/goose-linux-x64/goose
+./out/heybuddy-linux-x64/heybuddy
 ```
 
 #### Install DEB Package (if built)
 ```bash
-sudo dpkg -i out/make/deb/x64/goose_*.deb
+sudo dpkg -i out/make/deb/x64/heybuddy_*.deb
 ```
 
 ## Troubleshooting
@@ -142,14 +142,14 @@ These are harmless and don't affect functionality. To suppress them, create a la
 
 ```bash
 #!/bin/bash
-cd /path/to/goose/ui/desktop/out/goose-linux-x64
-./goose 2>&1 | grep -v "GLib-GObject" | grep -v "browser_main_loop"
+cd /path/to/heybuddy/ui/desktop/out/heybuddy-linux-x64
+./heybuddy 2>&1 | grep -v "GLib-GObject" | grep -v "browser_main_loop"
 ```
 
-#### Goose Binary Not Found
-If you see "Goose binary not found", ensure you've:
-1. Built the Rust binary: `cargo build --release -p goose-cli --bin goose`
-2. Copied it to the right location: `cp ../../target/release/goose src/bin/`
+#### HeyBuddy Binary Not Found
+If you see "HeyBuddy binary not found", ensure you've:
+1. Built the Rust binary: `cargo build --release -p heybuddy-cli --bin heybuddy`
+2. Copied it to the right location: `cp ../../target/release/heybuddy src/bin/`
 3. Rebuilt the application: `pnpm run make`
 
 ### Distribution-Specific Notes
@@ -180,32 +180,32 @@ Building as Snap packages is not currently supported but may be added in the fut
 
 For active development:
 
-1. **Backend changes**: Rebuild with `cargo build --release -p goose-cli --bin goose` and copy the binary
+1. **Backend changes**: Rebuild with `cargo build --release -p heybuddy-cli --bin heybuddy` and copy the binary
 2. **Frontend changes**: Use `pnpm run start` for hot reload during development
 3. **Full rebuild**: Run the complete build process above
 
 ## Creating System Integration
 
 ### Desktop Entry
-Create `~/.local/share/applications/goose.desktop`:
+Create `~/.local/share/applications/heybuddy.desktop`:
 ```ini
 [Desktop Entry]
-Name=goose AI Agent
+Name=heybuddy AI Agent
 Comment=Local AI agent for development tasks
-Exec=/path/to/goose/ui/desktop/out/goose-linux-x64/goose %U
-Icon=/path/to/goose/ui/desktop/out/goose-linux-x64/resources/app.asar.unpacked/src/images/icon.png
+Exec=/path/to/heybuddy/ui/desktop/out/heybuddy-linux-x64/heybuddy %U
+Icon=/path/to/heybuddy/ui/desktop/out/heybuddy-linux-x64/resources/app.asar.unpacked/src/images/icon.png
 Terminal=false
 Type=Application
 Categories=Development;Utility;
 StartupNotify=true
-MimeType=x-scheme-handler/goose
+MimeType=x-scheme-handler/heybuddy
 ```
 
 ### System-wide Installation
 To install system-wide:
 ```bash
-sudo cp -r out/goose-linux-x64 /opt/goose
-sudo ln -s /opt/goose/goose /usr/local/bin/goose-gui
+sudo cp -r out/heybuddy-linux-x64 /opt/heybuddy
+sudo ln -s /opt/heybuddy/heybuddy /usr/local/bin/heybuddy-gui
 ```
 
 ## Contributing

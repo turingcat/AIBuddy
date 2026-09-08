@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { defineMessages, useIntl } from '../i18n';
 import { useLocation, useNavigate } from 'react-router';
 import { SearchView } from './conversation/SearchView';
-import LoadingGoose from './LoadingGoose';
+import LoadingHeyBuddy from './LoadingHeyBuddy';
 import ProgressiveMessageList from './ProgressiveMessageList';
 import { MainPanelLayout } from './Layout/MainPanelLayout';
 import ChatInput from './ChatInput';
@@ -32,7 +32,7 @@ import {
 } from '../types/message';
 import { substituteParameters } from '../utils/parameterSubstitution';
 import { useAutoSubmit } from '../hooks/useAutoSubmit';
-import EnvironmentBadge from './GooseSidebar/EnvironmentBadge';
+import EnvironmentBadge from './HeyBuddySidebar/EnvironmentBadge';
 import ChatBrand from './ChatBrand';
 import SessionActionsHeader from './SessionActionsHeader';
 import { isAcpRecovering, subscribeToAcpRecovery } from '../acp/acpConnection';
@@ -482,7 +482,7 @@ export default function BaseChat({
 
           {chatState !== ChatState.Idle && (
             <div className="absolute bottom-1 left-4 z-20 pointer-events-none">
-              <LoadingGoose chatState={chatState} message={progressMessage} />
+              <LoadingHeyBuddy chatState={chatState} message={progressMessage} />
             </div>
           )}
         </div>

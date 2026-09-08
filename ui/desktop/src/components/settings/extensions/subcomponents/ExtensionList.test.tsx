@@ -36,7 +36,7 @@ const builtIns = [
   {
     name: 'memory',
     display_name: 'Memory',
-    description: 'Teach goose your preferences as you go.',
+    description: 'Teach heybuddy your preferences as you go.',
     enabled: false,
     type: 'builtin',
   },

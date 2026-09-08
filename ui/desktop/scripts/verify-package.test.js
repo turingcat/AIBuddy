@@ -4,23 +4,23 @@ const path = require('node:path');
 const { verifyPackageTree, verifyInfoPlist, verifyPackage } = require('./verify-package');
 const { resolveBrand } = require('./brand');
 
-function makeDarwinTree(root, productName, { omitGoose = false } = {}) {
+function makeDarwinTree(root, productName, { omitHeyBuddy = false } = {}) {
   const contents = path.join(root, `${productName}.app`, 'Contents');
   fs.mkdirSync(path.join(contents, 'MacOS'), { recursive: true });
   fs.writeFileSync(path.join(contents, 'MacOS', productName), '');
   fs.writeFileSync(path.join(contents, 'Info.plist'), '');
-  if (!omitGoose) {
+  if (!omitHeyBuddy) {
     fs.mkdirSync(path.join(contents, 'Resources', 'bin'), { recursive: true });
-    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'goose'), '');
+    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'heybuddy'), '');
   }
   return root;
 }
 
-function makeWin32Tree(root, productName, { omitGoose = false } = {}) {
+function makeWin32Tree(root, productName, { omitHeyBuddy = false } = {}) {
   fs.mkdirSync(path.join(root, 'resources', 'bin'), { recursive: true });
   fs.writeFileSync(path.join(root, `${productName}.exe`), '');
-  if (!omitGoose) {
-    fs.writeFileSync(path.join(root, 'resources', 'bin', 'goose.exe'), '');
+  if (!omitHeyBuddy) {
+    fs.writeFileSync(path.join(root, 'resources', 'bin', 'heybuddy.exe'), '');
   }
   return root;
 }
@@ -75,7 +75,7 @@ describe('verifyPackageTree', () => {
 
     expect(verifyPackageTree(resolveBrand('heybuddy'), 'darwin', root)).toEqual([
       expect.stringContaining('HeyBuddy.app/Contents/MacOS/HeyBuddy'),
-      expect.stringContaining('HeyBuddy.app/Contents/Resources/bin/goose'),
+      expect.stringContaining('HeyBuddy.app/Contents/Resources/bin/heybuddy'),
       expect.stringContaining('HeyBuddy-darwin-arm64'),
     ]);
   });
@@ -90,12 +90,12 @@ describe('verifyPackageTree', () => {
   });
 
   it.each([
-    ['darwin', makeDarwinTree, 'goose'],
-    ['win32', makeWin32Tree, 'goose.exe'],
+    ['darwin', makeDarwinTree, 'heybuddy'],
+    ['win32', makeWin32Tree, 'heybuddy.exe'],
   ])('rejects a %s package with no embedded CLI', (platform, make, binary) => {
     const brand = resolveBrand('heybuddy');
     const dirName = platform === 'darwin' ? 'HeyBuddy-darwin-arm64' : 'HeyBuddy-win32-x64';
-    const root = make(tempRoot(dirName), brand.productName, { omitGoose: true });
+    const root = make(tempRoot(dirName), brand.productName, { omitHeyBuddy: true });
 
     expect(verifyPackageTree(brand, platform, root)).toEqual([expect.stringContaining(binary)]);
   });
@@ -117,7 +117,7 @@ describe('verifyInfoPlist', () => {
 
     expect(verifyInfoPlist(resolveBrand('heybuddy'), plist)).toEqual([
       expect.stringContaining('com.electron.heybuddy'),
-      expect.stringContaining('goose'),
+      expect.stringContaining('heybuddy'),
     ]);
   });
 
@@ -125,7 +125,7 @@ describe('verifyInfoPlist', () => {
     const plist = { ...plistFor(resolveBrand('heybuddy')), CFBundleURLTypes: [] };
 
     expect(verifyInfoPlist(resolveBrand('heybuddy'), plist)).toEqual([
-      expect.stringContaining('goose'),
+      expect.stringContaining('heybuddy'),
     ]);
   });
 });

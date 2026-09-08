@@ -5,24 +5,30 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+ACTIVE_MACOS_WORKFLOW_FILES = (
+    ".github/workflows/bundle-macos.yml",
+    ".github/workflows/release.yml",
+)
+HISTORIC_MACOS_WORKFLOW_FILES = (
+    ".github/workflows/canary.yml.disabled",
+    ".github/workflows/release-branches.yml.disabled",
+)
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
     def test_macos_builds_only_target_arm64(self) -> None:
         build_files = [
-            ".github/workflows/bundle-macos.yml",
-            ".github/workflows/canary.yml",
-            ".github/workflows/release-branches.yml",
-            ".github/workflows/release.yml",
+            *ACTIVE_MACOS_WORKFLOW_FILES,
+            *HISTORIC_MACOS_WORKFLOW_FILES,
 
             "Justfile",
             "ui/desktop/package.json",
             "documentation/src/components/MacDesktopInstallButtons.js",
             "download_cli.sh",
-            "crates/goose-cli/src/commands/update.rs",
-            "crates/goose-sdk/scripts/maven-resource-prefix.sh",
-            "crates/goose-sdk/scripts/prepare-maven-package.sh",
-            "crates/goose-sdk/maven/README.md",
+            "crates/heybuddy-cli/src/commands/update.rs",
+            "crates/heybuddy-sdk/scripts/maven-resource-prefix.sh",
+            "crates/heybuddy-sdk/scripts/prepare-maven-package.sh",
+            "crates/heybuddy-sdk/maven/README.md",
             "documentation/src/components/SupportedEnvironments.js",
             "flake.nix",
             "ui/scripts/publish.sh",
@@ -39,7 +45,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "copy-binary-intel",
             "intel_mac",
             "macos-15-intel",
-            "Goose_intel_mac",
+            "HeyBuddy_intel_mac",
             "macOS Intel",
             "macos-x86_64",
             "darwin-x86-64",
@@ -51,6 +57,17 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             for marker in forbidden:
                 with self.subTest(file=relative_path, marker=marker):
                     self.assertNotIn(marker, content)
+
+    def test_macos_workflow_inventory_requires_declared_paths(self) -> None:
+        for relative_path in (*ACTIVE_MACOS_WORKFLOW_FILES, *HISTORIC_MACOS_WORKFLOW_FILES):
+            with self.subTest(file=relative_path):
+                self.assertTrue(
+                    (ROOT / relative_path).is_file(),
+                    f"required architecture contract file is missing: {relative_path}",
+                )
+
+        self.assertTrue(all(path.endswith(".yml") for path in ACTIVE_MACOS_WORKFLOW_FILES))
+        self.assertTrue(all(path.endswith(".yml.disabled") for path in HISTORIC_MACOS_WORKFLOW_FILES))
 
     def test_desktop_bundle_has_no_intel_script(self) -> None:
         package = json.loads((ROOT / "ui/desktop/package.json").read_text(encoding="utf-8"))
@@ -73,9 +90,9 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertIn("electron_arch: x64", workflow)
         self.assertIn("--arch=\"$ELECTRON_ARCH\"", workflow)
         self.assertIn("WINDOWS_ARCH: ${{ matrix.name }}", workflow)
-        self.assertIn("internal-goose-${{ matrix.rust_target }}", workflow)
+        self.assertIn("internal-heybuddy-${{ matrix.rust_target }}", workflow)
         self.assertIn("internal-windows-unsigned-${{ matrix.name }}", workflow)
-        self.assertIn("Goose-win32-${{ matrix.name }}", workflow)
+        self.assertIn("HeyBuddy-win32-${{ matrix.name }}", workflow)
         self.assertNotIn("aarch64-pc-windows", workflow)
         self.assertNotIn("--platform=win32 --arch=arm64", workflow)
         self.assertNotIn("--arch=x64", package["scripts"]["package:windows"])
@@ -86,8 +103,8 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         package_cli_job = workflow.split("  package-cli-windows:", 1)[1].split(
             "  build-desktop-windows:", 1
         )[0]
-        self.assertIn("internal-goose-x86_64-pc-windows-msvc", package_cli_job)
-        self.assertNotIn("internal-goose-i686-pc-windows-msvc", package_cli_job)
+        self.assertIn("internal-heybuddy-x86_64-pc-windows-msvc", package_cli_job)
+        self.assertNotIn("internal-heybuddy-i686-pc-windows-msvc", package_cli_job)
 
     def test_windows_workflow_publishes_installers_without_portable_archives(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
@@ -100,7 +117,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
 
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(
-            (ROOT / "ui/goose-binary/goose-binary-darwin-x64/package.json").exists()
+            (ROOT / "ui/heybuddy-binary/heybuddy-binary-darwin-x64/package.json").exists()
         )
 
 

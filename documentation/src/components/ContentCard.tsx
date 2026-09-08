@@ -245,7 +245,7 @@ export default function ContentCard({
           ) : (
             <img
               style={styles.placeholderLogo}
-              src="/img/goose.svg"
+              src="/img/heybuddy.svg"
               alt="HeyBuddy logo placeholder"
             />
           )}

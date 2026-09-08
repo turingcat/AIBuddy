@@ -1,25 +1,25 @@
 ---
 title: Knowledge Graph Memory Extension
-description: Add Knowledge Graph Memory MCP Server as a goose Extension
+description: Add Knowledge Graph Memory MCP Server as a heybuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/PF6hpDaI9Mc" />
 
 
-This tutorial covers how to add the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) as a goose extension. This enables goose to analyze relationships, detect patterns, and gain a deeper understanding of your data. The knowledge graph builds on the [memory extension](/docs/mcp/memory-mcp) by mapping complex relationships between concepts and providing persistent memory across goose sessions.
+This tutorial covers how to add the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory) as a heybuddy extension. This enables heybuddy to analyze relationships, detect patterns, and gain a deeper understanding of your data. The knowledge graph builds on the [memory extension](/docs/mcp/memory-mcp) by mapping complex relationships between concepts and providing persistent memory across heybuddy sessions.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="heybuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40modelcontextprotocol%2Fserver-memory&id=knowledge_graph_memory&name=Knowledge%20Graph%20Memory&description=Graph-based%20memory%20system%20for%20persistent%20knowledge%20storage)
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
   **Command**
   ```sh
   npx -y @modelcontextprotocol/server-memory
@@ -35,8 +35,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  <GooseDesktopInstaller
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  <HeyBuddyDesktopInstaller
     extensionId="knowledge_graph_memory"
     extensionName="Knowledge Graph Memory"
     description="Graph-based memory system for persistent knowledge storage"
@@ -44,7 +44,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@modelcontextprotocol/server-memory"]}
   />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
     <CLIExtensionInstructions
       name="Knowledge Graph Memory"
       description="Graph-based memory system for persistent knowledge storage"
@@ -55,16 +55,16 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-In this example, I'll show you how goose can become an intelligent security reviewer by using connected knowledge patterns to detect and analyze vulnerabilities. goose will be able to understand the relationship between security issues, their impacts, and mitigations.
+In this example, I'll show you how heybuddy can become an intelligent security reviewer by using connected knowledge patterns to detect and analyze vulnerabilities. heybuddy will be able to understand the relationship between security issues, their impacts, and mitigations.
 
-This means goose doesn't just spot issues - it understands how vulnerabilities connect to real world impacts and can suggest comprehensive solutions.
+This means heybuddy doesn't just spot issues - it understands how vulnerabilities connect to real world impacts and can suggest comprehensive solutions.
 
-### Step 1: Teach goose About Security Patterns
+### Step 1: Teach heybuddy About Security Patterns
 
-#### goose Prompt #1
+#### heybuddy Prompt #1
 
 ```text
-goose, learn these security vulnerability patterns and their relationships:
+heybuddy, learn these security vulnerability patterns and their relationships:
 
 1. SQL Injection relates to:
 
@@ -85,7 +85,7 @@ goose, learn these security vulnerability patterns and their relationships:
    - JWT-based solutions
 ```
 
-#### goose Output
+#### heybuddy Output
 
 ```text
 I'll store this security knowledge in the Knowledge Graph Memory with proper entities and relationships
@@ -128,7 +128,7 @@ The knowledge is now structured in a way that I can:
 
 ### Step 2:  Use Connected Knowledge for Code Review
 
-#### goose Prompt #2
+#### heybuddy Prompt #2
 
 Review this API endpoint for security issues:
 
@@ -146,7 +146,7 @@ app.post('/api/login', (req, res) => {
 });
 ```
 
-#### goose Output
+#### heybuddy Output
 
 ```text
 I'll analyze this code using our connected knowledge graph to trace security vulnerabilities and their implications:

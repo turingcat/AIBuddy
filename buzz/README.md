@@ -1,6 +1,6 @@
-# Goose Buzz automation
+# HeyBuddy Buzz automation
 
-These tools connect issues in `aaif-goose/goose` to the public Goose Buzz
+These tools connect issues in `aaif-goose/goose` to the public HeyBuddy Buzz
 community at `buzz.gdk.so`.
 
 The setup uses two separate identities:
@@ -21,7 +21,7 @@ added so people can find and manage them in Buzz Desktop.
   repository and its project board; the recipe also needs permission to assign
   issues
 - Buzz Desktop on macOS, or a `buzz` CLI on `PATH`
-- Goose CLI with a configured model provider
+- HeyBuddy CLI with a configured model provider
 - A running public Buzz community
 
 The scripts use `https://buzz.gdk.so` by default. Set `BUZZ_RELAY_URL` to target
@@ -52,11 +52,11 @@ The script:
 The identity is stored in:
 
 ```text
-$GOOSE_BUZZ_HOME/github-manager
+$HEYBUDDY_BUZZ_HOME/github-manager
 ```
 
-`GOOSE_BUZZ_HOME` defaults to `$XDG_CONFIG_HOME/goose/buzz`, or
-`~/.config/goose/buzz` when `XDG_CONFIG_HOME` is not set. The identity directory
+`HEYBUDDY_BUZZ_HOME` defaults to `$XDG_CONFIG_HOME/heybuddy/buzz`, or
+`~/.config/heybuddy/buzz` when `XDG_CONFIG_HOME` is not set. The identity directory
 is mode `0700`; its files are mode `0600`.
 
 The important files are:
@@ -109,7 +109,7 @@ To verify the permission, send a message as Github Manager with both readable
 mention text and the bot's public key:
 
 ```sh
-export BUZZ_PRIVATE_KEY="$(cat ~/.config/goose/buzz/github-manager/private-key.nsec)"
+export BUZZ_PRIVATE_KEY="$(cat ~/.config/heybuddy/buzz/github-manager/private-key.nsec)"
 export BUZZ_RELAY_URL=https://buzz.gdk.so
 BUZZ_CLI="${BUZZ_BIN:-/Applications/Buzz.app/Contents/MacOS/buzz}"
 
@@ -142,7 +142,7 @@ The current roster is:
 - jasper as a member
 - Mic as a member
 - lifei as a member
-    - Lifei goose agent as their bot
+    - Lifei heybuddy agent as their bot
 - Jack Amadeo as a member
 
 Edit the checked-in file when the permanent team changes. Set
@@ -208,11 +208,11 @@ must send a new message with an explicit bot mention:
 Lists issues in the project's Inbox that need an owner or channel, and open
 issues linked from the Buzz `issues to add` channel. An assigned Inbox issue
 without a channel is included so a failed channel creation can be retried. A
-queue entry can contain a Goose issue or pull request URL, or just `#<issue
+queue entry can contain a HeyBuddy issue or pull request URL, or just `#<issue
 number>`. Queue entries with an existing issue channel are treated as processed.
 Pull request links resolve to their issue when GitHub reports exactly one
 closing issue. The JSON also includes the core team, GitHub handles, Buzz public
-keys, interests, and assignment capacity so a Goose recipe can select an owner.
+keys, interests, and assignment capacity so a HeyBuddy recipe can select an owner.
 `recent_assignment_load` counts core-team assignees across the 100 most recently
 created issues, including closed issues. Phase and issue age do not affect the
 count. It does not change GitHub or Buzz.
@@ -221,7 +221,7 @@ count. It does not change GitHub or Buzz.
 ./buzz/list_issue_work
 ```
 
-The project defaults to `aaif-goose` project 1. Use `--repo`,
+The project defaults to `aaif-heybuddy` project 1. Use `--repo`,
 `--project-owner`, `--project-number`, and `--queue-channel` for another
 installation. The command fails instead of returning a partial list when the
 project, channel, or message limits are reached. Queue links that cannot be
@@ -312,7 +312,7 @@ target another repository or project.
 
 ### `github_issue_manager.yaml`
 
-This Goose recipe manages the full Inbox loop:
+This HeyBuddy recipe manages the full Inbox loop:
 
 1. List unassigned Inbox issues and unresolved work from `issues to add`.
 2. Read each issue and rank the three strongest matches based on `interest`.
@@ -332,7 +332,7 @@ change project fields, labels, or issue state.
 Run it once with:
 
 ```sh
-goose run \
+heybuddy run \
   --recipe "$PWD/buzz/github_issue_manager.yaml" \
   --params "automation_dir=$PWD/buzz" \
   --no-session
@@ -341,7 +341,7 @@ goose run \
 Preview assignments without changing GitHub or Buzz:
 
 ```sh
-goose run \
+heybuddy run \
   --recipe "$PWD/buzz/github_issue_manager.yaml" \
   --params "automation_dir=$PWD/buzz" \
   --params "dry_run=true" \
@@ -357,8 +357,8 @@ with `BUZZ_MANAGER_INTERVAL_SECONDS`.
 ./buzz/run_hourly
 ```
 
-The dedicated machine must stay awake and have working Goose, `gh`, and Buzz
-CLI configuration. This runner does not require Goose's scheduler.
+The dedicated machine must stay awake and have working HeyBuddy, `gh`, and Buzz
+CLI configuration. This runner does not require HeyBuddy's scheduler.
 
 ## Move or recover the setup
 
@@ -367,12 +367,12 @@ over a trusted encrypted connection. This moves the manager key and the sync
 cursors without copying a human or bot identity:
 
 ```text
-~/.config/goose/buzz/github-manager
+~/.config/heybuddy/buzz/github-manager
 ```
 
 On the destination, preserve the directory as `0700` and its files as `0600`,
 then run `create_github_manager` to confirm that it finds the identity. Also
-install and authenticate `gh`, install and configure Goose, and install Buzz
+install and authenticate `gh`, install and configure HeyBuddy, and install Buzz
 Desktop or configure `BUZZ_BIN`.
 
 Do not copy Buzz Desktop's application-data directory. The hourly workflow only

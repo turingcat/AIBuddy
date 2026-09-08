@@ -35,8 +35,8 @@ describe('Forge brand identity', () => {
       name: 'HeyBuddy',
       executableName: 'HeyBuddy',
       appBundleId: 'com.electron.heybuddy',
-      protocolName: 'GooseProtocol',
-      protocol: 'goose',
+      protocolName: 'HeyBuddyProtocol',
+      protocol: 'heybuddy',
       icon: 'src/images/icon.icns',
       windowsIcon: 'src/images/icon.ico',
     });

@@ -1,4 +1,4 @@
-﻿<#
+<#
     @author: logic
     @date: 2026-08-13
     Windows 桌面一键构建脚本
@@ -166,9 +166,9 @@ function Update-BuildVersion {
     Write-Host "    git add Cargo.toml Cargo.lock ui/desktop/package.json"
 }
 
-# 编译 goose.exe（release, x86_64-pc-windows-msvc）并复制到 ui/desktop/src/bin
-function Build-GooseBinary {
-    Write-Step "编译 Rust 后端 goose.exe（release）"
+# 编译 heybuddy.exe（release, x86_64-pc-windows-msvc）并复制到 ui/desktop/src/bin
+function Build-HeyBuddyBinary {
+    Write-Step "编译 Rust 后端 heybuddy.exe（release）"
     Set-Location $ProjectRoot
 
     & rustup target add x86_64-pc-windows-msvc
@@ -176,27 +176,27 @@ function Build-GooseBinary {
 
     Write-Host "首次编译依赖较多，可能耗时较长，请耐心等待..."
     # 禁用 local-inference 以跳过 llama.cpp 的 C++ 编译（本地无需本地推理，且其构建依赖易缺失）
-    & cargo build --release --target x86_64-pc-windows-msvc -p goose-cli --bin goose --no-default-features --features code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
+    & cargo build --release --target x86_64-pc-windows-msvc -p heybuddy-cli --bin heybuddy --no-default-features --features code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
     if ($LASTEXITCODE -ne 0) { throw "cargo build 失败" }
 
-    $gooseExe = Join-Path $ProjectRoot 'target\x86_64-pc-windows-msvc\release\goose.exe'
-    if (-not (Test-Path $gooseExe)) {
-        throw "未找到构建产物：$gooseExe"
+    $heybuddyExe = Join-Path $ProjectRoot 'target\x86_64-pc-windows-msvc\release\heybuddy.exe'
+    if (-not (Test-Path $heybuddyExe)) {
+        throw "未找到构建产物：$heybuddyExe"
     }
 
     $srcBin = Join-Path $ProjectRoot 'ui\desktop\src\bin'
     if (-not (Test-Path $srcBin)) { New-Item -ItemType Directory -Force $srcBin | Out-Null }
-    # 仅覆盖构建产物 goose.exe，不删除 git 跟踪的源文件（jbang/node/npx/uvx 等）。
+    # 仅覆盖构建产物 heybuddy.exe，不删除 git 跟踪的源文件（jbang/node/npx/uvx 等）。
     # 正在运行的 exe 无法被删除但可以改名，先移开再写入，避免覆写活动二进制
-    $destExe = Join-Path $srcBin 'goose.exe'
+    $destExe = Join-Path $srcBin 'heybuddy.exe'
     if (Test-Path $destExe) {
         $stale = "$destExe.old"
         if (Test-Path $stale) { Remove-Item -Path $stale -Force -ErrorAction SilentlyContinue }
         Move-Item -Path $destExe -Destination $stale -Force
         Remove-Item -Path $stale -Force -ErrorAction SilentlyContinue
     }
-    Copy-Item -Path $gooseExe -Destination $destExe
-    Write-Host "已复制 goose.exe 到 ui\desktop\src\bin"
+    Copy-Item -Path $heybuddyExe -Destination $destExe
+    Write-Host "已复制 heybuddy.exe 到 ui\desktop\src\bin"
 }
 
 # 安装依赖并用 electron-forge 打包 win32 x64 桌面应用
@@ -283,7 +283,7 @@ try {
     }
     Assert-Toolchain
     Update-BuildVersion
-    Build-GooseBinary
+    Build-HeyBuddyBinary
     Build-DesktopApp
     Package-Distribution
     Set-Location $ProjectRoot

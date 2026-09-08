@@ -30,7 +30,7 @@ describe('useIntl brand values', () => {
   it('supplies heybuddy brand values', () => {
     renderProbe('Welcome to {appName}, use {protocol}://recipe', 'heybuddy');
 
-    expect(screen.getByText('Welcome to HeyBuddy, use goose://recipe')).toBeInTheDocument();
+    expect(screen.getByText('Welcome to HeyBuddy, use heybuddy://recipe')).toBeInTheDocument();
   });
 
   it('supplies brand values to translated catalog messages too', () => {

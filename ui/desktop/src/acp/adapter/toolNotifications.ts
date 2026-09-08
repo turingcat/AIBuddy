@@ -178,6 +178,6 @@ function notificationMethod(toolNotification: ToolNotification): string {
     case 'platform_event':
       return 'platform_event';
     case 'live_output':
-      return 'goose/live_output';
+      return 'heybuddy/live_output';
   }
 }

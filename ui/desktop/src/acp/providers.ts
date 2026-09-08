@@ -7,7 +7,7 @@ import type {
   RefreshProviderInventoryResponse_unstable,
   ProviderTemplateCatalogEntryDto,
   ProviderTemplateDto,
-} from '@aaif/goose-sdk';
+} from '@heybuddy/heybuddy-sdk';
 import { methods } from '@agentclientprotocol/sdk';
 import type {
   ProviderDetails,
@@ -97,7 +97,7 @@ function updateRequestToCreate(
 
 export async function acpListProviderDetails(): Promise<ProviderDetails[]> {
   const client = await getAcpClient();
-  const { entries } = await client.goose.providersList_unstable({});
+  const { entries } = await client.heybuddy.providersList_unstable({});
   return entries.map(providerEntryToDetails);
 }
 
@@ -113,7 +113,7 @@ export async function acpListSettingsProviderDetails(): Promise<ProviderDetails[
 
 export async function acpGetProviderDetails(providerId: string): Promise<ProviderDetails> {
   const client = await getAcpClient();
-  const { entries } = await client.goose.providersList_unstable({ providerIds: [providerId] });
+  const { entries } = await client.heybuddy.providersList_unstable({ providerIds: [providerId] });
   const entry = entries.find((candidate) => candidate.providerId === providerId);
   if (!entry) throw new Error(`Unknown provider: ${providerId}`);
   return providerEntryToDetails(entry);
@@ -137,7 +137,7 @@ async function waitForProviderInventoryRefresh(
     : 1;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     throwIfAborted(signal);
-    const response = await client.goose.providersList_unstable({ providerIds: [providerId] });
+    const response = await client.heybuddy.providersList_unstable({ providerIds: [providerId] });
     throwIfAborted(signal);
     entry = response.entries.find((candidate) => candidate.providerId === providerId);
     if (!entry) throw new Error(`Unknown provider: ${providerId}`);
@@ -159,7 +159,7 @@ export async function acpRefreshProviderDetails(
 }> {
   const client = await getAcpClient();
   throwIfAborted(signal);
-  let { entries } = await client.goose.providersList_unstable({ providerIds: [providerId] });
+  let { entries } = await client.heybuddy.providersList_unstable({ providerIds: [providerId] });
   throwIfAborted(signal);
   let entry = entries.find((candidate) => candidate.providerId === providerId);
   if (!entry) throw new Error(`Unknown provider: ${providerId}`);
@@ -172,7 +172,7 @@ export async function acpRefreshProviderDetails(
     };
   }
 
-  const readiness = await client.goose.providersReadinessCheck_unstable({ providerId });
+  const readiness = await client.heybuddy.providersReadinessCheck_unstable({ providerId });
   throwIfAborted(signal);
   if (!readiness.ready) {
     return {
@@ -183,7 +183,7 @@ export async function acpRefreshProviderDetails(
   }
 
   if (entry.supportsRefresh) {
-    const refresh = await client.goose.providersInventoryRefresh_unstable({
+    const refresh = await client.heybuddy.providersInventoryRefresh_unstable({
       providerIds: [providerId],
     });
     const provider = await waitForProviderInventoryRefresh(client, providerId, refresh, signal);
@@ -199,31 +199,31 @@ export async function acpRefreshProviderDetails(
 
 export async function acpListProviderModels(providerId: string) {
   const client = await getAcpClient();
-  const { entries } = await client.goose.providersList_unstable({ providerIds: [providerId] });
+  const { entries } = await client.heybuddy.providersList_unstable({ providerIds: [providerId] });
   return entries.find((e) => e.providerId === providerId)?.models ?? [];
 }
 
 // 主动触发后端刷新指定 provider 的 inventory（GET /v1/models 重建 SQLite 快照）。
-// GooseExtClient 类型未暴露该 unstable 方法，用类型断言调用 generated client。
+// HeyBuddyExtClient 类型未暴露该 unstable 方法，用类型断言调用 generated client。
 export async function acpRefreshProviderInventory(providerId: string): Promise<void> {
   const client = await getAcpClient();
-  const goose = client.goose as {
+  const heybuddy = client.heybuddy as {
     providersInventoryRefresh_unstable: (params: { providerIds: string[] }) => Promise<unknown>;
   };
-  await goose.providersInventoryRefresh_unstable({ providerIds: [providerId] });
+  await heybuddy.providersInventoryRefresh_unstable({ providerIds: [providerId] });
 }
 
 export async function acpListProviderCatalogEntries(
   format?: string
 ): Promise<ProviderTemplateCatalogEntryDto[]> {
   const client = await getAcpClient();
-  const { providers } = await client.goose.providersCatalogList_unstable(format ? { format } : {});
+  const { providers } = await client.heybuddy.providersCatalogList_unstable(format ? { format } : {});
   return providers;
 }
 
 export async function acpGetProviderTemplate(providerId: string): Promise<ProviderTemplateDto> {
   const client = await getAcpClient();
-  const { template } = await client.goose.providersCatalogTemplate_unstable({ providerId });
+  const { template } = await client.heybuddy.providersCatalogTemplate_unstable({ providerId });
   return template;
 }
 
@@ -231,14 +231,14 @@ export async function acpGetCustomProvider(
   providerId: string
 ): Promise<CustomProviderReadResponse_unstable> {
   const client = await getAcpClient();
-  return client.goose.providersCustomRead_unstable({ providerId });
+  return client.heybuddy.providersCustomRead_unstable({ providerId });
 }
 
 export async function acpCreateCustomProviderFromRequest(
   request: UpdateCustomProviderRequest
 ): Promise<{ provider_name: string }> {
   const client = await getAcpClient();
-  const response = await client.goose.providersCustomCreate_unstable(
+  const response = await client.heybuddy.providersCustomCreate_unstable(
     updateRequestToCreate(request)
   );
   return { provider_name: response.providerId };
@@ -249,7 +249,7 @@ export async function acpUpdateCustomProviderFromRequest(
   request: UpdateCustomProviderRequest
 ): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersCustomUpdate_unstable({
+  await client.heybuddy.providersCustomUpdate_unstable({
     providerId,
     ...updateRequestToCreate(request),
   });
@@ -257,18 +257,18 @@ export async function acpUpdateCustomProviderFromRequest(
 
 export async function acpDeleteCustomProvider(providerId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersCustomDelete_unstable({ providerId });
+  await client.heybuddy.providersCustomDelete_unstable({ providerId });
 }
 
 export async function acpReadProviderConfig(providerId: string) {
   const client = await getAcpClient();
-  const { fields } = await client.goose.providersConfigRead_unstable({ providerId });
+  const { fields } = await client.heybuddy.providersConfigRead_unstable({ providerId });
   return fields;
 }
 
 export async function acpDeleteProviderConfig(providerId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersConfigDelete_unstable({ providerId });
+  await client.heybuddy.providersConfigDelete_unstable({ providerId });
 }
 
 export async function acpSaveProviderConfig(
@@ -276,7 +276,7 @@ export async function acpSaveProviderConfig(
   fields: { key: string; value: string }[]
 ): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersConfigSave_unstable({ providerId, fields });
+  await client.heybuddy.providersConfigSave_unstable({ providerId, fields });
 }
 
 export async function acpEnableProvider(
@@ -285,7 +285,7 @@ export async function acpEnableProvider(
 ): Promise<ProviderDetails> {
   const client = await getAcpClient();
   throwIfAborted(signal);
-  const { refresh } = await client.goose.providersConfigSave_unstable({
+  const { refresh } = await client.heybuddy.providersConfigSave_unstable({
     providerId,
     fields: [],
   });
@@ -295,18 +295,18 @@ export async function acpEnableProvider(
 
 export async function acpAuthenticateProvider(providerId: string): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersConfigAuthenticate_unstable({ providerId });
+  await client.heybuddy.providersConfigAuthenticate_unstable({ providerId });
 }
 
 export async function acpListProviderSecrets(): Promise<ProviderSecretDto[]> {
   const client = await getAcpClient();
-  const { secrets } = await client.goose.providersSecretsList_unstable({});
+  const { secrets } = await client.heybuddy.providersSecretsList_unstable({});
   return secrets;
 }
 
 export async function acpDeleteProviderSecret(id: string): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.providersSecretsDelete_unstable({ id });
+  await client.heybuddy.providersSecretsDelete_unstable({ id });
 }
 
 export async function acpGetCanonicalModelInfo(
@@ -314,7 +314,7 @@ export async function acpGetCanonicalModelInfo(
   model: string
 ): Promise<CanonicalModelInfoDto | null> {
   const client = await getAcpClient();
-  const { modelInfo } = await client.goose.providersCanonicalModelInfo_unstable({
+  const { modelInfo } = await client.heybuddy.providersCanonicalModelInfo_unstable({
     provider,
     model,
   });
@@ -326,7 +326,7 @@ export async function acpReadDefaults(): Promise<{
   modelId: string | null;
 }> {
   const client = await getAcpClient();
-  const response = await client.goose.defaultsRead_unstable({});
+  const response = await client.heybuddy.defaultsRead_unstable({});
   return {
     providerId: response.providerId ?? null,
     modelId: response.modelId ?? null,
@@ -335,25 +335,25 @@ export async function acpReadDefaults(): Promise<{
 
 export async function acpSaveDefaults(providerId: string, modelId?: string | null): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.defaultsSave_unstable({ providerId, modelId: modelId ?? null });
+  await client.heybuddy.defaultsSave_unstable({ providerId, modelId: modelId ?? null });
 }
 
 export async function acpClearDefaults(): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.defaultsClear_unstable({});
+  await client.heybuddy.defaultsClear_unstable({});
 }
 
 export async function acpReadThinkingEffort(): Promise<ThinkingEffort | null> {
   const client = await getAcpClient();
-  const response = await client.goose.preferencesRead_unstable({ keys: ['gooseThinkingEffort'] });
-  const value = response.values.find((v) => v.key === 'gooseThinkingEffort')?.value;
+  const response = await client.heybuddy.preferencesRead_unstable({ keys: ['heybuddyThinkingEffort'] });
+  const value = response.values.find((v) => v.key === 'heybuddyThinkingEffort')?.value;
   return typeof value === 'string' ? (value as ThinkingEffort) : null;
 }
 
 export async function acpSaveThinkingEffort(effort: ThinkingEffort): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.preferencesSave_unstable({
-    values: [{ key: 'gooseThinkingEffort', value: effort }],
+  await client.heybuddy.preferencesSave_unstable({
+    values: [{ key: 'heybuddyThinkingEffort', value: effort }],
   });
 }
 

@@ -6,10 +6,10 @@
  */
 export type AddSessionExtensionRequest_unstable = {
     sessionId: string;
-    extension: GooseExtension;
+    extension: HeyBuddyExtension;
 };
 
-export type GooseExtension = {
+export type HeyBuddyExtension = {
     name: string;
     description?: string | null;
     display_name?: string | null;
@@ -276,7 +276,7 @@ export type SetToolPermissionsResponse_unstable = {
 /**
  * Call a tool from an extension.
  */
-export type GooseToolCallRequest_unstable = {
+export type HeyBuddyToolCallRequest_unstable = {
     sessionId: string;
     name: string;
     arguments?: unknown;
@@ -285,7 +285,7 @@ export type GooseToolCallRequest_unstable = {
 /**
  * Tool call response.
  */
-export type GooseToolCallResponse_unstable = {
+export type HeyBuddyToolCallResponse_unstable = {
     content?: Array<unknown>;
     structuredContent?: unknown;
     isError: boolean;
@@ -356,7 +356,7 @@ export type UpdateWorkingDirRequest_unstable = {
 /**
  * Set, append, or clear system prompt text for a session.
  *
- * `mode: "set"` replaces Goose's base system prompt. `mode: "append"` adds an
+ * `mode: "set"` replaces HeyBuddy's base system prompt. `mode: "append"` adds an
  * instruction under "Additional Instructions". Reusing a key replaces the
  * previous value for that mode/key; sending empty text clears it.
  */
@@ -659,7 +659,7 @@ export type SteerSessionResponse_unstable = {
     runId: string;
     /**
      * Stable id of the queued steer message. The same id later appears as
-     * `messageId` on the streamed `UserMessageChunk` (with `_meta.goose.steer`),
+     * `messageId` on the streamed `UserMessageChunk` (with `_meta.heybuddy.steer`),
      * letting clients correlate a queued steer with its pickup.
      */
     messageId: string;
@@ -677,7 +677,7 @@ export type DiagnosticsGetResponse_unstable = {
 };
 
 /**
- * List all available Goose prompt templates.
+ * List all available HeyBuddy prompt templates.
  */
 export type ListPromptsRequest_unstable = {
     [key: string]: unknown;
@@ -699,7 +699,7 @@ export type PromptTemplateEntry = {
 };
 
 /**
- * Read a Goose prompt template.
+ * Read a HeyBuddy prompt template.
  */
 export type GetPromptRequest_unstable = {
     name: string;
@@ -713,7 +713,7 @@ export type GetPromptResponse_unstable = {
 };
 
 /**
- * Save a custom Goose prompt template.
+ * Save a custom HeyBuddy prompt template.
  */
 export type SavePromptRequest_unstable = {
     name: string;
@@ -725,7 +725,7 @@ export type PromptOperationResponse_unstable = {
 };
 
 /**
- * Reset a Goose prompt template to its default content.
+ * Reset a HeyBuddy prompt template to its default content.
  */
 export type ResetPromptRequest_unstable = {
     name: string;
@@ -742,33 +742,33 @@ export type GetConfigExtensionsRequest_unstable = {
  * List configured extensions and any warnings.
  */
 export type GetConfigExtensionsResponse_unstable = {
-    extensions: Array<GooseExtensionEntry>;
+    extensions: Array<HeyBuddyExtensionEntry>;
     warnings?: Array<string>;
 };
 
-export type GooseExtensionEntry = {
-    extension: GooseExtension;
+export type HeyBuddyExtensionEntry = {
+    extension: HeyBuddyExtension;
     enabled: boolean;
     configKey?: string | null;
 };
 
 /**
- * Persist a new extension to the user's global goose config.
+ * Persist a new extension to the user's global heybuddy config.
  */
 export type AddConfigExtensionRequest_unstable = {
-    extension: GooseExtension;
+    extension: HeyBuddyExtension;
     enabled?: boolean;
 };
 
 /**
- * Remove a persisted extension from the user's global goose config.
+ * Remove a persisted extension from the user's global heybuddy config.
  */
 export type RemoveConfigExtensionRequest_unstable = {
     configKey: string;
 };
 
 /**
- * Set the `enabled` flag for a persisted extension in the user's global goose config.
+ * Set the `enabled` flag for a persisted extension in the user's global heybuddy config.
  */
 export type SetConfigExtensionEnabledRequest_unstable = {
     configKey: string;
@@ -784,7 +784,7 @@ export type GetSessionExtensionsResponse_unstable = {
 };
 
 export type SessionExtensionEntry = {
-    extension: GooseExtension;
+    extension: HeyBuddyExtension;
     extensionKey: string;
 };
 
@@ -826,7 +826,7 @@ export type ProviderInventoryEntryDto = {
      */
     defaultModel: string;
     /**
-     * Whether Goose has enough configuration to use this provider.
+     * Whether HeyBuddy has enough configuration to use this provider.
      */
     configured: boolean;
     /**
@@ -1050,7 +1050,7 @@ export type ProviderTemplateCapabilitiesDto = {
 };
 
 /**
- * Create a custom provider backed by Goose's declarative provider store.
+ * Create a custom provider backed by HeyBuddy's declarative provider store.
  */
 export type CustomProviderCreateRequest_unstable = {
     engine: string;
@@ -1132,7 +1132,7 @@ export type CustomProviderConfigDto = {
 };
 
 /**
- * Update a custom provider backed by Goose's declarative provider store.
+ * Update a custom provider backed by HeyBuddy's declarative provider store.
  */
 export type CustomProviderUpdateRequest_unstable = {
     providerId: string;
@@ -1158,7 +1158,7 @@ export type CustomProviderUpdateResponse_unstable = {
 };
 
 /**
- * Delete a custom provider from Goose's declarative provider store.
+ * Delete a custom provider from HeyBuddy's declarative provider store.
  */
 export type CustomProviderDeleteRequest_unstable = {
     providerId: string;
@@ -1255,7 +1255,7 @@ export type ProviderConfigAuthenticateRequest_unstable = {
 };
 
 /**
- * List provider credentials stored locally by Goose.
+ * List provider credentials stored locally by HeyBuddy.
  */
 export type ProviderSecretsListRequest_unstable = {
     [key: string]: unknown;
@@ -1323,7 +1323,7 @@ export type PreferencesReadRequest_unstable = {
     keys?: Array<PreferenceKey>;
 };
 
-export type PreferenceKey = 'autoCompactThreshold' | 'gooseThinkingEffort' | 'voiceAutoSubmitPhrases' | 'voiceDictationProvider' | 'voiceDictationPreferredMic';
+export type PreferenceKey = 'autoCompactThreshold' | 'heybuddyThinkingEffort' | 'voiceAutoSubmitPhrases' | 'voiceDictationProvider' | 'voiceDictationPreferredMic';
 
 export type PreferencesReadResponse_unstable = {
     values: Array<PreferenceValue>;
@@ -1372,7 +1372,7 @@ export type ConfigReadAllResponse_unstable = {
 };
 
 /**
- * Read Goose default provider and model configuration.
+ * Read HeyBuddy default provider and model configuration.
  */
 export type DefaultsReadRequest_unstable = {
     [key: string]: unknown;
@@ -1384,7 +1384,7 @@ export type DefaultsReadResponse_unstable = {
 };
 
 /**
- * Save Goose default provider and model configuration.
+ * Save HeyBuddy default provider and model configuration.
  */
 export type DefaultsSaveRequest_unstable = {
     providerId: string;
@@ -1392,14 +1392,14 @@ export type DefaultsSaveRequest_unstable = {
 };
 
 /**
- * Clear Goose default provider and model configuration.
+ * Clear HeyBuddy default provider and model configuration.
  */
 export type DefaultsClearRequest_unstable = {
     [key: string]: unknown;
 };
 
 /**
- * Scan for existing Goose and compatible app data that onboarding can import.
+ * Scan for existing HeyBuddy and compatible app data that onboarding can import.
  */
 export type OnboardingImportScanRequest_unstable = {
     /**
@@ -1411,7 +1411,7 @@ export type OnboardingImportScanRequest_unstable = {
 /**
  * Sources that onboarding knows how to discover and import.
  */
-export type OnboardingImportSourceKind = 'goose_config' | 'claude_desktop';
+export type OnboardingImportSourceKind = 'heybuddy_config' | 'claude_desktop';
 
 export type OnboardingImportScanResponse_unstable = {
     candidates: Array<OnboardingImportCandidate>;
@@ -1461,7 +1461,7 @@ export type ExportSessionRequest_unstable = {
 export type SessionExportFormat = 'json' | 'markdown';
 
 /**
- * Export session response — raw JSON of the goose session with `conversation`,
+ * Export session response — raw JSON of the heybuddy session with `conversation`,
  * or a markdown transcript when `format` is `markdown`.
  */
 export type ExportSessionResponse_unstable = {
@@ -1592,8 +1592,8 @@ export type RecipeExtensionDto = {
 };
 
 export type RecipeSettingsDto = {
-    goose_provider?: string | null;
-    goose_model?: string | null;
+    heybuddy_provider?: string | null;
+    heybuddy_model?: string | null;
     temperature?: number | null;
     max_turns?: number | null;
 };
@@ -1949,7 +1949,7 @@ export type CreateSourceResponse_unstable = {
 };
 
 /**
- * A source discovered by Goose. Filesystem sources use an on-disk path;
+ * A source discovered by HeyBuddy. Filesystem sources use an on-disk path;
  * built-in sources use a stable synthetic path. Sources may be either
  * `global` (shared across all projects) or project-specific.
  */
@@ -2146,7 +2146,7 @@ export type ExportSourceResponse_unstable = {
 };
 
 /**
- * Import a source from a JSON export payload produced by `_goose/unstable/sources/export`.
+ * Import a source from a JSON export payload produced by `_heybuddy/unstable/sources/export`.
  * The imported source is written into the explicit target scope; on name
  * collisions a `-imported` suffix is appended.
  */
@@ -2494,23 +2494,23 @@ export type LocalInferenceBuiltinChatTemplatesListResponse_unstable = {
 };
 
 /**
- * Goose-custom session update notification — a parallel to ACP's
- * `session/update` carrying goose-specific update variants.
+ * HeyBuddy-custom session update notification — a parallel to ACP's
+ * `session/update` carrying heybuddy-specific update variants.
  */
-export type GooseSessionNotification_unstable = {
+export type HeyBuddySessionNotification_unstable = {
     sessionId: string;
-    update: GooseSessionUpdate;
+    update: HeyBuddySessionUpdate;
 };
 
 /**
- * Discriminated union of goose-specific session update payloads.
+ * Discriminated union of heybuddy-specific session update payloads.
  * Variant tag matches ACP's convention (`sessionUpdate: "<snake_case>"`).
  *
  * `discriminator.mapping` is what makes TS codegen (`@hey-api/openapi-ts`)
  * emit the correct snake_case tag value even when this enum has a single
  * variant. Add a mapping entry per variant.
  */
-export type GooseSessionUpdate = ({
+export type HeyBuddySessionUpdate = ({
     sessionUpdate: 'usage_update';
 } & SessionUsageUpdate) | ({
     sessionUpdate: 'status_message';
@@ -2547,7 +2547,7 @@ export type StatusMessageUpdate = {
 
 /**
  * Wire mirror of the conversation `MessageUsage` (this crate cannot depend on
- * goose-provider-types); field names and serde casing MUST stay in parity.
+ * heybuddy-provider-types); field names and serde casing MUST stay in parity.
  */
 export type MessageUsageData = {
     inputTokens?: number | null;
@@ -2585,7 +2585,7 @@ export type MessageUsageUpdate = {
 /**
  * Dedicated provider notification for OAuth device-code flow.
  * Sent during provider authentication when the ACP client supports
- * `goose.customNotifications` — avoids a fake empty session ID.
+ * `heybuddy.customNotifications` — avoids a fake empty session ID.
  */
 export type ProviderDeviceCodeNotification_unstable = {
     providerId: string;
@@ -2612,14 +2612,14 @@ export type RecipeParamsAction = 'submit' | 'cancel';
 export type ExtRequest = {
     id: string;
     method: string;
-    params?: AddSessionExtensionRequest_unstable | RemoveSessionExtensionRequest_unstable | GetToolsRequest_unstable | SetToolPermissionsRequest_unstable | GooseToolCallRequest_unstable | ReadResourceRequest_unstable | AppsListRequest_unstable | AppsExportRequest_unstable | AppsImportRequest_unstable | AppsDeleteRequest_unstable | UpdateWorkingDirRequest_unstable | SetSessionSystemPromptRequest_unstable | SteerSessionRequest_unstable | DiagnosticsGetRequest_unstable | ListPromptsRequest_unstable | GetPromptRequest_unstable | SavePromptRequest_unstable | ResetPromptRequest_unstable | GetConfigExtensionsRequest_unstable | AddConfigExtensionRequest_unstable | RemoveConfigExtensionRequest_unstable | SetConfigExtensionEnabledRequest_unstable | GetSessionExtensionsRequest_unstable | ListProvidersRequest_unstable | ProviderSupportedModelsListRequest_unstable | ProviderCatalogListRequest_unstable | ProviderSetupCatalogListRequest_unstable | ProviderCatalogTemplateRequest_unstable | CustomProviderCreateRequest_unstable | CustomProviderReadRequest_unstable | CustomProviderUpdateRequest_unstable | CustomProviderDeleteRequest_unstable | RefreshProviderInventoryRequest_unstable | ProviderReadinessCheckRequest_unstable | ProviderConfigReadRequest_unstable | ProviderConfigStatusRequest_unstable | ProviderConfigSaveRequest_unstable | ProviderConfigDeleteRequest_unstable | ProviderConfigAuthenticateRequest_unstable | ProviderSecretsListRequest_unstable | ProviderSecretDeleteRequest_unstable | CanonicalModelInfoRequest_unstable | PreferencesReadRequest_unstable | PreferencesSaveRequest_unstable | ConfigReadRequest_unstable | ConfigUpsertRequest_unstable | ConfigRemoveRequest_unstable | ConfigReadAllRequest_unstable | DefaultsReadRequest_unstable | DefaultsSaveRequest_unstable | DefaultsClearRequest_unstable | OnboardingImportScanRequest_unstable | OnboardingImportApplyRequest_unstable | ExportSessionRequest_unstable | ImportSessionRequest_unstable | ShareSessionNostrRequest_unstable | EncodeRecipeRequest_unstable | DecodeRecipeRequest_unstable | ScanRecipeRequest_unstable | ListRecipesRequest_unstable | DeleteRecipeRequest_unstable | ScheduleRecipeRequest_unstable | SetRecipeSlashCommandRequest_unstable | SaveRecipeRequest_unstable | ParseRecipeRequest_unstable | RecipeToYamlRequest_unstable | ListSchedulesRequest_unstable | ListScheduleSessionsRequest_unstable | CreateScheduleRequest_unstable | DeleteScheduleRequest_unstable | PauseScheduleRequest_unstable | UnpauseScheduleRequest_unstable | UpdateScheduleRequest_unstable | RunScheduleNowRequest_unstable | KillRunningJobRequest_unstable | InspectRunningJobRequest_unstable | GetSessionInfoRequest_unstable | TruncateSessionConversationRequest_unstable | UpdateSessionProjectRequest_unstable | RenameSessionRequest_unstable | ArchiveSessionRequest_unstable | UnarchiveSessionRequest_unstable | CreateSourceRequest_unstable | ListSourcesRequest_unstable | ListAgentMentionsRequest_unstable | ListSlashCommandsRequest_unstable | UpdateSourceRequest_unstable | DeleteSourceRequest_unstable | ExportSourceRequest_unstable | ImportSourcesRequest_unstable | DictationTranscribeRequest_unstable | DictationConfigRequest_unstable | DictationModelsListRequest_unstable | DictationModelDownloadRequest_unstable | DictationModelDownloadProgressRequest_unstable | DictationModelCancelRequest_unstable | DictationModelDeleteRequest_unstable | LocalInferenceModelsListRequest_unstable | LocalInferenceModelDownloadRequest_unstable | LocalInferenceModelDownloadProgressRequest_unstable | LocalInferenceModelDownloadCancelRequest_unstable | LocalInferenceModelDeleteRequest_unstable | LocalInferenceModelEvictRequest_unstable | LocalInferenceModelSettingsReadRequest_unstable | LocalInferenceModelSettingsUpdateRequest_unstable | LocalInferenceHuggingFaceSearchRequest_unstable | LocalInferenceHuggingFaceRepoVariantsRequest_unstable | LocalInferenceBuiltinChatTemplatesListRequest_unstable | {
+    params?: AddSessionExtensionRequest_unstable | RemoveSessionExtensionRequest_unstable | GetToolsRequest_unstable | SetToolPermissionsRequest_unstable | HeyBuddyToolCallRequest_unstable | ReadResourceRequest_unstable | AppsListRequest_unstable | AppsExportRequest_unstable | AppsImportRequest_unstable | AppsDeleteRequest_unstable | UpdateWorkingDirRequest_unstable | SetSessionSystemPromptRequest_unstable | SteerSessionRequest_unstable | DiagnosticsGetRequest_unstable | ListPromptsRequest_unstable | GetPromptRequest_unstable | SavePromptRequest_unstable | ResetPromptRequest_unstable | GetConfigExtensionsRequest_unstable | AddConfigExtensionRequest_unstable | RemoveConfigExtensionRequest_unstable | SetConfigExtensionEnabledRequest_unstable | GetSessionExtensionsRequest_unstable | ListProvidersRequest_unstable | ProviderSupportedModelsListRequest_unstable | ProviderCatalogListRequest_unstable | ProviderSetupCatalogListRequest_unstable | ProviderCatalogTemplateRequest_unstable | CustomProviderCreateRequest_unstable | CustomProviderReadRequest_unstable | CustomProviderUpdateRequest_unstable | CustomProviderDeleteRequest_unstable | RefreshProviderInventoryRequest_unstable | ProviderReadinessCheckRequest_unstable | ProviderConfigReadRequest_unstable | ProviderConfigStatusRequest_unstable | ProviderConfigSaveRequest_unstable | ProviderConfigDeleteRequest_unstable | ProviderConfigAuthenticateRequest_unstable | ProviderSecretsListRequest_unstable | ProviderSecretDeleteRequest_unstable | CanonicalModelInfoRequest_unstable | PreferencesReadRequest_unstable | PreferencesSaveRequest_unstable | ConfigReadRequest_unstable | ConfigUpsertRequest_unstable | ConfigRemoveRequest_unstable | ConfigReadAllRequest_unstable | DefaultsReadRequest_unstable | DefaultsSaveRequest_unstable | DefaultsClearRequest_unstable | OnboardingImportScanRequest_unstable | OnboardingImportApplyRequest_unstable | ExportSessionRequest_unstable | ImportSessionRequest_unstable | ShareSessionNostrRequest_unstable | EncodeRecipeRequest_unstable | DecodeRecipeRequest_unstable | ScanRecipeRequest_unstable | ListRecipesRequest_unstable | DeleteRecipeRequest_unstable | ScheduleRecipeRequest_unstable | SetRecipeSlashCommandRequest_unstable | SaveRecipeRequest_unstable | ParseRecipeRequest_unstable | RecipeToYamlRequest_unstable | ListSchedulesRequest_unstable | ListScheduleSessionsRequest_unstable | CreateScheduleRequest_unstable | DeleteScheduleRequest_unstable | PauseScheduleRequest_unstable | UnpauseScheduleRequest_unstable | UpdateScheduleRequest_unstable | RunScheduleNowRequest_unstable | KillRunningJobRequest_unstable | InspectRunningJobRequest_unstable | GetSessionInfoRequest_unstable | TruncateSessionConversationRequest_unstable | UpdateSessionProjectRequest_unstable | RenameSessionRequest_unstable | ArchiveSessionRequest_unstable | UnarchiveSessionRequest_unstable | CreateSourceRequest_unstable | ListSourcesRequest_unstable | ListAgentMentionsRequest_unstable | ListSlashCommandsRequest_unstable | UpdateSourceRequest_unstable | DeleteSourceRequest_unstable | ExportSourceRequest_unstable | ImportSourcesRequest_unstable | DictationTranscribeRequest_unstable | DictationConfigRequest_unstable | DictationModelsListRequest_unstable | DictationModelDownloadRequest_unstable | DictationModelDownloadProgressRequest_unstable | DictationModelCancelRequest_unstable | DictationModelDeleteRequest_unstable | LocalInferenceModelsListRequest_unstable | LocalInferenceModelDownloadRequest_unstable | LocalInferenceModelDownloadProgressRequest_unstable | LocalInferenceModelDownloadCancelRequest_unstable | LocalInferenceModelDeleteRequest_unstable | LocalInferenceModelEvictRequest_unstable | LocalInferenceModelSettingsReadRequest_unstable | LocalInferenceModelSettingsUpdateRequest_unstable | LocalInferenceHuggingFaceSearchRequest_unstable | LocalInferenceHuggingFaceRepoVariantsRequest_unstable | LocalInferenceBuiltinChatTemplatesListRequest_unstable | {
         [key: string]: unknown;
     } | null;
 };
 
 export type ExtResponse = {
     id: string;
-    result?: EmptyResponse | GetToolsResponse_unstable | SetToolPermissionsResponse_unstable | GooseToolCallResponse_unstable | ReadResourceResponse_unstable | AppsListResponse_unstable | AppsExportResponse_unstable | AppsImportResponse_unstable | AppsDeleteResponse_unstable | SteerSessionResponse_unstable | DiagnosticsGetResponse_unstable | ListPromptsResponse_unstable | GetPromptResponse_unstable | PromptOperationResponse_unstable | GetConfigExtensionsResponse_unstable | GetSessionExtensionsResponse_unstable | ListProvidersResponse_unstable | ProviderSupportedModelsListResponse_unstable | ProviderCatalogListResponse_unstable | ProviderSetupCatalogListResponse_unstable | ProviderCatalogTemplateResponse_unstable | CustomProviderCreateResponse_unstable | CustomProviderReadResponse_unstable | CustomProviderUpdateResponse_unstable | CustomProviderDeleteResponse_unstable | RefreshProviderInventoryResponse_unstable | ProviderReadinessCheckResponse_unstable | ProviderConfigReadResponse_unstable | ProviderConfigStatusResponse_unstable | ProviderConfigChangeResponse_unstable | ProviderSecretsListResponse_unstable | CanonicalModelInfoResponse_unstable | PreferencesReadResponse_unstable | ConfigReadResponse_unstable | ConfigReadAllResponse_unstable | DefaultsReadResponse_unstable | OnboardingImportScanResponse_unstable | OnboardingImportApplyResponse_unstable | ExportSessionResponse_unstable | ImportSessionResponse_unstable | ShareSessionNostrResponse_unstable | EncodeRecipeResponse_unstable | DecodeRecipeResponse_unstable | ScanRecipeResponse_unstable | ListRecipesResponse_unstable | SaveRecipeResponse_unstable | ParseRecipeResponse_unstable | RecipeToYamlResponse_unstable | ListSchedulesResponse_unstable | ListScheduleSessionsResponse_unstable | CreateScheduleResponse_unstable | UpdateScheduleResponse_unstable | RunScheduleNowResponse_unstable | KillRunningJobResponse_unstable | InspectRunningJobResponse_unstable | GetSessionInfoResponse_unstable | CreateSourceResponse_unstable | ListSourcesResponse_unstable | ListAgentMentionsResponse_unstable | ListSlashCommandsResponse_unstable | UpdateSourceResponse_unstable | ExportSourceResponse_unstable | ImportSourcesResponse_unstable | DictationTranscribeResponse_unstable | DictationConfigResponse_unstable | DictationModelsListResponse_unstable | DictationModelDownloadProgressResponse_unstable | LocalInferenceModelsListResponse_unstable | LocalInferenceModelDownloadResponse_unstable | LocalInferenceModelDownloadProgressResponse_unstable | LocalInferenceModelSettingsReadResponse_unstable | LocalInferenceModelSettingsUpdateResponse_unstable | LocalInferenceHuggingFaceSearchResponse_unstable | LocalInferenceHuggingFaceRepoVariantsResponse_unstable | LocalInferenceBuiltinChatTemplatesListResponse_unstable | unknown;
+    result?: EmptyResponse | GetToolsResponse_unstable | SetToolPermissionsResponse_unstable | HeyBuddyToolCallResponse_unstable | ReadResourceResponse_unstable | AppsListResponse_unstable | AppsExportResponse_unstable | AppsImportResponse_unstable | AppsDeleteResponse_unstable | SteerSessionResponse_unstable | DiagnosticsGetResponse_unstable | ListPromptsResponse_unstable | GetPromptResponse_unstable | PromptOperationResponse_unstable | GetConfigExtensionsResponse_unstable | GetSessionExtensionsResponse_unstable | ListProvidersResponse_unstable | ProviderSupportedModelsListResponse_unstable | ProviderCatalogListResponse_unstable | ProviderSetupCatalogListResponse_unstable | ProviderCatalogTemplateResponse_unstable | CustomProviderCreateResponse_unstable | CustomProviderReadResponse_unstable | CustomProviderUpdateResponse_unstable | CustomProviderDeleteResponse_unstable | RefreshProviderInventoryResponse_unstable | ProviderReadinessCheckResponse_unstable | ProviderConfigReadResponse_unstable | ProviderConfigStatusResponse_unstable | ProviderConfigChangeResponse_unstable | ProviderSecretsListResponse_unstable | CanonicalModelInfoResponse_unstable | PreferencesReadResponse_unstable | ConfigReadResponse_unstable | ConfigReadAllResponse_unstable | DefaultsReadResponse_unstable | OnboardingImportScanResponse_unstable | OnboardingImportApplyResponse_unstable | ExportSessionResponse_unstable | ImportSessionResponse_unstable | ShareSessionNostrResponse_unstable | EncodeRecipeResponse_unstable | DecodeRecipeResponse_unstable | ScanRecipeResponse_unstable | ListRecipesResponse_unstable | SaveRecipeResponse_unstable | ParseRecipeResponse_unstable | RecipeToYamlResponse_unstable | ListSchedulesResponse_unstable | ListScheduleSessionsResponse_unstable | CreateScheduleResponse_unstable | UpdateScheduleResponse_unstable | RunScheduleNowResponse_unstable | KillRunningJobResponse_unstable | InspectRunningJobResponse_unstable | GetSessionInfoResponse_unstable | CreateSourceResponse_unstable | ListSourcesResponse_unstable | ListAgentMentionsResponse_unstable | ListSlashCommandsResponse_unstable | UpdateSourceResponse_unstable | ExportSourceResponse_unstable | ImportSourcesResponse_unstable | DictationTranscribeResponse_unstable | DictationConfigResponse_unstable | DictationModelsListResponse_unstable | DictationModelDownloadProgressResponse_unstable | LocalInferenceModelsListResponse_unstable | LocalInferenceModelDownloadResponse_unstable | LocalInferenceModelDownloadProgressResponse_unstable | LocalInferenceModelSettingsReadResponse_unstable | LocalInferenceModelSettingsUpdateResponse_unstable | LocalInferenceHuggingFaceSearchResponse_unstable | LocalInferenceHuggingFaceRepoVariantsResponse_unstable | LocalInferenceBuiltinChatTemplatesListResponse_unstable | unknown;
 } | {
     error: {
         code: number;
@@ -2631,7 +2631,7 @@ export type ExtResponse = {
 
 export type ExtNotification = {
     method: string;
-    params?: GooseSessionNotification_unstable | ProviderDeviceCodeNotification_unstable | {
+    params?: HeyBuddySessionNotification_unstable | ProviderDeviceCodeNotification_unstable | {
         [key: string]: unknown;
     } | null;
 };

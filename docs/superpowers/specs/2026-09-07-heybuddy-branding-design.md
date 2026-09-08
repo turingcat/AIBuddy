@@ -1,5 +1,20 @@
 # HeyBuddy External Branding
 
+> SUPERSEDED: The user selected full source rebranding. See `../plans/2026-09-07-full-source-rebranding.md`. The external-only scope and CLI-only exception below are historical and must not guide new implementation.
+
+## CLI Scope Amendment
+
+This amendment supersedes conflicting CLI preservation rules below.
+
+- Rename package `goose-cli` to `heybuddy-cli`.
+- Rename directory `crates/goose-cli` to `crates/heybuddy-cli`.
+- Rename the primary executable `goose` to `heybuddy`.
+- Update dependent workspace references, CLI imports, build commands, lockfile metadata, packaging, desktop subprocess launch paths, scripts, tests, and maintained command examples together.
+- Record package, directory, executable, and dependent-reference mappings for upstream synchronization.
+- Other Goose crates and internal symbols retain upstream names unless required by the CLI rename.
+- Shipping a legacy `goose` command alias requires user confirmation. An alias cannot substitute for renaming the actual CLI package and executable.
+- Configuration directories and `GOOSE_*` environment variables remain unchanged.
+
 ## Decision
 
 Apply external HeyBuddy branding while preserving upstream Goose internal naming.

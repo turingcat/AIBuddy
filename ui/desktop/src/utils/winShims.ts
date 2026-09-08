@@ -20,7 +20,7 @@ export async function ensureWinShims(): Promise<void> {
   try {
     await fs.promises.mkdir(tgtDir, { recursive: true });
 
-    // Copy command-line tools only; the goose binary is never shimmed
+    // Copy command-line tools only; the heybuddy binary is never shimmed
     const shims = ['uvx.exe', 'uv.exe', 'npx.cmd'];
 
     await Promise.all(

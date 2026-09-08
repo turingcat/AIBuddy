@@ -7,7 +7,7 @@ export async function acpReadConfig(
   isSecret: boolean = false
 ): Promise<ConfigReadValue> {
   const client = await getAcpClient();
-  const { value } = await client.goose.configRead_unstable({ key, isSecret });
+  const { value } = await client.heybuddy.configRead_unstable({ key, isSecret });
   if (value == null) {
     return null;
   }
@@ -23,16 +23,16 @@ export async function acpUpsertConfig(
   isSecret: boolean = false
 ): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.configUpsert_unstable({ key, value, isSecret });
+  await client.heybuddy.configUpsert_unstable({ key, value, isSecret });
 }
 
 export async function acpRemoveConfig(key: string, isSecret: boolean): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.configRemove_unstable({ key, isSecret });
+  await client.heybuddy.configRemove_unstable({ key, isSecret });
 }
 
 export async function acpReadAllConfig(): Promise<Record<string, unknown>> {
   const client = await getAcpClient();
-  const { config } = await client.goose.configReadAll_unstable({});
+  const { config } = await client.heybuddy.configReadAll_unstable({});
   return config;
 }

@@ -1,10 +1,10 @@
-﻿<#
+<#
     @author: logic
     @date: 2026-08-24
     UI 开发模式一键启动脚本
-    流程：准备 node/pnpm 环境 → 检查 ui/desktop 依赖 → 确保 goose 二进制存在（默认缺才构建）→ pnpm run start-gui
+    流程：准备 node/pnpm 环境 → 检查 ui/desktop 依赖 → 确保 heybuddy 二进制存在（默认缺才构建）→ pnpm run start-gui
     运行：powershell -NoProfile -ExecutionPolicy Bypass -File .\dev-ui.ps1
-    可选：-RebuildBackend  先 cargo build（debug 增量）并复制 goose.exe 到 ui/desktop/src/bin 再启动（改过 Rust 代码后用）
+    可选：-RebuildBackend  先 cargo build（debug 增量）并复制 heybuddy.exe 到 ui/desktop/src/bin 再启动（改过 Rust 代码后用）
           -NoBuild         绝不构建，二进制缺失时直接报错退出（纯前端迭代最快路径）
           -AuthApiBaseUrl  登录服务地址（默认生产 https://ai.linyeyun.cn；传空串则用源码默认 localhost:3001）
           -Edition         品牌版本（默认 heybuddy；start-gui 的 validate:edition 要求显式设置）
@@ -32,7 +32,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = $PSScriptRoot
 $uiDir = Join-Path $repoRoot 'ui\desktop'
-$binName = 'goose.exe'
+$binName = 'heybuddy.exe'
 $srcBin = Join-Path $uiDir "src\bin\$binName"
 $debugBin = Join-Path $repoRoot "target\debug\$binName"
 
@@ -84,7 +84,7 @@ if (-not (Test-Path (Join-Path $uiDir 'node_modules'))) {
     Assert-LastExit 'pnpm install'
 }
 
-# ---------------- 3. goose 二进制保障 ----------------
+# ---------------- 3. heybuddy 二进制保障 ----------------
 # dev 模式解析顺序：src/bin → target/release → target/debug，任一存在即可启动
 $binaryAvailable = (Test-Path $srcBin) -or
     (Test-Path (Join-Path $repoRoot "target\release\$binName")) -or
@@ -92,12 +92,12 @@ $binaryAvailable = (Test-Path $srcBin) -or
 
 if ($NoBuild) {
     if (-not $binaryAvailable) {
-        throw "goose 二进制不存在（src/bin、target/release、target/debug 均未找到），且指定了 -NoBuild 不允许构建"
+        throw "heybuddy 二进制不存在（src/bin、target/release、target/debug 均未找到），且指定了 -NoBuild 不允许构建"
     }
     Write-Host '跳过构建（-NoBuild）'
 } elseif ($RebuildBackend -or -not $binaryAvailable) {
     if (-not $binaryAvailable) {
-        Write-Host '未找到 goose 二进制，先构建 debug 版后端 ...'
+        Write-Host '未找到 heybuddy 二进制，先构建 debug 版后端 ...'
     } else {
         Write-Host '-RebuildBackend：先重建 debug 版后端 ...'
     }
@@ -109,13 +109,13 @@ if ($NoBuild) {
     }
     New-Item -ItemType Directory -Force (Split-Path $srcBin) | Out-Null
     Copy-Item $debugBin $srcBin -Force
-    Write-Host "已复制 goose.exe 到 $srcBin"
+    Write-Host "已复制 heybuddy.exe 到 $srcBin"
     Set-Location $uiDir
 } else {
-    Write-Host 'goose 二进制已存在，跳过构建（改过 Rust 代码请用 -RebuildBackend）'
+    Write-Host 'heybuddy 二进制已存在，跳过构建（改过 Rust 代码请用 -RebuildBackend）'
 }
 
 # ---------------- 4. 启动 UI 开发模式 ----------------
-Write-Host '启动 UI 开发模式（build-goose-sdk + i18n:compile + electron-forge start）...'
+Write-Host '启动 UI 开发模式（build-heybuddy-sdk + i18n:compile + electron-forge start）...'
 & pnpm run start-gui
 exit $LASTEXITCODE

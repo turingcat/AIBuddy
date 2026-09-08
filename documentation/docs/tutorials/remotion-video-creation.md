@@ -1,13 +1,13 @@
 ---
 title: Create Videos with Remotion Skills
-description: Use goose with Remotion agent skills to generate programmatic videos with React
+description: Use heybuddy with Remotion agent skills to generate programmatic videos with React
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import GooseBuiltinInstaller from '@site/src/components/GooseBuiltinInstaller';
+import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
 
-goose can create programmatic videos using [Remotion](https://www.remotion.dev/), a framework for creating videos with React. By loading [Remotion Agent Skills](https://www.remotion.dev/docs/ai/skills), goose gains knowledge of best practices for animations, compositions, text effects, and video rendering.
+heybuddy can create programmatic videos using [Remotion](https://www.remotion.dev/), a framework for creating videos with React. By loading [Remotion Agent Skills](https://www.remotion.dev/docs/ai/skills), heybuddy gains knowledge of best practices for animations, compositions, text effects, and video rendering.
 
 ### Prerequisites
 
@@ -20,24 +20,24 @@ Remotion is free for individuals and small teams, but requires a [commercial lic
 
 ## Configuration
 
-Enable the [Summon extension](/docs/mcp/summon-mcp) to allow goose to load and use Agent Skills.
+Enable the [Summon extension](/docs/mcp/summon-mcp) to allow heybuddy to load and use Agent Skills.
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  <GooseBuiltinInstaller
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  <HeyBuddyBuiltinInstaller
     extensionName="Summon"
   />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
 
   1. Run the `configure` command:
   ```sh
-  goose configure
+  heybuddy configure
   ```
 
   2. Choose to `Toggle Extensions`
   ```sh
-  ┌   goose-configure 
+  ┌   heybuddy-configure 
   │
   ◇  What would you like to configure?
   │  Toggle Extensions 
@@ -54,13 +54,13 @@ Enable the [Summon extension](/docs/mcp/summon-mcp) to allow goose to load and u
 
 ## Example Usage
 
-In this example, we'll ask goose to create a terminal-style video that demonstrates a git workflow. The video will feature typewriter effects, realistic terminal output, and a celebratory animation at the end.
+In this example, we'll ask heybuddy to create a terminal-style video that demonstrates a git workflow. The video will feature typewriter effects, realistic terminal output, and a celebratory animation at the end.
 
 :::info LLM
 Anthropic's Claude Opus 4.5 was used for this example.
 :::
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 Create a terminal-style video showing a git workflow: type out git add ., 
@@ -69,7 +69,7 @@ Each command should appear with a typewriter effect, followed by realistic outpu
 End with 'Deployed to production 🚀'
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 ─── load | summon ───────────────────────────────────────

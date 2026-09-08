@@ -58,8 +58,8 @@ permissions:
   contents: read
 
 jobs:
-  build-goose-windows:
-    name: Build Goose (Windows ${{ matrix.name }})
+  build-heybuddy-windows:
+    name: Build HeyBuddy (Windows ${{ matrix.name }})
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -104,12 +104,12 @@ jobs:
           CARGO_FEATURES: ${{ matrix.cargo_features }}
         run: |
           if ($env:CARGO_FEATURES) {
-            cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose --no-default-features --features $env:CARGO_FEATURES
+            cargo build --release --target $env:RUST_TARGET -p heybuddy-cli --bin heybuddy --no-default-features --features $env:CARGO_FEATURES
           } else {
-            cargo build --release --target $env:RUST_TARGET -p goose-cli --bin goose
+            cargo build --release --target $env:RUST_TARGET -p heybuddy-cli --bin heybuddy
           }
 
-          $binaryPath = "./target/$env:RUST_TARGET/release/goose.exe"
+          $binaryPath = "./target/$env:RUST_TARGET/release/heybuddy.exe"
           if (-not (Test-Path $binaryPath)) {
             Write-Error "Windows binary not found: $binaryPath"
             Get-ChildItem "./target/$env:RUST_TARGET/release/" -ErrorAction SilentlyContinue
@@ -120,8 +120,8 @@ jobs:
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-${{ matrix.rust_target }}
-          path: target/${{ matrix.rust_target }}/release/goose.exe
+          name: internal-heybuddy-${{ matrix.rust_target }}
+          path: target/${{ matrix.rust_target }}/release/heybuddy.exe
           if-no-files-found: error
           retention-days: 1
           overwrite: true
@@ -129,26 +129,26 @@ jobs:
   package-cli-windows:
     name: Package CLI (Windows)
     if: ${{ inputs.package_cli }}
-    needs: build-goose-windows
+    needs: build-heybuddy-windows
     runs-on: ubuntu-latest
     steps:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-x86_64-pc-windows-msvc
+          name: internal-heybuddy-x86_64-pc-windows-msvc
           path: package
 
       - name: Package CLI
         run: |
-          mkdir -p goose-package
-          cp package/goose.exe goose-package/
-          zip -r "goose-x86_64-pc-windows-msvc.zip" goose-package/
+          mkdir -p heybuddy-package
+          cp package/heybuddy.exe heybuddy-package/
+          zip -r "heybuddy-x86_64-pc-windows-msvc.zip" heybuddy-package/
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: goose-x86_64-pc-windows-msvc.zip
-          path: goose-x86_64-pc-windows-msvc.zip
+          name: heybuddy-x86_64-pc-windows-msvc.zip
+          path: heybuddy-x86_64-pc-windows-msvc.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
@@ -156,7 +156,7 @@ jobs:
   build-desktop-windows:
     name: Build Desktop (Windows ${{ matrix.name }})
     if: ${{ inputs.package_desktop }}
-    needs: build-goose-windows
+    needs: build-heybuddy-windows
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -217,7 +217,7 @@ jobs:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-${{ matrix.rust_target }}
+          name: internal-heybuddy-${{ matrix.rust_target }}
           path: backend
 
       - name: Prepare Windows binary
@@ -225,18 +225,18 @@ jobs:
         run: |
           rm -rf ./ui/desktop/src/bin
           mkdir -p ./ui/desktop/src/bin
-          cp -f ./backend/goose.exe ./ui/desktop/src/bin/
+          cp -f ./backend/heybuddy.exe ./ui/desktop/src/bin/
 
           if [ -d "./ui/desktop/src/platform/windows/bin" ]; then
             for file in ./ui/desktop/src/platform/windows/bin/*.{exe,dll,cmd}; do
               filename="$(basename "$file")"
-              if [ -f "$file" ] && [ "$filename" != "goose.exe" ]; then
+              if [ -f "$file" ] && [ "$filename" != "heybuddy.exe" ]; then
                 cp -f "$file" ./ui/desktop/src/bin/
               fi
             done
 
-            if [ -d "./ui/desktop/src/platform/windows/bin/goose-npm" ]; then
-              cp -r ./ui/desktop/src/platform/windows/bin/goose-npm/ ./ui/desktop/src/bin/goose-npm/
+            if [ -d "./ui/desktop/src/platform/windows/bin/heybuddy-npm" ]; then
+              cp -r ./ui/desktop/src/platform/windows/bin/heybuddy-npm/ ./ui/desktop/src/bin/heybuddy-npm/
             fi
           fi
 
@@ -352,7 +352,7 @@ jobs:
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: Goose-win32-${{ matrix.name }}
+          name: HeyBuddy-win32-${{ matrix.name }}
           path: HeyBuddy-windows-${{ matrix.name }}-setup.exe
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}

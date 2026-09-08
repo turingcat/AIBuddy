@@ -20,15 +20,15 @@ describe('brand', () => {
     expect(getAppDisplayName()).toBe('HeyBuddy');
     expect(getAppIconStem()).toBe('icon');
     expect(getAppTrayIconStem()).toBe('iconTemplate');
-    expect(getAppProtocol()).toBe('goose');
-    expect(getAppProtocolPrefix()).toBe('goose://');
+    expect(getAppProtocol()).toBe('heybuddy');
+    expect(getAppProtocolPrefix()).toBe('heybuddy://');
   });
 
   // Resolving per call, not once at import, keeps a stale module-level constant
   // from leaking a previously read edition across tests.
   it('re-resolves the edition on every call', () => {
     vi.stubEnv('APP_EDITION', 'heybuddy');
-    expect(getAppProtocol()).toBe('goose');
+    expect(getAppProtocol()).toBe('heybuddy');
 
     vi.stubEnv('APP_EDITION', 'goose');
     expect(() => getAppProtocol()).toThrow(/Invalid APP_EDITION/);

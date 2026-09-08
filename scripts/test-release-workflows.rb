@@ -23,6 +23,7 @@ abort "missing release recovery workflow" unless File.exist?(recovery_path)
 
 recovery_workflow = File.read(recovery_path)
 YAML.parse(recovery_workflow)
+recovery_document = YAML.safe_load(recovery_workflow, aliases: true)
 
 required_fragments = [
   "workflow_dispatch:",
@@ -32,12 +33,25 @@ required_fragments = [
   "pattern: '!internal-*'",
   "merge-multiple: true",
   "tag: ${{ inputs.release_tag }}",
-  "HeyBuddy*.zip",
-  "HeyBuddy*.exe",
 ]
 
 required_fragments.each do |fragment|
   abort "recovery workflow missing #{fragment}" unless recovery_workflow.include?(fragment)
+end
+
+publish_step = recovery_document.fetch("jobs").fetch("publish").fetch("steps").find do |step|
+  step["name"] == "Publish versioned release"
+end
+abort "recovery workflow missing release publish step" unless publish_step
+
+release_artifacts = publish_step.fetch("with").fetch("artifacts").lines.map(&:strip)
+required_artifacts = [
+  "HeyBuddy*.zip",
+  "HeyBuddy-windows-*-setup.exe",
+]
+
+required_artifacts.each do |artifact|
+  abort "recovery workflow missing #{artifact}" unless release_artifacts.include?(artifact)
 end
 
 puts "release workflow contracts pass"

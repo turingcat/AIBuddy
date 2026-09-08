@@ -1,4 +1,4 @@
-import type { GooseSessionNotification_unstable } from '@aaif/goose-sdk';
+import type { HeyBuddySessionNotification_unstable } from '@heybuddy/heybuddy-sdk';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import type { Message } from '../types/message';
 import {
@@ -6,7 +6,7 @@ import {
   applyElicitationStatus as applyElicitationStatusToState,
   type ElicitationStatus,
 } from './adapter/elicitations';
-import { applyGooseSessionNotification } from './adapter/gooseSessionNotifications';
+import { applyHeyBuddySessionNotification } from './adapter/heybuddySessionNotifications';
 import { applyContentChunk, applyThoughtChunk } from './adapter/messages';
 import {
   applyPermissionRequest as applyPermissionRequestToState,
@@ -16,8 +16,8 @@ import {
   type AcpChatStateChange,
   type AdapterState,
   cloneMessage,
-  getGooseActiveRunId,
-  getGooseQueuedSteer,
+  getHeyBuddyActiveRunId,
+  getHeyBuddyQueuedSteer,
 } from './adapter/shared';
 import { applyToolCall, applyToolCallUpdate } from './adapter/tools';
 import type { AcpElicitationRequest } from './elicitationRequests';
@@ -27,7 +27,7 @@ export type { AcpChatStateChange } from './adapter/shared';
 
 export interface AcpSessionNotificationAdapter {
   apply(notification: SessionNotification): AcpChatStateChange[];
-  applyGoose(notification: GooseSessionNotification_unstable): AcpChatStateChange[];
+  applyHeyBuddy(notification: HeyBuddySessionNotification_unstable): AcpChatStateChange[];
   applyPermissionRequest(request: AcpPermissionRequest): AcpChatStateChange[];
   cancelPermissionRequest(toolCallId: string, generation: string): AcpChatStateChange[];
   applyElicitationRequest(request: AcpElicitationRequest): AcpChatStateChange[];
@@ -49,8 +49,8 @@ export function createAcpSessionNotificationAdapter(
     apply(notification) {
       return applyAcpSessionNotification(state, notification);
     },
-    applyGoose(notification) {
-      return applyGooseSessionNotification(state, notification);
+    applyHeyBuddy(notification) {
+      return applyHeyBuddySessionNotification(state, notification);
     },
     applyPermissionRequest(request) {
       return applyPermissionRequestToState(state, request);
@@ -88,8 +88,8 @@ function applyAcpSessionNotification(
     case 'tool_call_update':
       return applyToolCallUpdate(state, update);
     case 'session_info_update': {
-      const activeRunId = getGooseActiveRunId(update);
-      const queuedSteerMessageId = getGooseQueuedSteer(update);
+      const activeRunId = getHeyBuddyActiveRunId(update);
+      const queuedSteerMessageId = getHeyBuddyQueuedSteer(update);
       const changes: AcpChatStateChange[] = [];
 
       if (update.title || activeRunId !== undefined) {

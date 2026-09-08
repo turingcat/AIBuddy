@@ -1,12 +1,12 @@
 import type { ExtensionConfig } from '../types/extensions';
 import { getAcpClient } from './acpConnection';
-import { extensionConfigToGooseExtension, gooseExtensionToExtensionConfig } from './extensions';
+import { extensionConfigToHeyBuddyExtension, heybuddyExtensionToExtensionConfig } from './extensions';
 
 export type SessionExtension = ExtensionConfig & { extensionKey: string };
 
 export async function getSessionExtensions(sessionId: string): Promise<SessionExtension[]> {
   const client = await getAcpClient();
-  const response = await client.goose.sessionExtensionsList_unstable({ sessionId });
+  const response = await client.heybuddy.sessionExtensionsList_unstable({ sessionId });
   const extensionKeys = new Set<string>();
   const extensions: SessionExtension[] = [];
 
@@ -16,7 +16,7 @@ export async function getSessionExtensions(sessionId: string): Promise<SessionEx
     }
     extensionKeys.add(entry.extensionKey);
 
-    const config = gooseExtensionToExtensionConfig(entry.extension);
+    const config = heybuddyExtensionToExtensionConfig(entry.extension);
     if (config) {
       extensions.push({ ...config, extensionKey: entry.extensionKey });
     }
@@ -29,12 +29,12 @@ export async function addSessionExtension(
   sessionId: string,
   config: ExtensionConfig
 ): Promise<void> {
-  const extension = extensionConfigToGooseExtension(config);
+  const extension = extensionConfigToHeyBuddyExtension(config);
   if (!extension) {
     throw new Error(`Unsupported extension type for ACP: ${config.type}`);
   }
   const client = await getAcpClient();
-  await client.goose.sessionExtensionsAdd_unstable({ sessionId, extension });
+  await client.heybuddy.sessionExtensionsAdd_unstable({ sessionId, extension });
 }
 
 export async function removeSessionExtension(
@@ -42,5 +42,5 @@ export async function removeSessionExtension(
   extensionKey: string
 ): Promise<void> {
   const client = await getAcpClient();
-  await client.goose.sessionExtensionsRemove_unstable({ sessionId, extensionKey });
+  await client.heybuddy.sessionExtensionsRemove_unstable({ sessionId, extensionKey });
 }

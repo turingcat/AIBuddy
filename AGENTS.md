@@ -1,6 +1,6 @@
 # AGENTS Instructions
 
-goose is an AI agent framework in Rust with CLI and Electron desktop interfaces.
+heybuddy is an AI agent framework in Rust with CLI and Electron desktop interfaces.
 
 ## Development Standards
 
@@ -26,7 +26,7 @@ When fixing a bug:
 
 ## Contribution Workflow
 
-The issue is the source of truth for work intended for an upstream pull request. Track issue status on the [Goose Issues board](https://github.com/orgs/aaif-goose/projects/1).
+The issue is the source of truth for work intended for an upstream pull request. Track issue status on the [HeyBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1).
 
 - Before implementing an issue for a pull request, confirm that it is on the board with Status **Ready**.
 - Do not implement issues in **Inbox**, **Needs info**, or **Accepted / design**. Help resolve the issue discussion instead.
@@ -49,7 +49,7 @@ Write issue and pull request comments for humans, not as exhaustive work logs.
 
 ## Agent Loop Migration
 
-We are replacing the legacy agent loop in `crates/goose/src/agents/agent.rs` with the state machine in `crates/goose/src/agents/state_machine/`. The state-machine path is enabled with `GOOSE_STATE_MACHINE=1`.
+We are replacing the legacy agent loop in `crates/heybuddy/src/agents/agent.rs` with the state machine in `crates/heybuddy/src/agents/state_machine/`. The state-machine path is enabled with `HEYBUDDY_STATE_MACHINE=1`.
 
 Until the migration is complete, changes to agent-loop behavior must be implemented and tested in both paths. When reviewing code, check whether a change to either path also applies to the other and flag missing parity.
 
@@ -71,8 +71,8 @@ just release-binary           # release binary
 ### Test
 ```bash
 cargo test                   # all tests
-cargo test -p goose          # specific crate
-cargo test --package goose --test mcp_integration_test
+cargo test -p heybuddy          # specific crate
+cargo test --package heybuddy --test mcp_integration_test
 just record-mcp-tests        # record MCP
 ```
 
@@ -112,11 +112,11 @@ ui/text/      # deprecated ACP TUI (see ui/text/README.md)
 
 ## Rules
 
-- Test: Prefer tests/ folder, e.g. crates/goose/tests/
-- Test: When adding features, update goose-self-test.yaml, rebuild, then run `goose run --recipe goose-self-test.yaml` to validate
+- Test: Prefer tests/ folder, e.g. crates/heybuddy/tests/
+- Test: When adding features, update heybuddy-self-test.yaml, rebuild, then run `heybuddy run --recipe heybuddy-self-test.yaml` to validate
 - Error: Use anyhow::Result
 - Provider: Implement Provider trait see providers/base.rs
-- MCP: Extensions in crates/goose-mcp/
+- MCP: Extensions in crates/heybuddy-mcp/
 - UI Desktop: Use ACP SDK types or local `src/types/*` types. Do not import generated OpenAPI types/client code from `ui/desktop/src/api`
 
 ## Code Quality
@@ -141,6 +141,6 @@ ui/text/      # deprecated ACP TUI (see ui/text/README.md)
 - Never: Overwrite a live binary in place (e.g. `cp`/`fs.copyFileSync` onto an existing executable) - unlink or atomic-rename the destination first, otherwise macOS SIGKILLs running processes with "Code Signature Invalid"
 
 ## Entry Points
-- CLI: crates/goose-cli/src/main.rs
+- CLI: crates/heybuddy-cli/src/main.rs
 - UI: ui/desktop/src/main.ts
-- Agent: crates/goose/src/agents/agent.rs
+- Agent: crates/heybuddy/src/agents/agent.rs

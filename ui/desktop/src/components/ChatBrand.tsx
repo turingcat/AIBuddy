@@ -1,4 +1,4 @@
-import { Goose } from './icons';
+import { HeyBuddy } from './icons';
 
 export default function ChatBrand() {
   return (
@@ -8,7 +8,7 @@ export default function ChatBrand() {
       rel="noopener noreferrer"
       className="no-drag flex flex-row items-center gap-1 hover:opacity-80 transition-opacity"
     >
-      <Goose className="size-5 goose-icon-animation" />
+      <HeyBuddy className="size-5 heybuddy-icon-animation" />
       <span className="text-sm leading-none text-text-secondary -translate-y-px">HeyBuddy</span>
     </a>
   );

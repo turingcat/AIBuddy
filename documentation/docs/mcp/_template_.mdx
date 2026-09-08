@@ -1,6 +1,6 @@
 ---
 title: {Extension Name} Extension
-description: Add {Extension Name} MCP Server as a goose Extension
+description: Add {Extension Name} MCP Server as a heybuddy Extension
 ---
 
 <!-- You can use the "Add MCP Server" recipe from the Recipe Cookbook to create a draft tutorial -->
@@ -9,21 +9,21 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
-import GooseBuiltinInstaller from '@site/src/components/GooseBuiltinInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
+import HeyBuddyBuiltinInstaller from '@site/src/components/HeyBuddyBuiltinInstaller';
 
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/VIDEO_ID" />
 
 
-This tutorial covers how to add the [{Extension Name} MCP Server](/) as a goose extension to enable ________________.
+This tutorial covers how to add the [{Extension Name} MCP Server](/) as a heybuddy extension to enable ________________.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  [Launch the installer]({goose_url})
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  [Launch the installer]({heybuddy_url})
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
   **Command**
   ```sh
   {command}
@@ -47,17 +47,17 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="heybuddy Desktop" default>
 
     <!-- For built-in extensions -->
-    <GooseBuiltinInstaller
+    <HeyBuddyBuiltinInstaller
       extensionName="{Extension Name}"
       description="{Extension description}"
       extensionId="{extension_id}"
     />
 
     <!-- For external STDIO MCP servers (npx, uvx, git, etc.) -->
-    <GooseDesktopInstaller
+    <HeyBuddyDesktopInstaller
       extensionId="{extension_id}"
       extensionName="{Extension Name}"
       description="{Extension description}"
@@ -72,7 +72,7 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
     />
 
     <!-- For HTTP MCP servers -->
-    <GooseDesktopInstaller
+    <HeyBuddyDesktopInstaller
       extensionId="{extension_id}"
       extensionName="{Extension Name}"
       description="{Extension description}"
@@ -86,7 +86,7 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
     />
 
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
 
     <!-- For external STDIO MCP servers (npx, uvx, git, etc.) -->
     <CLIExtensionInstructions
@@ -135,12 +135,12 @@ Note that you'll need [uv](https://docs.astral.sh/uv/#installation) installed on
 
 {describe any environment setup, access controls, and what you want to accomplish.}
 
-### goose Prompt
+### heybuddy Prompt
 
 > _exact prompt_
 
 
-### goose Output
+### heybuddy Output
 
 :::note Desktop
 

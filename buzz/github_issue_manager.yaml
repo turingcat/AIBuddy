@@ -1,6 +1,6 @@
 version: "1.0.0"
 title: GitHub issue manager for Buzz
-description: Assigns Goose Inbox and queued issues to core-team owners and reconciles their Buzz channels.
+description: Assigns HeyBuddy Inbox and queued issues to core-team owners and reconciles their Buzz channels.
 
 parameters:
   - key: automation_dir
@@ -15,7 +15,7 @@ parameters:
   - key: project_owner
     input_type: string
     requirement: optional
-    default: aaif-goose
+    default: aaif-heybuddy
     description: Owner of the GitHub project
   - key: project_number
     input_type: number
@@ -25,7 +25,7 @@ parameters:
   - key: project_title
     input_type: string
     requirement: optional
-    default: Goose Issues
+    default: HeyBuddy Issues
     description: GitHub project title used in Buzz topics
   - key: dry_run
     input_type: string

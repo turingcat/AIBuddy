@@ -1,4 +1,4 @@
-# Goose v1.49.0 Sync
+# HeyBuddy v1.49.0 Sync
 
 - Upstream tag: `v1.49.0` (`71fc4be1ed729e26b1dc0a4466abdd03be548a53`).
 - HeyBuddy before sync: `d630adc1170157545e472d7fa6478c8b57c89610`.
@@ -30,8 +30,8 @@
 - Rust: `cargo fmt --all` and `cargo clippy --all-targets --locked -- -D warnings`
   passed with the repository-pinned Rust 1.96.1 toolchain. Two constant strings in
   an upstream test were changed from `format!` to equivalent string conversion.
-- Rust unit tests: 2,999 passed across goose, goose-agent, goose-provider-types,
-  goose-providers, and goose-context-management, with `goose/rustls-tls` enabled.
+- Rust unit tests: 2,999 passed across heybuddy, heybuddy-agent, heybuddy-provider-types,
+  heybuddy-providers, and heybuddy-context-management, with `heybuddy/rustls-tls` enabled.
   Tests ran with `--test-threads=1` because ACP tests mutate process-wide environment
   settings and one retry test failed intermittently during parallel runs.
 - Rust integration tests: 39 agent tests and 4 compaction tests passed with

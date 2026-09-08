@@ -38,8 +38,8 @@ export interface Settings {
   enableWakelock: boolean;
   enableNotifications: boolean;
   spellcheckEnabled: boolean;
-  // Key is kept as `externalGoosed` for backward compat with persisted user settings.
-  externalGoosed: ExternalBackendConfig;
+  // Key is kept as `externalHeyBuddyd` for backward compat with persisted user settings.
+  externalHeyBuddyd: ExternalBackendConfig;
   globalShortcut?: string | null;
   keyboardShortcuts: KeyboardShortcuts;
 
@@ -76,7 +76,7 @@ export const defaultSettings: Settings = {
   enableNotifications: true,
   spellcheckEnabled: true,
   keyboardShortcuts: defaultKeyboardShortcuts,
-  externalGoosed: {
+  externalHeyBuddyd: {
     enabled: false,
     url: '',
     secret: '',

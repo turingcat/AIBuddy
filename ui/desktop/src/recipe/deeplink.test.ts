@@ -16,7 +16,7 @@ const recipe = { title: 'T', description: 'D' } as Recipe;
 // accepting a foreign scheme would hand the user's recipe to the wrong
 // installed app.
 describe('recipe deeplinks for heybuddy', () => {
-  const own = 'goose';
+  const own = 'heybuddy';
   const foreign = 'otherapp';
 
   beforeEach(() => {

@@ -5,10 +5,10 @@ This guide explains how to test the CLI command tracking automation locally and 
 ## Prerequisites
 
 - Python 3.7+
-- Rust toolchain (for building goose)
+- Rust toolchain (for building heybuddy)
 - jq (for JSON processing)
-- goose CLI installed (for running recipes)
-- Git with access to goose repository
+- heybuddy CLI installed (for running recipes)
+- Git with access to heybuddy repository
 
 ## Local Testing
 
@@ -17,8 +17,8 @@ This guide explains how to test the CLI command tracking automation locally and 
 ```bash
 cd /path/to/cli-command-tracking
 
-# Set the goose repository path
-export GOOSE_REPO=/path/to/goose
+# Set the heybuddy repository path
+export HEYBUDDY_REPO=/path/to/heybuddy
 
 # Create output directory
 mkdir -p output
@@ -93,7 +93,7 @@ Generate human-readable documentation:
 cd output
 
 # Run synthesis recipe
-goose run --recipe ../recipes/synthesize-cli-changes.yaml
+heybuddy run --recipe ../recipes/synthesize-cli-changes.yaml
 
 # Check output
 ls -lh cli-changes.md
@@ -115,10 +115,10 @@ Update the actual documentation:
 cd output
 
 # Set path to documentation file
-export CLI_COMMANDS_PATH=/path/to/goose/documentation/docs/guides/goose-cli-commands.md
+export CLI_COMMANDS_PATH=/path/to/heybuddy/documentation/docs/guides/heybuddy-cli-commands.md
 
 # Run update recipe
-goose run --recipe ../recipes/update-cli-commands.yaml
+heybuddy run --recipe ../recipes/update-cli-commands.yaml
 
 # Check outputs
 ls -lh update-summary.md
@@ -136,7 +136,7 @@ Run the complete end-to-end pipeline:
 cd /path/to/cli-command-tracking
 
 # Set documentation path (optional - only needed for update step)
-export CLI_COMMANDS_PATH=/path/to/goose/documentation/docs/guides/goose-cli-commands.md
+export CLI_COMMANDS_PATH=/path/to/heybuddy/documentation/docs/guides/heybuddy-cli-commands.md
 
 # Run pipeline
 ./scripts/run-pipeline.sh v1.14.0 v1.15.0
@@ -160,10 +160,10 @@ ls -lh output/
 2. **Copy automation files** to your fork:
    ```bash
    cp -r /path/to/cli-command-tracking \
-         /path/to/forked-goose/documentation/automation/
+         /path/to/forked-heybuddy/documentation/automation/
    
-   cp /path/to/goose/.github/workflows/docs-update-cli-ref.yml \
-      /path/to/forked-goose/.github/workflows/
+   cp /path/to/heybuddy/.github/workflows/docs-update-cli-ref.yml \
+      /path/to/forked-heybuddy/.github/workflows/
    ```
 
 3. **Set up secrets** in your fork:
@@ -171,8 +171,8 @@ ls -lh output/
    - Add `ANTHROPIC_API_KEY` secret
 
 4. **Set up variables** (optional):
-   - Add `GOOSE_PROVIDER` variable (default: anthropic)
-   - Add `GOOSE_MODEL` variable (default: claude-opus-4-5)
+   - Add `HEYBUDDY_PROVIDER` variable (default: anthropic)
+   - Add `HEYBUDDY_MODEL` variable (default: claude-opus-4-5)
 
 5. **Trigger workflow manually**:
    - Go to Actions → "Update CLI Documentation"
@@ -217,13 +217,13 @@ To validate the automation works correctly, test with versions that have known C
 ### Finding Test Versions
 
 ```bash
-cd /path/to/goose
+cd /path/to/heybuddy
 
 # Check git history for CLI changes
-git log --oneline --all -- crates/goose-cli/src/cli.rs | head -20
+git log --oneline --all -- crates/heybuddy-cli/src/cli.rs | head -20
 
 # Look for commits that added/removed/modified commands
-git show <commit-hash>:crates/goose-cli/src/cli.rs | grep "enum Command" -A 30
+git show <commit-hash>:crates/heybuddy-cli/src/cli.rs | grep "enum Command" -A 30
 ```
 
 ### Test Case: New Command Added
@@ -264,7 +264,7 @@ Before considering the automation complete:
 - [ ] Captures defaults and possible values
 - [ ] Works with commands that have no description
 - [ ] Handles nested subcommands (2+ levels)
-- [ ] Builds goose from git tags correctly
+- [ ] Builds heybuddy from git tags correctly
 
 ### Diff Script
 - [ ] Detects added commands
@@ -287,11 +287,11 @@ Before considering the automation complete:
 - [ ] Runs end-to-end without errors
 - [ ] Handles "no changes" case
 - [ ] Creates all expected output files
-- [ ] Filters goose session output correctly
+- [ ] Filters heybuddy session output correctly
 
 ### GitHub Actions
 - [ ] Workflow triggers correctly
-- [ ] Builds goose for both versions
+- [ ] Builds heybuddy for both versions
 - [ ] Uploads artifacts
 - [ ] Creates PR when changes detected
 - [ ] Respects dry_run mode
@@ -301,11 +301,11 @@ Before considering the automation complete:
 
 ### Keychain Access (macOS)
 
-On macOS, running `goose --help` or `goose --version` may prompt for keychain access. This happens because goose tries to access stored credentials on startup.
+On macOS, running `heybuddy --help` or `heybuddy --version` may prompt for keychain access. This happens because heybuddy tries to access stored credentials on startup.
 
 **Local workaround:** Allow the keychain access when prompted.
 
-**CI consideration:** GitHub Actions runners don't have a keychain, so this may need to be handled. Check existing goose workflows for patterns - there may be a `keyring: false` config option or environment variable to disable credential loading.
+**CI consideration:** GitHub Actions runners don't have a keychain, so this may need to be handled. Check existing heybuddy workflows for patterns - there may be a `keyring: false` config option or environment variable to disable credential loading.
 
 **TODO:** Investigate if this blocks CI execution and document the solution.
 
@@ -318,8 +318,8 @@ Some old versions may have different dependencies:
 git tag | grep v1.14.0
 
 # Try building manually
-git worktree add /tmp/goose-test v1.14.0
-cd /tmp/goose-test
+git worktree add /tmp/heybuddy-test v1.14.0
+cd /tmp/heybuddy-test
 cargo build --release
 ```
 
@@ -337,8 +337,8 @@ Check if help text formatting changed:
 
 ```bash
 # Compare raw help output
-./old-goose session --help > old-help.txt
-./new-goose session --help > new-help.txt
+./old-heybuddy session --help > old-help.txt
+./new-heybuddy session --help > new-help.txt
 diff old-help.txt new-help.txt
 ```
 

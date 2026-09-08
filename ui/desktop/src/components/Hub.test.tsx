@@ -11,7 +11,7 @@ vi.mock('./ChatInputCard', () => ({
   ChatInputCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('./ConfigContext', () => ({ useConfig: () => ({ extensionsList: [] }) }));
-vi.mock('./LoadingGoose', () => ({ default: () => null }));
+vi.mock('./LoadingHeyBuddy', () => ({ default: () => null }));
 vi.mock('../sessions', () => ({ createSession: vi.fn() }));
 vi.mock('../utils/workingDir', () => ({
   getInitialWorkingDir: () => '/workspace',

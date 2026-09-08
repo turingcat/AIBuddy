@@ -18,7 +18,7 @@ A native desktop app for macOS, Linux, and Windows. A full CLI for terminal work
 
 HeyBuddy works with 15+ providers — Anthropic, OpenAI, Google, Ollama, OpenRouter, Azure, Bedrock, and more. Use API keys or your existing Claude, ChatGPT, or Gemini subscriptions via [ACP](https://goose-docs.ai/docs/guides/acp-providers). Connect to 70+ extensions via the [Model Context Protocol](https://modelcontextprotocol.io/) open standard.
 
-HeyBuddy is a private fork of [goose](https://github.com/aaif-goose/goose), an open source project of the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. The CLI binary, environment variables, and underlying engine keep the original `goose` naming; only the desktop app's branding and interface have been renamed.
+HeyBuddy is a private fork of [heybuddy](https://github.com/aaif-goose/goose), an open source project of the [Agentic AI Foundation (AAIF)](https://aaif.io/) at the Linux Foundation. The CLI binary, environment variables, and underlying engine keep the original `heybuddy` naming; only the desktop app's branding and interface have been renamed.
 
 # Get started
 
@@ -36,7 +36,7 @@ curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download
 - [Tutorials](https://goose-docs.ai/docs/category/tutorials)
 - [Documentation](https://goose-docs.ai/docs/category/getting-started)
 - [Governance](https://github.com/aaif-goose/goose/blob/main/GOVERNANCE.md)
-- [Custom Distributions](https://github.com/aaif-goose/goose/blob/main/CUSTOM_DISTROS.md) — build your own goose distro with preconfigured providers, extensions, and branding
+- [Custom Distributions](https://github.com/aaif-goose/goose/blob/main/CUSTOM_DISTROS.md) — build your own heybuddy distro with preconfigured providers, extensions, and branding
 
 ## Need help?
 - [Diagnostics & Reporting](https://goose-docs.ai/docs/troubleshooting/diagnostics-and-reporting)

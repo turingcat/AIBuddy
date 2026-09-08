@@ -4,7 +4,7 @@ import type { setViewType } from './hooks/useNavigation';
 import type { FixedExtensionEntry } from './components/ConfigContext';
 import { AppEvents } from './constants/events';
 import { acpChatSessionController } from './acp/chatSessionController';
-import { getConfiguredGooseExtensions, gooseExtensionName } from './acp/extensions';
+import { getConfiguredHeyBuddyExtensions, heybuddyExtensionName } from './acp/extensions';
 import { beginConfiguredRecipeParameterScope } from './acp/recipeParamRequests';
 import { getAcpFeatureCapabilities } from './acp/capabilities';
 import { RecipeParameterScopesUnsupportedError } from './acp/errors';
@@ -56,13 +56,13 @@ async function createAcpSession(
       }
     }
     const selectedNames = new Set(selectedExtensionConfigs(options).map((config) => config.name));
-    const gooseExtensions =
+    const heybuddyExtensions =
       selectedNames.size > 0
-        ? (await getConfiguredGooseExtensions())
-            .filter((entry) => selectedNames.has(gooseExtensionName(entry.extension)))
+        ? (await getConfiguredHeyBuddyExtensions())
+            .filter((entry) => selectedNames.has(heybuddyExtensionName(entry.extension)))
             .map((entry) => entry.extension)
         : [];
-    return await acpChatSessionController.createSession(workingDir, gooseExtensions, {
+    return await acpChatSessionController.createSession(workingDir, heybuddyExtensions, {
       recipeId: options?.recipeId,
       recipeDeeplink: options?.recipeDeeplink,
       recipeParameterScopeId: configuredParameterScope?.id,

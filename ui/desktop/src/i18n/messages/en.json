@@ -1002,7 +1002,7 @@
     "defaultMessage": "Working directory must be an absolute path"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "Enter an absolute path (e.g. /home/goose/workspace)"
+    "defaultMessage": "Enter an absolute path (e.g. /home/heybuddy/workspace)"
   },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
@@ -1314,7 +1314,7 @@
     "defaultMessage": "Secret Key"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "The secret key configured on the external backend (GOOSE_SERVER__SECRET_KEY)."
+    "defaultMessage": "The secret key configured on the external backend (HEYBUDDY_SERVER__SECRET_KEY)."
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "Enter the server's secret key"
@@ -1350,7 +1350,7 @@
     "defaultMessage": "Absolute path on the external backend. Leave blank to send the local working directory."
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/heybuddy/workspace"
   },
   "gitBranchIndicator.failedToSwitch": {
     "defaultMessage": "Failed to switch to {branch}"
@@ -1364,67 +1364,67 @@
   "gitBranchIndicator.uncommittedChanges": {
     "defaultMessage": "You may have uncommitted changes."
   },
-  "goosehintsModal.close": {
+  "heybuddyhintsModal.close": {
     "defaultMessage": "Close"
   },
-  "goosehintsModal.developer": {
+  "heybuddyhintsModal.developer": {
     "defaultMessage": "Developer"
   },
-  "goosehintsModal.dialogDescription": {
+  "heybuddyhintsModal.dialogDescription": {
     "defaultMessage": "Provide additional context about your project to improve communication with {appName}"
   },
-  "goosehintsModal.dialogTitle": {
-    "defaultMessage": "Configure Project Hints (.goosehints)"
+  "heybuddyhintsModal.dialogTitle": {
+    "defaultMessage": "Configure Project Hints (.heybuddyhints)"
   },
-  "goosehintsModal.errorReading": {
-    "defaultMessage": "Error reading .goosehints file: {error}"
+  "heybuddyhintsModal.errorReading": {
+    "defaultMessage": "Error reading .heybuddyhints file: {error}"
   },
-  "goosehintsModal.failedToAccess": {
-    "defaultMessage": "Failed to access .goosehints file"
+  "heybuddyhintsModal.failedToAccess": {
+    "defaultMessage": "Failed to access .heybuddyhints file"
   },
-  "goosehintsModal.failedToSave": {
-    "defaultMessage": "Failed to save .goosehints file"
+  "heybuddyhintsModal.failedToSave": {
+    "defaultMessage": "Failed to save .heybuddyhints file"
   },
-  "goosehintsModal.fileCreating": {
-    "defaultMessage": "Creating new .goosehints file at: {filePath}"
+  "heybuddyhintsModal.fileCreating": {
+    "defaultMessage": "Creating new .heybuddyhints file at: {filePath}"
   },
-  "goosehintsModal.fileFound": {
-    "defaultMessage": ".goosehints file found at: {filePath}"
+  "heybuddyhintsModal.fileFound": {
+    "defaultMessage": ".heybuddyhints file found at: {filePath}"
   },
-  "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints is a text file used to provide additional context about your project and improve the communication with {appName}."
+  "heybuddyhintsModal.helpText1": {
+    "defaultMessage": ".heybuddyhints is a text file used to provide additional context about your project and improve the communication with {appName}."
   },
-  "goosehintsModal.helpText2": {
-    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .goosehints. You'll need to restart your session for .goosehints updates to take effect."
+  "heybuddyhintsModal.helpText2": {
+    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .heybuddyhints. You'll need to restart your session for .heybuddyhints updates to take effect."
   },
-  "goosehintsModal.helpText3": {
+  "heybuddyhintsModal.helpText3": {
     "defaultMessage": "See {link} for more information."
   },
-  "goosehintsModal.helpTextLink": {
-    "defaultMessage": "using .goosehints"
+  "heybuddyhintsModal.helpTextLink": {
+    "defaultMessage": "using .heybuddyhints"
   },
-  "goosehintsModal.placeholder": {
+  "heybuddyhintsModal.placeholder": {
     "defaultMessage": "Enter project hints here..."
   },
-  "goosehintsModal.save": {
+  "heybuddyhintsModal.save": {
     "defaultMessage": "Save"
   },
-  "goosehintsModal.savedSuccessfully": {
+  "heybuddyhintsModal.savedSuccessfully": {
     "defaultMessage": "Saved successfully"
   },
-  "goosehintsModal.saving": {
+  "heybuddyhintsModal.saving": {
     "defaultMessage": "Saving..."
   },
-  "goosehintsSection.configure": {
+  "heybuddyhintsSection.configure": {
     "defaultMessage": "Configure"
   },
-  "goosehintsSection.description": {
-    "defaultMessage": "Configure your project's .goosehints file to provide additional context to {appName}"
+  "heybuddyhintsSection.description": {
+    "defaultMessage": "Configure your project's .heybuddyhints file to provide additional context to {appName}"
   },
-  "goosehintsSection.title": {
-    "defaultMessage": "Project Hints (.goosehints)"
+  "heybuddyhintsSection.title": {
+    "defaultMessage": "Project Hints (.heybuddyhints)"
   },
-  "groupedExtensionLoadingToast.askGoose": {
+  "groupedExtensionLoadingToast.askHeyBuddy": {
     "defaultMessage": "Ask {appName}"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
@@ -1841,25 +1841,25 @@
   "launcher.placeholder": {
     "defaultMessage": "Ask {appName} anything..."
   },
-  "loadingGoose.compacting": {
+  "loadingHeyBuddy.compacting": {
     "defaultMessage": "{appName} is compacting the conversation..."
   },
-  "loadingGoose.idle": {
+  "loadingHeyBuddy.idle": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingGoose.loadingConversation": {
+  "loadingHeyBuddy.loadingConversation": {
     "defaultMessage": "loading conversation..."
   },
-  "loadingGoose.restartingAgent": {
+  "loadingHeyBuddy.restartingAgent": {
     "defaultMessage": "restarting session..."
   },
-  "loadingGoose.streaming": {
+  "loadingHeyBuddy.streaming": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingGoose.thinking": {
+  "loadingHeyBuddy.thinking": {
     "defaultMessage": "{appName} is thinking…"
   },
-  "loadingGoose.waiting": {
+  "loadingHeyBuddy.waiting": {
     "defaultMessage": "{appName} is waiting…"
   },
   "localInferenceSettings.deleteConfirm": {
@@ -4191,7 +4191,7 @@
     "defaultMessage": "No matching skills found"
   },
   "skillsView.noSkillsDescription": {
-    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .goose/skills/, or other supported directories."
+    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .heybuddy/skills/, or other supported directories."
   },
   "skillsView.noSkillsInstalled": {
     "defaultMessage": "No skills installed"
@@ -4469,7 +4469,7 @@
   "toolConfirmation.allowToolCallWithName": {
     "defaultMessage": "Allow {toolName}?"
   },
-  "toolConfirmation.gooseWouldLikeToCallWithName": {
+  "toolConfirmation.heybuddyWouldLikeToCallWithName": {
     "defaultMessage": "{appName} would like to call {toolName}. Allow?"
   },
   "userMessage.cancel": {

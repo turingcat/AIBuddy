@@ -65,7 +65,7 @@ describe('ModelAndProviderProvider fallback defaults', () => {
     mocks.saveDefaults.mockResolvedValue(undefined);
     mocks.listModelsViaApi.mockResolvedValue([]);
     mocks.appConfigGet.mockImplementation((key: string) =>
-      key === 'GOOSE_DEFAULT_PROVIDER' ? 'heybuddy' : undefined
+      key === 'HEYBUDDY_DEFAULT_PROVIDER' ? 'heybuddy' : undefined
     );
 
     (window as unknown as { appConfig: { get: typeof mocks.appConfigGet } }).appConfig = {

@@ -2,8 +2,8 @@ node_modules
 .vite/
 out
 coverage/
-src/bin/goosed
-src/bin/goose-npm/
+src/bin/heybuddyd
+src/bin/heybuddy-npm/
 /src/bin/*.exe
 /src/bin/*.cmd
 /src/platform/windows/bin/*.dll

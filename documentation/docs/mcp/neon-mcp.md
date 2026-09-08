@@ -1,15 +1,15 @@
 ---
 title: Neon Extension
-description: Add Neon MCP Server as a goose Extension
+description: Add Neon MCP Server as a heybuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
 import { PanelLeft } from 'lucide-react';
 
-This tutorial covers how to add the [Neon MCP Server](https://github.com/neondatabase/mcp-server-neon) as a goose extension to interact with your Neon Postgres databases and manage your projects, branches, and more.
+This tutorial covers how to add the [Neon MCP Server](https://github.com/neondatabase/mcp-server-neon) as a heybuddy extension to interact with your Neon Postgres databases and manage your projects, branches, and more.
 
 Neon offers two versions of the MCP server:
 
@@ -26,11 +26,11 @@ The Neon MCP Server grants powerful database management capabilities and is inte
   <TabItem value="remote" label="Neon Remote MCP" default>
   :::tip Quick Install
   <Tabs groupId="interface">
-    <TabItem value="ui" label="goose Desktop" default>
+    <TabItem value="ui" label="heybuddy Desktop" default>
     [Launch the installer](goose://extension?type=streamable_http&url=https%3A%2F%2Fmcp.neon.tech%2Fmcp&id=neon&name=Neon&description=Manage%20Neon%20Postgres%20databases%2C%20projects%2C%20and%20branches)
     </TabItem>
-    <TabItem value="cli" label="goose CLI">
-    Use `goose configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
+    <TabItem value="cli" label="heybuddy CLI">
+    Use `heybuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
 
     **Endpoint URL**
     ```
@@ -45,8 +45,8 @@ The Neon MCP Server grants powerful database management capabilities and is inte
   :::
 
   <Tabs groupId="interface">
-    <TabItem value="ui" label="goose Desktop" default>
-      <GooseDesktopInstaller
+    <TabItem value="ui" label="heybuddy Desktop" default>
+      <HeyBuddyDesktopInstaller
         extensionId="neon"
         extensionName="Neon"
         description="Manage Neon Postgres databases, projects, and branches"
@@ -54,7 +54,7 @@ The Neon MCP Server grants powerful database management capabilities and is inte
         url="https://mcp.neon.tech/mcp"
       />
     </TabItem>
-    <TabItem value="cli" label="goose CLI">
+    <TabItem value="cli" label="heybuddy CLI">
       <CLIExtensionInstructions
         name="neon-mcp-remote"
         description="Manage Neon Postgres databases, projects, and branches"
@@ -70,10 +70,10 @@ The Neon MCP Server grants powerful database management capabilities and is inte
   <TabItem value="local" label="Neon Local MCP">
   :::tip Quick Install
   <Tabs groupId="interface">
-    <TabItem value="ui" label="goose Desktop" default>
+    <TabItem value="ui" label="heybuddy Desktop" default>
       [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40neondatabase%2Fmcp-server-neon&arg=start&arg=%3CYOUR_NEON_API_KEY%3E&id=neon&name=Neon&description=Manage%20your%20Neon%20Postgres%20databases%2C%20projects%2C%20and%20branches)
     </TabItem>
-    <TabItem value="cli" label="goose CLI">
+    <TabItem value="cli" label="heybuddy CLI">
       **Command**
       ```sh
       npx -y @neondatabase/mcp-server-neon start <YOUR_NEON_API_KEY>
@@ -91,8 +91,8 @@ The Neon MCP Server grants powerful database management capabilities and is inte
   :::
 
   <Tabs groupId="interface">
-    <TabItem value="ui" label="goose Desktop" default>
-    <GooseDesktopInstaller
+    <TabItem value="ui" label="heybuddy Desktop" default>
+    <HeyBuddyDesktopInstaller
       extensionId="neon"
       extensionName="Neon"
       description="Manage your Neon Postgres databases, projects, and branches"
@@ -101,7 +101,7 @@ The Neon MCP Server grants powerful database management capabilities and is inte
     />
     </TabItem>
 
-    <TabItem value="cli" label="goose CLI">
+    <TabItem value="cli" label="heybuddy CLI">
       <CLIExtensionInstructions
         name="Neon MCP"
         description="Manage Neon Postgres databases, projects, and branches"
@@ -120,13 +120,13 @@ For all setup and configuration options, see the [official Neon MCP Server docum
 
 Get an overview of all your Neon database projects and their configurations.
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 List my Neon projects
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 I'll help you list your Neon projects using the neon__list_projects tool. By default, it will show the first 10 projects.
@@ -166,13 +166,13 @@ All projects are running PostgreSQL 17 and have autoscaling configured between 1
 
 Discover what tables and schemas exist within a specific project.
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 What tables do I have in my neon-auth-mcp-oauth project?
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 In your neon-auth-mcp-oauth project, there is one table:
@@ -184,13 +184,13 @@ users_sync in the neon_auth schema
 
 Run queries against your database tables to retrieve and analyze your data.
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 Count the rows in the users_sync table.
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 I'll count the rows in the neon_auth.users_sync table using a COUNT query.

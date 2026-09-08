@@ -16,11 +16,11 @@ function verifyPackageTree(brand, platform, root) {
     platform === 'darwin'
       ? [
           path.join(root, `${brand.productName}.app`, 'Contents', 'MacOS', brand.executableName),
-          path.join(root, `${brand.productName}.app`, 'Contents', 'Resources', 'bin', 'goose'),
+          path.join(root, `${brand.productName}.app`, 'Contents', 'Resources', 'bin', 'heybuddy'),
         ]
       : [
           path.join(root, `${brand.executableName}.exe`),
-          path.join(root, 'resources', 'bin', 'goose.exe'),
+          path.join(root, 'resources', 'bin', 'heybuddy.exe'),
         ];
 
   const problems = required.filter((file) => !fs.existsSync(file)).map((file) => `missing ${file}`);

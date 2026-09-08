@@ -6,7 +6,7 @@ This note records the measurements available before the GitHub Actions optimizat
 
 ## Windows Bundle Baseline
 
-The three runs below are successful `workflow_dispatch` executions of `Bundle CLI and Desktop (Windows)` on `main`. Total wall time is the run's GitHub `created_at` to `updated_at` duration. Rust compile time is the `Build Windows executable` step in the `Build Goose (Windows)` job. This is the comparison scope for the three-run baseline; it does not compare overall CI or release workflows.
+The three runs below are successful `workflow_dispatch` executions of `Bundle CLI and Desktop (Windows)` on `main`. Total wall time is the run's GitHub `created_at` to `updated_at` duration. Rust compile time is the `Build Windows executable` step in the `Build HeyBuddy (Windows)` job. This is the comparison scope for the three-run baseline; it does not compare overall CI or release workflows.
 
 | Run | UTC time | Head ref / SHA | Total wall | Rust compile | Warm | Rust cache hit |
 | --- | --- | --- | --- | --- | --- | --- |

@@ -41,8 +41,8 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          git archive --format=tar.gz --prefix="goose-${RELEASE_TAG}/" --output="goose-source-${RELEASE_TAG}.tar.gz" HEAD
-          git archive --format=zip --prefix="goose-${RELEASE_TAG}/" --output="goose-source-${RELEASE_TAG}.zip" HEAD
+          git archive --format=tar.gz --prefix="heybuddy-${RELEASE_TAG}/" --output="heybuddy-source-${RELEASE_TAG}.tar.gz" HEAD
+          git archive --format=zip --prefix="heybuddy-${RELEASE_TAG}/" --output="heybuddy-source-${RELEASE_TAG}.zip" HEAD
 
       - name: Download release artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
@@ -60,9 +60,9 @@ jobs:
           tag: ${{ inputs.release_tag }}
           name: HeyBuddy ${{ inputs.release_tag }}
           artifacts: |
-            goose-*.tar.bz2
-            goose-*.tar.gz
-            goose-*.zip
+            heybuddy-*.tar.bz2
+            heybuddy-*.tar.gz
+            heybuddy-*.zip
             HeyBuddy*.zip
             HeyBuddy-windows-*-setup.exe
             download_cli.sh

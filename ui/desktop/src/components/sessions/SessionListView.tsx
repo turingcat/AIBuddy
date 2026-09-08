@@ -54,7 +54,7 @@ import {
   acpShareSessionNostr,
   type SessionListItem,
 } from '../../acp/sessions';
-import type { SessionExportFormat } from '@aaif/goose-sdk';
+import type { SessionExportFormat } from '@heybuddy/heybuddy-sdk';
 import { acpChatSessionActions } from '../../acp/chatSessionStore';
 import { cancelAcpPermissionRequestsForSession } from '../../acp/permissionRequests';
 import { cancelAcpElicitationRequestsForSession } from '../../acp/elicitationRequests';
@@ -495,7 +495,7 @@ const SessionListView: React.FC<SessionListViewProps> = React.memo(({ onSelectSe
   // Hide Nostr sharing when explicitly disabled via env var (restricted/enterprise bundles)
   useEffect(() => {
     const config = window.electron.getConfig();
-    if (config.GOOSE_DISABLE_NOSTR_SHARING === true) {
+    if (config.HEYBUDDY_DISABLE_NOSTR_SHARING === true) {
       setNostrEnabled(false);
     }
   }, []);

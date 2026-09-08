@@ -55,18 +55,18 @@ import {
 import { DEFAULT_CURRENCY_CONFIG } from './quotaFormat';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
 import { configureProxy } from './proxy';
-import { startGooseServe } from './gooseServe';
-import { buildHeyBuddyEnv } from './gooseServeEnv';
+import { startHeyBuddyServe } from './heybuddyServe';
+import { buildHeyBuddyEnv } from './heybuddyServeEnv';
 import { getLoginShellPath } from './loginShellPath';
-import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
+import { HeyBuddyServeLeaseRegistry, type HeyBuddyServeLease } from './heybuddyServeLeaseRegistry';
 import { createAuthSessionTransition } from './authSessionTransition';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
-import { expandTilde, sanitizeGoosePathRoot } from './utils/pathUtils';
+import { expandTilde, sanitizeHeyBuddyPathRoot } from './utils/pathUtils';
 import log from './utils/logger';
 import { ensureWinShims } from './utils/winShims';
 import { addRecentDir, loadRecentDirs } from './utils/recentDirs';
 import { formatAppName, errorMessage, formatErrorForLogging } from './utils/conversionUtils';
-import { isRetiredGooseChatApp } from './utils/retiredApps';
+import { isRetiredHeyBuddyChatApp } from './utils/retiredApps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings, getKeyboardShortcuts } from './utils/settings';
 import * as crypto from 'crypto';
@@ -84,7 +84,7 @@ import {
 import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
-import type { GooseApp } from './types/apps';
+import type { HeyBuddyApp } from './types/apps';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { WEB_PROTOCOLS } from './utils/urlSecurity';
 import { openExternalUrl } from './utils/openExternalUrl';
@@ -100,7 +100,7 @@ import {
 // Native menu localization
 // -----------------------------------------------------------------------
 function detectMenuLocale(): string {
-  return getConfiguredGooseLocale() ?? 'en';
+  return getConfiguredHeyBuddyLocale() ?? 'en';
 }
 
 function menuT(label: string): string {
@@ -154,9 +154,9 @@ function getSettings(): Settings {
     return {
       ...defaultSettings,
       ...stored,
-      externalGoosed: {
-        ...defaultSettings.externalGoosed,
-        ...(stored.externalGoosed ?? {}),
+      externalHeyBuddyd: {
+        ...defaultSettings.externalHeyBuddyd,
+        ...(stored.externalHeyBuddyd ?? {}),
       },
       keyboardShortcuts: {
         ...defaultSettings.keyboardShortcuts,
@@ -173,14 +173,14 @@ function updateSettings(modifier: (settings: Settings) => void): void {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 }
 
-function getConfiguredGooseLocale(): string | undefined {
+function getConfiguredHeyBuddyLocale(): string | undefined {
   const language = getSettings().language;
   if (isValidLanguageSetting(language) && language !== 'system') {
     return language;
   }
 
-  if (process.env.GOOSE_LOCALE) {
-    return process.env.GOOSE_LOCALE;
+  if (process.env.HEYBUDDY_LOCALE) {
+    return process.env.HEYBUDDY_LOCALE;
   }
 
   try {
@@ -323,7 +323,7 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
 });
 
 app.whenReady().then(() => {
-  appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
+  appConfig.HEYBUDDY_LOCALE = getConfiguredHeyBuddyLocale();
 });
 
 // Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
@@ -809,12 +809,12 @@ interface BundledConfig {
 
 const getBundledConfig = (): BundledConfig => {
   //{env-macro-start}//
-  //needed when goose is bundled for a specific provider
+  //needed when heybuddy is bundled for a specific provider
   //{env-macro-end}//
   return {
-    defaultProvider: process.env.GOOSE_DEFAULT_PROVIDER,
-    defaultModel: process.env.GOOSE_DEFAULT_MODEL,
-    version: process.env.GOOSE_VERSION,
+    defaultProvider: process.env.HEYBUDDY_DEFAULT_PROVIDER,
+    defaultModel: process.env.HEYBUDDY_DEFAULT_MODEL,
+    version: process.env.HEYBUDDY_VERSION,
   };
 };
 
@@ -831,16 +831,16 @@ interface ExternalBackend {
 }
 
 const getExternalBackendUrlFromEnv = (): string | null => {
-  if (!process.env.GOOSE_EXTERNAL_BACKEND) {
+  if (!process.env.HEYBUDDY_EXTERNAL_BACKEND) {
     return null;
   }
 
-  const configuredUrl = process.env.GOOSE_EXTERNAL_BACKEND_URL?.trim();
+  const configuredUrl = process.env.HEYBUDDY_EXTERNAL_BACKEND_URL?.trim();
   if (configuredUrl) {
     return configuredUrl;
   }
 
-  return `http://127.0.0.1:${process.env.GOOSE_PORT || '3000'}`;
+  return `http://127.0.0.1:${process.env.HEYBUDDY_PORT || '3000'}`;
 };
 
 const getExternalBackendFromEnv = (): ExternalBackend | null => {
@@ -849,10 +849,10 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
     return null;
   }
 
-  const secret = process.env.GOOSE_SERVER__SECRET_KEY;
+  const secret = process.env.HEYBUDDY_SERVER__SECRET_KEY;
   if (!secret) {
     throw new Error(
-      'GOOSE_SERVER__SECRET_KEY must be set when using GOOSE_EXTERNAL_BACKEND. ' +
+      'HEYBUDDY_SERVER__SECRET_KEY must be set when using HEYBUDDY_EXTERNAL_BACKEND. ' +
         'Set it to the same value on both the server and the desktop client.'
     );
   }
@@ -865,8 +865,8 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
 };
 
 const getServerSecret = (settings: Settings): string => {
-  if (settings.externalGoosed?.enabled && settings.externalGoosed.secret) {
-    return settings.externalGoosed.secret;
+  if (settings.externalHeyBuddyd?.enabled && settings.externalHeyBuddyd.secret) {
+    return settings.externalHeyBuddyd.secret;
   }
   return GENERATED_SECRET;
 };
@@ -876,17 +876,17 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
   if (envBackend) {
     return {
       ...envBackend,
-      workingDir: settings.externalGoosed?.workingDir,
+      workingDir: settings.externalHeyBuddyd?.workingDir,
     };
   }
 
-  if (settings.externalGoosed?.enabled && settings.externalGoosed.url) {
+  if (settings.externalHeyBuddyd?.enabled && settings.externalHeyBuddyd.url) {
     return {
       source: 'settings',
-      url: settings.externalGoosed.url,
+      url: settings.externalHeyBuddyd.url,
       secret: getServerSecret(settings),
-      certFingerprint: settings.externalGoosed.certFingerprint,
-      workingDir: settings.externalGoosed.workingDir,
+      certFingerprint: settings.externalHeyBuddyd.certFingerprint,
+      workingDir: settings.externalHeyBuddyd.workingDir,
     };
   }
 
@@ -896,32 +896,32 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
 const getExternalBackendForCsp = (settings: Settings) => {
   const envUrl = getExternalBackendUrlFromEnv();
   if (!envUrl) {
-    return settings.externalGoosed;
+    return settings.externalHeyBuddyd;
   }
 
   return {
-    ...settings.externalGoosed,
+    ...settings.externalHeyBuddyd,
     enabled: true,
     url: envUrl,
   };
 };
 
 let appConfig = {
-  GOOSE_DEFAULT_PROVIDER: defaultProvider,
-  GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PATH_ROOT: sanitizeGoosePathRoot(process.env),
-  GOOSE_WORKING_DIR: '',
+  HEYBUDDY_DEFAULT_PROVIDER: defaultProvider,
+  HEYBUDDY_DEFAULT_MODEL: defaultModel,
+  HEYBUDDY_PATH_ROOT: sanitizeHeyBuddyPathRoot(process.env),
+  HEYBUDDY_WORKING_DIR: '',
   // Whether the window is bound to an external backend (fixed at window
-  // creation via gooseServeLeases) and which URL it is bound to.
-  GOOSE_EXTERNAL_BACKEND: false,
-  GOOSE_EXTERNAL_BACKEND_URL: '',
-  GOOSE_EXTERNAL_BACKEND_SOURCE: '',
+  // creation via heybuddyServeLeases) and which URL it is bound to.
+  HEYBUDDY_EXTERNAL_BACKEND: false,
+  HEYBUDDY_EXTERNAL_BACKEND_URL: '',
+  HEYBUDDY_EXTERNAL_BACKEND_SOURCE: '',
   // Start with the env-var override; the OS region locale is filled in after app.ready
   // (see updateLocaleFromSystem below) since getSystemLocale() cannot be called earlier.
-  GOOSE_LOCALE: process.env.GOOSE_LOCALE || undefined,
-  // If GOOSE_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
-  GOOSE_ALLOWLIST_WARNING: process.env.GOOSE_ALLOWLIST_WARNING === 'true',
-  GOOSE_DISABLE_NOSTR_SHARING: process.env.GOOSE_DISABLE_NOSTR_SHARING === 'true',
+  HEYBUDDY_LOCALE: process.env.HEYBUDDY_LOCALE || undefined,
+  // If HEYBUDDY_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
+  HEYBUDDY_ALLOWLIST_WARNING: process.env.HEYBUDDY_ALLOWLIST_WARNING === 'true',
+  HEYBUDDY_DISABLE_NOSTR_SHARING: process.env.HEYBUDDY_DISABLE_NOSTR_SHARING === 'true',
 };
 
 const windowMap = new Map<number, BrowserWindow>();
@@ -952,7 +952,7 @@ function getRegularWindows(): BrowserWindow[] {
   return [...windowMap.values()].filter((w) => !w.isDestroyed());
 }
 
-const gooseServeLeases = new GooseServeLeaseRegistry(log);
+const heybuddyServeLeases = new HeyBuddyServeLeaseRegistry(log);
 
 const windowPowerSaveBlockers = new Map<number, number>(); // windowId -> blockerId
 // Track pending initial messages per window
@@ -1026,8 +1026,8 @@ const createChat = async (
 
       if (response === 0) {
         updateSettings((s) => {
-          if (s.externalGoosed) {
-            s.externalGoosed.enabled = false;
+          if (s.externalHeyBuddyd) {
+            s.externalHeyBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1040,7 +1040,7 @@ const createChat = async (
 
   const serverSecret = externalBackend ? externalBackend.secret : GENERATED_SECRET;
   let workingDir = resolveWorkingDir(externalBackend?.workingDir, dir, os.homedir());
-  let gooseServeLease: GooseServeLease | null = null;
+  let heybuddyServeLease: HeyBuddyServeLease | null = null;
 
   if (externalBackend) {
     let externalCertificateTrust: BackendCertificateTrustRegistration | null = null;
@@ -1068,7 +1068,7 @@ const createChat = async (
           title: 'External Backend Unreachable',
           message: `Could not connect to external backend at ${externalBaseUrl}`,
           detail:
-            'The external backend must be running and the configured secret must match GOOSE_SERVER__SECRET_KEY on the server.',
+            'The external backend must be running and the configured secret must match HEYBUDDY_SERVER__SECRET_KEY on the server.',
           buttons: canDisableExternalBackend
             ? ['Disable External Backend & Retry', 'Quit']
             : ['Quit'],
@@ -1078,8 +1078,8 @@ const createChat = async (
 
         if (canDisableExternalBackend && response === 0) {
           updateSettings((s) => {
-            if (s.externalGoosed) {
-              s.externalGoosed.enabled = false;
+            if (s.externalHeyBuddyd) {
+              s.externalHeyBuddyd.enabled = false;
             }
           });
           return createChat(app, options);
@@ -1091,7 +1091,7 @@ const createChat = async (
 
       const leaseCertificateTrust = externalCertificateTrust;
       externalCertificateTrust = null;
-      gooseServeLease = gooseServeLeases.createExternal(
+      heybuddyServeLease = heybuddyServeLeases.createExternal(
         acpWebSocketUrlFromHttpBase(externalBaseUrl, serverSecret),
         serverSecret,
         leaseCertificateTrust ? async () => leaseCertificateTrust.release() : undefined
@@ -1114,8 +1114,8 @@ const createChat = async (
 
       if (canDisableExternalBackend && response === 0) {
         updateSettings((s) => {
-          if (s.externalGoosed) {
-            s.externalGoosed.enabled = false;
+          if (s.externalHeyBuddyd) {
+            s.externalHeyBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1130,14 +1130,14 @@ const createChat = async (
     const loginShellPath = await getLoginShellPath(log);
 
     const heyBuddyEnv = buildHeyBuddyEnv(readCredentials(CREDENTIALS_FILE, getCredentialsCodec()));
-    let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
+    let heybuddyServeResult: Awaited<ReturnType<typeof startHeyBuddyServe>>;
     try {
-      gooseServeResult = await startGooseServe({
+      heybuddyServeResult = await startHeyBuddyServe({
         serverSecret,
         dir: workingDir,
         tls: true,
         env: {
-          GOOSE_PATH_ROOT: appConfig.GOOSE_PATH_ROOT as string | undefined,
+          HEYBUDDY_PATH_ROOT: appConfig.HEYBUDDY_PATH_ROOT as string | undefined,
           ...heyBuddyEnv,
         },
         loginShellPath,
@@ -1147,31 +1147,31 @@ const createChat = async (
         diagnosticsDir: STARTUP_LOGS_DIR,
         readinessFetch: net.fetch as unknown as typeof globalThis.fetch,
       });
-      if (!gooseServeResult.certFingerprint) {
-        await gooseServeResult.cleanup();
+      if (!heybuddyServeResult.certFingerprint) {
+        await heybuddyServeResult.cleanup();
         throw new Error(
-          'goose serve started with TLS but did not return a certificate fingerprint'
+          'heybuddy serve started with TLS but did not return a certificate fingerprint'
         );
       }
 
-      const localCertFingerprint = normalizeFingerprint(gooseServeResult.certFingerprint);
+      const localCertFingerprint = normalizeFingerprint(heybuddyServeResult.certFingerprint);
       if (
         localCertificateTrust.trust.fingerprint &&
         localCertificateTrust.trust.fingerprint !== localCertFingerprint
       ) {
-        await gooseServeResult.cleanup();
-        throw new Error('goose serve TLS certificate fingerprint did not match readiness probe');
+        await heybuddyServeResult.cleanup();
+        throw new Error('heybuddy serve TLS certificate fingerprint did not match readiness probe');
       }
       localCertificateTrust.trust.fingerprint = localCertFingerprint;
     } catch (error) {
       localCertificateTrust.release();
-      log.error('goose serve failed to start', error);
+      log.error('heybuddy serve failed to start', error);
       dialog.showMessageBoxSync({
         type: 'error',
         title: `${getAppDisplayName()} Failed to Start`,
         message: 'The backend server failed to start.',
         detail: [
-          'Backend: goose serve',
+          'Backend: heybuddy serve',
           'Readiness check: HTTPS GET /status',
           `Startup error:\n${errorMessage(error)}`,
         ].join('\n\n'),
@@ -1181,26 +1181,26 @@ const createChat = async (
       return;
     }
 
-    workingDir = gooseServeResult.workingDir;
-    const cleanupGooseServe = gooseServeResult.cleanup;
-    gooseServeResult.cleanup = async () => {
+    workingDir = heybuddyServeResult.workingDir;
+    const cleanupHeyBuddyServe = heybuddyServeResult.cleanup;
+    heybuddyServeResult.cleanup = async () => {
       try {
-        await cleanupGooseServe();
+        await cleanupHeyBuddyServe();
       } finally {
         localCertificateTrust.release();
       }
     };
-    gooseServeLease = gooseServeLeases.create(gooseServeResult, serverSecret);
+    heybuddyServeLease = heybuddyServeLeases.create(heybuddyServeResult, serverSecret);
   }
 
-  const cleanupUnregisteredGooseServeLease = async () => {
-    if (!gooseServeLease) {
+  const cleanupUnregisteredHeyBuddyServeLease = async () => {
+    if (!heybuddyServeLease) {
       return;
     }
 
-    const lease = gooseServeLease;
-    gooseServeLease = null;
-    await gooseServeLeases.cleanupLease(lease);
+    const lease = heybuddyServeLease;
+    heybuddyServeLease = null;
+    await heybuddyServeLeases.cleanupLease(lease);
   };
 
   let mainWindowState: ReturnType<typeof windowStateKeeper>;
@@ -1256,13 +1256,13 @@ const createChat = async (
         additionalArguments: [
           JSON.stringify({
             ...appConfig,
-            GOOSE_LOCALE: getConfiguredGooseLocale(),
-            GOOSE_WORKING_DIR: workingDir,
-            GOOSE_EXTERNAL_BACKEND: externalBackend !== null,
-            GOOSE_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
-            GOOSE_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
+            HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
+            HEYBUDDY_WORKING_DIR: workingDir,
+            HEYBUDDY_EXTERNAL_BACKEND: externalBackend !== null,
+            HEYBUDDY_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
+            HEYBUDDY_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
             REQUEST_DIR: dir,
-            GOOSE_VERSION: version,
+            HEYBUDDY_VERSION: version,
             recipeDeeplink: recipeDeeplink,
             recipeId: recipeId,
             recipeParameters: recipeParameters,
@@ -1277,17 +1277,17 @@ const createChat = async (
       },
     });
   } catch (error) {
-    await cleanupUnregisteredGooseServeLease();
+    await cleanupUnregisteredHeyBuddyServeLease();
     throw error;
   }
 
-  if (gooseServeLease) {
-    const lease = gooseServeLease;
+  if (heybuddyServeLease) {
+    const lease = heybuddyServeLease;
     mainWindow.once('closed', () => {
-      void gooseServeLeases.releaseWindow(mainWindow.id);
+      void heybuddyServeLeases.releaseWindow(mainWindow.id);
     });
-    gooseServeLeases.attachWindow(mainWindow.id, lease);
-    gooseServeLease = null;
+    heybuddyServeLeases.attachWindow(mainWindow.id, lease);
+    heybuddyServeLease = null;
   }
 
   if (!app.isPackaged) {
@@ -1366,7 +1366,7 @@ const createChat = async (
 
   // Handle new window creation for links (fallback for any links not handled by onClick)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredHeyBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
     return { action: 'deny' };
@@ -1377,7 +1377,7 @@ const createChat = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mainWindow.webContents.on('new-window' as any, function (event: any, url: string) {
     event.preventDefault();
-    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredHeyBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
   });
@@ -1530,7 +1530,7 @@ const createLauncher = () => {
       additionalArguments: [
         JSON.stringify({
           ...appConfig,
-          GOOSE_LOCALE: getConfiguredGooseLocale(),
+          HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
         }),
       ],
       partition: 'persist:goose',
@@ -1687,7 +1687,7 @@ const openDirectoryDialog = async (): Promise<OpenDialogReturnValue> => {
   if (currentWindow) {
     try {
       const currentWorkingDir = await currentWindow.webContents.executeJavaScript(
-        `window.appConfig ? window.appConfig.get('GOOSE_WORKING_DIR') : null`
+        `window.appConfig ? window.appConfig.get('HEYBUDDY_WORKING_DIR') : null`
       );
 
       if (currentWorkingDir && typeof currentWorkingDir === 'string') {
@@ -1882,7 +1882,7 @@ ipcMain.on('react-ready', (event) => {
 
 ipcMain.handle('open-external', async (event, url: string) => {
   const senderWindow = BrowserWindow.fromWebContents(event.sender) ?? undefined;
-  return openExternalUrl(url, senderWindow, getConfiguredGooseLocale());
+  return openExternalUrl(url, senderWindow, getConfiguredHeyBuddyLocale());
 });
 
 ipcMain.handle('directory-chooser', async () => {
@@ -1918,7 +1918,7 @@ const validSettingKeys: Set<string> = new Set([
   'enableWakelock',
   'enableNotifications',
   'spellcheckEnabled',
-  'externalGoosed',
+  'externalHeyBuddyd',
   'globalShortcut',
   'keyboardShortcuts',
   'theme',
@@ -1947,7 +1947,7 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 
   if (key === 'language') {
-    appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
+    appConfig.HEYBUDDY_LOCALE = getConfiguredHeyBuddyLocale();
   }
 
   // Re-register shortcuts if keyboard shortcuts changed
@@ -2067,7 +2067,7 @@ ipcMain.handle(
   }
 );
 
-// 模型列表走主进程 fetch new-api /v1/models：绕开 goose inventory refresh 依赖 + renderer CSP
+// 模型列表走主进程 fetch new-api /v1/models：绕开 heybuddy inventory refresh 依赖 + renderer CSP
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('list-models-via-api', async () => {
@@ -2095,7 +2095,7 @@ ipcMain.handle('get-secret-key', (event) => {
   if (!windowId) {
     return null;
   }
-  return gooseServeLeases.getSecretKey(windowId) ?? null;
+  return heybuddyServeLeases.getSecretKey(windowId) ?? null;
 });
 
 ipcMain.handle('get-acp-url', async (event) => {
@@ -2103,7 +2103,7 @@ ipcMain.handle('get-acp-url', async (event) => {
   if (!windowId) {
     return null;
   }
-  return gooseServeLeases.getAcpUrl(windowId) ?? null;
+  return heybuddyServeLeases.getAcpUrl(windowId) ?? null;
 });
 
 // Handle menu bar icon visibility
@@ -2317,10 +2317,10 @@ ipcMain.handle('select-file-or-directory', async (_event, defaultPath?: string) 
 
 ipcMain.handle('select-recipe-file', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  const pathRoot = appConfig.GOOSE_PATH_ROOT as string | undefined;
+  const pathRoot = appConfig.HEYBUDDY_PATH_ROOT as string | undefined;
   const recipeDirectory = pathRoot
     ? path.join(pathRoot, 'config', 'recipes')
-    : path.join(os.homedir(), '.config', 'goose', 'recipes');
+    : path.join(os.homedir(), '.config', 'heybuddy', 'recipes');
   let defaultPath = os.homedir();
   try {
     if ((await fs.stat(recipeDirectory)).isDirectory()) {
@@ -2342,14 +2342,14 @@ ipcMain.handle('select-recipe-file', async (event) => {
   return readSelectedRecipe(result.filePaths[0]);
 });
 
-ipcMain.handle('read-goosehints', async (event) => {
+ipcMain.handle('read-heybuddyhints', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.readGoosehints(senderWindow.id);
+  return desktopFileAccess.readHeyBuddyhints(senderWindow.id);
 });
 
-ipcMain.handle('write-goosehints', async (event, content) => {
+ipcMain.handle('write-heybuddyhints', async (event, content) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.writeGoosehints(senderWindow.id, content);
+  return desktopFileAccess.writeHeyBuddyhints(senderWindow.id, content);
 });
 
 // Native picker tailored for session imports: shows hidden files (so users can
@@ -2857,14 +2857,14 @@ async function appMain() {
       }
 
       // Create the About menu item with a submenu
-      const aboutGooseMenuItem = new MenuItem({
+      const aboutHeyBuddyMenuItem = new MenuItem({
         label: menuT('About {app}'),
         submenu: Menu.buildFromTemplate([]), // Start with an empty submenu for About
       });
 
       // Add the Version menu item (display only) to the About submenu
-      if (aboutGooseMenuItem.submenu) {
-        aboutGooseMenuItem.submenu.append(
+      if (aboutHeyBuddyMenuItem.submenu) {
+        aboutHeyBuddyMenuItem.submenu.append(
           new MenuItem({
             label: `Version ${version || app.getVersion()}`,
             enabled: false,
@@ -2872,7 +2872,7 @@ async function appMain() {
         );
       }
 
-      helpMenu.submenu.append(aboutGooseMenuItem);
+      helpMenu.submenu.append(aboutHeyBuddyMenuItem);
     }
   }
 
@@ -3029,7 +3029,7 @@ async function appMain() {
 
   const refreshAuthSession = createAuthSessionTransition({
     listWindows: () => BrowserWindow.getAllWindows(),
-    cleanupBackends: () => gooseServeLeases.cleanupAll(),
+    cleanupBackends: () => heybuddyServeLeases.cleanupAll(),
     createReplacementWindow: () => createNewWindow(app),
   });
 
@@ -3064,11 +3064,11 @@ async function appMain() {
     }
   });
 
-  // 重启前先清理 goose serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
+  // 重启前先清理 heybuddy serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
   // @author logic
   // @date 2026-08-13
   ipcMain.on('restart-app', async () => {
-    await gooseServeLeases.cleanupAll();
+    await heybuddyServeLeases.cleanupAll();
     app.relaunch();
     app.exit(0);
   });
@@ -3079,7 +3079,7 @@ async function appMain() {
   });
 
   ipcMain.on('get-app-locale', (event) => {
-    event.returnValue = getConfiguredGooseLocale();
+    event.returnValue = getConfiguredHeyBuddyLocale();
   });
 
   ipcMain.handle('open-directory-in-explorer', async (_event, path: string) => {
@@ -3091,9 +3091,9 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('launch-app', async (event, gooseApp: GooseApp) => {
+  ipcMain.handle('launch-app', async (event, heybuddyApp: HeyBuddyApp) => {
     try {
-      if (isRetiredGooseChatApp(gooseApp)) {
+      if (isRetiredHeyBuddyChatApp(heybuddyApp)) {
         throw new Error('This built-in Chat app is no longer supported.');
       }
 
@@ -3103,13 +3103,13 @@ async function appMain() {
       }
 
       const launchingWindowId = launchingWindow.id;
-      const launchingGooseServeLease = gooseServeLeases.get(launchingWindowId);
-      if (!launchingGooseServeLease) {
+      const launchingHeyBuddyServeLease = heybuddyServeLeases.get(launchingWindowId);
+      if (!launchingHeyBuddyServeLease) {
         throw new Error('No backend lease found for launching window');
       }
 
       const launchingWorkingDir = await launchingWindow.webContents
-        .executeJavaScript(`window.appConfig ? window.appConfig.get('GOOSE_WORKING_DIR') : null`)
+        .executeJavaScript(`window.appConfig ? window.appConfig.get('HEYBUDDY_WORKING_DIR') : null`)
         .catch((error) => {
           console.warn('Failed to get working directory from launching window:', error);
           return undefined;
@@ -3120,10 +3120,10 @@ async function appMain() {
         app.getPath('home')
       );
       const appWindow = new BrowserWindow({
-        title: formatAppName(gooseApp.name),
-        width: gooseApp.width ?? 800,
-        height: gooseApp.height ?? 600,
-        resizable: gooseApp.resizable ?? true,
+        title: formatAppName(heybuddyApp.name),
+        width: heybuddyApp.width ?? 800,
+        height: heybuddyApp.height ?? 600,
+        resizable: heybuddyApp.resizable ?? true,
         useContentSize: true,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
@@ -3133,32 +3133,32 @@ async function appMain() {
           additionalArguments: [
             JSON.stringify({
               ...appConfig,
-              GOOSE_LOCALE: getConfiguredGooseLocale(),
-              GOOSE_WORKING_DIR: workingDir,
-              GOOSE_VERSION: version,
+              HEYBUDDY_LOCALE: getConfiguredHeyBuddyLocale(),
+              HEYBUDDY_WORKING_DIR: workingDir,
+              HEYBUDDY_VERSION: version,
             }),
           ],
           partition: 'persist:goose',
         },
       });
 
-      gooseServeLeases.attachWindow(appWindow.id, launchingGooseServeLease);
+      heybuddyServeLeases.attachWindow(appWindow.id, launchingHeyBuddyServeLease);
 
-      appWindows.set(gooseApp.name, appWindow);
+      appWindows.set(heybuddyApp.name, appWindow);
 
       appWindow.on('closed', () => {
-        void gooseServeLeases.releaseWindow(appWindow.id);
-        appWindows.delete(gooseApp.name);
+        void heybuddyServeLeases.releaseWindow(appWindow.id);
+        appWindows.delete(heybuddyApp.name);
       });
 
-      const extensionName = gooseApp.mcpServers?.[0] ?? '';
+      const extensionName = heybuddyApp.mcpServers?.[0] ?? '';
 
       const url = getAppUrl();
 
       const searchParams = new URLSearchParams();
-      searchParams.set('resourceUri', gooseApp.uri);
+      searchParams.set('resourceUri', heybuddyApp.uri);
       searchParams.set('extensionName', extensionName);
-      searchParams.set('appName', gooseApp.name);
+      searchParams.set('appName', heybuddyApp.name);
       searchParams.set('workingDir', workingDir);
 
       url.hash = `/standalone-app?${searchParams.toString()}`;
@@ -3170,11 +3170,11 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('refresh-app', async (_event, gooseApp: GooseApp) => {
+  ipcMain.handle('refresh-app', async (_event, heybuddyApp: HeyBuddyApp) => {
     try {
-      const appWindow = appWindows.get(gooseApp.name);
+      const appWindow = appWindows.get(heybuddyApp.name);
       if (!appWindow || appWindow.isDestroyed()) {
-        console.log(`App window for '${gooseApp.name}' not found or destroyed, skipping refresh`);
+        console.log(`App window for '${heybuddyApp.name}' not found or destroyed, skipping refresh`);
         return;
       }
 
@@ -3219,11 +3219,11 @@ app.whenReady().then(async () => {
 });
 
 async function getAllowList(): Promise<string[]> {
-  if (!process.env.GOOSE_ALLOWLIST) {
+  if (!process.env.HEYBUDDY_ALLOWLIST) {
     return [];
   }
 
-  const response = await fetch(process.env.GOOSE_ALLOWLIST);
+  const response = await fetch(process.env.HEYBUDDY_ALLOWLIST);
 
   if (!response.ok) {
     throw new Error(
@@ -3249,10 +3249,10 @@ async function getAllowList(): Promise<string[]> {
 }
 
 app.on('will-quit', async () => {
-  const gooseServeLeaseCount = gooseServeLeases.activeLeaseCount();
-  if (gooseServeLeaseCount > 0) {
-    log.info(`App quitting, cleaning up ${gooseServeLeaseCount} backend lease(s)`);
-    await gooseServeLeases.cleanupAll();
+  const heybuddyServeLeaseCount = heybuddyServeLeases.activeLeaseCount();
+  if (heybuddyServeLeaseCount > 0) {
+    log.info(`App quitting, cleaning up ${heybuddyServeLeaseCount} backend lease(s)`);
+    await heybuddyServeLeases.cleanupAll();
   }
 
   for (const [windowId, blockerId] of windowPowerSaveBlockers.entries()) {
