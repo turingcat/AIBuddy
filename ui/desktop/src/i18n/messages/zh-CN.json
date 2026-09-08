@@ -996,7 +996,7 @@
     "defaultMessage": "输入路径"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "输入绝对路径（例如 /home/goose/workspace）"
+    "defaultMessage": "输入绝对路径（例如 /home/heybuddy/workspace）"
   },
   "dirSwitcher.enterPathInvalid": {
     "defaultMessage": "工作目录必须是绝对路径"
@@ -1126,9 +1126,6 @@
   },
   "extensionInfoFields.typeLabel": {
     "defaultMessage": "类型"
-  },
-  "extensionInfoFields.typeSseUnsupported": {
-    "defaultMessage": "SSE（不支持）"
   },
   "extensionInfoFields.typeStandardIo": {
     "defaultMessage": "标准输入输出（STDIO）"
@@ -1326,7 +1323,7 @@
     "defaultMessage": "密钥"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "在外部后端上配置的密钥（GOOSE_SERVER__SECRET_KEY）"
+    "defaultMessage": "在外部后端上配置的密钥（HEYBUDDY_SERVER__SECRET_KEY）"
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "输入服务器的密钥"
@@ -1362,69 +1359,69 @@
     "defaultMessage": "外部后端上的绝对路径。留空时将发送本地工作目录。"
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/heybuddy/workspace"
   },
-  "goosehintsModal.close": {
+  "heybuddyhintsModal.close": {
     "defaultMessage": "关闭"
   },
-  "goosehintsModal.developer": {
+  "heybuddyhintsModal.developer": {
     "defaultMessage": "Developer"
   },
-  "goosehintsModal.dialogDescription": {
+  "heybuddyhintsModal.dialogDescription": {
     "defaultMessage": "为你的项目提供额外上下文，改善与 {appName} 的沟通"
   },
-  "goosehintsModal.dialogTitle": {
-    "defaultMessage": "配置项目提示（.goosehints）"
+  "heybuddyhintsModal.dialogTitle": {
+    "defaultMessage": "配置项目提示（.heybuddyhints）"
   },
-  "goosehintsModal.errorReading": {
-    "defaultMessage": "读取 .goosehints 文件出错：{error}"
+  "heybuddyhintsModal.errorReading": {
+    "defaultMessage": "读取 .heybuddyhints 文件出错：{error}"
   },
-  "goosehintsModal.failedToAccess": {
-    "defaultMessage": "访问 .goosehints 文件失败"
+  "heybuddyhintsModal.failedToAccess": {
+    "defaultMessage": "访问 .heybuddyhints 文件失败"
   },
-  "goosehintsModal.failedToSave": {
-    "defaultMessage": "保存 .goosehints 文件失败"
+  "heybuddyhintsModal.failedToSave": {
+    "defaultMessage": "保存 .heybuddyhints 文件失败"
   },
-  "goosehintsModal.fileCreating": {
-    "defaultMessage": "正在创建新的 .goosehints 文件：{filePath}"
+  "heybuddyhintsModal.fileCreating": {
+    "defaultMessage": "正在创建新的 .heybuddyhints 文件：{filePath}"
   },
-  "goosehintsModal.fileFound": {
-    "defaultMessage": "已找到 .goosehints 文件：{filePath}"
+  "heybuddyhintsModal.fileFound": {
+    "defaultMessage": "已找到 .heybuddyhints 文件：{filePath}"
   },
-  "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints 是一个文本文件，用于为你的项目提供额外上下文，改善与 {appName} 的沟通。"
+  "heybuddyhintsModal.helpText1": {
+    "defaultMessage": ".heybuddyhints 是一个文本文件，用于为你的项目提供额外上下文，改善与 {appName} 的沟通。"
   },
-  "goosehintsModal.helpText2": {
-    "defaultMessage": "请确认已在扩展页面启用 {bold} 扩展。此扩展是使用 .goosehints 所必需的。你需要重启会话，.goosehints 的更新才会生效。"
+  "heybuddyhintsModal.helpText2": {
+    "defaultMessage": "请确认已在扩展页面启用 {bold} 扩展。此扩展是使用 .heybuddyhints 所必需的。你需要重启会话，.heybuddyhints 的更新才会生效。"
   },
-  "goosehintsModal.helpText3": {
+  "heybuddyhintsModal.helpText3": {
     "defaultMessage": "更多信息请参见 {link}。"
   },
-  "goosehintsModal.helpTextLink": {
-    "defaultMessage": "使用 .goosehints"
+  "heybuddyhintsModal.helpTextLink": {
+    "defaultMessage": "使用 .heybuddyhints"
   },
-  "goosehintsModal.placeholder": {
+  "heybuddyhintsModal.placeholder": {
     "defaultMessage": "在此输入项目提示…"
   },
-  "goosehintsModal.save": {
+  "heybuddyhintsModal.save": {
     "defaultMessage": "保存"
   },
-  "goosehintsModal.savedSuccessfully": {
+  "heybuddyhintsModal.savedSuccessfully": {
     "defaultMessage": "保存成功"
   },
-  "goosehintsModal.saving": {
+  "heybuddyhintsModal.saving": {
     "defaultMessage": "保存中…"
   },
-  "goosehintsSection.configure": {
+  "heybuddyhintsSection.configure": {
     "defaultMessage": "配置"
   },
-  "goosehintsSection.description": {
-    "defaultMessage": "配置项目的 .goosehints 文件，为 {appName} 提供额外上下文"
+  "heybuddyhintsSection.description": {
+    "defaultMessage": "配置项目的 .heybuddyhints 文件，为 {appName} 提供额外上下文"
   },
-  "goosehintsSection.title": {
-    "defaultMessage": "项目提示（.goosehints）"
+  "heybuddyhintsSection.title": {
+    "defaultMessage": "项目提示（.heybuddyhints）"
   },
-  "groupedExtensionLoadingToast.askGoose": {
+  "groupedExtensionLoadingToast.askHeyBuddy": {
     "defaultMessage": "问问 {appName}"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
@@ -1841,25 +1838,25 @@
   "launcher.placeholder": {
     "defaultMessage": "问 {appName} 任何问题…"
   },
-  "loadingGoose.compacting": {
+  "loadingHeyBuddy.compacting": {
     "defaultMessage": "{appName} 正在压缩对话…"
   },
-  "loadingGoose.idle": {
+  "loadingHeyBuddy.idle": {
     "defaultMessage": "{appName} 正在处理…"
   },
-  "loadingGoose.loadingConversation": {
+  "loadingHeyBuddy.loadingConversation": {
     "defaultMessage": "正在加载对话…"
   },
-  "loadingGoose.restartingAgent": {
+  "loadingHeyBuddy.restartingAgent": {
     "defaultMessage": "正在重启会话…"
   },
-  "loadingGoose.streaming": {
+  "loadingHeyBuddy.streaming": {
     "defaultMessage": "{appName} 正在处理…"
   },
-  "loadingGoose.thinking": {
+  "loadingHeyBuddy.thinking": {
     "defaultMessage": "{appName} 正在思考…"
   },
-  "loadingGoose.waiting": {
+  "loadingHeyBuddy.waiting": {
     "defaultMessage": "{appName} 正在等待…"
   },
   "localInferenceSettings.deleteConfirm": {
@@ -3779,6 +3776,9 @@
   "sessionIndicators.streaming": {
     "defaultMessage": "流式传输中"
   },
+  "sessions.acpBadge": {
+    "defaultMessage": "ACP"
+  },
   "sessions.action.delete": {
     "defaultMessage": "删除会话"
   },
@@ -3853,6 +3853,9 @@
   },
   "sessions.importing": {
     "defaultMessage": "正在导入…"
+  },
+  "sessions.includeAcp": {
+    "defaultMessage": "包含 ACP 会话"
   },
   "sessions.loadingMore": {
     "defaultMessage": "正在加载更多会话…"
@@ -4089,7 +4092,7 @@
     "defaultMessage": "未找到匹配的技能"
   },
   "skillsView.noSkillsDescription": {
-    "defaultMessage": "技能从 ~/.config/agents/skills/、.goose/skills/ 或其他受支持目录中的 SKILL.md 文件加载。"
+    "defaultMessage": "技能从 ~/.config/agents/skills/、.heybuddy/skills/ 或其他受支持目录中的 SKILL.md 文件加载。"
   },
   "skillsView.noSkillsInstalled": {
     "defaultMessage": "未安装任何技能"
@@ -4367,7 +4370,7 @@
   "toolConfirmation.allowToolCallWithName": {
     "defaultMessage": "允许 {toolName} 吗？"
   },
-  "toolConfirmation.gooseWouldLikeToCallWithName": {
+  "toolConfirmation.heybuddyWouldLikeToCallWithName": {
     "defaultMessage": "{appName} 想调用 {toolName}，允许吗？"
   },
   "userMessage.cancel": {

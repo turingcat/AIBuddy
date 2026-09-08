@@ -1,19 +1,19 @@
-# @aaif/goose-sdk
+# @heybuddy/heybuddy-sdk
 
-TypeScript client library for the Goose Agent Client Protocol (ACP).
+TypeScript client library for the HeyBuddy Agent Client Protocol (ACP).
 
 This package provides:
 
-- TypeScript types and Zod validators for Goose ACP extension methods
-- A client for communicating with the Goose ACP server
+- TypeScript types and Zod validators for HeyBuddy ACP extension methods
+- A client for communicating with the HeyBuddy ACP server
 
 ## Installation
 
 ```bash
-npm install @aaif/goose-sdk @agentclientprotocol/sdk
+npm install @heybuddy/heybuddy-sdk @agentclientprotocol/sdk
 ```
 
-The native `goose` binaries are distributed as optional dependencies
+The native `heybuddy` binaries are distributed as optional dependencies
 and will be automatically installed for your platform.
 
 ## Development
@@ -53,12 +53,12 @@ npm run build
 npm link
 
 # In the consuming project
-npm link @aaif/goose-sdk
+npm link @heybuddy/heybuddy-sdk
 ```
 
 ### Schema Generation
 
-The TypeScript types are generated from Rust schemas defined in `crates/goose`.
+The TypeScript types are generated from Rust schemas defined in `crates/heybuddy`.
 The build process:
 
 1. Builds the `generate-acp-schema` Rust binary
@@ -74,17 +74,17 @@ npm run build:schema
 
 ## Native Binary Packages
 
-Platform-specific npm packages for the `goose` binary are located in
-`ui/goose-binary/`:
+Platform-specific npm packages for the `heybuddy` binary are located in
+`ui/heybuddy-binary/`:
 
 | Package                           | Platform            |
 | --------------------------------- | ------------------- |
-| `@aaif/goose-binary-darwin-arm64` | macOS Apple Silicon |
-| `@aaif/goose-binary-linux-arm64` | Linux ARM64 |
-| `@aaif/goose-binary-linux-x64` | Linux x64 |
-| `@aaif/goose-binary-win32-x64` | Windows x64 |
+| `@heybuddy/heybuddy-binary-darwin-arm64` | macOS Apple Silicon |
+| `@heybuddy/heybuddy-binary-linux-arm64` | Linux ARM64 |
+| `@heybuddy/heybuddy-binary-linux-x64` | Linux x64 |
+| `@heybuddy/heybuddy-binary-win32-x64` | Windows x64 |
 
-These are published separately from `@aaif/goose-sdk`.
+These are published separately from `@heybuddy/heybuddy-sdk`.
 
 ### Building Native Binaries
 
@@ -112,13 +112,13 @@ For manual publishing:
 
 This will:
 
-1. Build and publish `@aaif/goose-sdk`
+1. Build and publish `@heybuddy/heybuddy-sdk`
 2. Publish all native binary packages
 
 ## Usage
 
-Compose the ACP client with the standard ACP SDK, then use `GooseExtClient` for
-typed Goose extension methods:
+Compose the ACP client with the standard ACP SDK, then use `HeyBuddyExtClient` for
+typed HeyBuddy extension methods:
 
 ```typescript
 import {
@@ -127,12 +127,12 @@ import {
   PROTOCOL_VERSION,
 } from "@agentclientprotocol/sdk";
 import { createWebSocketStream } from "@agentclientprotocol/sdk/experimental/ws-client";
-import { GooseExtClient } from "@aaif/goose-sdk";
+import { HeyBuddyExtClient } from "@heybuddy/heybuddy-sdk";
 
 const app = createAcpClient({ name: "my-client" });
 const stream = createWebSocketStream("ws://localhost:3000/acp");
 const connection = app.connect(stream);
-const goose = new GooseExtClient(connection.agent);
+const heybuddy = new HeyBuddyExtClient(connection.agent);
 
 await connection.agent.request(methods.agent.initialize, {
   protocolVersion: PROTOCOL_VERSION,
@@ -140,7 +140,7 @@ await connection.agent.request(methods.agent.initialize, {
   clientCapabilities: {},
 });
 
-const providers = await goose.providersList_unstable({ providerIds: [] });
+const providers = await heybuddy.providersList_unstable({ providerIds: [] });
 ```
 
 See the [main documentation](../../README.md) for more details.

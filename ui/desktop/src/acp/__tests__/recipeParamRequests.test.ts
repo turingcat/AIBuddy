@@ -1,4 +1,4 @@
-import type { RequestRecipeParams_unstable } from '@aaif/goose-sdk';
+import type { RequestRecipeParams_unstable } from '@heybuddy/heybuddy-sdk';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 type RecipeParamRequestsModule = typeof import('../recipeParamRequests');

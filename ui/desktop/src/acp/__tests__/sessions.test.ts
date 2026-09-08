@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getAcpClient } from '../acpConnection';
 import {
   acpGetSessionListItem,
+  acpListSessions,
   acpLoadSession,
   acpNewSession,
   sessionInfoToSession,
@@ -44,6 +45,29 @@ describe('ACP sessions', () => {
     expect(session.name).toBe('');
   });
 
+  it('only requests acp session types when explicitly included', async () => {
+    const client = {
+      connection: {
+        agent: {
+          request: vi.fn().mockResolvedValue({ sessions: [] }),
+        },
+      },
+    };
+    vi.mocked(getAcpClient).mockResolvedValue(
+      client as unknown as Awaited<ReturnType<typeof getAcpClient>>
+    );
+
+    await acpListSessions();
+    expect(client.connection.agent.request).toHaveBeenLastCalledWith(methods.agent.session.list, {
+      _meta: { types: ['user', 'scheduled'] },
+    });
+
+    await acpListSessions(undefined, { includeAcp: true });
+    expect(client.connection.agent.request).toHaveBeenLastCalledWith(methods.agent.session.list, {
+      _meta: { types: ['user', 'scheduled', 'acp'] },
+    });
+  });
+
   it('returns session info refreshed after loading the ACP session', async () => {
     const loadedSessionInfo = sessionInfo({
       _meta: {
@@ -59,7 +83,7 @@ describe('ACP sessions', () => {
           request: vi.fn().mockResolvedValue({}),
         },
       },
-      goose: {
+      heybuddy: {
         sessionInfo_unstable: vi
           .fn()
           .mockResolvedValueOnce({ session: sessionInfo() })
@@ -77,7 +101,7 @@ describe('ACP sessions', () => {
       cwd: '/tmp',
       mcpServers: [],
     });
-    expect(client.goose.sessionInfo_unstable).toHaveBeenCalledTimes(2);
+    expect(client.heybuddy.sessionInfo_unstable).toHaveBeenCalledTimes(2);
     expect(result.sessionInfo).toBe(loadedSessionInfo);
     expect(sessionInfoToSession(result.sessionInfo).provider_name).toBe('anthropic');
     expect(sessionInfoToSession(result.sessionInfo).model_config?.model_name).toBe(
@@ -93,7 +117,7 @@ describe('ACP sessions', () => {
           request: vi.fn().mockResolvedValue({ sessionId: 'session-1' }),
         },
       },
-      goose: {
+      heybuddy: {
         sessionInfo_unstable: vi.fn().mockResolvedValue({ session: createdSessionInfo }),
       },
     };
@@ -102,7 +126,7 @@ describe('ACP sessions', () => {
     );
 
     await acpNewSession('/tmp', [], {
-      recipeDeeplink: 'goose://recipe?url=example',
+      recipeDeeplink: 'heybuddy://recipe?url=example',
       recipeParameterScopeId: 'scope-1',
     });
 
@@ -110,8 +134,8 @@ describe('ACP sessions', () => {
       cwd: '/tmp',
       mcpServers: [],
       _meta: {
-        client: 'goose-desktop',
-        recipeDeeplink: 'goose://recipe?url=example',
+        client: 'heybuddy-desktop',
+        recipeDeeplink: 'heybuddy://recipe?url=example',
         recipeParameterScopeId: 'scope-1',
       },
     });
@@ -119,7 +143,7 @@ describe('ACP sessions', () => {
 
   it('returns a list item from ACP session info', async () => {
     const client = {
-      goose: {
+      heybuddy: {
         sessionInfo_unstable: vi.fn().mockResolvedValue({
           session: sessionInfo({
             title: 'Subagent session',
@@ -141,7 +165,7 @@ describe('ACP sessions', () => {
 
     const item = await acpGetSessionListItem('session-1');
 
-    expect(client.goose.sessionInfo_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
+    expect(client.heybuddy.sessionInfo_unstable).toHaveBeenCalledWith({ sessionId: 'session-1' });
     expect(item).toMatchObject({
       id: 'session-1',
       name: 'Subagent session',

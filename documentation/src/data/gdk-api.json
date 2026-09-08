@@ -3,7 +3,7 @@
     {
       "version": "0.1.0-alpha.6",
       "docVersion": "0.1",
-      "source": "crates/goose-sdk/src/bindings.rs",
+      "source": "crates/heybuddy-sdk/src/bindings.rs",
       "functions": [
         {
           "name": "anthropic_default_model",
@@ -37,7 +37,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -66,7 +66,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -95,7 +95,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -110,7 +110,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -141,7 +141,7 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -156,7 +156,7 @@
             }
           ],
           "returns": null,
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         },
         {
@@ -179,13 +179,13 @@
             }
           ],
           "returns": "Provider",
-          "throws": "GooseError",
+          "throws": "HeyBuddyError",
           "isAsync": false
         }
       ],
       "items": [
         {
-          "name": "GooseError",
+          "name": "HeyBuddyError",
           "kind": "error",
           "docs": "",
           "fields": [],
@@ -288,7 +288,7 @@
               "docs": "",
               "params": [],
               "returns": "u64",
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": false
             },
             {
@@ -309,7 +309,7 @@
                 }
               ],
               "returns": null,
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": false
             }
           ]
@@ -391,6 +391,29 @@
               ]
             },
             {
+              "name": "Document",
+              "fields": [
+                {
+                  "name": "mime_type",
+                  "type": "String",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "data",
+                  "type": "Vec<u8>",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "name",
+                  "type": "Option<String>",
+                  "default": null,
+                  "docs": ""
+                }
+              ]
+            },
+            {
               "name": "ToolRequest",
               "fields": [
                 {
@@ -408,6 +431,18 @@
                 {
                   "name": "arguments_json",
                   "type": "String",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "provider_metadata_json",
+                  "type": "Option<String>",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "tool_error_json",
+                  "type": "Option<String>",
                   "default": null,
                   "docs": ""
                 }
@@ -627,6 +662,12 @@
               "type": "Option<String>",
               "default": null,
               "docs": ""
+            },
+            {
+              "name": "additional_data_json",
+              "type": "Option<String>",
+              "default": null,
+              "docs": "Provider-specific response fields as a JSON object, present only when the provider reported fields with no canonical `Usage` equivalent."
             }
           ],
           "variants": [],
@@ -667,6 +708,18 @@
                 {
                   "name": "arguments_json",
                   "type": "String",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "index",
+                  "type": "Option<i32>",
+                  "default": null,
+                  "docs": ""
+                },
+                {
+                  "name": "provider_metadata_json",
+                  "type": "Option<String>",
                   "default": null,
                   "docs": ""
                 }
@@ -716,7 +769,7 @@
               "fields": [
                 {
                   "name": "error",
-                  "type": "GooseStreamError",
+                  "type": "HeyBuddyStreamError",
                   "default": null,
                   "docs": ""
                 }
@@ -726,13 +779,13 @@
           "methods": []
         },
         {
-          "name": "GooseStreamError",
+          "name": "HeyBuddyStreamError",
           "kind": "record",
           "docs": "",
           "fields": [
             {
               "name": "kind",
-              "type": "GooseStreamErrorKind",
+              "type": "HeyBuddyStreamErrorKind",
               "default": null,
               "docs": ""
             },
@@ -753,7 +806,7 @@
           "methods": []
         },
         {
-          "name": "GooseStreamErrorKind",
+          "name": "HeyBuddyStreamErrorKind",
           "kind": "enum",
           "docs": "",
           "fields": [],
@@ -801,6 +854,12 @@
               "docs": ""
             },
             {
+              "name": "content",
+              "type": "Vec<MessageContent>",
+              "default": null,
+              "docs": "The assistant turn as binding types, ready to append to history and replay on the next request without reparsing `message_json`."
+            },
+            {
               "name": "usage",
               "type": "Option<Usage>",
               "default": null,
@@ -826,6 +885,10 @@
             },
             {
               "name": "Images",
+              "fields": []
+            },
+            {
+              "name": "Documents",
               "fields": []
             },
             {
@@ -863,6 +926,21 @@
               "isAsync": false
             },
             {
+              "name": "context_limit",
+              "docs": "",
+              "params": [
+                {
+                  "name": "model",
+                  "type": "ProviderModelConfig",
+                  "default": null,
+                  "docs": ""
+                }
+              ],
+              "returns": "u64",
+              "throws": "HeyBuddyError",
+              "isAsync": true
+            },
+            {
               "name": "stream",
               "docs": "",
               "params": [
@@ -892,7 +970,7 @@
                 }
               ],
               "returns": "ProviderStream",
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": true
             },
             {
@@ -925,7 +1003,7 @@
                 }
               ],
               "returns": "ProviderCompletion",
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": true
             },
             {
@@ -952,7 +1030,7 @@
                 }
               ],
               "returns": "CompactionSummary",
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": true
             }
           ]
@@ -1027,6 +1105,18 @@
               "type": "Option<i32>",
               "default": null,
               "docs": ""
+            },
+            {
+              "name": "cache_read_input_tokens",
+              "type": "Option<i32>",
+              "default": null,
+              "docs": ""
+            },
+            {
+              "name": "cache_creation_input_tokens",
+              "type": "Option<i32>",
+              "default": null,
+              "docs": ""
             }
           ],
           "variants": [],
@@ -1044,7 +1134,7 @@
               "docs": "",
               "params": [],
               "returns": "Option<StreamChunk>",
-              "throws": "GooseError",
+              "throws": "HeyBuddyError",
               "isAsync": true
             }
           ]

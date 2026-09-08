@@ -30,9 +30,9 @@ function makeDarwinTree(root, { omitGoose = false, omitAsset = null } = {}) {
   fs.mkdirSync(path.join(contents, 'MacOS'), { recursive: true });
   fs.writeFileSync(path.join(contents, 'MacOS', brand.executableName), '');
   fs.writeFileSync(path.join(contents, 'Info.plist'), '');
-  if (!omitGoose) {
+  if (!omitHeyBuddy) {
     fs.mkdirSync(path.join(contents, 'Resources', 'bin'), { recursive: true });
-    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'goose'), '');
+    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'heybuddy'), '');
   }
   makeRuntimeAssets(path.join(contents, 'Resources'), omitAsset);
   return root;

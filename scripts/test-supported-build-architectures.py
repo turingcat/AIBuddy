@@ -5,15 +5,34 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+ACTIVE_MACOS_WORKFLOW_FILES = (
+    ".github/workflows/bundle-macos.yml",
+    ".github/workflows/release.yml",
+)
+HISTORIC_MACOS_WORKFLOW_FILES = (
+    ".github/workflows/canary.yml.disabled",
+    ".github/workflows/release-branches.yml.disabled",
+)
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
+    def test_main_updates_do_not_start_build_workflows(self) -> None:
+        for relative_path in (
+            ".github/workflows/ci.yml",
+            ".github/workflows/mcp-conformance.yml",
+        ):
+            with self.subTest(file=relative_path):
+                workflow = (ROOT / relative_path).read_text(encoding="utf-8")
+                trigger_block = workflow.split("on:", 1)[1].split("concurrency:", 1)[0]
+                self.assertNotIn("push:", trigger_block)
+                self.assertNotIn("merge_group:", trigger_block)
+                self.assertIn("pull_request:", trigger_block)
+                self.assertIn("workflow_dispatch:", trigger_block)
+
     def test_macos_builds_only_target_arm64(self) -> None:
         build_files = [
-            ".github/workflows/bundle-macos.yml",
-            ".github/workflows/canary.yml",
-            ".github/workflows/release-branches.yml",
-            ".github/workflows/release.yml",
+            *ACTIVE_MACOS_WORKFLOW_FILES,
+            *HISTORIC_MACOS_WORKFLOW_FILES,
 
             "Justfile",
             "ui/desktop/package.json",
@@ -38,7 +57,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "copy-binary-intel",
             "intel_mac",
             "macos-15-intel",
-            "Goose_intel_mac",
+            "HeyBuddy_intel_mac",
             "macOS Intel",
             "macos-x86_64",
             "darwin-x86-64",
@@ -50,6 +69,17 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             for marker in forbidden:
                 with self.subTest(file=relative_path, marker=marker):
                     self.assertNotIn(marker, content)
+
+    def test_macos_workflow_inventory_requires_declared_paths(self) -> None:
+        for relative_path in (*ACTIVE_MACOS_WORKFLOW_FILES, *HISTORIC_MACOS_WORKFLOW_FILES):
+            with self.subTest(file=relative_path):
+                self.assertTrue(
+                    (ROOT / relative_path).is_file(),
+                    f"required architecture contract file is missing: {relative_path}",
+                )
+
+        self.assertTrue(all(path.endswith(".yml") for path in ACTIVE_MACOS_WORKFLOW_FILES))
+        self.assertTrue(all(path.endswith(".yml.disabled") for path in HISTORIC_MACOS_WORKFLOW_FILES))
 
     def test_desktop_bundle_has_no_intel_script(self) -> None:
         package = json.loads((ROOT / "ui/desktop/package.json").read_text(encoding="utf-8"))
@@ -89,7 +119,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
 
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(
-            (ROOT / "ui/goose-binary/goose-binary-darwin-x64/package.json").exists()
+            (ROOT / "ui/heybuddy-binary/heybuddy-binary-darwin-x64/package.json").exists()
         )
 
 

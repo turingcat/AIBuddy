@@ -1,13 +1,7 @@
 name: MCP Conformance
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
-  merge_group:
     branches:
       - main
   workflow_dispatch:
@@ -48,7 +42,7 @@ jobs:
         run: exit 1
 
       - name: Checkout Code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
         with:
@@ -60,7 +54,7 @@ jobs:
           sudo apt install -y libdbus-1-dev libxcb1-dev
 
       - name: Cache Cargo artifacts
-        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
         with:
           key: mcp-conformance
 
@@ -75,7 +69,7 @@ jobs:
         with:
           name: mcp-conformance-binaries
           path: |
-            target/debug/goose
+            target/debug/heybuddy
             target/debug/mcp_conformance_driver
           retention-days: 1
           if-no-files-found: error
@@ -91,20 +85,20 @@ jobs:
         include:
           - spec-version: "2025-11-25"
             conformance-version: "0.1.16"
-            baseline: "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml"
+            baseline: "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml"
           - spec-version: "2025-11-25"
             conformance-version: "0.2.0-alpha.10"
-            baseline: "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml"
+            baseline: "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml"
           - spec-version: "2026-07-28"
             conformance-version: "0.2.0-alpha.10"
-            baseline: "crates/goose-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml"
+            baseline: "crates/heybuddy-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml"
     steps:
       - name: Fail when prerequisites fail
         if: needs.changes.result != 'success' || needs.build.result != 'success'
         run: exit 1
 
       - name: Checkout Code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0  # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Install Dependencies
         run: |
@@ -118,11 +112,11 @@ jobs:
           path: target/debug
 
       - name: Restore Executable Permissions
-        run: chmod +x target/debug/goose target/debug/mcp_conformance_driver
+        run: chmod +x target/debug/heybuddy target/debug/mcp_conformance_driver
 
       - name: Run Conformance Suite
         env:
-          GOOSE_DISABLE_KEYRING: "1"
+          HEYBUDDY_DISABLE_KEYRING: "1"
         run: |
           source ./bin/activate-hermit
           just mcp-conformance "${{ matrix.spec-version }}" all "${{ matrix.conformance-version }}" false "${{ matrix.baseline }}"

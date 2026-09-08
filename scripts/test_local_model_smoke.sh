@@ -8,11 +8,11 @@ show_usage() {
   echo "  -n, --top-n NUM          Number of recommended models to test (default: 3)"
   echo "  -m, --models MODELS      Comma-separated download ids. Skips search."
   echo "  -o, --output-dir DIR     Directory for logs (default: ./local-model-smoke-results)"
-  echo "      --ram-gb NUM         Override RAM passed to goose lm search"
+  echo "      --ram-gb NUM         Override RAM passed to heybuddy lm search"
   echo "      --instruction TEXT   Prompt to send to each model"
-  echo "      --repo-prefix TEXT   Forwarded to goose lm search"
-  echo "      --repo-suffix TEXT   Forwarded to goose lm search"
-  echo "      --quant TEXT         Forwarded to goose lm search"
+  echo "      --repo-prefix TEXT   Forwarded to heybuddy lm search"
+  echo "      --repo-suffix TEXT   Forwarded to heybuddy lm search"
+  echo "      --quant TEXT         Forwarded to heybuddy lm search"
   echo "      --download-retries N Retry model downloads after HF rate limits (default: 3)"
   echo "      --retry-delay SEC    Initial retry delay for HF rate limits (default: 60)"
   echo "      --run-timeout SEC    Kill a model run after this many seconds (default: 600, 0 disables)"
@@ -20,7 +20,7 @@ show_usage() {
   echo "  -h, --help               Show this help message"
   echo ""
   echo "Environment:"
-  echo "  GOOSE_BIN                Optional goose binary path"
+  echo "  HEYBUDDY_BIN                Optional heybuddy binary path"
   echo "  SKIP_BUILD               Skip cargo build when set"
 }
 
@@ -126,15 +126,15 @@ fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-if [[ -z "${SKIP_BUILD:-}" && -z "${GOOSE_BIN:-}" ]]; then
-  echo "Building goose..."
-  (cd "$REPO_ROOT" && cargo build -p goose-cli --features local-inference --bin goose)
+if [[ -z "${SKIP_BUILD:-}" && -z "${HEYBUDDY_BIN:-}" ]]; then
+  echo "Building heybuddy..."
+  (cd "$REPO_ROOT" && cargo build -p heybuddy-cli --features local-inference --bin heybuddy)
   echo ""
 fi
 
-GOOSE_BIN="${GOOSE_BIN:-$REPO_ROOT/target/debug/goose}"
-if [[ ! -x "$GOOSE_BIN" ]]; then
-  echo "Error: goose binary not found or not executable: $GOOSE_BIN"
+HEYBUDDY_BIN="${HEYBUDDY_BIN:-$REPO_ROOT/target/debug/heybuddy}"
+if [[ ! -x "$HEYBUDDY_BIN" ]]; then
+  echo "Error: heybuddy binary not found or not executable: $HEYBUDDY_BIN"
   exit 1
 fi
 
@@ -142,7 +142,7 @@ mkdir -p "$OUTPUT_DIR"
 
 EXISTING_MODELS_FILE="$OUTPUT_DIR/existing-models.txt"
 RESULTS_FILE="$OUTPUT_DIR/results.tsv"
-"$GOOSE_BIN" lm list | awk 'NR > 2 && $4 == "✓" { print $1 }' > "$EXISTING_MODELS_FILE"
+"$HEYBUDDY_BIN" lm list | awk 'NR > 2 && $4 == "✓" { print $1 }' > "$EXISTING_MODELS_FILE"
 printf "status\tmodel_id\tdetail\n" > "$RESULTS_FILE"
 
 TEMP_HF_CACHE_ROOT=""
@@ -153,7 +153,7 @@ cleanup_temp_models() {
   local cleanup_failed=false
 
   for model_id in "${TEMP_MODELS[@]}"; do
-    if ! "$GOOSE_BIN" lm delete "$model_id" >/dev/null 2>&1; then
+    if ! "$HEYBUDDY_BIN" lm delete "$model_id" >/dev/null 2>&1; then
       cleanup_failed=true
     fi
   done
@@ -219,7 +219,7 @@ else
 
   SEARCH_JSON="$OUTPUT_DIR/search.json"
   echo "Finding recommended local models..."
-  "$GOOSE_BIN" "${SEARCH_ARGS[@]}" > "$SEARCH_JSON"
+  "$HEYBUDDY_BIN" "${SEARCH_ARGS[@]}" > "$SEARCH_JSON"
 
   while IFS= read -r model_row; do
     MODELS+=("$model_row")
@@ -255,7 +255,7 @@ record_result() {
   printf "%s\t%s\t%s\n" "$status" "$model_id" "$detail" >> "$RESULTS_FILE"
 }
 
-summarize_goose_error() {
+summarize_heybuddy_error() {
   awk '
     /Ran into this error:/ {
       sub(/^.*Ran into this error: /, "")
@@ -286,9 +286,9 @@ download_once() {
   if [[ -n "$cache_root" ]]; then
     HF_HUB_CACHE="$cache_root/hub" \
       HF_XET_CACHE="$cache_root/xet" \
-      "$GOOSE_BIN" lm download "$download_id"
+      "$HEYBUDDY_BIN" lm download "$download_id"
   else
-    "$GOOSE_BIN" lm download "$download_id"
+    "$HEYBUDDY_BIN" lm download "$download_id"
   fi
 }
 
@@ -327,8 +327,8 @@ run_model() {
   local log_file="$2"
 
   if [[ "$RUN_TIMEOUT" -eq 0 ]]; then
-    GOOSE_MODE=auto GOOSE_PROVIDER=local GOOSE_MODEL="$model_id" \
-      "$GOOSE_BIN" run --no-profile --text "$INSTRUCTION" 2>&1 | tee "$log_file"
+    HEYBUDDY_MODE=auto HEYBUDDY_PROVIDER=local HEYBUDDY_MODEL="$model_id" \
+      "$HEYBUDDY_BIN" run --no-profile --text "$INSTRUCTION" 2>&1 | tee "$log_file"
     return "${PIPESTATUS[0]}"
   fi
 
@@ -353,8 +353,8 @@ run_model() {
     exit($status & 127 ? 128 + ($status & 127) : $status >> 8);
   ' \
     "$RUN_TIMEOUT" \
-    env GOOSE_MODE=auto GOOSE_PROVIDER=local GOOSE_MODEL="$model_id" \
-    "$GOOSE_BIN" run --no-profile --text "$INSTRUCTION" 2>&1 | tee "$log_file"
+    env HEYBUDDY_MODE=auto HEYBUDDY_PROVIDER=local HEYBUDDY_MODEL="$model_id" \
+    "$HEYBUDDY_BIN" run --no-profile --text "$INSTRUCTION" 2>&1 | tee "$log_file"
   return "${PIPESTATUS[0]}"
 }
 
@@ -419,8 +419,8 @@ for row in "${MODELS[@]}"; do
       echo "Run timed out after ${RUN_TIMEOUT}s for $model_id"
       record_result "FAIL" "$model_id" "run timed out"
       OVERALL_SUCCESS=false
-    elif error_summary=$(summarize_goose_error "$run_log"); then
-      echo "Goose reported an error for $model_id"
+    elif error_summary=$(summarize_heybuddy_error "$run_log"); then
+      echo "HeyBuddy reported an error for $model_id"
       echo "  $error_summary"
       record_result "FAIL" "$model_id" "$error_summary"
       OVERALL_SUCCESS=false
@@ -435,7 +435,7 @@ for row in "${MODELS[@]}"; do
   fi
 
   if [[ "$KEEP_DOWNLOADS" = false && "$downloaded" = true && "$existed_before" = false ]]; then
-    if "$GOOSE_BIN" lm delete "$model_id" 2>&1 | tee "$delete_log"; then
+    if "$HEYBUDDY_BIN" lm delete "$model_id" 2>&1 | tee "$delete_log"; then
       untrack_temp_model "$model_id"
       echo "Unregistered $model_id; its temporary cache will be removed at exit"
     else

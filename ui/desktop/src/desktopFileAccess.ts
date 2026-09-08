@@ -71,7 +71,7 @@ export class DesktopFileAccess {
   private bindingForWindow(windowId: number): WorkingDirectoryBinding {
     const binding = this.workingDirectories.get(windowId);
     if (!binding) {
-      throw new Error('This window is not authorized to access .goosehints');
+      throw new Error('This window is not authorized to access .heybuddyhints');
     }
     return binding;
   }
@@ -119,9 +119,9 @@ export class DesktopFileAccess {
     this.workingDirectories.delete(windowId);
   }
 
-  async readGoosehints(windowId: number): Promise<FileReadResult> {
+  async readHeyBuddyhints(windowId: number): Promise<FileReadResult> {
     const binding = this.bindingForWindow(windowId);
-    const filePath = path.join(binding.path, '.goosehints');
+    const filePath = path.join(binding.path, '.heybuddyhints');
     if (binding.status === 'missing') {
       return missingFile(filePath);
     }
@@ -135,15 +135,15 @@ export class DesktopFileAccess {
     try {
       const metadata = await fs.lstat(filePath);
       if (metadata.isSymbolicLink()) {
-        return failedRead(filePath, 'Refusing to read a symbolic link as .goosehints');
+        return failedRead(filePath, 'Refusing to read a symbolic link as .heybuddyhints');
       }
       if (!metadata.isFile()) {
-        return failedRead(filePath, '.goosehints is not a regular file');
+        return failedRead(filePath, '.heybuddyhints is not a regular file');
       }
 
       const canonicalFilePath = await fs.realpath(filePath);
       if (path.dirname(canonicalFilePath) !== binding.path) {
-        return failedRead(filePath, '.goosehints resolves outside the working directory');
+        return failedRead(filePath, '.heybuddyhints resolves outside the working directory');
       }
 
       const noFollow = process.platform === 'win32' ? 0 : fsConstants.O_NOFOLLOW;
@@ -151,10 +151,10 @@ export class DesktopFileAccess {
       try {
         const openedMetadata = await handle.stat();
         if (!openedMetadata.isFile()) {
-          return failedRead(filePath, '.goosehints is not a regular file');
+          return failedRead(filePath, '.heybuddyhints is not a regular file');
         }
         if (openedMetadata.dev !== metadata.dev || openedMetadata.ino !== metadata.ino) {
-          return failedRead(filePath, '.goosehints changed while it was being opened');
+          return failedRead(filePath, '.heybuddyhints changed while it was being opened');
         }
         if (!(await this.bindingMatchesDirectory(binding))) {
           return failedRead(filePath, 'The working directory changed after it was authorized');
@@ -172,11 +172,11 @@ export class DesktopFileAccess {
       if (isMissingFile(error)) {
         return missingFile(filePath);
       }
-      return failedRead(filePath, 'Unable to read .goosehints');
+      return failedRead(filePath, 'Unable to read .heybuddyhints');
     }
   }
 
-  async writeGoosehints(windowId: number, content: string): Promise<boolean> {
+  async writeHeyBuddyhints(windowId: number, content: string): Promise<boolean> {
     const binding = this.bindingForWindow(windowId);
     if (binding.status !== 'ready' || typeof content !== 'string') {
       return false;
@@ -185,7 +185,7 @@ export class DesktopFileAccess {
       return false;
     }
 
-    const filePath = path.join(binding.path, '.goosehints');
+    const filePath = path.join(binding.path, '.heybuddyhints');
     const noFollow = process.platform === 'win32' ? 0 : fsConstants.O_NOFOLLOW;
     try {
       let metadata: Stats;

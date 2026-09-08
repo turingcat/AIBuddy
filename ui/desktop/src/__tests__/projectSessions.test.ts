@@ -9,7 +9,7 @@ function makeSession(overrides: Partial<SessionListItem> = {}): SessionListItem 
     messageCount: 1,
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
-    workingDir: '/tmp/goose',
+    workingDir: '/tmp/heybuddy',
     ...overrides,
   };
 }
@@ -17,14 +17,14 @@ function makeSession(overrides: Partial<SessionListItem> = {}): SessionListItem 
 describe('groupSessionsByProject', () => {
   it('groups sessions by normalized working directory', () => {
     const groups = groupSessionsByProject([
-      makeSession({ id: 'a', workingDir: '/tmp/goose' }),
-      makeSession({ id: 'b', workingDir: '/tmp/goose/' }),
-      makeSession({ id: 'c', workingDir: '  /tmp/goose//  ' }),
+      makeSession({ id: 'a', workingDir: '/tmp/heybuddy' }),
+      makeSession({ id: 'b', workingDir: '/tmp/heybuddy/' }),
+      makeSession({ id: 'c', workingDir: '  /tmp/heybuddy//  ' }),
       makeSession({ id: 'd', workingDir: '/tmp/other' }),
     ]);
 
     expect(groups).toHaveLength(2);
-    expect(groups.find((group) => group.path === '/tmp/goose')?.sessions.map((s) => s.id)).toEqual([
+    expect(groups.find((group) => group.path === '/tmp/heybuddy')?.sessions.map((s) => s.id)).toEqual([
       'a',
       'b',
       'c',
@@ -80,19 +80,19 @@ describe('groupSessionsByProject', () => {
 
   it('disambiguates projects with the same basename', () => {
     const groups = groupSessionsByProject([
-      makeSession({ id: 'a', workingDir: '/Users/me/work/goose' }),
-      makeSession({ id: 'b', workingDir: '/Users/me/forks/goose' }),
+      makeSession({ id: 'a', workingDir: '/Users/me/work/heybuddy' }),
+      makeSession({ id: 'b', workingDir: '/Users/me/forks/heybuddy' }),
     ]);
 
-    expect(groups.map((group) => group.label).sort()).toEqual(['forks/goose', 'work/goose']);
+    expect(groups.map((group) => group.label).sort()).toEqual(['forks/heybuddy', 'work/heybuddy']);
   });
 });
 
 describe('getProjectLabel', () => {
   it('extracts readable labels from paths', () => {
-    expect(getProjectLabel('/Users/me/work/goose')).toBe('goose');
+    expect(getProjectLabel('/Users/me/work/heybuddy')).toBe('heybuddy');
     expect(getProjectLabel('/')).toBe('/');
     expect(getProjectLabel('')).toBe('Unknown');
-    expect(getProjectLabel('C:\\Users\\me\\goose')).toBe('goose');
+    expect(getProjectLabel('C:\\Users\\me\\heybuddy')).toBe('heybuddy');
   });
 });

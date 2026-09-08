@@ -1,35 +1,35 @@
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { isAbsoluteGoosePath, resolveGoosePathRoot, sanitizeGoosePathRoot } from './pathUtils';
+import { isAbsoluteHeyBuddyPath, resolveHeyBuddyPathRoot, sanitizeHeyBuddyPathRoot } from './pathUtils';
 
-describe('resolveGoosePathRoot', () => {
+describe('resolveHeyBuddyPathRoot', () => {
   it('rejects empty and relative values', () => {
-    expect(resolveGoosePathRoot(undefined)).toBeUndefined();
-    expect(resolveGoosePathRoot('   ')).toBeUndefined();
-    expect(resolveGoosePathRoot('relative/root')).toBeUndefined();
+    expect(resolveHeyBuddyPathRoot(undefined)).toBeUndefined();
+    expect(resolveHeyBuddyPathRoot('   ')).toBeUndefined();
+    expect(resolveHeyBuddyPathRoot('relative/root')).toBeUndefined();
   });
 
   it('retains absolute paths without requiring them to exist', () => {
-    const absolute = path.resolve('nonexistent-goose-root');
-    expect(resolveGoosePathRoot(`  ${absolute}  `)).toBe(absolute);
+    const absolute = path.resolve('nonexistent-heybuddy-root');
+    expect(resolveHeyBuddyPathRoot(`  ${absolute}  `)).toBe(absolute);
   });
 
   it('expands a home-relative root before validation', () => {
-    expect(resolveGoosePathRoot('~')).toBe(os.homedir());
+    expect(resolveHeyBuddyPathRoot('~')).toBe(os.homedir());
   });
 
   it('removes a rejected value from the child-process environment', () => {
-    const env = { GOOSE_PATH_ROOT: 'relative/root' };
-    expect(sanitizeGoosePathRoot(env)).toBeUndefined();
-    expect(env).not.toHaveProperty('GOOSE_PATH_ROOT');
+    const env = { HEYBUDDY_PATH_ROOT: 'relative/root' };
+    expect(sanitizeHeyBuddyPathRoot(env)).toBeUndefined();
+    expect(env).not.toHaveProperty('HEYBUDDY_PATH_ROOT');
   });
 
   it('matches Rust absolute-path handling on Windows', () => {
-    expect(isAbsoluteGoosePath('C:\\goose\\root', 'win32')).toBe(true);
-    expect(isAbsoluteGoosePath('\\\\server\\share\\goose', 'win32')).toBe(true);
-    expect(isAbsoluteGoosePath('C:goose\\root', 'win32')).toBe(false);
-    expect(isAbsoluteGoosePath('\\goose\\root', 'win32')).toBe(false);
-    expect(isAbsoluteGoosePath('/goose/root', 'win32')).toBe(false);
+    expect(isAbsoluteHeyBuddyPath('C:\\heybuddy\\root', 'win32')).toBe(true);
+    expect(isAbsoluteHeyBuddyPath('\\\\server\\share\\heybuddy', 'win32')).toBe(true);
+    expect(isAbsoluteHeyBuddyPath('C:heybuddy\\root', 'win32')).toBe(false);
+    expect(isAbsoluteHeyBuddyPath('\\heybuddy\\root', 'win32')).toBe(false);
+    expect(isAbsoluteHeyBuddyPath('/heybuddy/root', 'win32')).toBe(false);
   });
 });

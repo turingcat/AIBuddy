@@ -11,7 +11,7 @@ instructions: |
   
   ## Your Task
   
-  Analyze the CLI changes between two goose versions and generate clear, user-focused 
+  Analyze the CLI changes between two heybuddy versions and generate clear, user-focused 
   documentation explaining what changed and why it matters.
   
   ## Input Files
@@ -61,10 +61,10 @@ instructions: |
   - **Example**:
   
       # Old way
-      goose old-command --option value
+      heybuddy old-command --option value
       
       # New way
-      goose new-command --option value
+      heybuddy new-command --option value
   
   ### Option Removed: **--option-name** from **command**
   
@@ -85,14 +85,14 @@ instructions: |
   ### **command-name**
   
   - **Description**: What this command does
-  - **Usage**: goose command-name [OPTIONS]
+  - **Usage**: heybuddy command-name [OPTIONS]
   - **Purpose**: Why this command was added
   - **Key Options**:
     - **--option1**: Description
     - **--option2**: Description
   - **Example**:
   
-      goose command-name --option1 value
+      heybuddy command-name --option1 value
   
   ## Removed Commands
   

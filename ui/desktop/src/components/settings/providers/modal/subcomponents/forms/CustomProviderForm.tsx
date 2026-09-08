@@ -4,7 +4,7 @@ import { Select } from '../../../../../ui/Select';
 import { Button } from '../../../../../ui/button';
 import { SecureStorageNotice } from '../SecureStorageNotice';
 import type { UpdateCustomProviderRequest } from '../../../../../../types/providers';
-import type { ProviderTemplateDto } from '@aaif/goose-sdk';
+import type { ProviderTemplateDto } from '@heybuddy/heybuddy-sdk';
 import { Plus, X, Trash2, AlertTriangle, ExternalLink, Search, Settings } from 'lucide-react';
 import { cn } from '../../../../../../utils';
 import ProviderCatalogPicker from '../ProviderCatalogPicker';
@@ -459,8 +459,8 @@ export default function CustomProviderForm({
 
     const modelList = models
       .split(',')
-      .map((m) => m.trim())
-      .filter((m) => m);
+      .map((name) => name.trim())
+      .filter(Boolean);
 
     let allHeaders = [...headers];
 

@@ -4,17 +4,17 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 
 import styles from "./index.module.css";
-import { GooseLogo } from "../components/GooseLogo";
+import { HeyBuddyLogo } from "../components/HeyBuddyLogo";
 
 function HeroSection() {
   return (
     <header className={styles.hero}>
       <div className={styles.heroInner}>
         <div className={styles.heroBadge}>
-          Open Source · Apache 2.0 · Fork of goose (Agentic AI Foundation)
+          Open Source · Apache 2.0 · Fork of heybuddy (Agentic AI Foundation)
         </div>
         <div className={styles.heroLogo}>
-          <GooseLogo />
+          <HeyBuddyLogo />
         </div>
         <p className={styles.heroSubtitle}>
           Your native open source AI agent. Desktop app, CLI, and API — for code,
@@ -209,11 +209,11 @@ function StandardsSection() {
             <Link to="/docs/guides/acp-clients">HeyBuddy as ACP server →</Link>
           </div>
           <div className={styles.standardCard}>
-            <h3>Built on goose</h3>
+            <h3>Built on heybuddy</h3>
             <p>
               HeyBuddy is a private fork of{" "}
               <a href="https://github.com/aaif-goose/goose" target="_blank" rel="noopener">
-                goose
+                heybuddy
               </a>
               , an open source project of the{" "}
               <a href="https://aaif.io/" target="_blank" rel="noopener">

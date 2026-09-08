@@ -1,4 +1,4 @@
-import type { GooseSessionNotification_unstable } from '@aaif/goose-sdk';
+import type { HeyBuddySessionNotification_unstable } from '@heybuddy/heybuddy-sdk';
 import type { RequestPermissionRequest, SessionNotification } from '@agentclientprotocol/sdk';
 import { describe, expect, it } from 'vitest';
 import { getToolResponses, type Message, type NotificationEvent } from '../../types/message';
@@ -28,9 +28,9 @@ function acpUpdate(update: SessionNotification['update']): SessionNotification {
   };
 }
 
-function gooseUpdate(
-  update: GooseSessionNotification_unstable['update']
-): GooseSessionNotification_unstable {
+function heybuddyUpdate(
+  update: HeyBuddySessionNotification_unstable['update']
+): HeyBuddySessionNotification_unstable {
   return {
     sessionId: SESSION_ID,
     update,
@@ -172,7 +172,7 @@ describe('createAcpSessionNotificationAdapter', () => {
           acpUpdate({
             sessionUpdate: 'agent_message_chunk',
             content: { type: 'text', text: 'Partial response' },
-            _meta: { goose: { messageId: 'msg-1' } },
+            _meta: { heybuddy: { messageId: 'msg-1' } },
           } as SessionNotification['update'])
         );
 
@@ -182,7 +182,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'agent_message_chunk',
               content: { type: 'text', text: OUTPUT_TOKEN_LIMIT_FALLBACK_TEXT },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'msg-1',
                   outputTokenLimitReached: true,
                   fallbackContent: true,
@@ -221,7 +221,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'user_message_chunk',
               content: { type: 'text', text: 'hel' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'steer-1',
                   steer: true,
                 },
@@ -245,7 +245,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'user_message_chunk',
               content: { type: 'text', text: 'lo' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'steer-1',
                   steer: true,
                 },
@@ -263,7 +263,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'user_message_chunk',
               content: { type: 'image', data: 'base64-image', mimeType: 'image/png' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'steer-1',
                   steer: true,
                 },
@@ -296,7 +296,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'user_message_chunk',
               content: { type: 'text', text: 'ha' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'steer-1',
                   steer: true,
                 },
@@ -314,7 +314,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'user_message_chunk',
               content: { type: 'text', text: 'ha' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'steer-1',
                   steer: true,
                 },
@@ -362,7 +362,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'agent_thought_chunk',
               content: { type: 'text', text: 'Truncated thinking' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'thought-1',
                   outputTokenLimitReached: true,
                 },
@@ -382,7 +382,7 @@ describe('createAcpSessionNotificationAdapter', () => {
           acpUpdate({
             sessionUpdate: 'agent_thought_chunk',
             content: { type: 'text', text: 'Truncated ' },
-            _meta: { goose: { messageId: 'thought-1' } },
+            _meta: { heybuddy: { messageId: 'thought-1' } },
           } as SessionNotification['update'])
         );
 
@@ -392,7 +392,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               sessionUpdate: 'agent_thought_chunk',
               content: { type: 'text', text: 'thinking' },
               _meta: {
-                goose: {
+                heybuddy: {
                   messageId: 'thought-1',
                   outputTokenLimitReached: true,
                 },
@@ -424,7 +424,7 @@ describe('createAcpSessionNotificationAdapter', () => {
             rawInput: { path: 'README.md' },
             locations: [{ path: 'README.md', line: 1 }],
             _meta: {
-              goose: {
+              heybuddy: {
                 toolCall: {
                   extensionName: 'developer',
                   toolName: 'read_file',
@@ -469,7 +469,7 @@ describe('createAcpSessionNotificationAdapter', () => {
               },
             ],
             _meta: {
-              goose: {
+              heybuddy: {
                 mcpApp: {
                   resourceUri: 'ui://app/resource',
                   extensionName: 'developer',
@@ -852,13 +852,13 @@ describe('createAcpSessionNotificationAdapter', () => {
     });
   });
 
-  describe('applyGoose', () => {
+  describe('applyHeyBuddy', () => {
     it('maps usage updates into token state', () => {
       const adapter = createAcpSessionNotificationAdapter();
 
       expect(
-        adapter.applyGoose(
-          gooseUpdate({
+        adapter.applyHeyBuddy(
+          heybuddyUpdate({
             sessionUpdate: 'usage_update',
             used: 42,
             contextLimit: 200,
@@ -872,6 +872,7 @@ describe('createAcpSessionNotificationAdapter', () => {
           type: 'tokenState',
           tokenState: {
             totalTokens: 42,
+            contextLimit: 200,
             accumulatedInputTokens: 10,
             accumulatedOutputTokens: 15,
             accumulatedTotalTokens: 25,
@@ -884,8 +885,8 @@ describe('createAcpSessionNotificationAdapter', () => {
     it('maps status messages and keeps later id-less chunks separate', () => {
       const adapter = createAcpSessionNotificationAdapter();
 
-      const noticeStateChanges = adapter.applyGoose(
-        gooseUpdate({
+      const noticeStateChanges = adapter.applyHeyBuddy(
+        heybuddyUpdate({
           sessionUpdate: 'status_message',
           status: { type: 'notice', message: 'Checking files' },
         })
@@ -906,8 +907,8 @@ describe('createAcpSessionNotificationAdapter', () => {
       expect(messages).toHaveLength(2);
       expect(firstContent(messages[1])).toMatchObject({ type: 'text', text: 'Result' });
 
-      const progressStateChanges = adapter.applyGoose(
-        gooseUpdate({
+      const progressStateChanges = adapter.applyHeyBuddy(
+        heybuddyUpdate({
           sessionUpdate: 'status_message',
           status: { type: 'progress', message: 'Still working' },
         })
@@ -934,7 +935,7 @@ describe('createAcpSessionNotificationAdapter', () => {
             },
           ],
           _meta: {
-            goose: {
+            heybuddy: {
               toolCall: {
                 toolName: 'edit_file',
               },
@@ -1009,7 +1010,7 @@ describe('createAcpSessionNotificationAdapter', () => {
         acpUpdate({
           sessionUpdate: 'session_info_update',
           _meta: {
-            goose: {
+            heybuddy: {
               queuedSteer: { messageId: 'steer-msg-1', runId: 'run-1' },
             },
           },
@@ -1026,7 +1027,7 @@ describe('createAcpSessionNotificationAdapter', () => {
           sessionUpdate: 'session_info_update',
           title: 'New Title',
           _meta: {
-            goose: {
+            heybuddy: {
               queuedSteer: { messageId: 'steer-msg-2', runId: 'run-2' },
             },
           },

@@ -275,7 +275,7 @@ export const SwitchModelModal = ({
     }
   }, [currentModel, predefinedModels, resolveSelectedModelReasoning]);
 
-  // 模型列表数据源：主进程直接 fetch new-api /v1/models（绕过 goose inventory refresh 依赖）。
+  // 模型列表数据源：主进程直接 fetch new-api /v1/models（绕过 heybuddy inventory refresh 依赖）。
   // @author logic
   // @date 2026-08-12
   useEffect(() => {

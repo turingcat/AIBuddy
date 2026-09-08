@@ -1,5 +1,5 @@
 import { Card } from '../ui/card';
-import GooseLogo from '../GooseLogo';
+import HeyBuddyLogo from '../HeyBuddyLogo';
 import MarkdownContent from '../MarkdownContent';
 import { substituteParameters } from '../../utils/parameterSubstitution';
 
@@ -31,9 +31,9 @@ export default function RecipeActivities({
   if (activities && activities.length > 0) {
     return (
       <div className="flex flex-col px-6">
-        {/* Animated goose icon */}
+        {/* Animated heybuddy icon */}
         <div className="flex justify-start mb-6">
-          <GooseLogo size="default" />
+          <HeyBuddyLogo size="default" />
         </div>
 
         {messagePill && (

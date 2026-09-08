@@ -2,7 +2,7 @@
 title: Mobile Access via Secure Tunneling
 sidebar_position: 3
 sidebar_label: Mobile Access
-description: Mobile access via secure tunneling is no longer available in goose Desktop.
+description: Mobile access via secure tunneling is no longer available in heybuddy Desktop.
 unlisted: true
 ---
 

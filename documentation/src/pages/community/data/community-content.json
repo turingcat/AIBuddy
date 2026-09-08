@@ -1,12 +1,12 @@
 {
   "title": "📚 Community Content Contributions",
-  "description": "Amazing blog posts, videos, and tutorials created by our community for goose!",
+  "description": "Amazing blog posts, videos, and tutorials created by our community for heybuddy!",
   "lastUpdated": "2025-10-15",
   "hacktoberfestYear": 2025,
   "submissionUrl": "https://github.com/aaif-goose/goose/issues/4705",
   "submissions": [
     {
-      "title": "Hacktoberfest 2025: Contributing to goose",
+      "title": "Hacktoberfest 2025: Contributing to heybuddy",
       "author": {
         "name": "Tania Chakraborty",
         "handle": "taniacryptid"
@@ -22,7 +22,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Running goose in Containers (Without Losing Your Mind)",
+      "title": "Running heybuddy in Containers (Without Losing Your Mind)",
       "author": {
         "name": "Rupam Golui",
         "handle": "Itz-Agasta"
@@ -37,7 +37,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Goose with goose Docs MCP",
+      "title": "HeyBuddy with heybuddy Docs MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -51,7 +51,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Best Practices for Using goose in Enterprise Environments",
+      "title": "Best Practices for Using heybuddy in Enterprise Environments",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -66,7 +66,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Getting started with goose on Windows",
+      "title": "Getting started with heybuddy on Windows",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -81,7 +81,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Best Practices for Prompt Engineering with goose",
+      "title": "Best Practices for Prompt Engineering with heybuddy",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -96,7 +96,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Deep Dive into goose's Extension System and Model Context Protocol (MCP)",
+      "title": "Deep Dive into heybuddy's Extension System and Model Context Protocol (MCP)",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -111,7 +111,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Configuring goose for Team Environments and Shared Workflows",
+      "title": "Configuring heybuddy for Team Environments and Shared Workflows",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -126,7 +126,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Adopting goose in the Enterprise: A Guide to Security, Scalability, and Governance",
+      "title": "Adopting heybuddy in the Enterprise: A Guide to Security, Scalability, and Governance",
       "author": {
         "name": "M A Sai Adithyaa",
         "handle": "M-A-SAIADITHYAA"
@@ -140,7 +140,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Creating and Sharing Effective goose Recipes",
+      "title": "Creating and Sharing Effective heybuddy Recipes",
       "author": {
         "name": "Shreyansh Singh Gautam",
         "handle": "Shreyanshsingh23"
@@ -155,7 +155,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "goose with Context7 MCP",
+      "title": "heybuddy with Context7 MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -169,7 +169,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Stop Chasing Stale Docs: Creating Automated Documentation Workflows with goose",
+      "title": "Stop Chasing Stale Docs: Creating Automated Documentation Workflows with heybuddy",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -183,7 +183,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Building Effective Prompts and Workflows for Code Review with goose",
+      "title": "Building Effective Prompts and Workflows for Code Review with heybuddy",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -198,7 +198,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Optimizing goose Performance on Windows",
+      "title": "Optimizing heybuddy Performance on Windows",
       "author": {
         "name": "Mohammed Thaha",
         "handle": "mohammed-thaha"
@@ -213,7 +213,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "goose with Neon MCP",
+      "title": "heybuddy with Neon MCP",
       "author": {
         "name": "Dakshata Mishra",
         "handle": "the-matrixneo"
@@ -227,7 +227,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Goose with Canva MCP",
+      "title": "HeyBuddy with Canva MCP",
       "author": {
         "name": "BestCodes",
         "handle": "the-best-codes"
@@ -241,7 +241,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "goose with Apify MCP",
+      "title": "heybuddy with Apify MCP",
       "author": {
         "name": "abhi",
         "handle": "Better-Boy"
@@ -255,7 +255,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Building Custom Tools and Extensions for goose: A Developer's Guide",
+      "title": "Building Custom Tools and Extensions for heybuddy: A Developer's Guide",
       "author": {
         "name": "Anudhyan Datta",
         "handle": "Anudhyan"
@@ -270,7 +270,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Managing goose Configurations Across Multiple Projects",
+      "title": "Managing heybuddy Configurations Across Multiple Projects",
       "author": {
         "name": "Halimah",
         "handle": "lymah123"
@@ -285,7 +285,7 @@
       "hacktoberfest": true
     },
     {
-      "title": "Managing Goose Configurations Across Multiple Projects: A Practical Guide",
+      "title": "Managing HeyBuddy Configurations Across Multiple Projects: A Practical Guide",
       "author": {
         "name": "Viet Bui",
         "handle": "vietbui1999ru"

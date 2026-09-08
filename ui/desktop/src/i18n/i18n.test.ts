@@ -34,14 +34,14 @@ describe('getLocale', () => {
     expect(getLocale()).toEqual({ locale: 'en', messageLocale: 'en' });
   });
 
-  it('respects GOOSE_LOCALE over navigator.languages', () => {
-    mockAppConfig({ GOOSE_LOCALE: 'en' });
+  it('respects HEYBUDDY_LOCALE over navigator.languages', () => {
+    mockAppConfig({ HEYBUDDY_LOCALE: 'en' });
     vi.stubGlobal('navigator', { languages: ['xx-XX'] });
     expect(getLocale()).toEqual({ locale: 'en', messageLocale: 'en' });
   });
 
-  it('preserves regional tag from GOOSE_LOCALE', () => {
-    mockAppConfig({ GOOSE_LOCALE: 'en-GB' });
+  it('preserves regional tag from HEYBUDDY_LOCALE', () => {
+    mockAppConfig({ HEYBUDDY_LOCALE: 'en-GB' });
     vi.stubGlobal('navigator', { languages: ['xx-XX'] });
     expect(getLocale()).toEqual({ locale: 'en-GB', messageLocale: 'en' });
   });
@@ -62,15 +62,15 @@ describe('getLocale', () => {
     expect(getLocale()).toEqual({ locale: 'zh-CN', messageLocale: 'zh-CN' });
   });
 
-  it('supports explicit zh-CN locale from GOOSE_LOCALE', () => {
-    mockAppConfig({ GOOSE_LOCALE: 'zh-CN' });
+  it('supports explicit zh-CN locale from HEYBUDDY_LOCALE', () => {
+    mockAppConfig({ HEYBUDDY_LOCALE: 'zh-CN' });
     vi.stubGlobal('navigator', { languages: ['xx-XX'] });
     expect(getLocale()).toEqual({ locale: 'zh-CN', messageLocale: 'zh-CN' });
   });
 
   it('falls back to base language when locale tag is invalid BCP 47', () => {
     // "en-" is not a valid BCP 47 tag and would cause RangeError in Intl APIs
-    mockAppConfig({ GOOSE_LOCALE: 'en-' });
+    mockAppConfig({ HEYBUDDY_LOCALE: 'en-' });
     vi.stubGlobal('navigator', { languages: ['xx-XX'] });
     expect(getLocale()).toEqual({ locale: 'en', messageLocale: 'en' });
   });

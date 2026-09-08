@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ProviderDeviceCodeNotification_unstable } from '@aaif/goose-sdk';
+import type { ProviderDeviceCodeNotification_unstable } from '@heybuddy/heybuddy-sdk';
 
 export function useProviderDeviceCode(providerId: string) {
   const [deviceCode, setDeviceCode] = useState<ProviderDeviceCodeNotification_unstable | null>(
@@ -13,8 +13,8 @@ export function useProviderDeviceCode(providerId: string) {
         setDeviceCode(detail);
       }
     };
-    window.addEventListener('goose:device-code', handler);
-    return () => window.removeEventListener('goose:device-code', handler);
+    window.addEventListener('heybuddy:device-code', handler);
+    return () => window.removeEventListener('heybuddy:device-code', handler);
   }, [providerId]);
 
   return {

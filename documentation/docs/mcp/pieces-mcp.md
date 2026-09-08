@@ -1,17 +1,17 @@
 ---
 title: Pieces for Developers Extension
-description: Add Pieces for Developers MCP Server as a goose Extension
+description: Add Pieces for Developers MCP Server as a heybuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import YouTubeShortEmbed from '@site/src/components/YouTubeShortEmbed';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/V8zp9m9__t4" />
 
-This tutorial covers how to add the [Pieces for Developers MCP Server](https://docs.pieces.app/products/mcp/get-started?utm_source=goose&utm_medium=collab&utm_campaign=mcp) as a goose extension to enable interaction with your Pieces Long-Term Memory.
+This tutorial covers how to add the [Pieces for Developers MCP Server](https://docs.pieces.app/products/mcp/get-started?utm_source=goose&utm_medium=collab&utm_campaign=mcp) as a heybuddy extension to enable interaction with your Pieces Long-Term Memory.
 
 ## Configuration
 
@@ -20,8 +20,8 @@ This tutorial covers how to add the [Pieces for Developers MCP Server](https://d
 2. Enable [Long-Term Memory Context](https://docs.pieces.app/products/quick-guides/ltm-context) in PiecesOS
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  <GooseDesktopInstaller
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  <HeyBuddyDesktopInstaller
     extensionId="pieces"
     extensionName="Pieces for Developers"
     description="Provides access to your Pieces Long-Term Memory. You need to have Pieces installed to use this."
@@ -29,7 +29,7 @@ This tutorial covers how to add the [Pieces for Developers MCP Server](https://d
     args={["--from", "pieces-cli", "pieces", "--ignore-onboarding", "mcp", "start"]}
   />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
     <CLIExtensionInstructions
       name="Pieces"
       description="Provides access to your Pieces Long-Term Memory"
@@ -43,25 +43,25 @@ This tutorial covers how to add the [Pieces for Developers MCP Server](https://d
 
 Let's use the Pieces for Developers MCP server to generate a status update for a standup meeting based on your activities on the previous day.
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 I need a status update for what I was using yesterday. Create a report with 5 bullet points based off the most important activities, and give each one a brief description.
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 Here's a report summarizing your key activities from yesterday, based on the most important interactions and applications you were using:
 
-1. Code Development with goose:
+1. Code Development with heybuddy:
 
-    Activity: You worked on integrating MCP servers into the goose CLI, making enhancements to handle extensions via schema URLs.
-    Description: This task involved modifying code and testing new integrations to support advanced functionalities. It also included interactions with the goose community on Discord for feedback and troubleshooting.
+    Activity: You worked on integrating MCP servers into the heybuddy CLI, making enhancements to handle extensions via schema URLs.
+    Description: This task involved modifying code and testing new integrations to support advanced functionalities. It also included interactions with the heybuddy community on Discord for feedback and troubleshooting.
 
 2. Documentation Updates:
 
-    Activity: You updated and managed documentation related to the goose project and MCP integrations.
+    Activity: You updated and managed documentation related to the heybuddy project and MCP integrations.
     Description: This involved preparing documentation for new features, including usage guidelines and technical details, aiding in the improvement of user experience and technical instructions.
 
 3. Community Interaction on Discord:
@@ -71,7 +71,7 @@ Here's a report summarizing your key activities from yesterday, based on the mos
 
 4. Managing and Testing Extensions:
 
-    Activity: You focused on testing and managing various extensions through the goose platform.
+    Activity: You focused on testing and managing various extensions through the heybuddy platform.
     Description: This included configuring and validating different extensions, ensuring their compatibility and functionality, and incorporating feedback from testing.
 
 5. Content and Integration Planning:

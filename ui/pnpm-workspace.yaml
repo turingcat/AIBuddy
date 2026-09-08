@@ -1,7 +1,7 @@
 packages:
   - 'sdk'
   - 'desktop'
-  - 'goose-binary/*'
+  - 'heybuddy-binary/*'
 
 registry: https://registry.npmjs.org/
 preferOffline: true

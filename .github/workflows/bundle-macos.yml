@@ -49,8 +49,8 @@ env:
   MACOS_TARGET: aarch64-apple-darwin
 
 jobs:
-  build-goose:
-    name: Build Goose (macOS ARM64)
+  build-heybuddy:
+    name: Build HeyBuddy (macOS ARM64)
     runs-on: macos-latest
     env:
       MACOSX_DEPLOYMENT_TARGET: "12.0"
@@ -113,22 +113,22 @@ jobs:
         with:
           key: bundle-macos-aarch64-apple-darwin-deployment-target-12
 
-      - name: Build goose
+      - name: Build heybuddy
         run: |
           source ./bin/activate-hermit
           rustup target add "$MACOS_TARGET"
-          cargo build --release -p goose-cli --bin goose --target "$MACOS_TARGET"
+          cargo build --release -p heybuddy-cli --bin heybuddy --target "$MACOS_TARGET"
 
       - name: Prepare binary artifact
         run: |
           mkdir -p artifacts
-          cp "target/${MACOS_TARGET}/release/goose" "artifacts/internal-goose-${MACOS_TARGET}"
+          cp "target/${MACOS_TARGET}/release/heybuddy" "artifacts/internal-heybuddy-${MACOS_TARGET}"
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
-          name: internal-goose-aarch64-apple-darwin
-          path: artifacts/internal-goose-aarch64-apple-darwin
+          name: internal-heybuddy-aarch64-apple-darwin
+          path: artifacts/internal-heybuddy-aarch64-apple-darwin
           if-no-files-found: error
           retention-days: 1
           overwrite: true
@@ -166,14 +166,14 @@ jobs:
       - name: Download binary artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
-          name: internal-goose-aarch64-apple-darwin
+          name: internal-heybuddy-aarch64-apple-darwin
           path: ui/desktop/src/bin
 
       - name: Prepare desktop backend
         run: |
-          rm -f ui/desktop/src/bin/goose
-          mv "ui/desktop/src/bin/internal-goose-${MACOS_TARGET}" ui/desktop/src/bin/goose
-          chmod +x ui/desktop/src/bin/goose
+          rm -f ui/desktop/src/bin/heybuddy
+          mv "ui/desktop/src/bin/internal-heybuddy-${MACOS_TARGET}" ui/desktop/src/bin/heybuddy
+          chmod +x ui/desktop/src/bin/heybuddy
           ls -la ui/desktop/src/bin/
 
       - name: Resolve pnpm store path
@@ -253,7 +253,7 @@ jobs:
 
       - name: Final cleanup before artifact upload
         run: |
-          rm -f ui/desktop/src/bin/goose
+          rm -f ui/desktop/src/bin/heybuddy
           df -h
 
       - name: Upload Desktop artifact

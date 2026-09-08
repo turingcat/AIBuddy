@@ -13,7 +13,7 @@ import {
 
 function setAppConfig(value: unknown) {
   (window as unknown as { appConfig: { get: (k: string) => unknown } }).appConfig = {
-    get: (key: string) => (key === 'GOOSE_PREDEFINED_MODELS' ? value : undefined),
+    get: (key: string) => (key === 'HEYBUDDY_PREDEFINED_MODELS' ? value : undefined),
   };
 }
 

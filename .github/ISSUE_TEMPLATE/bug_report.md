@@ -49,4 +49,4 @@ If applicable, add screenshots to help explain your problem.
 **Additional context**
 Add any other context about the problem here.
 
-Do not begin implementation until the issue reaches **Ready** on the [Goose Issues board](https://github.com/orgs/aaif-goose/projects/1).
+Do not begin implementation until the issue reaches **Ready** on the [HeyBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1).

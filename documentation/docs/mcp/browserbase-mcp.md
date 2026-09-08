@@ -1,22 +1,22 @@
 ---
 title: Browserbase Extension
-description: Add Browserbase MCP Server as a goose Extension for Web Automation
+description: Add Browserbase MCP Server as a heybuddy Extension for Web Automation
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
-This tutorial covers how to add the Browserbase MCP Server as a goose extension for browser automation, enabling programmatic control over navigation, page interactions, and content capture.
+This tutorial covers how to add the Browserbase MCP Server as a heybuddy extension for browser automation, enabling programmatic control over navigation, page interactions, and content capture.
 
 :::tip Quick Install
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="heybuddy Desktop" default>
   [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40browserbasehq%2Fmcp&id=browserbase-mcp&name=Browserbase&description=Automate%20web%20browsing%20and%20data%20extraction&env=BROWSERBASE_PROJECT_ID%3DBrowserbase%20Project%20ID&env=BROWSERBASE_API_KEY%3DBrowserbase%20API%20Key&env=GEMINI_API_KEY%3DGemini%20API%20Key)
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
   **Command**
   ```sh
   npx -y @browserbasehq/mcp
@@ -38,8 +38,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  <GooseDesktopInstaller
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  <HeyBuddyDesktopInstaller
     extensionId="browserbase-mcp"
     extensionName="Browserbase"
     description="Automate web browsing and data extraction"
@@ -54,7 +54,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     apiKeyLinkText="Browserbase credentials"
   />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
     <CLIExtensionInstructions
       name="Browserbase"
       description="Automate web browsing and data extraction"
@@ -77,7 +77,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 Let's use the Browserbase extension to gather information about trending MCP-related repositories on GitHub.
 
-### goose Prompt
+### heybuddy Prompt
 
 ```
 1. Go to https://github.com/trending
@@ -103,7 +103,7 @@ Let's use the Browserbase extension to gather information about trending MCP-rel
     • README excerpt
 ```
 
-### goose Output
+### heybuddy Output
 
 ```
 # MCP Repositories Report

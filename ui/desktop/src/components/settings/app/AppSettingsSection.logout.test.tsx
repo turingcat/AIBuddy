@@ -6,7 +6,7 @@ import { IntlProvider } from 'react-intl';
 import AppSettingsSection from './AppSettingsSection';
 
 vi.mock('../../../utils/analytics', () => ({ trackSettingToggled: vi.fn() }));
-vi.mock('../../GooseSidebar/ThemeSelector', () => ({ default: () => null }));
+vi.mock('../../HeyBuddySidebar/ThemeSelector', () => ({ default: () => null }));
 
 const clearLoginCredentials = vi.fn();
 const refreshAuthSession = vi.fn();

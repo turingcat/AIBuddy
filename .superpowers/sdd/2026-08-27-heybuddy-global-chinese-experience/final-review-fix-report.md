@@ -18,7 +18,7 @@
 - 修改：`session_naming.rs` 与 `cli_common.rs` 对含中文的归一化标题保留完整内容；非中文标题继续使用 100 字符安全限制。未改内部 ID/API，桌面侧栏继续负责视觉 ellipsis。
 - 测试：两文件各新增超过 100 个连续中文字符的单测。
 - RED：两项测试均得到 100 字符加 `...` 的机械截断结果，2 failed。
-- GREEN：`cargo test -p goose session_naming` 为 4 passed；`cargo test -p goose --lib providers::cli_common::tests` 为 13 passed。
+- GREEN：`cargo test -p heybuddy session_naming` 为 4 passed；`cargo test -p heybuddy --lib providers::cli_common::tests` 为 13 passed。
 
 ## Important 2：聊天栏诊断、语音与停止文案
 
@@ -46,16 +46,16 @@
 - 修改：共享 `system.md` 与 `PromptManager` fallback 改为“当用户问候你或询问你的身份时，你的回复必须以‘我是HeyBuddy’开头”，移除可选的“你可以说”；更新 5 个 snapshots。legacy agent 与 state machine 均通过同一 `PromptManager` 构建 prompt。
 - 测试：`prompt_manager.rs` 的身份断言及 default/code-mode snapshots。
 - RED：规范性句子断言缺失，1 failed。
-- GREEN：`cargo test -p goose prompt_manager` 15 passed；`cargo test -p goose --features code-mode prompt_manager` 15 passed。
+- GREEN：`cargo test -p heybuddy prompt_manager` 15 passed；`cargo test -p heybuddy --features code-mode prompt_manager` 15 passed。
 
 ## 最终验证命令
 
 - `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm exec vitest run src/authConfig.test.ts src/components/ChatInput.test.tsx src/components/bottom_menu/ExtensionMenu.test.tsx src/components/recipes/shared/__tests__/RecipeExtensionSelector.test.tsx src/components/schedule/__tests__/ScheduleDynamicCopy.test.tsx`（在 `ui/desktop`）：5 files、18 tests passed。
 - `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm run typecheck`（在 `ui/desktop`）：exit 0。
-- `cargo test -p goose session_naming`：4 passed。
-- `cargo test -p goose --lib providers::cli_common::tests`：13 passed。
-- `cargo test -p goose prompt_manager`：15 passed。
-- `cargo test -p goose --features code-mode prompt_manager`：15 passed。
+- `cargo test -p heybuddy session_naming`：4 passed。
+- `cargo test -p heybuddy --lib providers::cli_common::tests`：13 passed。
+- `cargo test -p heybuddy prompt_manager`：15 passed。
+- `cargo test -p heybuddy --features code-mode prompt_manager`：15 passed。
 - `cargo fmt --all -- --check`：exit 0。
 - `git diff --check`：exit 0。
 - forbidden-path diff check：exit 0。
@@ -80,14 +80,14 @@
 
 - 修改：`cli_common.rs` 新增两条标题路径共享的 `preserves_untruncated_chinese_title` 判定。只有标题包含中文且其余字符均为 Han、Unicode 空白或 Unicode 标点时才保留完整内容；字母/数字混入的超长候选继续经过 `safe_truncate(..., 100)`。CLI 对超长混合候选在中文短语归一化前应用安全边界，普通短混合输入的既有中文短语提取行为不变；`session_naming.rs` 复用同一 helper。
 - 测试：`session_naming.rs` 与 `cli_common.rs` 各新增“120 个英文字符夹一个中文字符”回归测试，手工断言 97 字符加 `...`；两路径原有超过 100 字纯连续中文完整保留测试继续覆盖另一侧边界。
-- RED：`cargo test -p goose session_naming` 为 4 passed、1 failed，实际返回完整 121 字混合标题；`cargo test -p goose --lib providers::cli_common::tests` 为 13 passed、1 failed，实际返回仅 `中`。
+- RED：`cargo test -p heybuddy session_naming` 为 4 passed、1 failed，实际返回完整 121 字混合标题；`cargo test -p heybuddy --lib providers::cli_common::tests` 为 13 passed、1 failed，实际返回仅 `中`。
 - GREEN：前一命令 5 passed；后一命令 14 passed，包含普通短混合输入的既有回归用例。
 
 ### Re-review 最终验证
 
 - `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm exec vitest run src/components/ChatInput.test.tsx`（在 `ui/desktop`）：1 file、7 tests passed。
-- `cargo test -p goose session_naming`：5 passed。
-- `cargo test -p goose --lib providers::cli_common::tests`：14 passed。
+- `cargo test -p heybuddy session_naming`：5 passed。
+- `cargo test -p heybuddy --lib providers::cli_common::tests`：14 passed。
 - `CI=true PATH="/opt/homebrew/opt/node@24/bin:$PATH" pnpm run typecheck`（在 `ui/desktop`）：exit 0。
 - `cargo fmt --all -- --check`：exit 0。
 - `git diff --check`：exit 0。

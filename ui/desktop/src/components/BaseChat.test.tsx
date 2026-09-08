@@ -12,7 +12,7 @@ vi.mock('./ChatInput', () => ({ default: () => <div data-testid="chat-input" /> 
 vi.mock('./conversation/SearchView', () => ({
   SearchView: ({ children }: React.PropsWithChildren) => children,
 }));
-vi.mock('./LoadingGoose', () => ({ default: () => null }));
+vi.mock('./LoadingHeyBuddy', () => ({ default: () => null }));
 vi.mock('./ChatBrand', () => ({ default: () => <div data-testid="chat-brand" /> }));
 vi.mock('./ProgressiveMessageList', () => ({ default: () => null }));
 vi.mock('./Layout/MainPanelLayout', () => ({
@@ -59,8 +59,8 @@ vi.mock('./ui/RecipeWarningModal', () => ({ RecipeWarningModal: () => null }));
 vi.mock('../recipe', () => ({ scanRecipe: vi.fn() }));
 vi.mock('./recipes/RecipeActivities', () => ({ default: () => null }));
 vi.mock('../hooks/useAutoSubmit', () => ({ useAutoSubmit: vi.fn() }));
-vi.mock('./icons', () => ({ Goose: () => null }));
-vi.mock('./GooseSidebar/EnvironmentBadge', () => ({ default: () => null }));
+vi.mock('./icons', () => ({ HeyBuddy: () => null }));
+vi.mock('./HeyBuddySidebar/EnvironmentBadge', () => ({ default: () => null }));
 vi.mock('./SessionActionsHeader', () => ({ default: () => null }));
 vi.mock('../acp/acpConnection', () => ({
   isAcpRecovering: () => false,

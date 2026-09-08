@@ -140,8 +140,8 @@ vi.mock('react-toastify', () => ({
   },
 }));
 
-vi.mock('./components/GoosehintsModal', () => ({
-  GoosehintsModal: () => null,
+vi.mock('./components/HeyBuddyhintsModal', () => ({
+  HeyBuddyhintsModal: () => null,
 }));
 
 vi.mock('./components/AnnouncementModal', () => ({
@@ -183,8 +183,8 @@ vi.mock('react-router', () => ({
 // Mock electron API
 const mockElectron = {
   getConfig: vi.fn().mockReturnValue({
-    GOOSE_ALLOWLIST_WARNING: false,
-    GOOSE_WORKING_DIR: '/test/dir',
+    HEYBUDDY_ALLOWLIST_WARNING: false,
+    HEYBUDDY_WORKING_DIR: '/test/dir',
   }),
   logInfo: vi.fn(),
   on: vi.fn(),
@@ -203,7 +203,7 @@ const mockElectron = {
 // Mock appConfig
 const mockAppConfig = {
   get: vi.fn((key: string): string | null => {
-    if (key === 'GOOSE_WORKING_DIR') return '/test/dir';
+    if (key === 'HEYBUDDY_WORKING_DIR') return '/test/dir';
     return null;
   }),
 };
@@ -254,7 +254,7 @@ describe('App Component - Brand New State', () => {
     mockNavigate.mockClear();
     mockSetSearchParams.mockClear();
     mockAppConfig.get.mockImplementation((key: string): string | null => {
-      if (key === 'GOOSE_WORKING_DIR') return '/test/dir';
+      if (key === 'HEYBUDDY_WORKING_DIR') return '/test/dir';
       return null;
     });
 
@@ -275,9 +275,9 @@ describe('App Component - Brand New State', () => {
   it('should redirect to "/" when app is brand new (no provider configured)', async () => {
     // Mock no provider configured
     mockElectron.getConfig.mockReturnValue({
-      GOOSE_DEFAULT_PROVIDER: null,
-      GOOSE_DEFAULT_MODEL: null,
-      GOOSE_ALLOWLIST_WARNING: false,
+      HEYBUDDY_DEFAULT_PROVIDER: null,
+      HEYBUDDY_DEFAULT_MODEL: null,
+      HEYBUDDY_ALLOWLIST_WARNING: false,
     });
 
     render(<AppInner />, { wrapper: AppInnerTestWrapper });
@@ -295,9 +295,9 @@ describe('App Component - Brand New State', () => {
   it('should handle deep links correctly when app is brand new', async () => {
     // Mock no provider configured
     mockElectron.getConfig.mockReturnValue({
-      GOOSE_DEFAULT_PROVIDER: null,
-      GOOSE_DEFAULT_MODEL: null,
-      GOOSE_ALLOWLIST_WARNING: false,
+      HEYBUDDY_DEFAULT_PROVIDER: null,
+      HEYBUDDY_DEFAULT_MODEL: null,
+      HEYBUDDY_ALLOWLIST_WARNING: false,
     });
 
     // Set up search params to simulate view=settings deep link
@@ -316,9 +316,9 @@ describe('App Component - Brand New State', () => {
   it('should not redirect when provider is configured', async () => {
     // Mock provider configured
     mockElectron.getConfig.mockReturnValue({
-      GOOSE_DEFAULT_PROVIDER: 'openai',
-      GOOSE_DEFAULT_MODEL: 'gpt-4',
-      GOOSE_ALLOWLIST_WARNING: false,
+      HEYBUDDY_DEFAULT_PROVIDER: 'openai',
+      HEYBUDDY_DEFAULT_MODEL: 'gpt-4',
+      HEYBUDDY_ALLOWLIST_WARNING: false,
     });
 
     render(<AppInner />, { wrapper: AppInnerTestWrapper });
@@ -334,8 +334,8 @@ describe('App Component - Brand New State', () => {
 
   it('shows the scoped-parameter incompatibility before returning home', async () => {
     mockAppConfig.get.mockImplementation((key: string): string | null => {
-      if (key === 'GOOSE_WORKING_DIR') return '/test/dir';
-      if (key === 'recipeDeeplink') return 'goose://recipe?url=example';
+      if (key === 'HEYBUDDY_WORKING_DIR') return '/test/dir';
+      if (key === 'recipeDeeplink') return 'heybuddy://recipe?url=example';
       return null;
     });
     vi.mocked(createSession).mockRejectedValueOnce(new RecipeParameterScopesUnsupportedError());
@@ -346,7 +346,7 @@ describe('App Component - Brand New State', () => {
 
     await waitFor(() => {
       expect(mockToastError).toHaveBeenCalledWith(
-        'The connected Goose server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
+        'The connected HeyBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
       );
     });
     expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -354,9 +354,9 @@ describe('App Component - Brand New State', () => {
 
   it('should navigate home when the main process emits new-chat', async () => {
     mockElectron.getConfig.mockReturnValue({
-      GOOSE_DEFAULT_PROVIDER: 'openai',
-      GOOSE_DEFAULT_MODEL: 'gpt-4',
-      GOOSE_ALLOWLIST_WARNING: false,
+      HEYBUDDY_DEFAULT_PROVIDER: 'openai',
+      HEYBUDDY_DEFAULT_MODEL: 'gpt-4',
+      HEYBUDDY_ALLOWLIST_WARNING: false,
     });
 
     render(<AppInner />, { wrapper: AppInnerTestWrapper });

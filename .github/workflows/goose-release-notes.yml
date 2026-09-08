@@ -1,12 +1,12 @@
-# goose Release Notes Generator
+# heybuddy Release Notes Generator
 #
-# Automatically generates release notes using goose AI agent when a new release is published.
+# Automatically generates release notes using heybuddy AI agent when a new release is published.
 # Updates the GitHub release with AI-generated categorized notes and posts to Discord.
 #
 # Uses workflow_run instead of release:published because GitHub doesn't trigger
 # workflows for events created by GITHUB_TOKEN (to prevent infinite loops).
 
-name: goose Release Notes Generator
+name: heybuddy Release Notes Generator
 
 on:
   # Trigger when Release workflow completes (works around GITHUB_TOKEN limitation)
@@ -27,7 +27,7 @@ on:
         type: string
 
 env:
-  GOOSE_RECIPE: |
+  HEYBUDDY_RECIPE: |
     version: "1.0.0"
     title: "Release Notes Generator"
     description: "Generate release notes for ${RELEASE_TAG}"
@@ -37,10 +37,10 @@ env:
         name: developer
 
     instructions: |
-      Generate release notes for the goose release.
+      Generate release notes for the heybuddy release.
 
       ## Process
-      1. You are already in the goose repository. Do NOT clone or checkout anything.
+      1. You are already in the heybuddy repository. Do NOT clone or checkout anything.
       2. Get the previous release tag by running: git describe --tags --abbrev=0 ${RELEASE_TAG}^
       3. Get commits between tags: git log <previous_tag>..${RELEASE_TAG} --oneline --no-merges
       4. Analyze the commits and categorize changes
@@ -65,7 +65,7 @@ env:
       Write ONLY the release notes content to /tmp/release_notes.md (no extra commentary)
 
     prompt: |
-      Generate release notes for ${RELEASE_TAG} in the goose repository.
+      Generate release notes for ${RELEASE_TAG} in the heybuddy repository.
 
 permissions:
   contents: write
@@ -90,10 +90,10 @@ jobs:
       image: ghcr.io/aaif-goose/goose:latest
       options: --user root
       env:
-        GOOSE_PROVIDER: ${{ vars.GOOSE_PROVIDER || 'anthropic' }}
-        GOOSE_MODEL: ${{ vars.GOOSE_MODEL || 'claude-opus-4-5' }}
+        HEYBUDDY_PROVIDER: ${{ vars.HEYBUDDY_PROVIDER || 'anthropic' }}
+        HEYBUDDY_MODEL: ${{ vars.HEYBUDDY_MODEL || 'claude-opus-4-5' }}
         ANTHROPIC_API_KEY: ${{ secrets.RELEASE_BOT_ANTHROPIC_KEY }}
-        HOME: /tmp/goose-home
+        HOME: /tmp/heybuddy-home
 
     outputs:
       release_notes: ${{ steps.read-notes.outputs.notes }}
@@ -125,21 +125,21 @@ jobs:
           apt-get update
           apt-get install -y gettext curl ripgrep git jq
 
-      - name: Run goose to generate release notes
+      - name: Run heybuddy to generate release notes
         env:
           RELEASE_TAG: ${{ steps.get-tag.outputs.tag }}
         run: |
-          mkdir -p $HOME/.local/share/goose/sessions
-          mkdir -p $HOME/.config/goose
+          mkdir -p $HOME/.local/share/heybuddy/sessions
+          mkdir -p $HOME/.config/heybuddy
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
           # Checkout the release tag
           git checkout "${RELEASE_TAG}"
 
           # Create recipe from env var with variable substitution
-          echo "$GOOSE_RECIPE" | envsubst '$RELEASE_TAG' > /tmp/recipe.yaml
+          echo "$HEYBUDDY_RECIPE" | envsubst '$RELEASE_TAG' > /tmp/recipe.yaml
 
-          goose run --recipe /tmp/recipe.yaml
+          heybuddy run --recipe /tmp/recipe.yaml
 
       - name: Read release notes
         id: read-notes
@@ -241,7 +241,7 @@ jobs:
           }
 
           # Build the announcement header
-          HEADER="## 🎉 goose ${RELEASE_TAG} is here!
+          HEADER="## 🎉 heybuddy ${RELEASE_TAG} is here!
 
           📦 **Release:** ${RELEASE_URL}"
 

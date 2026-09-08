@@ -106,14 +106,14 @@ describe('addExtensionFromDeepLink for AIBuddy', () => {
         'Memory',
         expect.objectContaining({
           type: 'stdio',
-          cmd: 'goose',
+          cmd: 'heybuddy',
           args: ['mcp', 'memory'],
         }),
         true
       );
     });
 
-    it('should reject legacy goosed deeplinks', async () => {
+    it('should reject legacy heybuddyd deeplinks', async () => {
       vi.mocked(toastService.handleError).mockImplementationOnce(() => {
         throw new Error('Invalid command');
       });
@@ -126,7 +126,7 @@ describe('addExtensionFromDeepLink for AIBuddy', () => {
 
       expect(toastService.handleError).toHaveBeenCalledWith(
         'Invalid Command',
-        expect.stringContaining('Invalid command: goosed'),
+        expect.stringContaining('Invalid command: heybuddyd'),
         { shouldThrow: true }
       );
       expect(mockAddExtension).not.toHaveBeenCalled();

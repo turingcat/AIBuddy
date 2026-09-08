@@ -1,23 +1,23 @@
 ---
 title: Nostrbook Extension
-description: Add Nostrbook MCP Server as a goose Extension
+description: Add Nostrbook MCP Server as a heybuddy Extension
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import HeyBuddyDesktopInstaller from '@site/src/components/HeyBuddyDesktopInstaller';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
 
 
-This tutorial covers how to add the [Nostrbook MCP Server](https://gitlab.com/soapbox-pub/nostrbook) as a goose extension to provide access to a comprehensive registry of Nostr documentation that helps users understand the decentralized social protocol, its implementation possibilities, and technical specifications.
+This tutorial covers how to add the [Nostrbook MCP Server](https://gitlab.com/soapbox-pub/nostrbook) as a heybuddy extension to provide access to a comprehensive registry of Nostr documentation that helps users understand the decentralized social protocol, its implementation possibilities, and technical specifications.
 
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="heybuddy Desktop" default>
     [Launch the installer](goose://extension?cmd=npx&arg=-y&arg=%40nostrbook%2Fmcp%40latest&id=nostrbook-mcp&name=NostrBook&description=A%20comprehensive%20registry%20of%20Nostr%20documentation%20with%20structured%20knowledge)
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
     **Command**
     ```sh
     npx -y @nostrbook/mcp@latest
@@ -34,8 +34,8 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-  <GooseDesktopInstaller
+  <TabItem value="ui" label="heybuddy Desktop" default>
+  <HeyBuddyDesktopInstaller
     extensionId="nostrbook-mcp"
     extensionName="Nostrbook"
     description="A comprehensive registry of Nostr documentation with structured knowledge"
@@ -43,7 +43,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     args={["-y", "@nostrbook/mcp@latest"]}
   />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="heybuddy CLI">
     <CLIExtensionInstructions
       name="Nostrbook"
       description="A comprehensive registry of Nostr documentation with structured knowledge"
@@ -54,12 +54,12 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-### goose Prompt
+### heybuddy Prompt
 
-> _goose, what is the NIP-61 and how can I implement it?._
+> _heybuddy, what is the NIP-61 and how can I implement it?._
 
 
-### goose Output
+### heybuddy Output
 
 Note that IDs have been changed to generic ones
 

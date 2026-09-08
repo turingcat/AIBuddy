@@ -6,24 +6,24 @@ sidebar_label: Configuration Files
 
 # Configuration Overview
 
-goose uses YAML [configuration files](#configuration-files) to manage settings and extensions. The primary config file is located at:
+heybuddy uses YAML [configuration files](#configuration-files) to manage settings and extensions. The primary config file is located at:
 
-* macOS/Linux: `~/.config/goose/config.yaml`
-* Windows: `%APPDATA%\Block\goose\config\config.yaml`
+* macOS/Linux: `~/.config/heybuddy/config.yaml`
+* Windows: `%APPDATA%\Block\heybuddy\config\config.yaml`
 
 The configuration files allow you to set default behaviors, configure language models, set tool permissions, and manage extensions. While many settings can also be set using [environment variables](/docs/guides/environment-variables), the config files provide a persistent way to maintain your preferences.
 
 ## Configuration Files
 
 - **config.yaml** - Provider, model, extensions, and general settings
-- **permission.yaml** - Tool permission levels configured via `goose configure`
-- **secrets.yaml** - API keys and secrets (when goose is using [file-based secret storage](#security-considerations))
+- **permission.yaml** - Tool permission levels configured via `heybuddy configure`
+- **secrets.yaml** - API keys and secrets (when heybuddy is using [file-based secret storage](#security-considerations))
 - **permissions/tool_permissions.json** - Runtime permission decisions (auto-managed)
 - **prompts/** - Customized [prompt templates](/docs/guides/context-engineering/prompt-templates)
 
-In addition to editing configuration files directly, many settings can be managed from goose Desktop and goose CLI:
-- **goose Desktop**: From the `Settings` page and the bottom toolbar
-- **goose CLI**: Run the `goose configure` command
+In addition to editing configuration files directly, many settings can be managed from heybuddy Desktop and heybuddy CLI:
+- **heybuddy Desktop**: From the `Settings` page and the bottom toolbar
+- **heybuddy CLI**: Run the `heybuddy configure` command
 
 ## Provider Configuration
 
@@ -38,7 +38,7 @@ providers:
     configured: true
 ```
 
-`GOOSE_PROVIDER` and `GOOSE_MODEL` are still supported as environment variables and override the config file for that process. Older config files that use flat `GOOSE_PROVIDER` and `GOOSE_MODEL` keys are read for compatibility and migrated when goose updates the provider settings.
+`HEYBUDDY_PROVIDER` and `HEYBUDDY_MODEL` are still supported as environment variables and override the config file for that process. Older config files that use flat `HEYBUDDY_PROVIDER` and `HEYBUDDY_MODEL` keys are read for compatibility and migrated when heybuddy updates the provider settings.
 
 ## Global Settings
 
@@ -46,24 +46,25 @@ The following settings can be configured at the root level of your config.yaml f
 
 | Setting | Purpose | Values | Default | Required |
 |---------|---------|---------|---------|-----------|
-| `GOOSE_TEMPERATURE` | Model response randomness | Float between 0.0 and 1.0 | Model-specific | No |
-| `GOOSE_MAX_TOKENS` | Maximum number of tokens for each model response (truncates longer responses) | Positive integer | Model-specific | No |
-| `GOOSE_MODE` | [Tool execution behavior](/docs/guides/managing-tools/goose-permissions) | "auto", "approve", "chat", "smart_approve" | "auto" | No |
-| `GOOSE_MAX_TURNS` | [Maximum number of turns](/docs/guides/sessions/smart-context-management#maximum-turns) allowed without user input | Integer (e.g., 10, 50, 100) | 1000 | No |
-| `GOOSE_PLANNER_PROVIDER` | Provider for [planning mode](/docs/guides/context-engineering/creating-plans) | Same as `GOOSE_PROVIDER` options | Falls back to `GOOSE_PROVIDER` | No |
-| `GOOSE_PLANNER_MODEL` | Model for planning mode | Model name | Falls back to `GOOSE_MODEL` | No |
-| `GOOSE_TOOLSHIM` | Enable tool interpretation | true/false | false | No |
-| `GOOSE_TOOLSHIM_OLLAMA_MODEL` | Model for tool interpretation | Model name (e.g., "llama3.2") | System default | No |
-| `GOOSE_INPUT_LIMIT` | Override input token limit for Ollama (maps to `num_ctx`) | Positive integer | Model default | No |
-| `GOOSE_CLI_MIN_PRIORITY` | Tool output verbosity | Float between 0.0 and 1.0 | 0.0 | No |
-| `GOOSE_CLI_THEME` | [Theme](/docs/guides/goose-cli-commands#themes) for CLI response markdown | "light", "dark", "ansi" | "ansi" | No |
-| `GOOSE_CLI_LIGHT_THEME` | Custom syntax highlighting theme for light mode | [bat theme name](https://github.com/sharkdp/bat#adding-new-themes) | "GitHub" | No |
-| `GOOSE_CLI_DARK_THEME` | Custom syntax highlighting theme for dark mode | [bat theme name](https://github.com/sharkdp/bat#adding-new-themes) | "zenburn" | No |
-| `GOOSE_CLI_SHOW_COST` | Show estimated cost for token use in the CLI | true/false | false | No |
-| `GOOSE_ALLOWLIST` | URL for allowed extensions | Valid URL | None | No |
-| `GOOSE_DOCS_ROOT` | Documentation root used by `goose-doc-guide` (e.g. for offline/air-gapped docs) | Local path or HTTP(S) URL containing `goose-docs-map.md` and `docs/` | `https://goose-docs.ai` | No |
-| `GOOSE_RECIPE_GITHUB_REPO` | GitHub repository for recipes | Format: "org/repo" | None | No |
-| `GOOSE_AUTO_COMPACT_THRESHOLD` | Set the percentage threshold at which goose [automatically compacts your session](/docs/guides/sessions/smart-context-management#automatic-compaction). | Float between 0.0 and 1.0 (disabled at 0.0)| 0.8 | No |
+| `HEYBUDDY_TEMPERATURE` | Model response randomness | Float between 0.0 and 1.0 | Model-specific | No |
+| `HEYBUDDY_MAX_TOKENS` | Maximum number of tokens for each model response (truncates longer responses) | Positive integer | Model-specific | No |
+| `HEYBUDDY_CACHE_TTL` | Anthropic prompt-cache TTL; `1h` keeps the cached prefix alive across idle gaps at a higher cache-write rate. Headless runs always use `5m` | "5m", "1h" | "5m" | No |
+| `HEYBUDDY_MODE` | [Tool execution behavior](/docs/guides/managing-tools/heybuddy-permissions) | "auto", "approve", "chat", "smart_approve" | "auto" | No |
+| `HEYBUDDY_MAX_TURNS` | [Maximum number of turns](/docs/guides/sessions/smart-context-management#maximum-turns) allowed without user input | Integer (e.g., 10, 50, 100) | 1000 | No |
+| `HEYBUDDY_PLANNER_PROVIDER` | Provider for [planning mode](/docs/guides/context-engineering/creating-plans) | Same as `HEYBUDDY_PROVIDER` options | Falls back to `HEYBUDDY_PROVIDER` | No |
+| `HEYBUDDY_PLANNER_MODEL` | Model for planning mode | Model name | Falls back to `HEYBUDDY_MODEL` | No |
+| `HEYBUDDY_TOOLSHIM` | Enable tool interpretation | true/false | false | No |
+| `HEYBUDDY_TOOLSHIM_OLLAMA_MODEL` | Model for tool interpretation | Model name (e.g., "llama3.2") | System default | No |
+| `HEYBUDDY_INPUT_LIMIT` | Override input token limit for Ollama (maps to `num_ctx`) | Positive integer | Model default | No |
+| `HEYBUDDY_CLI_MIN_PRIORITY` | Tool output verbosity | Float between 0.0 and 1.0 | 0.0 | No |
+| `HEYBUDDY_CLI_THEME` | [Theme](/docs/guides/heybuddy-cli-commands#themes) for CLI response markdown | "light", "dark", "ansi" | "ansi" | No |
+| `HEYBUDDY_CLI_LIGHT_THEME` | Custom syntax highlighting theme for light mode | [bat theme name](https://github.com/sharkdp/bat#adding-new-themes) | "GitHub" | No |
+| `HEYBUDDY_CLI_DARK_THEME` | Custom syntax highlighting theme for dark mode | [bat theme name](https://github.com/sharkdp/bat#adding-new-themes) | "zenburn" | No |
+| `HEYBUDDY_CLI_SHOW_COST` | Show estimated cost for token use in the CLI | true/false | false | No |
+| `HEYBUDDY_ALLOWLIST` | URL for allowed extensions | Valid URL | None | No |
+| `HEYBUDDY_DOCS_ROOT` | Documentation root used by `heybuddy-doc-guide` (e.g. for offline/air-gapped docs) | Local path or HTTP(S) URL containing `heybuddy-docs-map.md` and `docs/` | `https://goose-docs.ai` | No |
+| `HEYBUDDY_RECIPE_GITHUB_REPO` | GitHub repository for recipes | Format: "org/repo" | None | No |
+| `HEYBUDDY_AUTO_COMPACT_THRESHOLD` | Set the percentage threshold at which heybuddy [automatically compacts your session](/docs/guides/sessions/smart-context-management#automatic-compaction). | Float between 0.0 and 1.0 (disabled at 0.0)| 0.8 | No |
 | `SECURITY_PROMPT_ENABLED` | Enable [prompt injection detection](/docs/guides/security/prompt-injection-detection) to identify potentially harmful commands | true/false | false | No |
 | `SECURITY_PROMPT_THRESHOLD` | Sensitivity threshold for prompt injection detection (higher = stricter) | Float between 0.01 and 1.0 | 0.8 | No |
 | `SECURITY_PROMPT_CLASSIFIER_ENABLED` | Enable ML-based prompt injection detection for advanced threat identification | true/false | false | No |
@@ -84,25 +85,25 @@ providers:
     enabled: true
     model: claude-sonnet-4-5-20250929
     configured: true
-GOOSE_TEMPERATURE: 0.7
+HEYBUDDY_TEMPERATURE: 0.7
 
 # Planning Configuration
-GOOSE_PLANNER_PROVIDER: "openai"
-GOOSE_PLANNER_MODEL: "gpt-4"
+HEYBUDDY_PLANNER_PROVIDER: "openai"
+HEYBUDDY_PLANNER_MODEL: "gpt-4"
 
 # Tool Configuration
-GOOSE_MODE: "smart_approve"
-GOOSE_TOOLSHIM: true
-GOOSE_CLI_MIN_PRIORITY: 0.2
+HEYBUDDY_MODE: "smart_approve"
+HEYBUDDY_TOOLSHIM: true
+HEYBUDDY_CLI_MIN_PRIORITY: 0.2
 
 # Recipe Configuration
-GOOSE_RECIPE_GITHUB_REPO: "aaif-goose/goose-recipes"
+HEYBUDDY_RECIPE_GITHUB_REPO: "aaif-goose/goose-recipes"
 
 # Documentation Configuration
-GOOSE_DOCS_ROOT: "/path/to/goose-docs"
+HEYBUDDY_DOCS_ROOT: "/path/to/heybuddy-docs"
 
 # Search Path Configuration
-GOOSE_SEARCH_PATHS:
+HEYBUDDY_SEARCH_PATHS:
   - "/usr/local/bin"
   - "~/custom/tools"
   - "/opt/homebrew/bin"
@@ -134,7 +135,7 @@ Extensions are configured under the `extensions` key. Each extension can have th
 ```yaml
 extensions:
   extension_name:
-    bundled: true/false       # Whether it's included with goose
+    bundled: true/false       # Whether it's included with heybuddy
     display_name: "Name"      # Human-readable name (optional)
     enabled: true/false       # Whether the extension is active
     name: "extension_name"    # Internal name
@@ -143,7 +144,7 @@ extensions:
     available_tools: []       # Filter to specific tools (empty = all)
 ```
 
-Supported extension types are `builtin`, `platform`, `stdio`, `streamable_http`, `frontend`, and `inline_python`. `sse` may appear in older configs, but is kept only for compatibility.
+Supported extension types are `builtin`, `platform`, `stdio`, and `streamable_http`. SSE is not supported; migrate old SSE configurations to `streamable_http`.
 
 Common extension shapes:
 
@@ -186,14 +187,14 @@ extensions:
 
 ### Tool Filtering
 
-Use the `available_tools` field to limit which tools are loaded from an extension. List the tool names you want — only those will be available to goose. Leave it empty (the default) to load all tools. This can help reduce token overhead in sessions where you only need a subset of an extension's capabilities.
+Use the `available_tools` field to limit which tools are loaded from an extension. List the tool names you want — only those will be available to heybuddy. Leave it empty (the default) to load all tools. This can help reduce token overhead in sessions where you only need a subset of an extension's capabilities.
 
 ## Search Path Configuration
 
-Extensions may need to execute external commands or tools. Goose builds the command search path from any `GOOSE_SEARCH_PATHS` entries, built-in fallback paths, and then your system PATH. You can add additional search directories in your config file:
+Extensions may need to execute external commands or tools. HeyBuddy builds the command search path from any `HEYBUDDY_SEARCH_PATHS` entries, built-in fallback paths, and then your system PATH. You can add additional search directories in your config file:
 
 ```yaml
-GOOSE_SEARCH_PATHS:
+HEYBUDDY_SEARCH_PATHS:
   - "/usr/local/bin"
   - "~/custom/tools"
   - "/opt/homebrew/bin"
@@ -203,7 +204,7 @@ These paths are checked before the built-in fallback paths and system PATH when 
 
 ## Observability Configuration
 
-Configure goose to export telemetry to [OpenTelemetry](https://opentelemetry.io/docs/) compatible platforms. Environment variables override these settings and support additional options like per-signal configuration. See the [environment variables guide](/docs/guides/environment-variables#observability-configuration) for details.
+Configure heybuddy to export telemetry to [OpenTelemetry](https://opentelemetry.io/docs/) compatible platforms. Environment variables override these settings and support additional options like per-signal configuration. See the [environment variables guide](/docs/guides/environment-variables#observability-configuration) for details.
 
 | Setting | Purpose | Values | Default |
 |---------|---------|--------|---------|
@@ -223,7 +224,7 @@ slash_commands:
   - command: "run-tests"
     recipe_path: "/path/to/recipe.yaml"
   - command: "daily-standup"
-    recipe_path: "/Users/me/.local/share/goose/recipes/standup.yaml"
+    recipe_path: "/Users/me/.local/share/heybuddy/recipes/standup.yaml"
 ```
 
 ## Configuration Priority
@@ -237,25 +238,25 @@ Settings are applied in the following order of precedence:
 ## Security Considerations
 
 :::warning Provider API keys do not go in `config.yaml`
-goose does not read provider API keys from `config.yaml`. A key placed there is ignored, which typically surfaces as an authentication failure such as `No api key passed in`. Store the key in the system keyring (via `goose configure`), or—when using file-based secret storage—in `secrets.yaml`. It can also be supplied through the provider's environment variable (for example `OPENAI_API_KEY`), which takes precedence over stored secrets.
+heybuddy does not read provider API keys from `config.yaml`. A key placed there is ignored, which typically surfaces as an authentication failure such as `No api key passed in`. Store the key in the system keyring (via `heybuddy configure`), or—when using file-based secret storage—in `secrets.yaml`. It can also be supplied through the provider's environment variable (for example `OPENAI_API_KEY`), which takes precedence over stored secrets.
 :::
 
 - Avoid storing sensitive information (API keys, tokens) in the config file
 - Use the system keyring (keychain on macOS) for storing secrets. When available, this is the recommended option.
-- If goose is using file-based secret storage, secrets are stored in a separate `secrets.yaml` file (in plain text). This can happen when:
+- If heybuddy is using file-based secret storage, secrets are stored in a separate `secrets.yaml` file (in plain text). This can happen when:
 
   - Your environment does not provide a desktop keyring service (for example: headless servers, CI/CD, containers)
-  - You disable the keyring explicitly (via [GOOSE_DISABLE_KEYRING](/docs/guides/environment-variables#security-and-privacy))
-  - goose cannot access the keyring and falls back to file-based secret storage
+  - You disable the keyring explicitly (via [HEYBUDDY_DISABLE_KEYRING](/docs/guides/environment-variables#security-and-privacy))
+  - heybuddy cannot access the keyring and falls back to file-based secret storage
 
   For troubleshooting keyring failures and automatic fallback behavior, see [Known Issues](/docs/troubleshooting/known-issues#keyring-cannot-be-accessed-automatic-fallback).
 
 ## Updating Configuration
 
-Direct edits to config files usually require restarting goose to take effect for existing sessions. Goose2 provider credential/config saves made through Settings use ACP/core to update storage and refresh provider inventory without restarting the app, but currently active chat sessions continue using the provider instance they started with. You can verify your current configuration using:
+Direct edits to config files usually require restarting heybuddy to take effect for existing sessions. HeyBuddy2 provider credential/config saves made through Settings use ACP/core to update storage and refresh provider inventory without restarting the app, but currently active chat sessions continue using the provider instance they started with. You can verify your current configuration using:
 
 ```bash
-goose info -v
+heybuddy info -v
 ```
 
 This will show all active settings and their current values.

@@ -116,8 +116,8 @@ export type ElectronAPI = {
   } | null>;
   getBinaryPath: (binaryName: string) => Promise<string>;
   selectRecipeFile: () => Promise<FileResponse | null>;
-  readGoosehints: () => Promise<FileResponse>;
-  writeGoosehints: (content: string) => Promise<boolean>;
+  readHeyBuddyhints: () => Promise<FileResponse>;
+  writeHeyBuddyhints: (content: string) => Promise<boolean>;
   writeFile: (directory: string, content: string) => Promise<boolean>;
   ensureDirectory: (dirPath: string) => Promise<boolean>;
   listFiles: (dirPath: string, extension?: string) => Promise<string[]>;
@@ -164,8 +164,8 @@ export type ElectronAPI = {
   hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
   recordRecipeHash: (recipe: Recipe) => Promise<boolean>;
   openDirectoryInExplorer: (directoryPath: string) => Promise<boolean>;
-  launchApp: (app: GooseApp) => Promise<void>;
-  refreshApp: (app: GooseApp) => Promise<void>;
+  launchApp: (app: HeyBuddyApp) => Promise<void>;
+  refreshApp: (app: HeyBuddyApp) => Promise<void>;
   closeApp: (appName: string) => Promise<void>;
   addRecentDir: (dir: string) => Promise<boolean>;
   listRecentDirs: () => Promise<string[]>;
@@ -231,8 +231,8 @@ const electronAPI: ElectronAPI = {
   selectImportSessionFile: () => ipcRenderer.invoke('select-import-session-file'),
   getBinaryPath: (binaryName: string) => ipcRenderer.invoke('get-binary-path', binaryName),
   selectRecipeFile: () => ipcRenderer.invoke('select-recipe-file'),
-  readGoosehints: () => ipcRenderer.invoke('read-goosehints'),
-  writeGoosehints: (content: string) => ipcRenderer.invoke('write-goosehints', content),
+  readHeyBuddyhints: () => ipcRenderer.invoke('read-heybuddyhints'),
+  writeHeyBuddyhints: (content: string) => ipcRenderer.invoke('write-heybuddyhints', content),
   writeFile: (filePath: string, content: string) =>
     ipcRenderer.invoke('write-file', filePath, content),
   ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
@@ -316,7 +316,7 @@ const electronAPI: ElectronAPI = {
     return ipcRenderer.invoke('open-external', url);
   },
   getVersion: (): string => {
-    return config.GOOSE_VERSION || ipcRenderer.sendSync('get-app-version') || '';
+    return config.HEYBUDDY_VERSION || ipcRenderer.sendSync('get-app-version') || '';
   },
   restartApp: (): void => {
     ipcRenderer.send('restart-app');
@@ -328,8 +328,8 @@ const electronAPI: ElectronAPI = {
   recordRecipeHash: (recipe: Recipe) => ipcRenderer.invoke('record-recipe-hash', recipe),
   openDirectoryInExplorer: (directoryPath: string) =>
     ipcRenderer.invoke('open-directory-in-explorer', directoryPath),
-  launchApp: (app: GooseApp) => ipcRenderer.invoke('launch-app', app),
-  refreshApp: (app: GooseApp) => ipcRenderer.invoke('refresh-app', app),
+  launchApp: (app: HeyBuddyApp) => ipcRenderer.invoke('launch-app', app),
+  refreshApp: (app: HeyBuddyApp) => ipcRenderer.invoke('refresh-app', app),
   closeApp: (appName: string) => ipcRenderer.invoke('close-app', appName),
   addRecentDir: (dir: string) => ipcRenderer.invoke('add-recent-dir', dir),
   listRecentDirs: () => ipcRenderer.invoke('list-recent-dirs'),
@@ -356,15 +356,15 @@ const electronAPI: ElectronAPI = {
 
 function getAppLocale(): unknown {
   try {
-    return ipcRenderer.sendSync('get-app-locale') ?? config.GOOSE_LOCALE;
+    return ipcRenderer.sendSync('get-app-locale') ?? config.HEYBUDDY_LOCALE;
   } catch {
-    return config.GOOSE_LOCALE;
+    return config.HEYBUDDY_LOCALE;
   }
 }
 
 const appConfigAPI: AppConfigAPI = {
-  get: (key: string) => (key === 'GOOSE_LOCALE' ? getAppLocale() : config[key]),
-  getAll: () => ({ ...config, GOOSE_LOCALE: getAppLocale() }),
+  get: (key: string) => (key === 'HEYBUDDY_LOCALE' ? getAppLocale() : config[key]),
+  getAll: () => ({ ...config, HEYBUDDY_LOCALE: getAppLocale() }),
 };
 
 // Expose the APIs
