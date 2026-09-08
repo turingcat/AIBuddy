@@ -90,11 +90,14 @@ import { WEB_PROTOCOLS } from './utils/urlSecurity';
 import { openExternalUrl } from './utils/openExternalUrl';
 import { buildCSP } from './utils/csp';
 import { resolveWorkingDir } from './utils/workingDir';
+import { applyLegacyHeyBuddyEnvironment } from './legacyEnv';
 import {
   DesktopFileAccess,
   isAuthorizedFileAccessRequest,
   readSelectedRecipe,
 } from './desktopFileAccess';
+
+applyLegacyHeyBuddyEnvironment(process.env);
 
 // =======================================================================
 // Native menu localization
@@ -2011,8 +2014,7 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
 // @author logic
 // @date 2026-09-02
 type RechargeAuth =
-  | { ok: true; pat: string }
-  | { ok: false; kind: 'not-logged-in' | 'no-pat'; message: string };
+  { ok: true; pat: string } | { ok: false; kind: 'not-logged-in' | 'no-pat'; message: string };
 
 function resolveRechargePat(): RechargeAuth {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
@@ -2047,7 +2049,9 @@ ipcMain.handle(
       createWechatPayOrder(authConfig.apiBaseUrl, auth.pat, amount, net.fetch)
     );
     if (!result.ok) {
-      log.error(`[HeyBuddy] 微信充值下单失败 kind=${result.kind} amount=${amount}: ${result.message}`);
+      log.error(
+        `[HeyBuddy] 微信充值下单失败 kind=${result.kind} amount=${amount}: ${result.message}`
+      );
     }
     return result.ok ? { ok: true, order: result.data } : result;
   }
@@ -3174,7 +3178,9 @@ async function appMain() {
     try {
       const appWindow = appWindows.get(heybuddyApp.name);
       if (!appWindow || appWindow.isDestroyed()) {
-        console.log(`App window for '${heybuddyApp.name}' not found or destroyed, skipping refresh`);
+        console.log(
+          `App window for '${heybuddyApp.name}' not found or destroyed, skipping refresh`
+        );
         return;
       }
 

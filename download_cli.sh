@@ -11,7 +11,7 @@ set -eu
 # Supported Architectures: macOS arm64; Linux arm64/x86_64; Windows x86_64
 #
 # Usage:
-#   curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
+#   curl -fsSL https://github.com/turingcat/HeyBuddy/releases/download/stable/download_cli.sh | bash
 #
 # Environment variables:
 #   HEYBUDDY_BIN_DIR  - Directory to which heybuddy will be installed (default: $HOME/.local/bin)
@@ -54,7 +54,7 @@ fi
 
 
 # --- 2) Variables ---
-REPO="aaif-goose/goose"
+REPO="turingcat/HeyBuddy"
 OUT_FILE="heybuddy"
 
 # Set default bin directory based on detected OS environment
@@ -235,7 +235,7 @@ echo "Downloading $RELEASE_TAG release: $FILE..."
 if ! curl -sLf "$DOWNLOAD_URL" --output "$FILE"; then
   # If the download fails, only fall back to latest stable when no version was specified and canary was not requested).
   if ! [ -n "${HEYBUDDY_VERSION:-}" ] && [ "${CANARY:-false}" != "true" ]; then
-    LATEST_TAG=$(curl -s https://api.github.com/repos/aaif-goose/goose/releases/latest | \
+    LATEST_TAG=$(curl -s https://api.github.com/repos/${REPO}/releases/latest | \
       grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "$LATEST_TAG" ]; then
       echo "Error: Failed to download $DOWNLOAD_URL and latest tag unavailable"

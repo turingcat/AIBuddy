@@ -189,6 +189,27 @@ fn test_custom_get_tools() {
 
 #[test]
 #[serial]
+fn test_legacy_custom_method_namespace() {
+    write_acp_global_config(DEFAULT_ACP_TEST_CONFIG);
+    run_test(async move {
+        let openai = OpenAiFixture::new(vec![], Arc::new(EnforceSessionId::default())).await;
+        let mut conn = AcpServerConnection::new(TestConnectionConfig::default(), openai).await;
+
+        let SessionData { session, .. } = conn.new_session().await.unwrap();
+        let result = send_custom(
+            conn.cx(),
+            "_goose/unstable/tools/list",
+            serde_json::json!({ "sessionId": session.session_id().0 }),
+        )
+        .await
+        .expect("legacy custom method should be routed to the canonical handler");
+
+        assert!(result.get("tools").is_some_and(serde_json::Value::is_array));
+    });
+}
+
+#[test]
+#[serial]
 fn test_custom_get_extensions() {
     let config_key = "test-stdio-acp-mutation-flow";
     let _guard = env_lock::lock_env([("EXTENSIONS", None::<&str>)]);

@@ -1,5 +1,18 @@
-use super::*;
+use std::borrow::Cow;
+
 use heybuddy_acp_macros::custom_methods;
+
+use super::*;
+
+const LEGACY_CUSTOM_METHOD_PREFIX: &str = "_goose/unstable/";
+const CUSTOM_METHOD_PREFIX: &str = "_heybuddy/unstable/";
+
+fn canonical_custom_method(method: &str) -> Cow<'_, str> {
+    match method.strip_prefix(LEGACY_CUSTOM_METHOD_PREFIX) {
+        Some(suffix) => Cow::Owned(format!("{CUSTOM_METHOD_PREFIX}{suffix}")),
+        None => Cow::Borrowed(method),
+    }
+}
 
 #[custom_methods]
 impl HeyBuddyAcpAgent {
@@ -8,6 +21,8 @@ impl HeyBuddyAcpAgent {
         method: &str,
         params: serde_json::Value,
     ) -> Result<serde_json::Value, agent_client_protocol::Error> {
+        let canonical_method = canonical_custom_method(method);
+        let method = canonical_method.as_ref();
         let result = async {
             if <SaveRecipeRequest as agent_client_protocol::JsonRpcMessage>::matches_method(method)
             {

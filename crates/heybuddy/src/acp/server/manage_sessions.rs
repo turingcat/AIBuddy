@@ -295,7 +295,11 @@ impl HeyBuddyAcpAgent {
 }
 
 fn is_nostr_session_link(input: &str) -> bool {
-    input.trim_start().starts_with("heybuddy://sessions/nostr")
+    matches!(
+        input.trim_start(),
+        value if value.starts_with("heybuddy://sessions/nostr")
+            || value.starts_with("goose://sessions/nostr")
+    )
 }
 
 #[cfg(feature = "nostr")]
@@ -344,4 +348,20 @@ struct NostrSessionShare {
     nevent: String,
     event_id: String,
     relays: Vec<String>,
+}
+
+#[cfg(test)]
+mod nostr_link_tests {
+    use super::is_nostr_session_link;
+
+    #[test]
+    fn recognizes_canonical_and_legacy_nostr_links() {
+        assert!(is_nostr_session_link(
+            "heybuddy://sessions/nostr?nevent=abc&key=def"
+        ));
+        assert!(is_nostr_session_link(
+            "  goose://sessions/nostr?nevent=abc&key=def"
+        ));
+        assert!(!is_nostr_session_link("https://example.com/sessions/nostr"));
+    }
 }

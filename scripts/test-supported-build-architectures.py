@@ -115,6 +115,16 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("7z a", workflow)
         self.assertNotIn("HeyBuddy-win32-x64", workflow)
 
+    def test_installers_use_the_heybuddy_release_repository(self) -> None:
+        shell_installer = (ROOT / "download_cli.sh").read_text(encoding="utf-8")
+        powershell_installer = (ROOT / "download_cli.ps1").read_text(encoding="utf-8")
+
+        self.assertIn('REPO="turingcat/HeyBuddy"', shell_installer)
+        self.assertIn('$REPO = "turingcat/HeyBuddy"', powershell_installer)
+        self.assertIn("https://api.github.com/repos/${REPO}/releases/latest", shell_installer)
+        self.assertNotIn("aaif-goose/goose/releases", shell_installer)
+        self.assertNotIn("aaif-goose/goose/releases", powershell_installer)
+
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(
             (ROOT / "ui/heybuddy-binary/heybuddy-binary-darwin-x64/package.json").exists()

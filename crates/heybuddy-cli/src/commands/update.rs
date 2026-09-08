@@ -82,6 +82,18 @@ struct AttestationEntry {
 }
 
 const GITHUB_ACTIONS_ISSUER: &str = "https://token.actions.githubusercontent.com";
+const RELEASE_REPOSITORY: &str = "turingcat/HeyBuddy";
+
+fn attestation_url(digest: &str) -> String {
+    format!(
+        "https://api.github.com/repos/{RELEASE_REPOSITORY}/attestations/sha256:{digest}\
+         ?per_page=30&predicate_type=https://slsa.dev/provenance/v1"
+    )
+}
+
+fn release_download_url(tag: &str, asset: &str) -> String {
+    format!("https://github.com/{RELEASE_REPOSITORY}/releases/download/{tag}/{asset}")
+}
 
 fn sanitized_token(token: Option<&str>) -> Option<&str> {
     token.map(str::trim).filter(|tok| !tok.is_empty())
@@ -110,10 +122,7 @@ fn should_retry_attestations_without_token(status: StatusCode, token: Option<&st
 }
 
 async fn fetch_attestations(digest: &str, token: Option<&str>) -> Result<Vec<serde_json::Value>> {
-    let url = format!(
-        "https://api.github.com/repos/aaif-goose/goose/attestations/sha256:{digest}\
-         ?per_page=30&predicate_type=https://slsa.dev/provenance/v1"
-    );
+    let url = attestation_url(digest);
 
     let client = reqwest::Client::new();
     let token = sanitized_token(token);
@@ -298,7 +307,7 @@ pub async fn update(canary: bool, reconfigure: bool) -> Result<()> {
     {
         let tag = if canary { "canary" } else { "stable" };
         let asset = asset_name();
-        let url = format!("https://github.com/aaif-goose/goose/releases/download/{tag}/{asset}");
+        let url = release_download_url(tag, asset);
 
         println!("Downloading {asset} from {tag} release...");
 
@@ -625,6 +634,18 @@ fn copy_dlls(extracted_binary: &Path, current_exe: &Path) -> Result<()> {
 mod tests {
     use super::*;
     use tempfile::tempdir;
+
+    #[test]
+    fn release_urls_use_the_heybuddy_repository() {
+        assert_eq!(
+            release_download_url("stable", "heybuddy-aarch64-apple-darwin.tar.bz2"),
+            "https://github.com/turingcat/HeyBuddy/releases/download/stable/heybuddy-aarch64-apple-darwin.tar.bz2"
+        );
+        assert_eq!(
+            attestation_url("abc123"),
+            "https://api.github.com/repos/turingcat/HeyBuddy/attestations/sha256:abc123?per_page=30&predicate_type=https://slsa.dev/provenance/v1"
+        );
+    }
 
     #[test]
     fn test_asset_name_valid() {
