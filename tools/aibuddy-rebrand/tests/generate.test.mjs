@@ -158,7 +158,7 @@ function createOutputLocation(label) {
   };
 }
 
-test('plans bounded blob batches with per-batch deduplication and actionable oversize errors', () => {
+test('plans bounded blob batches with per-batch deduplication and standalone oversized blobs', () => {
   const objectA = 'a'.repeat(40);
   const objectB = 'b'.repeat(40);
   const entries = [
@@ -183,11 +183,15 @@ test('plans bounded blob batches with per-batch deduplication and actionable ove
     ],
   );
 
-  assert.throws(
-    () => planBlobBatches([
-      { gitType: 'blob', objectId: objectA, path: 'large.bin', size: 20 * 1024 * 1024 },
-    ], { maxBytes: 16 * 1024 * 1024 }),
-    /large\.bin.*20971520 bytes.*16777216 bytes/i,
+  const largeEntry = {
+    gitType: 'blob',
+    objectId: objectA,
+    path: 'large.bin',
+    size: 20 * 1024 * 1024,
+  };
+  assert.deepEqual(
+    planBlobBatches([largeEntry], { maxBytes: 16 * 1024 * 1024 }),
+    [{ entries: [largeEntry], expectedSize: largeEntry.size, objectIds: [objectA] }],
   );
 });
 

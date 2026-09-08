@@ -297,12 +297,6 @@ function nextBlobBatch(entries, start, maxBytes, maxObjects) {
       if (!Number.isSafeInteger(entry.size) || entry.size < 0) {
         throw new Error(`git ls-tree returned an invalid blob size for ${entry.path}`);
       }
-      if (entry.size > maxBytes && batch.length === 0) {
-        throw new Error(
-          `blob ${entry.path} is ${entry.size} bytes, exceeding the bounded read batch limit of `
-          + `${maxBytes} bytes; split the blob or increase the configured limit`,
-        );
-      }
       if (batch.length > 0 && expectedSize + entry.size > maxBytes) {
         break;
       }
@@ -342,15 +336,20 @@ export function planBlobBatches(
   return batches;
 }
 
-function readBlobBatch(cwd, objectIds) {
+function readBlobBatch(cwd, objectIds, expectedSize = 0) {
   if (objectIds.length === 0) {
     return new Map();
+  }
+  const input = Buffer.from(`${objectIds.join('\n')}\n`, 'ascii');
+  const outputBuffer = expectedSize + objectIds.length * 128 + input.length + 1;
+  if (!Number.isSafeInteger(outputBuffer)) {
+    throw new Error('git cat-file batch is too large to read safely');
   }
   const output = runGit(
     cwd,
     ['cat-file', '--batch'],
-    Buffer.from(`${objectIds.join('\n')}\n`, 'ascii'),
-    GIT_BATCH_MAX_BUFFER,
+    input,
+    Math.max(GIT_BATCH_MAX_BUFFER, outputBuffer),
   );
   const blobs = new Map();
   let offset = 0;
@@ -505,7 +504,7 @@ function readGitEntries(cwd, source) {
 
   const blobs = new Map();
   for (const batch of planBlobBatches(rawEntries)) {
-    const batchBlobs = readBlobBatch(cwd, batch.objectIds);
+    const batchBlobs = readBlobBatch(cwd, batch.objectIds, batch.expectedSize);
     for (const [objectId, content] of batchBlobs) {
       blobs.set(objectId, content);
     }
