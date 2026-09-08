@@ -1,0 +1,90 @@
+import fs from 'fs';
+import path from 'path';
+import { app } from 'electron';
+
+function getRecentDirsFile(): string {
+  return path.join(app.getPath('userData'), 'recent-dirs.json');
+}
+const MAX_RECENT_DIRS = 10;
+
+interface RecentDirs {
+  dirs: string[];
+}
+
+export function loadRecentDirs(): string[] {
+  const recentDirsFile = getRecentDirsFile();
+  try {
+    if (fs.existsSync(recentDirsFile)) {
+      const data = fs.readFileSync(recentDirsFile, 'utf8');
+      const recentDirs: RecentDirs = JSON.parse(data);
+
+      // Filter out invalid directories (nonexistent or not directories)
+      const validDirs = recentDirs.dirs.filter((dir) => {
+        try {
+          // Use lstat to detect symlinks and validate path structure
+          const stats = fs.lstatSync(dir);
+
+          // Reject symlinks for security
+          if (stats.isSymbolicLink()) {
+            console.warn(
+              `Removing symlink from recent directories for security: ${path.basename(dir)}`
+            );
+            return false;
+          }
+
+          return stats.isDirectory();
+        } catch {
+          // Directory doesn't exist or can't be accessed - don't log full path for security
+          console.warn(`Removing inaccessible recent directory`);
+          return false;
+        }
+      });
+
+      // Save the cleaned list back if it changed
+      if (validDirs.length !== recentDirs.dirs.length) {
+        fs.writeFileSync(recentDirsFile, JSON.stringify({ dirs: validDirs }, null, 2));
+      }
+
+      return validDirs;
+    }
+  } catch (error) {
+    console.error('Error loading recent directories:', error);
+  }
+  return [];
+}
+
+export function addRecentDir(dir: string): void {
+  const recentDirsFile = getRecentDirsFile();
+  try {
+    // Validate that the path is actually a directory before adding it
+    try {
+      const stats = fs.lstatSync(dir);
+
+      // Reject symlinks for security
+      if (stats.isSymbolicLink()) {
+        console.warn(`Cannot add recent directory: symlinks not allowed for security`);
+        return;
+      }
+
+      if (!stats.isDirectory()) {
+        console.warn(`Cannot add recent directory: not a directory`);
+        return;
+      }
+    } catch {
+      console.warn(`Cannot add recent directory: path does not exist or cannot be accessed`);
+      return;
+    }
+
+    let dirs = loadRecentDirs();
+    // Remove the directory if it already exists
+    dirs = dirs.filter((d) => d !== dir);
+    // Add the new directory at the beginning
+    dirs.unshift(dir);
+    // Keep only the most recent MAX_RECENT_DIRS
+    dirs = dirs.slice(0, MAX_RECENT_DIRS);
+
+    fs.writeFileSync(recentDirsFile, JSON.stringify({ dirs }, null, 2));
+  } catch (error) {
+    console.error('Error saving recent directory:', error);
+  }
+}

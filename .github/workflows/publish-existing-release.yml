@@ -1,0 +1,78 @@
+name: Publish Existing Release Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing release tag to publish
+        required: true
+        type: string
+      source_run_id:
+        description: Successful Release workflow run containing the artifacts
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$SOURCE_RUN_ID" =~ ^[0-9]+$ ]]
+
+      - name: Checkout release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
+
+      - name: Create source code bundles
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          git archive --format=tar.gz --prefix="aibuddy-${RELEASE_TAG}/" --output="aibuddy-source-${RELEASE_TAG}.tar.gz" HEAD
+          git archive --format=zip --prefix="aibuddy-${RELEASE_TAG}/" --output="aibuddy-source-${RELEASE_TAG}.zip" HEAD
+
+      - name: Download release artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+          pattern: '!internal-*'
+          merge-multiple: true
+
+      - name: Publish versioned release
+        uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd  # v1.21.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ inputs.release_tag }}
+          name: AIBuddy ${{ inputs.release_tag }}
+          artifacts: |
+            aibuddy-*.tar.bz2
+            aibuddy-*.tar.gz
+            aibuddy-*.zip
+            AIBuddy*.zip
+            AIBuddy-windows-*-setup.exe
+            download_cli.sh
+          allowUpdates: true
+          omitBody: true
+          prerelease: false
+
+      - name: Upload Windows installers to COS
+        shell: bash
+        env:
+          TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+        run: bash .github/scripts/upload-windows-installers-to-cos.sh

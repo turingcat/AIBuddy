@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=AIBuddy
+Exec=/usr/lib/AIBuddy/AIBuddy %U
+Icon=/usr/share/pixmaps/AIBuddy.png
+Terminal=false
+Type=Application
+Categories=Development;
+MimeType=x-scheme-handler/aibuddy;

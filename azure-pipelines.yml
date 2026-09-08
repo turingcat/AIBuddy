@@ -1,0 +1,66 @@
+# Windows CI on Azure Pipelines for the private GitHub repository.
+# Uses Microsoft-hosted Windows agents and does not consume GitHub Actions minutes.
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - .cargo/**
+      - crates/**
+      - azure-pipelines.yml
+
+pr:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - Cargo.toml
+      - Cargo.lock
+      - rust-toolchain.toml
+      - .cargo/**
+      - crates/**
+      - azure-pipelines.yml
+
+pool:
+  vmImage: windows-2022
+
+steps:
+  - checkout: self
+    clean: true
+    fetchDepth: 1
+
+  - powershell: |
+      Write-Host "Agent OS: $env:AGENT_OS"
+      Write-Host "Architecture: $env:PROCESSOR_ARCHITECTURE"
+      rustup show
+      rustup target add x86_64-pc-windows-msvc
+    displayName: Prepare Windows Rust toolchain
+
+  - task: Cache@2
+    displayName: Cache Cargo registry and Git dependencies
+    inputs:
+      key: 'cargo | "$(Agent.OS)" | Cargo.lock'
+      restoreKeys: |
+        cargo | "$(Agent.OS)"
+      path: $(UserProfile)\.cargo
+
+  - powershell: |
+      $env:CARGO_INCREMENTAL = "0"
+      cargo build --locked -p aibuddy-cli --bin aibuddy --target x86_64-pc-windows-msvc
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      $binary = "target\x86_64-pc-windows-msvc\debug\aibuddy.exe"
+      if (-not (Test-Path $binary)) { throw "Windows binary not found: $binary" }
+      New-Item -ItemType Directory -Force "$(Build.ArtifactStagingDirectory)\windows-x64" | Out-Null
+      Copy-Item $binary "$(Build.ArtifactStagingDirectory)\windows-x64\aibuddy.exe"
+    displayName: Build Windows x64 CLI
+
+  - publish: $(Build.ArtifactStagingDirectory)\windows-x64
+    artifact: AIBuddy-windows-x64
+    displayName: Publish Windows artifact

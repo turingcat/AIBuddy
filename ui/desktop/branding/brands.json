@@ -1,0 +1,15 @@
+{
+  "aibuddy": {
+    "edition": "aibuddy",
+    "productName": "AIBuddy",
+    "bundleId": "com.electron.aibuddy",
+    "protocol": "aibuddy",
+    "protocolName": "AIBuddyProtocol",
+    "windowsAppId": "{FDA43817-EFCC-42D0-AB69-D414B629E300}",
+    "executableName": "AIBuddy",
+    "artifactStem": "AIBuddy",
+    "iconStem": "icon",
+    "authMode": "oa",
+    "authApiBaseUrl": "https://ai.linyeyun.cn"
+  }
+}

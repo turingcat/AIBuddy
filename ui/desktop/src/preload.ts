@@ -1,0 +1,379 @@
+import Electron, { contextBridge, ipcRenderer, webUtils } from 'electron';
+import { Recipe } from './recipe';
+import type { LoginCredentials } from './credentials';
+import type { OaLoginResult } from './oaLogin';
+import type { BalanceResult } from './balance';
+import type {
+  TopupInfoResult,
+  WechatPayOrderResult,
+  WechatPayOrderStatusResult,
+} from './recharge';
+import type { AIBuddyApp } from './types/apps';
+import type { Settings, SettingKey } from './utils/settings';
+import { defaultSettings } from './utils/settings';
+import type { OpenExternalUrlResult } from './utils/urlSecurity';
+
+// Mapping from settings keys to their old localStorage keys for lazy migration
+const localStorageKeyMap: Partial<Record<SettingKey, string>> = {
+  theme: 'theme',
+  useSystemTheme: 'use_system_theme',
+  responseStyle: 'response_style',
+  seenAnnouncementIds: 'seenAnnouncementIds',
+};
+
+// Parse localStorage value based on the setting key
+function parseLocalStorageValue<K extends SettingKey>(
+  key: K,
+  rawValue: string
+): Settings[K] | null {
+  try {
+    switch (key) {
+      case 'theme':
+        return (rawValue === 'dark' || rawValue === 'light' ? rawValue : null) as Settings[K];
+      case 'useSystemTheme':
+        return (rawValue === 'true') as unknown as Settings[K];
+      case 'responseStyle':
+        return rawValue as Settings[K];
+      case 'seenAnnouncementIds':
+        return JSON.parse(rawValue) as Settings[K];
+      default:
+        return null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+interface NotificationData {
+  title: string;
+  body: string;
+}
+
+interface MessageBoxOptions {
+  type?: 'none' | 'info' | 'error' | 'question' | 'warning';
+  buttons?: string[];
+  defaultId?: number;
+  title?: string;
+  message: string;
+  detail?: string;
+}
+
+interface MessageBoxResponse {
+  response: number;
+  checkboxChecked?: boolean;
+}
+
+interface SaveDialogOptions {
+  title?: string;
+  defaultPath?: string;
+  buttonLabel?: string;
+  filters?: Array<{ name: string; extensions: string[] }>;
+  message?: string;
+  nameFieldLabel?: string;
+  showsTagField?: boolean;
+}
+
+interface SaveDialogResponse {
+  canceled: boolean;
+  filePath?: string;
+}
+
+interface FileResponse {
+  file: string;
+  filePath: string;
+  error: string | null;
+  found: boolean;
+}
+
+const config = JSON.parse(process.argv.find((arg) => arg.startsWith('{')) || '{}');
+
+export interface CreateChatWindowOptions {
+  query?: string;
+  dir?: string;
+  version?: string;
+  resumeSessionId?: string;
+  viewType?: string;
+  recipeId?: string;
+}
+
+// Define the API types in a single place
+export type ElectronAPI = {
+  platform: string;
+  arch: string;
+  reactReady: () => void;
+  getConfig: () => Record<string, unknown>;
+  hideWindow: () => void;
+  directoryChooser: () => Promise<Electron.OpenDialogReturnValue>;
+  createChatWindow: (options?: CreateChatWindowOptions) => void;
+  logInfo: (txt: string) => void;
+  showNotification: (data: NotificationData) => void;
+  showMessageBox: (options: MessageBoxOptions) => Promise<MessageBoxResponse>;
+  showSaveDialog: (options: SaveDialogOptions) => Promise<SaveDialogResponse>;
+  openInChrome: (url: string) => void;
+  reloadApp: () => void;
+  checkForOllama: () => Promise<boolean>;
+  selectFileOrDirectory: (defaultPath?: string) => Promise<string | null>;
+  selectImportSessionFile: () => Promise<{
+    filePath: string;
+    contents: string;
+    error?: string;
+  } | null>;
+  getBinaryPath: (binaryName: string) => Promise<string>;
+  selectRecipeFile: () => Promise<FileResponse | null>;
+  readAIBuddyhints: () => Promise<FileResponse>;
+  writeAIBuddyhints: (content: string) => Promise<boolean>;
+  writeFile: (directory: string, content: string) => Promise<boolean>;
+  ensureDirectory: (dirPath: string) => Promise<boolean>;
+  listFiles: (dirPath: string, extension?: string) => Promise<string[]>;
+  getAllowedExtensions: () => Promise<string[]>;
+  getPathForFile: (file: File) => string;
+  setMenuBarIcon: (show: boolean) => Promise<boolean>;
+  getMenuBarIconState: () => Promise<boolean>;
+  setDockIcon: (show: boolean) => Promise<boolean>;
+  getDockIconState: () => Promise<boolean>;
+  getSetting: <K extends SettingKey>(key: K) => Promise<Settings[K]>;
+  setSetting: <K extends SettingKey>(key: K, value: Settings[K]) => Promise<void>;
+  getSecretKey: () => Promise<string | null>;
+  getAcpUrl: () => Promise<string | null>;
+  setWakelock: (enable: boolean) => Promise<boolean>;
+  getWakelockState: () => Promise<boolean>;
+  setSpellcheck: (enable: boolean) => Promise<boolean>;
+  getSpellcheckState: () => Promise<boolean>;
+  openNotificationsSettings: () => Promise<boolean>;
+  isAnyWindowFocused: () => Promise<boolean>;
+  getIsFullScreen: () => Promise<boolean>;
+  onMouseBackButtonClicked: (callback: () => void) => void;
+  offMouseBackButtonClicked: (callback: () => void) => void;
+  on: (
+    channel: string,
+    callback: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+  ) => void;
+  off: (
+    channel: string,
+    callback: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+  ) => void;
+  emit: (channel: string, ...args: unknown[]) => void;
+  broadcastThemeChange: (themeData: {
+    mode: string;
+    useSystemTheme: boolean;
+    theme: string;
+    tokensUpdated?: boolean;
+  }) => void;
+  openExternal: (url: string) => Promise<OpenExternalUrlResult>;
+  getVersion: () => string;
+  restartApp: () => void;
+  refreshAuthSession: () => Promise<void>;
+  // Recipe warning functions
+  closeWindow: () => void;
+  hasAcceptedRecipeBefore: (recipe: Recipe) => Promise<boolean>;
+  recordRecipeHash: (recipe: Recipe) => Promise<boolean>;
+  openDirectoryInExplorer: (directoryPath: string) => Promise<boolean>;
+  launchApp: (app: AIBuddyApp) => Promise<void>;
+  refreshApp: (app: AIBuddyApp) => Promise<void>;
+  closeApp: (appName: string) => Promise<void>;
+  addRecentDir: (dir: string) => Promise<boolean>;
+  listRecentDirs: () => Promise<string[]>;
+  listGitWorktreeDirs: (dir: string) => Promise<string[]>;
+  getLoginCredentials: () => Promise<LoginCredentials | null>;
+  isLoggedIn: () => Promise<boolean>;
+  setLoginCredentials: (creds: LoginCredentials) => Promise<void>;
+  clearLoginCredentials: () => Promise<void>;
+  loginViaOA: (loginName: string, password: string) => Promise<OaLoginResult>;
+  getUserBalance: () => Promise<BalanceResult>;
+  getTopupInfo: () => Promise<TopupInfoResult>;
+  createWechatPayOrder: (amount: number) => Promise<WechatPayOrderResult>;
+  getWechatPayOrderStatus: (tradeNo: string) => Promise<WechatPayOrderStatusResult>;
+  listModelsViaApi: () => Promise<
+    {
+      id: string;
+      name: string;
+      contextLimit: number | null;
+      reasoning: boolean | null;
+      providerId?: string;
+    }[]
+  >;
+  getGitBranchInfo: (dir: string) => Promise<{ branch: string } | null>;
+  listGitBranches: (dir: string) => Promise<string[]>;
+  switchGitBranch: (dir: string, branch: string) => Promise<{ success: boolean; error?: string }>;
+};
+
+type AppConfigAPI = {
+  get: (key: string) => unknown;
+  getAll: () => Record<string, unknown>;
+};
+
+const electronAPI: ElectronAPI = {
+  platform: process.platform,
+  arch: process.arch,
+  reactReady: () => ipcRenderer.send('react-ready'),
+  getConfig: () => {
+    if (!config || Object.keys(config).length === 0) {
+      console.warn(
+        'No config provided by main process. This may indicate an initialization issue.'
+      );
+    }
+    return config;
+  },
+  hideWindow: () => ipcRenderer.send('hide-window'),
+  directoryChooser: () => ipcRenderer.invoke('directory-chooser'),
+  createChatWindow: (options?: CreateChatWindowOptions) =>
+    ipcRenderer.send('create-chat-window', options || {}),
+  logInfo: (txt: string) => ipcRenderer.send('logInfo', txt),
+  showNotification: (data: NotificationData) => ipcRenderer.send('notify', data),
+  showMessageBox: (options: MessageBoxOptions) => ipcRenderer.invoke('show-message-box', options),
+  showSaveDialog: (options: SaveDialogOptions) => ipcRenderer.invoke('show-save-dialog', options),
+  openInChrome: (url: string) => ipcRenderer.send('open-in-chrome', url),
+  reloadApp: () => ipcRenderer.send('reload-app'),
+  checkForOllama: () => ipcRenderer.invoke('check-ollama'),
+
+  selectFileOrDirectory: (defaultPath?: string) =>
+    ipcRenderer.invoke('select-file-or-directory', defaultPath),
+  selectImportSessionFile: () => ipcRenderer.invoke('select-import-session-file'),
+  getBinaryPath: (binaryName: string) => ipcRenderer.invoke('get-binary-path', binaryName),
+  selectRecipeFile: () => ipcRenderer.invoke('select-recipe-file'),
+  readAIBuddyhints: () => ipcRenderer.invoke('read-aibuddyhints'),
+  writeAIBuddyhints: (content: string) => ipcRenderer.invoke('write-aibuddyhints', content),
+  writeFile: (filePath: string, content: string) =>
+    ipcRenderer.invoke('write-file', filePath, content),
+  ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
+  listFiles: (dirPath: string, extension?: string) =>
+    ipcRenderer.invoke('list-files', dirPath, extension),
+  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  getAllowedExtensions: () => ipcRenderer.invoke('get-allowed-extensions'),
+  setMenuBarIcon: (show: boolean) => ipcRenderer.invoke('set-menu-bar-icon', show),
+  getMenuBarIconState: () => ipcRenderer.invoke('get-menu-bar-icon-state'),
+  setDockIcon: (show: boolean) => ipcRenderer.invoke('set-dock-icon', show),
+  getDockIconState: () => ipcRenderer.invoke('get-dock-icon-state'),
+  getSetting: async <K extends SettingKey>(key: K): Promise<Settings[K]> => {
+    try {
+      // Check for localStorage value first (lazy migration)
+      const localStorageKey = localStorageKeyMap[key];
+      if (localStorageKey) {
+        const rawValue = localStorage.getItem(localStorageKey);
+        if (rawValue !== null) {
+          const parsed = parseLocalStorageValue(key, rawValue);
+          if (parsed !== null) {
+            return parsed;
+          }
+        }
+      }
+      return await ipcRenderer.invoke('get-setting', key);
+    } catch (error) {
+      console.error(`Failed to get setting '${key}', using default`, error);
+      return defaultSettings[key];
+    }
+  },
+  setSetting: async <K extends SettingKey>(key: K, value: Settings[K]): Promise<void> => {
+    // Clear any localStorage version when writing
+    const localStorageKey = localStorageKeyMap[key];
+    if (localStorageKey) {
+      localStorage.removeItem(localStorageKey);
+    }
+    return ipcRenderer.invoke('set-setting', key, value);
+  },
+  getSecretKey: () => ipcRenderer.invoke('get-secret-key'),
+  getAcpUrl: () => ipcRenderer.invoke('get-acp-url'),
+  setWakelock: (enable: boolean) => ipcRenderer.invoke('set-wakelock', enable),
+  getWakelockState: () => ipcRenderer.invoke('get-wakelock-state'),
+  setSpellcheck: (enable: boolean) => ipcRenderer.invoke('set-spellcheck', enable),
+  getSpellcheckState: () => ipcRenderer.invoke('get-spellcheck-state'),
+  openNotificationsSettings: () => ipcRenderer.invoke('open-notifications-settings'),
+  isAnyWindowFocused: () => ipcRenderer.invoke('is-any-window-focused'),
+  getIsFullScreen: () => ipcRenderer.invoke('get-is-fullscreen'),
+  onMouseBackButtonClicked: (callback: () => void) => {
+    // Wrapper that ignores the event parameter.
+    const wrappedCallback = (_event: Electron.IpcRendererEvent) => callback();
+    ipcRenderer.on('mouse-back-button-clicked', wrappedCallback);
+    return wrappedCallback;
+  },
+  offMouseBackButtonClicked: (callback: () => void) => {
+    ipcRenderer.removeListener('mouse-back-button-clicked', callback);
+  },
+  on: (
+    channel: string,
+    callback: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+  ) => {
+    ipcRenderer.on(channel, callback);
+  },
+  off: (
+    channel: string,
+    callback: (event: Electron.IpcRendererEvent, ...args: unknown[]) => void
+  ) => {
+    ipcRenderer.off(channel, callback);
+  },
+  emit: (channel: string, ...args: unknown[]) => {
+    ipcRenderer.emit(channel, ...args);
+  },
+  broadcastThemeChange: (themeData: {
+    mode: string;
+    useSystemTheme: boolean;
+    theme: string;
+    tokensUpdated?: boolean;
+  }) => {
+    ipcRenderer.send('broadcast-theme-change', themeData);
+  },
+  openExternal: (url: string): Promise<OpenExternalUrlResult> => {
+    return ipcRenderer.invoke('open-external', url);
+  },
+  getVersion: (): string => {
+    return config.AIBUDDY_VERSION || ipcRenderer.sendSync('get-app-version') || '';
+  },
+  restartApp: (): void => {
+    ipcRenderer.send('restart-app');
+  },
+  refreshAuthSession: () => ipcRenderer.invoke('refresh-auth-session'),
+  closeWindow: () => ipcRenderer.send('close-window'),
+  hasAcceptedRecipeBefore: (recipe: Recipe) =>
+    ipcRenderer.invoke('has-accepted-recipe-before', recipe),
+  recordRecipeHash: (recipe: Recipe) => ipcRenderer.invoke('record-recipe-hash', recipe),
+  openDirectoryInExplorer: (directoryPath: string) =>
+    ipcRenderer.invoke('open-directory-in-explorer', directoryPath),
+  launchApp: (app: AIBuddyApp) => ipcRenderer.invoke('launch-app', app),
+  refreshApp: (app: AIBuddyApp) => ipcRenderer.invoke('refresh-app', app),
+  closeApp: (appName: string) => ipcRenderer.invoke('close-app', appName),
+  addRecentDir: (dir: string) => ipcRenderer.invoke('add-recent-dir', dir),
+  listRecentDirs: () => ipcRenderer.invoke('list-recent-dirs'),
+  listGitWorktreeDirs: (dir: string) => ipcRenderer.invoke('list-git-worktree-dirs', dir),
+  getLoginCredentials: () => ipcRenderer.invoke('get-login-credentials'),
+  isLoggedIn: () => ipcRenderer.invoke('is-logged-in'),
+  setLoginCredentials: (creds: LoginCredentials) =>
+    ipcRenderer.invoke('set-login-credentials', creds),
+  clearLoginCredentials: () => ipcRenderer.invoke('clear-login-credentials'),
+  loginViaOA: (loginName: string, password: string) =>
+    ipcRenderer.invoke('login-via-oa', loginName, password),
+  getUserBalance: () => ipcRenderer.invoke('get-user-balance'),
+  getTopupInfo: () => ipcRenderer.invoke('get-topup-info'),
+  createWechatPayOrder: (amount: number) => ipcRenderer.invoke('create-wechat-pay-order', amount),
+  getWechatPayOrderStatus: (tradeNo: string) =>
+    ipcRenderer.invoke('get-wechat-pay-order-status', tradeNo),
+  listModelsViaApi: () => ipcRenderer.invoke('list-models-via-api'),
+  getGitBranchInfo: (dir: string) => ipcRenderer.invoke('get-git-branch-info', dir),
+  listGitBranches: (dir: string) => ipcRenderer.invoke('list-git-branches', dir),
+  switchGitBranch: (dir: string, branch: string) =>
+    ipcRenderer.invoke('switch-git-branch', dir, branch),
+};
+
+function getAppLocale(): unknown {
+  try {
+    return ipcRenderer.sendSync('get-app-locale') ?? config.AIBUDDY_LOCALE;
+  } catch {
+    return config.AIBUDDY_LOCALE;
+  }
+}
+
+const appConfigAPI: AppConfigAPI = {
+  get: (key: string) => (key === 'AIBUDDY_LOCALE' ? getAppLocale() : config[key]),
+  getAll: () => ({ ...config, AIBUDDY_LOCALE: getAppLocale() }),
+};
+
+// Expose the APIs
+contextBridge.exposeInMainWorld('electron', electronAPI);
+contextBridge.exposeInMainWorld('appConfig', appConfigAPI);
+
+// Type declaration for TypeScript
+declare global {
+  interface Window {
+    electron: ElectronAPI;
+    appConfig: AppConfigAPI;
+  }
+}

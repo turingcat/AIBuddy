@@ -1,0 +1,21 @@
+{
+  "name": "aibuddy",
+  "engine": "openai",
+  "display_name": "AIBuddy",
+  "description": "AIBuddy gateway. base_url and API key are injected at runtime after login.",
+  "api_key_env": "AIBUDDY_API_KEY",
+  "base_url": "${AIBUDDY_BASE_URL}",
+  "env_vars": [
+    {
+      "name": "AIBUDDY_BASE_URL",
+      "required": true,
+      "secret": false,
+      "description": "AIBuddy gateway base URL, injected after login."
+    }
+  ],
+  "dynamic_models": true,
+  "models": [],
+  "skip_canonical_filtering": true,
+  "preserves_thinking": true,
+  "supports_streaming": true
+}

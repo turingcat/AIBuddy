@@ -1,0 +1,56 @@
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import type { Message } from '../types/message';
+import AIBuddyMessage from './AIBuddyMessage';
+import { deriveMessageRowContexts } from './messageRowContext';
+
+vi.mock('./ToolCallWithResponse', () => ({
+  default: ({ isCancelledMessage }: { isCancelledMessage: boolean }) => (
+    <div data-testid="tool-call" data-cancelled={String(isCancelledMessage)} />
+  ),
+}));
+
+const toolRequestMessage: Message = {
+  id: 'assistant-tool-request',
+  role: 'assistant',
+  created: 1,
+  metadata: { agentVisible: true, userVisible: true },
+  content: [
+    {
+      type: 'toolRequest',
+      id: 'tool-1',
+      toolCall: {
+        status: 'success',
+        value: {
+          name: 'developer__shell',
+          arguments: { command: 'build' },
+        },
+      },
+    },
+  ],
+};
+
+const laterUserMessage: Message = {
+  id: 'later-user-message',
+  role: 'user',
+  created: 2,
+  metadata: { agentVisible: true, userVisible: true },
+  content: [{ type: 'text', text: 'continue' }],
+};
+
+describe('AIBuddyMessage', () => {
+  it('marks an older unmatched tool request as cancelled', () => {
+    render(
+      <AIBuddyMessage
+        sessionId="session-1"
+        message={toolRequestMessage}
+        {...deriveMessageRowContexts([toolRequestMessage, laterUserMessage])[0]}
+        toolNotifications={[]}
+        append={vi.fn()}
+        isStreaming={false}
+      />
+    );
+
+    expect(screen.getByTestId('tool-call')).toHaveAttribute('data-cancelled', 'true');
+  });
+});
