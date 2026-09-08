@@ -6,7 +6,7 @@ Create a downloadable Windows x32 portable ZIP from the successful installer art
 
 ## Workflow
 
-Add a manually dispatched workflow that accepts a source run ID, source artifact name, architecture, and retention period. It downloads the existing Actions artifact with the repository `GITHUB_TOKEN`, runs the installer silently into an isolated staging directory on a Windows runner, removes the generated uninstaller, and archives the staged application contents at the ZIP root.
+Add a manually dispatched workflow that accepts a source run ID, source artifact name, architecture, and retention period. It downloads the existing Actions artifact with the repository `GITHUB_TOKEN`, builds the pending upstream `innoextract` support for Inno Setup 6.4.2 through 7.0.2 from pinned commit `376a13e7c41cc5528b6088d0dd16ec1b323a8d37`, extracts the installer payload, and archives the extracted application contents at the ZIP root.
 
 The initial dispatch uses:
 
@@ -18,7 +18,7 @@ The initial dispatch uses:
 
 ## Validation
 
-The workflow fails unless both `HeyBuddy.exe` and `resources/bin/goose.exe` exist. It reads the PE headers directly and requires both Machine fields to equal `0x014c` for x32 or `0x8664` for x64. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
+The workflow fails unless both `HeyBuddy.exe` and `resources/bin/goose.exe` exist. For x32, `file` must identify both executables as `PE32` and must not identify either as `PE32+`; x64 requires `PE32+`. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
 
 ## Scope
 

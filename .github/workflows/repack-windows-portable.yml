@@ -34,7 +34,7 @@ permissions:
 jobs:
   repack:
     name: Repack Windows ${{ inputs.architecture }} portable
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Download installer artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
@@ -45,85 +45,99 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ inputs.source_run_id }}
 
-      - name: Stage and validate portable files
-        shell: pwsh
+      - name: Build Inno Setup extractor
+        shell: bash
+        env:
+          INNOEXTRACT_COMMIT: 376a13e7c41cc5528b6088d0dd16ec1b323a8d37
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes \
+            cmake \
+            g++ \
+            libboost-date-time-dev \
+            libboost-filesystem-dev \
+            libboost-iostreams-dev \
+            libboost-program-options-dev \
+            libboost-system-dev \
+            libbz2-dev \
+            liblzma-dev \
+            zlib1g-dev
+
+          git init innoextract-src
+          git -C innoextract-src remote add origin https://github.com/dscho/innoextract.git
+          git -C innoextract-src fetch --depth=1 origin "$INNOEXTRACT_COMMIT"
+          git -C innoextract-src checkout --detach FETCH_HEAD
+
+          cmake \
+            -S innoextract-src \
+            -B innoextract-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DUSE_LTO=OFF
+          cmake --build innoextract-build --parallel 2
+
+          extractor="$(find innoextract-build -type f -name innoextract -perm -111 -print -quit)"
+          test -n "$extractor"
+          echo "INNOEXTRACT=$extractor" >> "$GITHUB_ENV"
+          "$extractor" --version
+
+      - name: Extract and validate installer
+        shell: bash
         env:
           ARCHITECTURE: ${{ inputs.architecture }}
         run: |
-          $ErrorActionPreference = 'Stop'
+          set -euo pipefail
 
-          $installers = @(Get-ChildItem -Path source -Recurse -File -Filter '*-setup.exe')
-          if ($installers.Count -ne 1) {
-            throw "Expected one installer, found $($installers.Count)"
-          }
+          mapfile -t installers < <(find source -type f -iname '*-setup.exe')
+          if [[ ${#installers[@]} -ne 1 ]]; then
+            printf 'Expected one installer, found %s\n' "${#installers[@]}" >&2
+            exit 1
+          fi
 
-          $stagingDir = Join-Path $env:GITHUB_WORKSPACE 'staged-app'
-          New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
-          $arguments = @(
-            '/VERYSILENT'
-            '/SUPPRESSMSGBOXES'
-            '/NORESTART'
-            '/SP-'
-            '/NOICONS'
-            "/DIR=$stagingDir"
-          )
-          $process = Start-Process -FilePath $installers[0].FullName -ArgumentList $arguments -Wait -PassThru
-          if ($process.ExitCode -ne 0) {
-            throw "Installer exited with code $($process.ExitCode)"
-          }
+          "$INNOEXTRACT" --extract --output-dir extracted "${installers[0]}"
 
-          Get-ChildItem -Path $stagingDir -File -Filter 'unins*' | Remove-Item -Force
+          main_executable='extracted/app/HeyBuddy.exe'
+          backend_executable='extracted/app/resources/bin/goose.exe'
+          test -f "$main_executable"
+          test -f "$backend_executable"
 
-          $mainExecutable = Join-Path $env:GITHUB_WORKSPACE 'staged-app\HeyBuddy.exe'
-          $backendExecutable = Join-Path $env:GITHUB_WORKSPACE 'staged-app\resources\bin\goose.exe'
-          if (-not (Test-Path $mainExecutable -PathType Leaf)) {
-            throw "Missing main executable: $mainExecutable"
-          }
-          if (-not (Test-Path $backendExecutable -PathType Leaf)) {
-            throw "Missing backend executable: $backendExecutable"
-          }
+          main_file_type="$(file -b "$main_executable")"
+          backend_file_type="$(file -b "$backend_executable")"
+          printf '%s\n%s\n' "$main_file_type" "$backend_file_type"
 
-          function Get-PeMachine([string] $path) {
-            $stream = [System.IO.File]::OpenRead($path)
-            try {
-              $reader = [System.IO.BinaryReader]::new($stream)
-              $stream.Position = 0x3c
-              $peOffset = $reader.ReadInt32()
-              $stream.Position = $peOffset
-              if ($reader.ReadUInt32() -ne 0x00004550) {
-                throw "Invalid PE signature: $path"
-              }
-              return $reader.ReadUInt16()
-            } finally {
-              $stream.Dispose()
-            }
-          }
-
-          $expectedMachine = switch ($env:ARCHITECTURE) {
-            'x32' { [uint16] 0x014c }
-            'x64' { [uint16] 0x8664 }
-            default { throw "Unsupported architecture: $env:ARCHITECTURE" }
-          }
-          foreach ($executable in @($mainExecutable, $backendExecutable)) {
-            $actualMachine = Get-PeMachine $executable
-            if ($actualMachine -ne $expectedMachine) {
-              throw ('Unexpected PE machine for {0}: expected 0x{1:x4}, got 0x{2:x4}' -f $executable, $expectedMachine, $actualMachine)
-            }
-          }
+          case "$ARCHITECTURE" in
+            x32)
+              if [[ "$main_file_type" != 'PE32 executable'* || "$main_file_type" == 'PE32+ executable'* ]]; then
+                printf 'Main executable is not Windows x32: %s\n' "$main_file_type" >&2
+                exit 1
+              fi
+              if [[ "$backend_file_type" != 'PE32 executable'* || "$backend_file_type" == 'PE32+ executable'* ]]; then
+                printf 'Backend executable is not Windows x32: %s\n' "$backend_file_type" >&2
+                exit 1
+              fi
+              ;;
+            x64)
+              if [[ "$main_file_type" != 'PE32+ executable'* ]]; then
+                printf 'Main executable is not Windows x64: %s\n' "$main_file_type" >&2
+                exit 1
+              fi
+              if [[ "$backend_file_type" != 'PE32+ executable'* ]]; then
+                printf 'Backend executable is not Windows x64: %s\n' "$backend_file_type" >&2
+                exit 1
+              fi
+              ;;
+          esac
 
       - name: Create portable archive
-        shell: pwsh
+        shell: bash
         env:
           ARCHITECTURE: ${{ inputs.architecture }}
         run: |
-          $ErrorActionPreference = 'Stop'
-          $ARCHITECTURE = $env:ARCHITECTURE
-          $archiveName = "HeyBuddy-windows-${ARCHITECTURE}-portable.zip"
-          $archivePath = Join-Path $env:GITHUB_WORKSPACE $archiveName
-          $stagingDir = Join-Path $env:GITHUB_WORKSPACE 'staged-app'
-          Compress-Archive -Path "$stagingDir\*" -DestinationPath $archivePath -CompressionLevel Optimal
-          $hash = (Get-FileHash -Path $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
-          Set-Content -Path "$archivePath.sha256" -Value "$hash  $archiveName" -Encoding ascii
+          set -euo pipefail
+          archive="$GITHUB_WORKSPACE/HeyBuddy-windows-${ARCHITECTURE}-portable.zip"
+          (cd extracted/app && zip -r "$archive" .)
+          sha256sum "$(basename "$archive")" > "$(basename "$archive").sha256"
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1

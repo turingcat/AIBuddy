@@ -4,9 +4,9 @@
 
 **Goal:** Generate a Windows x32 portable ZIP from an existing successful Actions installer artifact without rebuilding the application.
 
-**Architecture:** A manual GitHub Actions workflow downloads a named artifact from a named run, silently stages its files on a Windows runner, validates the executable architecture, creates a root-level portable ZIP, and uploads the ZIP plus checksum. A workflow contract test fixes the inputs, validation, naming, and retention behavior.
+**Architecture:** A manual GitHub Actions workflow downloads a named artifact from a named run, builds a pinned upstream extractor with support for the installer's Inno Setup version, validates the extracted executable architecture, creates a root-level portable ZIP, and uploads the ZIP plus checksum. A workflow contract test fixes the inputs, validation, naming, and retention behavior.
 
-**Tech Stack:** GitHub Actions YAML, `actions/download-artifact`, PowerShell, Inno Setup silent switches, `Compress-Archive`, Python `unittest`.
+**Tech Stack:** GitHub Actions YAML, `actions/download-artifact`, CMake, `innoextract`, `file`, `zip`, Python `unittest`.
 
 ## Global Constraints
 
@@ -29,7 +29,7 @@
 
 - [ ] **Step 1: Write the failing workflow contract test**
 
-Assert that the workflow exists, downloads from the selected run with `GITHUB_TOKEN`, silently stages the installer, validates both Windows PE Machine fields, creates the architecture-qualified portable ZIP, and uploads it with the selected retention period.
+Assert that the workflow exists, downloads from the selected run with `GITHUB_TOKEN`, builds pinned `innoextract` support for Inno Setup 6.5+, validates both Windows executables, creates the architecture-qualified portable ZIP, and uploads it with the selected retention period.
 
 - [ ] **Step 2: Run the test and verify RED**
 
@@ -37,7 +37,7 @@ Run `python3 scripts/test-supported-build-architectures.py` and confirm it fails
 
 - [ ] **Step 3: Implement the workflow**
 
-Create the workflow with the exact inputs and validation described above. Archive `staged-app/*` so `HeyBuddy.exe` is at the ZIP root.
+Create the workflow with the exact inputs and validation described above. Archive `extracted/app/*` so `HeyBuddy.exe` is at the ZIP root.
 
 - [ ] **Step 4: Run focused verification**
 
