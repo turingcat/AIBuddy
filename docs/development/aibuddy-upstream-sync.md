@@ -174,6 +174,12 @@ Two independently generated snapshots produced the same verification values:
 | Output digest | `06b26bb441eae5404f908cacd0d5d24b09acd9b6ee7036fdef9544afa34c81d6` |
 | Transform identity | `cef1b2daef669d3b32c248961eb2969dec83cfedca121b67c6e0e2e57ca2d911` |
 | Entry count | `2223` |
+| Product baseline P0 | `f0ad0cc87bb9c77ee2039a52b5f3d1a6d48ae1fc` |
+| Product tree | `924d620b4009e837557979eb2d5d39ec4991e5df` |
+| Mirror root M0 | `e3aea38cbf3f260fd75aa4edfcfe93ad2ee1a1c5` |
+| Mirror tree | `9fdbcdd4f2a07553e1b86b62fd1ab620bf4238a8` |
+| Bootstrap bridge | `b2cceb889cfb55253d9771f7a4cd5971169915b4` |
+| Migration proof digest | `8c4432c353d3877f13af8224a1ff59ddc0548b8be547053ae0452424b78b54b0` |
 
-The reviewed product baseline, transformed mirror root, and bootstrap bridge
-commit IDs are recorded here after those commits are created.
+The bridge has P0 as its first parent and M0 as its second parent. Its tree is
+byte-for-byte identical to the P0 product tree.
