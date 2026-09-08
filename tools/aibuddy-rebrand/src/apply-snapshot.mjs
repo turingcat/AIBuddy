@@ -151,50 +151,23 @@ function parseGitTree(output) {
     if (tab === -1) throw new Error('git ls-tree returned a malformed entry');
     const metadata = record.subarray(0, tab).toString('ascii').trim().split(/\s+/u);
     if (metadata.length !== 4) throw new Error('git ls-tree returned an unexpected entry');
-    const [mode, type, objectId] = metadata;
+    const [mode, type, objectId, sizeText] = metadata;
     if (!MODES.has(mode) || type !== 'blob') {
       throw new Error(`unsupported baseline Git entry: ${record.toString('utf8')}`);
     }
     const path = record.subarray(tab + 1).toString('utf8');
     if (!safePath(path)) throw new Error(`unsafe baseline Git path: ${path}`);
-    records.push({ mode, objectId, path });
+    const size = Number(sizeText);
+    if (!Number.isSafeInteger(size) || size < 0) {
+      throw new Error(`git ls-tree returned an invalid blob size for ${path}`);
+    }
+    records.push({ mode, objectId, path, size });
   }
   return records;
 }
 
-function readGitBlobs(cwd, records) {
-  if (records.length === 0) return [];
-  const output = runGit(
-    cwd,
-    ['cat-file', '--batch'],
-    Buffer.from(`${records.map((record) => record.objectId).join('\n')}\n`, 'ascii'),
-  );
-  const entries = [];
-  let offset = 0;
-  for (const record of records) {
-    const headerEnd = output.indexOf(0x0a, offset);
-    if (headerEnd === -1) throw new Error(`git cat-file returned no header for ${record.path}`);
-    const [objectId, type, sizeText] = output.subarray(offset, headerEnd).toString('ascii').split(/\s+/u);
-    const size = Number(sizeText);
-    const contentStart = headerEnd + 1;
-    const contentEnd = contentStart + size;
-    if (objectId !== record.objectId || type !== 'blob' || !Number.isSafeInteger(size)
-      || size < 0 || contentEnd >= output.length || output[contentEnd] !== 0x0a) {
-      throw new Error(`git cat-file returned an invalid blob for ${record.path}`);
-    }
-    entries.push({
-      content: Buffer.from(output.subarray(contentStart, contentEnd)),
-      mode: record.mode,
-      path: record.path,
-    });
-    offset = contentEnd + 1;
-  }
-  return entries;
-}
-
 function readGitTree(cwd, commit) {
-  const records = parseGitTree(runGit(cwd, ['ls-tree', '--full-tree', '-r', '-z', '-l', commit]));
-  return readGitBlobs(cwd, records);
+  return parseGitTree(runGit(cwd, ['ls-tree', '--full-tree', '-r', '-z', '-l', commit]));
 }
 
 function workingEntry(root, relativePath) {
