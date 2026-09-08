@@ -248,7 +248,7 @@ pub fn build_deeplink(nevent: &str, decryption_key: &str) -> String {
 
 pub fn parse_deeplink(deeplink: &str) -> Result<ParsedShareLink> {
     let parsed = url::Url::parse(deeplink).context("Invalid AIBuddy session share link")?;
-    if !matches!(parsed.scheme(), "aibuddy" | "aibuddy")
+    if !matches!(parsed.scheme(), "aibuddy" | "goose")
         || parsed.host_str() != Some("sessions")
         || parsed.path() != "/nostr"
     {

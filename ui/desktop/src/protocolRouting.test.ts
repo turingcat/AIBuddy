@@ -6,8 +6,8 @@ import {
 } from './protocolRouting';
 
 describe('desktop inbound protocol routing', () => {
-  it('registers the AIBuddy product scheme and AIBuddy Nostr compatibility scheme', () => {
-    expect(getInboundProtocolSchemes()).toEqual(['aibuddy', 'aibuddy']);
+  it('registers the AIBuddy product scheme and Goose Nostr compatibility scheme', () => {
+    expect(getInboundProtocolSchemes()).toEqual(['aibuddy', 'goose']);
   });
 
   it.each(['aibuddy://recipe?config=test', 'aibuddy://extension?name=test'])(
@@ -17,17 +17,17 @@ describe('desktop inbound protocol routing', () => {
     }
   );
 
-  it('canonicalizes the compatible AIBuddy Nostr route for the renderer', () => {
+  it('canonicalizes the compatible Goose Nostr route for the renderer', () => {
     expect(parseInboundProtocolUrl('GoOsE://SESSIONS/nostr?nevent=test&key=secret')?.url).toBe(
-      'aibuddy://sessions/nostr?nevent=test&key=secret'
+      'goose://sessions/nostr?nevent=test&key=secret'
     );
   });
 
   it.each([
-    'aibuddy://recipe?config=test',
-    'aibuddy://extension?name=test',
-    'aibuddy://sessions/nostr-extra?nevent=test',
-    'aibuddy://sessions/nostr/extra?nevent=test',
+    'goose://recipe?config=test',
+    'goose://extension?name=test',
+    'goose://sessions/nostr-extra?nevent=test',
+    'goose://sessions/nostr/extra?nevent=test',
     'https://sessions/nostr?nevent=test',
     'not a URL',
   ])('rejects non-Nostr compatibility route %s', (url) => {
@@ -38,15 +38,15 @@ describe('desktop inbound protocol routing', () => {
     expect(
       findInboundProtocolUrl([
         'AIBuddy',
-        'aibuddy://recipe?config=ignored',
-        'aibuddy://sessions/nostr?nevent=test&key=secret',
+        'goose://recipe?config=ignored',
+        'goose://sessions/nostr?nevent=test&key=secret',
       ])?.url
-    ).toBe('aibuddy://sessions/nostr?nevent=test&key=secret');
+    ).toBe('goose://sessions/nostr?nevent=test&key=secret');
   });
 
   it('uses the same allowlist for macOS open-url input', () => {
-    expect(parseInboundProtocolUrl('aibuddy://extension?name=ignored')).toBeNull();
-    expect(parseInboundProtocolUrl('aibuddy://sessions/nostr?nevent=test')?.parsedUrl.pathname).toBe(
+    expect(parseInboundProtocolUrl('goose://extension?name=ignored')).toBeNull();
+    expect(parseInboundProtocolUrl('goose://sessions/nostr?nevent=test')?.parsedUrl.pathname).toBe(
       '/nostr'
     );
   });

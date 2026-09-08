@@ -6,23 +6,24 @@
 from current main, review and test their changes, then merge normally. No product
 development is performed in a generated-only branch.
 
-The initial migration is being prepared in `feat/aibuddy-branding`. Do not merge
+The initial HeyBuddy main migration is prepared in
+`sync/heybuddy-main-aibuddy-map-20260908`. Do not merge
 unconverted upstream sources into a renamed product tree or overwrite product
 sources with a pristine upstream snapshot.
 
 ## Tooling
 
-Install the locked dependencies in `tools/rebrand` with `npm ci`. The tool requires
+Install the locked dependencies in `tools/aibuddy-rebrand` with `npm ci`. The tool requires
 Node matching its package engines, Rust/Cargo/rustfmt, and Git. The parser helper
 uses its own locked Cargo workspace; it does not replace product dependencies.
 
 Run from the source repository:
 
 ```sh
-node tools/rebrand/cli.mjs inventory --source-ref <commit> --report-dir <new-report-directory>
-node tools/rebrand/cli.mjs generate --source-ref <commit> --output <new-output-directory> --input product
-node tools/rebrand/cli.mjs generate --source-ref <upstream-release-commit> --output <new-output-directory> --input upstream
-node tools/rebrand/cli.mjs verify --output <generated-directory>
+node tools/aibuddy-rebrand/cli.mjs inventory --source-ref <commit> --report-dir <new-report-directory>
+node tools/aibuddy-rebrand/cli.mjs generate --source-ref <commit> --output <new-output-directory> --input product
+node tools/aibuddy-rebrand/cli.mjs generate --source-ref <upstream-release-commit> --output <new-output-directory> --input upstream
+node tools/aibuddy-rebrand/cli.mjs verify --output <generated-directory>
 ```
 
 Output directories must be new and outside source worktrees. Generation never
@@ -43,10 +44,14 @@ applied directly to formatted output.
 ## Preservation Rules
 
 - First-party packages, modules, identifiers, commands and normal product text use
-  AIBuddy. Plural AIBuddies becomes AIBuddies to avoid colliding with AIBuddy symbols.
+  AIBuddy. Goose/Geese and HeyBuddy/HeyBuddies converge on
+  AIBuddy/AIBuddies.
 - Copyright/license notices and real upstream/external URLs remain accurate.
-- Published third-party dependency `v8-aibuddy` and Rust binding `v8_goose` remain
+- Published third-party dependency `v8-goose` and Rust binding `v8_goose` remain
   unchanged. Local workspace crates are renamed.
+- Provider model aliases such as `goose-o1`, `kgoose-o3`, and
+  `headless-goose-o3-mini` remain unchanged because they are external input
+  identities rather than product branding.
 - Historical data/keychain/browser partition identities are explicit exceptions
   until a tested data migration is approved. Never rename another installation's
   data or credentials automatically.
@@ -84,7 +89,5 @@ the product-specific tests, build and review gates pass.
 
 ## Verification Status
 
-Current execution evidence and outstanding gates are recorded in
-`docs/superpowers/plans/2026-09-07-rebranding-progress.md`. Baseline clippy failures,
-path-coverage requirements, platform installer checks and compatibility decisions
-must not be silently treated as passing.
+The exact synchronization commands and current baseline are recorded in
+`docs/development/aibuddy-upstream-sync.md`.

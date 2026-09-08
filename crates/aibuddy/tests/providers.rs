@@ -11,7 +11,6 @@ use aibuddy::providers::base::Provider;
 #[cfg(feature = "aws-providers")]
 use aibuddy::providers::bedrock::BEDROCK_DEFAULT_MODEL;
 use aibuddy::providers::claude_code::CLAUDE_CODE_DEFAULT_MODEL;
-use aibuddy::providers::codex::CODEX_DEFAULT_MODEL;
 use aibuddy::providers::create_with_named_model;
 use aibuddy::providers::google::GOOGLE_DEFAULT_MODEL;
 use aibuddy::providers::litellm::LITELLM_DEFAULT_MODEL;

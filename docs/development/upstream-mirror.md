@@ -5,7 +5,7 @@ three-way merge baseline for the renamed product. It is not a product branch,
 does not receive product edits, and never replaces the product tree.
 
 The implementation is exported from
-`tools/rebrand/src/mirror.mjs`. It does not run `git init`, change the working
+`tools/aibuddy-rebrand/src/mirror.mjs`. It does not run `git init`, change the working
 tree, push, or merge into `main`. A caller that performs the real bootstrap owns
 the surrounding review, commit, and publication steps.
 
@@ -14,7 +14,7 @@ the surrounding review, commit, and publication steps.
 Generate an untouched upstream snapshot first:
 
 ```sh
-node tools/rebrand/cli.mjs generate \
+node tools/aibuddy-rebrand/cli.mjs generate \
   --source-ref <upstream-commit> \
   --output <new-snapshot-directory> \
   --input upstream
@@ -23,7 +23,7 @@ node tools/rebrand/cli.mjs generate \
 Then call:
 
 ```js
-import { prepareMirror } from './tools/rebrand/src/mirror.mjs';
+import { prepareMirror } from './tools/aibuddy-rebrand/src/mirror.mjs';
 
 const result = await prepareMirror({
   cwd: repository,
@@ -44,8 +44,8 @@ const result = await prepareMirror({
 - writes non-dry-run blobs through temporary files outside the source worktree
   and `.git`, passing literal paths to `git hash-object -w`; an isolated
   temporary Git index is still used for the tree, never the repository index;
-- omits only `.aibuddy-rebrand.json` from the mirror tree and rejects tracked
-  `.git` paths;
+- omits `.aibuddy-rebrand.json`, the upstream `.heybuddy-rebrand.json`, and
+  `tools/rebrand/**` from the mirror tree, and rejects tracked `.git` paths;
 - records source commit/tree, transformed tree, output digest, and transform
   identity in commit trailers; and
 - refuses an existing mirror branch. A non-dry run creates it with
@@ -61,7 +61,7 @@ writing objects or invoking a per-entry Git hash process and returns
 Use `appendMirror` for every later upstream snapshot:
 
 ```js
-import { appendMirror } from './tools/rebrand/src/mirror.mjs';
+import { appendMirror } from './tools/aibuddy-rebrand/src/mirror.mjs';
 
 const result = await appendMirror({
   cwd: repository,
@@ -89,22 +89,25 @@ branch fails instead of overwriting another worker's result.
 `establishBridge` is deliberately review-first:
 
 ```js
-import { establishBridge } from './tools/rebrand/src/mirror.mjs';
+import { establishBridge } from './tools/aibuddy-rebrand/src/mirror.mjs';
 
 const review = await establishBridge({
+  branch: 'sync/heybuddy-main-aibuddy-map-20260908',
   cwd: repository,
   mirrorCommit: m0,
   expectedProductCommit: p0,
+  migrationProofPath: '/absolute/path/to/review/migration-proof.json',
   dryRun: true,
 });
 ```
 
 The default result describes the proposed bridge and its product parent tree;
 it does not create an `ours` bridge or update a ref. The helper requires the
-current branch to be exactly `feat/aibuddy-branding`, `HEAD` to equal
+current branch to equal the explicit `branch` argument and to use an allowed
+`feat/*` or `sync/*` prefix. It also requires `HEAD` to equal
 `expectedProductCommit`, a clean tracked worktree and index, and no untracked
-files. Rejecting untracked tooling or documentation is intentional because
-those files can hide an incomplete migration review.
+files. Rejecting untracked tooling or documentation prevents an incomplete
+migration review from being bridged.
 
 The caller must provide `migrationProofPath` as an absolute path to a regular,
 non-symlink file outside the repository worktree. The file is a review artifact,
@@ -135,6 +138,7 @@ Creating the bridge requires all of the following additional, explicit inputs:
 
 ```js
 await establishBridge({
+  branch: 'sync/heybuddy-main-aibuddy-map-20260908',
   cwd: repository,
   mirrorCommit: m0,
   expectedProductCommit: p0,
@@ -164,5 +168,5 @@ performing this operation.
 Focused tests use disposable repositories and the real converter fixture:
 
 ```sh
-node --test tools/rebrand/tests/mirror.test.mjs
+node --test tools/aibuddy-rebrand/tests/mirror.test.mjs
 ```

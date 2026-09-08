@@ -53,6 +53,107 @@ test('transforms mixed Goose and HeyBuddy source names to one AIBuddy identity',
   ].join('\n'));
 });
 
+test('restores external provider model aliases while converting product identifiers', async () => {
+  const result = await transformSnapshot([
+    entry(
+      'crates/heybuddy-provider-types/src/canonical/name_builder.rs',
+      [
+        'const PRODUCT: &str = "HeyBuddy";',
+        'const MODELS: &[&str] = &[',
+        '  "heybuddy-claude-sonnet-4-5-bedrock",',
+        '  "kheybuddy-gpt-4o",',
+        '  "heybuddy-o1",',
+        '  "kheybuddy-o3",',
+        '  "headless-heybuddy-o3-mini",',
+        '  "kheybuddy-grok-4.3",',
+        '  "heybuddy-command-r-08-2024",',
+        '  "heybuddy-claude-sonnet",',
+        '  "heybuddy-o3-mini",',
+        '  "heybuddy-o4-mini",',
+        '  "heybuddy-gpt-5.4-high",',
+        '  "heybuddy-gpt-5-high",',
+        '  "heybuddy-gpt-5",',
+        '  "heybuddy-claude-sonnet-4",',
+        '];',
+        '',
+      ].join('\n'),
+    ),
+  ], { input: 'upstream' });
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'crates/aibuddy-provider-types/src/canonical/name_builder.rs'),
+    [
+      'const PRODUCT: &str = "AIBuddy";',
+      'const MODELS: &[&str] = &[',
+      '  "goose-claude-sonnet-4-5-bedrock",',
+      '  "kgoose-gpt-4o",',
+      '  "goose-o1",',
+      '  "kgoose-o3",',
+      '  "headless-goose-o3-mini",',
+      '  "kgoose-grok-4.3",',
+      '  "goose-command-r-08-2024",',
+      '  "goose-claude-sonnet",',
+      '  "goose-o3-mini",',
+      '  "goose-o4-mini",',
+      '  "goose-gpt-5.4-high",',
+      '  "goose-gpt-5-high",',
+      '  "goose-gpt-5",',
+      '  "goose-claude-sonnet-4",',
+      '];',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('omits upstream rebrand implementation and provenance from transformed snapshots', async () => {
+  const result = await transformSnapshot([
+    entry('.heybuddy-rebrand.json', '{"source":"HeyBuddy"}\n'),
+    entry('tools/rebrand/README.md', '# HeyBuddy rebrand\n'),
+    entry('tools/rebrand/src/transform.mjs', 'export const name = "HeyBuddy";\n'),
+    entry('branding/README.md', '# HeyBuddy branding\n'),
+    entry('branding/heybuddy-icon.svg', '<svg><!-- HeyBuddy icon --></svg>\n'),
+    entry('README.md', '# HeyBuddy\n'),
+  ], { input: 'upstream' });
+
+  assert.equal(result.report.complete, true);
+  assert.deepEqual(result.entries.map((candidate) => candidate.path), ['README.md']);
+  assert.equal(text(result, 'README.md'), '# AIBuddy\n');
+  assert.equal(
+    result.report.entries.filter((candidate) => candidate.disposition === 'omitted-upstream-tooling').length,
+    5,
+  );
+});
+
+test('converts product-owned MCP replay input while preserving recorded server output', async () => {
+  const transcript = [
+    'STDIN: {"clientInfo":{"name":"heybuddy-desktop"}}',
+    'STDIN: {"result":{"roots":[{"uri":"file:///tmp/heybuddy_test"}]}}',
+    'STDOUT: {"result":{"text":"HeyBuddy and goose are external response data"}}',
+    '',
+  ].join('\n');
+  const results = '[{"text":"HeyBuddy and goose are external result data"}]\n';
+  const errors = 'expected HeyBuddy server output\n';
+  const result = await transformSnapshot([
+    entry('crates/heybuddy/tests/mcp_replays/example', transcript),
+    entry('crates/heybuddy/tests/mcp_replays/example.results.json', results),
+    entry('crates/heybuddy/tests/mcp_replays/example.errors.txt', errors),
+  ], { input: 'upstream' });
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'crates/aibuddy/tests/mcp_replays/example'),
+    [
+      'STDIN: {"clientInfo":{"name":"aibuddy-desktop"}}',
+      'STDIN: {"result":{"roots":[{"uri":"file:///tmp/aibuddy_test"}]}}',
+      'STDOUT: {"result":{"text":"HeyBuddy and goose are external response data"}}',
+      '',
+    ].join('\n'),
+  );
+  assert.equal(text(result, 'crates/aibuddy/tests/mcp_replays/example.results.json'), results);
+  assert.equal(text(result, 'crates/aibuddy/tests/mcp_replays/example.errors.txt'), errors);
+});
+
 test('transforms Rust, TypeScript, TOML, JSON, and YAML through parser-backed adapters', async () => {
   const result = await transformSnapshot([
     entry(
@@ -284,6 +385,266 @@ test('changes new protocol values but preserves legacy acceptance only in its ex
       (reference) => reference.path === 'crates/goose/src/session/nostr_share.rs',
     ),
     true,
+  );
+});
+
+test('preserves reviewed AIBuddy compatibility boundaries in product input', async () => {
+  const result = await transformSnapshot([
+    entry(
+      'ui/desktop/src/nostrProtocol.ts',
+      [
+        "export const GOOSE_NOSTR_PROTOCOL_PREFIX = 'goose://sessions/nostr';",
+        "export const scheme = 'goose:';",
+        'export const product = "HeyBuddy";',
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'ui/desktop/forge.config.ts',
+      [
+        "const productProtocol = { name: 'HeyBuddyProtocol', schemes: ['heybuddy'] };",
+        "const compatibilityProtocol = { name: 'GooseNostrProtocol', schemes: ['goose'] };",
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'ui/desktop/src/components/ChatBrand.test.tsx',
+      [
+        "expect(screen.getByText('HeyBuddy')).toBeInTheDocument();",
+        "expect(screen.queryByText('HeyBuddy')).not.toBeInTheDocument();",
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'ui/desktop/src/components/Hub.test.tsx',
+      [
+        'expect(screen.queryByText(/HeyBuddy|/)).not.toBeInTheDocument();',
+        'const currentBrand = /HeyBuddy/;',
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'ui/desktop/src/aibuddyServeLeaseRegistry.test.ts',
+      [
+        "expect(message).not.toContain('Goose');",
+        'const product = "HeyBuddy";',
+        '',
+      ].join('\n'),
+    ),
+  ]);
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'ui/desktop/src/nostrProtocol.ts'),
+    [
+      "export const GOOSE_NOSTR_PROTOCOL_PREFIX = 'goose://sessions/nostr';",
+      "export const scheme = 'goose:';",
+      'export const product = "AIBuddy";',
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'ui/desktop/forge.config.ts'),
+    [
+      "const productProtocol = { name: 'AIBuddyProtocol', schemes: ['aibuddy'] };",
+      "const compatibilityProtocol = { name: 'GooseNostrProtocol', schemes: ['goose'] };",
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'ui/desktop/src/components/ChatBrand.test.tsx'),
+    [
+      "expect(screen.getByText('AIBuddy')).toBeInTheDocument();",
+      "expect(screen.queryByText('HeyBuddy')).not.toBeInTheDocument();",
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'ui/desktop/src/components/Hub.test.tsx'),
+    [
+      'expect(screen.queryByText(/HeyBuddy|/)).not.toBeInTheDocument();',
+      'const currentBrand = /AIBuddy/;',
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'ui/desktop/src/aibuddyServeLeaseRegistry.test.ts'),
+    [
+      "expect(message).not.toContain('Goose');",
+      'const product = "AIBuddy";',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('preserves Goose ACP and Nostr compatibility while converting HeyBuddy Rust', async () => {
+  const result = await transformSnapshot([
+    entry(
+      'crates/heybuddy/src/acp/server.rs',
+      [
+        'struct ClientCapabilitiesMeta {',
+        '  heybuddy: Option<HeyBuddyClientCapabilities>,',
+        '  goose: Option<HeyBuddyClientCapabilities>,',
+        '}',
+        'enum CustomMethodNamespace { HeyBuddy, Goose }',
+        'fn test_legacy_goose_capabilities_negotiate_legacy_custom_methods() {',
+        '  let goose_meta = "goose";',
+        '}',
+        'const CANONICAL_META: &str = "heybuddy";',
+        'const LEGACY_META: &str = "goose";',
+        'const LEGACY_METHOD: &str = "_goose/unstable/session/update";',
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'crates/heybuddy/src/session/nostr_share.rs',
+      [
+        'const LINK: &str = "heybuddy://sessions/nostr";',
+        'fn accepts(scheme: &str) -> bool { matches!(scheme, "heybuddy" | "goose") }',
+        '',
+      ].join('\n'),
+    ),
+    entry(
+      'crates/heybuddy/tests/acp_fixtures/server.rs',
+      [
+        'const CANONICAL_META: &str = "heybuddy";',
+        'const LEGACY_META: &str = "goose";',
+        'fn check(method: &str) {',
+        '  assert_ne!(method, "_heybuddy/unstable/session/update");',
+        '  if method == "_goose/unstable/session/update" {}',
+        '}',
+        '',
+      ].join('\n'),
+    ),
+  ], { input: 'upstream' });
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'crates/aibuddy/src/acp/server.rs'),
+    [
+      'struct ClientCapabilitiesMeta {',
+      '  aibuddy: Option<AIBuddyClientCapabilities>,',
+      '  goose: Option<AIBuddyClientCapabilities>,',
+      '}',
+      'enum CustomMethodNamespace { AIBuddy, Goose }',
+      'fn test_legacy_goose_capabilities_negotiate_legacy_custom_methods() {',
+      '  let goose_meta = "goose";',
+      '}',
+      'const CANONICAL_META: &str = "aibuddy";',
+      'const LEGACY_META: &str = "goose";',
+      'const LEGACY_METHOD: &str = "_goose/unstable/session/update";',
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'crates/aibuddy/src/session/nostr_share.rs'),
+    [
+      'const LINK: &str = "aibuddy://sessions/nostr";',
+      'fn accepts(scheme: &str) -> bool { matches!(scheme, "aibuddy" | "goose") }',
+      '',
+    ].join('\n'),
+  );
+  assert.equal(
+    text(result, 'crates/aibuddy/tests/acp_fixtures/server.rs'),
+    [
+      'const CANONICAL_META: &str = "aibuddy";',
+      'const LEGACY_META: &str = "goose";',
+      'fn check(method: &str) {',
+      '  assert_ne!(method, "_aibuddy/unstable/session/update");',
+      '  if method == "_goose/unstable/session/update" {}',
+      '}',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('preserves legacy HeyBuddy rejection fixtures in AIBuddy Rust identity tests', async () => {
+  const paths = [
+    'crates/heybuddy/src/agents/agent.rs',
+    'crates/heybuddy/src/agents/prompt_manager.rs',
+    'crates/heybuddy/src/agents/state_machine/tests/provider_lifecycle.rs',
+  ];
+  const result = await transformSnapshot(
+    paths.map((path) =>
+      entry(
+        path,
+        [
+          'assert!(prompt.contains("HeyBuddy"));',
+          'assert!(!prompt.contains("HeyBuddy"));',
+          '',
+        ].join('\n'),
+      ),
+    ),
+    { input: 'upstream' },
+  );
+
+  assert.equal(result.report.complete, true);
+  for (const path of paths) {
+    const outputPath = path.replace('crates/heybuddy/', 'crates/aibuddy/');
+    assert.equal(
+      text(result, outputPath),
+      [
+        'assert!(prompt.contains("AIBuddy"));',
+        'assert!(!prompt.contains("HeyBuddy"));',
+        '',
+      ].join('\n'),
+    );
+  }
+});
+
+test('preserves the Goose session column while converting the current HeyBuddy column', async () => {
+  const result = await transformSnapshot([
+    entry(
+      'crates/heybuddy/src/session/session_manager.rs',
+      [
+        'const COLUMNS: &str = "WHERE name IN (\'goose_mode\', \'heybuddy_mode\')";',
+        'const ERROR: &str = "sessions contains both goose_mode and heybuddy_mode";',
+        'const ALTER: &str = "ALTER TABLE sessions RENAME COLUMN goose_mode TO heybuddy_mode";',
+        '',
+      ].join('\n'),
+    ),
+  ], { input: 'upstream' });
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'crates/aibuddy/src/session/session_manager.rs'),
+    [
+      'const COLUMNS: &str = "WHERE name IN (\'goose_mode\', \'aibuddy_mode\')";',
+      'const ERROR: &str = "sessions contains both goose_mode and aibuddy_mode";',
+      'const ALTER: &str = "ALTER TABLE sessions RENAME COLUMN goose_mode TO aibuddy_mode";',
+      '',
+    ].join('\n'),
+  );
+});
+
+test('preserves explicitly keyed HeyBuddy database compatibility values in product input', async () => {
+  const result = await transformSnapshot([
+    entry(
+      'crates/aibuddy/src/session/session_manager.rs',
+      [
+        'struct Session {',
+        '#[serde(default, alias = "goose_mode", alias = "heybuddy_mode")]',
+        'pub aibuddy_mode: AIBuddyMode,',
+        '}',
+        'const LEGACY_HEYBUDDY_MODE_COLUMN: &str = "heybuddy_mode";',
+        'const CURRENT_HEYBUDDY_MODE_COLUMN: &str = "heybuddy_mode";',
+        '',
+      ].join('\n'),
+    ),
+  ], { input: 'product' });
+
+  assert.equal(result.report.complete, true);
+  assert.equal(
+    text(result, 'crates/aibuddy/src/session/session_manager.rs'),
+    [
+      'struct Session {',
+      '#[serde(default, alias = "goose_mode", alias = "heybuddy_mode")]',
+      'pub aibuddy_mode: AIBuddyMode,',
+      '}',
+      'const LEGACY_HEYBUDDY_MODE_COLUMN: &str = "heybuddy_mode";',
+      'const CURRENT_AIBUDDY_MODE_COLUMN: &str = "aibuddy_mode";',
+      '',
+    ].join('\n'),
   );
 });
 

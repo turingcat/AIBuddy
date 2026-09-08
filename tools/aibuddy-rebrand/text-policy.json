@@ -153,24 +153,25 @@
     "Cargo.lock",
     "Dockerfile",
     "Justfile",
-    "crates/goose/src/config/signup_openrouter/templates/success.html",
     "crates/goose-cli/.gitignore",
+    "crates/goose-sdk/.gitignore",
+    "crates/goose/src/config/signup_openrouter/templates/success.html",
     "crates/goose/src/goose_apps/clock.html",
     "crates/goose/src/oauth/oauth_callback.html",
-    "crates/goose-sdk/.gitignore",
     "documentation/.gitignore",
+    "documentation/.goosehints",
     "documentation/docs/docker/Dockerfile",
     "documentation/static/CNAME",
     "ui/desktop/.env",
+    "ui/desktop/.env.production",
     "ui/desktop/.gitignore",
     "ui/desktop/.goosehints",
+    "ui/desktop/desktop-setup.iss",
     "ui/desktop/forge.deb.desktop",
     "ui/desktop/forge.rpm.desktop",
-    "ui/desktop/desktop-setup.iss",
-    "ui/desktop/src/styles/main.css",
-    "ui/install-link-generator/index.html",
     "ui/desktop/index.html",
-    "documentation/.goosehints"
+    "ui/desktop/src/styles/main.css",
+    "ui/install-link-generator/index.html"
   ],
   "svg": {
     "exactPaths": [
@@ -201,13 +202,20 @@
     "frontmatter": "yaml",
     "body": "scoped-literal"
   },
+  "mcpReplay": {
+    "pathPrefixes": [
+      "crates/goose/tests/mcp_replays/"
+    ],
+    "transformLinePrefixes": [
+      "STDIN: "
+    ]
+  },
   "preserve": {
     "exactPaths": [
       "crates/goose-sdk/maven/gradlew",
       "ui/desktop/src/platform/windows/bin/npx.cmd"
     ],
     "pathPrefixes": [
-      "crates/goose/tests/mcp_replays/",
       "evals/harbor/"
     ],
     "legalLinePatterns": [

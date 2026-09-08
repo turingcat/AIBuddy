@@ -189,7 +189,7 @@ pub async fn assert_legacy_client_receives_legacy_custom_notifications(
             "protocolVersion": 1,
             "clientCapabilities": {
                 "_meta": {
-                    "aibuddy": {
+                    "goose": {
                         "customNotifications": true
                     }
                 }
@@ -206,12 +206,12 @@ pub async fn assert_legacy_client_receives_legacy_custom_notifications(
         serde_json::from_str(&initialize_response).unwrap();
     assert_eq!(initialize_response["id"], 1);
     assert_eq!(
-        initialize_response["result"]["agentCapabilities"]["_meta"]["aibuddy"]
+        initialize_response["result"]["agentCapabilities"]["_meta"]["goose"]
             ["recipeParameterScopes"],
         serde_json::json!({})
     );
     assert_eq!(
-        initialize_response["result"]["agentCapabilities"]["_meta"]["aibuddy"],
+        initialize_response["result"]["agentCapabilities"]["_meta"]["goose"],
         initialize_response["result"]["agentCapabilities"]["_meta"]["aibuddy"]
     );
 
@@ -245,7 +245,7 @@ pub async fn assert_legacy_client_receives_legacy_custom_notifications(
             continue;
         };
         assert_ne!(method, "_aibuddy/unstable/session/update");
-        if method == "_aibuddy/unstable/session/update" {
+        if method == "_goose/unstable/session/update" {
             break;
         }
     }

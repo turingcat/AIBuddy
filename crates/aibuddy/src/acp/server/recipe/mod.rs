@@ -482,7 +482,7 @@ fn recipe_to_dto(recipe: Recipe) -> Result<RecipeDto, agent_client_protocol::Err
         .map_err(|e| agent_client_protocol::Error::invalid_params().data(format!("recipe: {e}")))
 }
 
-const LEGACY_RECIPE_PARAMS_METHOD: &str = "_aibuddy/unstable/session/recipe/request-params";
+const LEGACY_RECIPE_PARAMS_METHOD: &str = "_goose/unstable/session/recipe/request-params";
 
 #[derive(Debug, Clone)]
 struct RequestRecipeParamsMessage {
@@ -494,7 +494,7 @@ impl RequestRecipeParamsMessage {
     fn new(request: RequestRecipeParams, namespace: CustomMethodNamespace) -> Self {
         let method = match namespace {
             CustomMethodNamespace::AIBuddy => RECIPE_PARAMS_METHOD,
-            CustomMethodNamespace::AIBuddy => LEGACY_RECIPE_PARAMS_METHOD,
+            CustomMethodNamespace::Goose => LEGACY_RECIPE_PARAMS_METHOD,
         };
         Self { request, method }
     }
@@ -570,7 +570,7 @@ mod tests {
 
         let canonical =
             RequestRecipeParamsMessage::new(request.clone(), CustomMethodNamespace::AIBuddy);
-        let legacy = RequestRecipeParamsMessage::new(request, CustomMethodNamespace::AIBuddy);
+        let legacy = RequestRecipeParamsMessage::new(request, CustomMethodNamespace::Goose);
 
         assert_eq!(canonical.method(), RECIPE_PARAMS_METHOD);
         assert_eq!(legacy.method(), LEGACY_RECIPE_PARAMS_METHOD);

@@ -184,7 +184,7 @@ describe('SessionListView Nostr import', () => {
     vi.mocked(acpImportSession).mockResolvedValue(undefined);
     vi.mocked(acpRenameSession).mockResolvedValue(undefined);
     vi.mocked(acpShareSessionNostr).mockResolvedValue({
-      deeplink: 'aibuddy://sessions/nostr?nevent=shared&key=secret',
+      deeplink: 'goose://sessions/nostr?nevent=shared&key=secret',
       nevent: 'shared',
       eventId: 'event-id',
       relays: [],
@@ -202,17 +202,17 @@ describe('SessionListView Nostr import', () => {
     Object.defineProperty(URL, 'revokeObjectURL', { value: vi.fn(), configurable: true });
   });
 
-  it('shows the generic AIBuddy Nostr link format', async () => {
+  it('shows the generic Goose Nostr link format', async () => {
     render(<SessionListView onSelectSession={vi.fn()} />, { wrapper: IntlTestWrapper });
 
     fireEvent.click(await screen.findByRole('button', { name: 'Import Link' }));
 
     expect(
-      screen.getByPlaceholderText('aibuddy://sessions/nostr?nevent=...&key=...')
+      screen.getByPlaceholderText('goose://sessions/nostr?nevent=...&key=...')
     ).toBeInTheDocument();
   });
 
-  it('keeps the generic AIBuddy Nostr link format in the Chinese catalog', async () => {
+  it('keeps the generic Goose Nostr link format in the Chinese catalog', async () => {
     const messages = Object.fromEntries(
       Object.entries(zhCatalog).map(([id, message]) => [id, message.defaultMessage])
     );
@@ -226,7 +226,7 @@ describe('SessionListView Nostr import', () => {
     fireEvent.click(await screen.findByRole('button', { name: '导入链接' }));
 
     expect(
-      screen.getByPlaceholderText('aibuddy://sessions/nostr?nevent=...&key=...')
+      screen.getByPlaceholderText('goose://sessions/nostr?nevent=...&key=...')
     ).toBeInTheDocument();
   });
 
@@ -248,7 +248,10 @@ describe('SessionListView Nostr import', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Scheduled Jobs/ }));
     expect(screen.getByText('Session scheduled')).toBeInTheDocument();
-    expect(acpListSessions).toHaveBeenNthCalledWith(2, 'next-page', { keyword: '' });
+    expect(acpListSessions).toHaveBeenNthCalledWith(2, 'next-page', {
+      keyword: '',
+      includeAcp: false,
+    });
   });
 
   it('searches sessions and restores the normal empty state when cleared', async () => {
@@ -450,14 +453,14 @@ describe('SessionListView Nostr import', () => {
 
     fireEvent.click(screen.getByTitle('Share encrypted Nostr link'));
     expect(
-      await screen.findByText('aibuddy://sessions/nostr?nevent=shared&key=secret')
+      await screen.findByText('goose://sessions/nostr?nevent=shared&key=secret')
     ).toBeInTheDocument();
     expect(acpShareSessionNostr).toHaveBeenCalledWith('share', []);
 
     fireEvent.click(screen.getByRole('button', { name: 'Copied to clipboard' }));
     await waitFor(() =>
       expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-        'aibuddy://sessions/nostr?nevent=shared&key=secret'
+        'goose://sessions/nostr?nevent=shared&key=secret'
       )
     );
 
@@ -468,7 +471,7 @@ describe('SessionListView Nostr import', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(
-      screen.queryByText('aibuddy://sessions/nostr?nevent=shared&key=secret')
+      screen.queryByText('goose://sessions/nostr?nevent=shared&key=secret')
     ).not.toBeInTheDocument();
   });
 
@@ -485,26 +488,26 @@ describe('SessionListView Nostr import', () => {
   it('imports a Nostr link and reports import failures', async () => {
     await renderSessionList();
     fireEvent.click(screen.getByRole('button', { name: 'Import Link' }));
-    const textarea = screen.getByPlaceholderText('aibuddy://sessions/nostr?nevent=...&key=...');
+    const textarea = screen.getByPlaceholderText('goose://sessions/nostr?nevent=...&key=...');
     fireEvent.change(textarea, {
-      target: { value: '  aibuddy://sessions/nostr?nevent=import&key=secret  ' },
+      target: { value: '  goose://sessions/nostr?nevent=import&key=secret  ' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: 'Import Session' }).at(-1)!);
 
     await waitFor(() =>
       expect(acpImportSession).toHaveBeenCalledWith(
-        'aibuddy://sessions/nostr?nevent=import&key=secret',
+        'goose://sessions/nostr?nevent=import&key=secret',
         'nostr'
       )
     );
     expect(
-      screen.queryByPlaceholderText('aibuddy://sessions/nostr?nevent=...&key=...')
+      screen.queryByPlaceholderText('goose://sessions/nostr?nevent=...&key=...')
     ).not.toBeInTheDocument();
 
     vi.mocked(acpImportSession).mockRejectedValueOnce(new Error('import failed'));
     fireEvent.click(screen.getByRole('button', { name: 'Import Link' }));
-    fireEvent.change(screen.getByPlaceholderText('aibuddy://sessions/nostr?nevent=...&key=...'), {
-      target: { value: 'aibuddy://sessions/nostr?nevent=bad&key=secret' },
+    fireEvent.change(screen.getByPlaceholderText('goose://sessions/nostr?nevent=...&key=...'), {
+      target: { value: 'goose://sessions/nostr?nevent=bad&key=secret' },
     });
     fireEvent.click(screen.getAllByRole('button', { name: 'Import Session' }).at(-1)!);
     await waitFor(() => expect(mockToastError).toHaveBeenCalled());

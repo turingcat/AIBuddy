@@ -26,6 +26,17 @@ const correctionPattern = correctionPatternSource
   ? new RegExp(correctionPatternSource, 'g')
   : null;
 
+const externalAliases = Object.entries(map.externalAliasReplacements ?? {});
+const externalAliasPatternSource = externalAliases
+  .map(([source]) => source)
+  .sort((left, right) => right.length - left.length || left.localeCompare(right))
+  .map(escapeRegExp)
+  .join('|');
+const externalAliasPattern = externalAliasPatternSource
+  ? new RegExp(externalAliasPatternSource, 'g')
+  : null;
+const externalAliasMap = new Map(externalAliases);
+
 const patternSource = replacements
   .map(([source]) => source)
   .sort((left, right) => right.length - left.length || left.localeCompare(right))
@@ -44,6 +55,14 @@ export function createBrandPattern(flags = 'g') {
 
 export function mappedBrand(value) {
   return SOURCE_REPLACEMENTS.get(value) ?? value;
+}
+
+export function findExternalAliases(value) {
+  return externalAliasPattern ? [...value.matchAll(externalAliasPattern)] : [];
+}
+
+export function mappedExternalAlias(value) {
+  return externalAliasMap.get(value) ?? value;
 }
 
 export function applyUpstreamCorrections(value) {

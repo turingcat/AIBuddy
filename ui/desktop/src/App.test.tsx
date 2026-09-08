@@ -392,7 +392,7 @@ describe('App Component - Brand New State', () => {
     expect(reconnectAcpAfterSystemResume).toHaveBeenCalledOnce();
   });
 
-  it('imports generic AIBuddy Nostr session links', async () => {
+  it('imports generic Goose Nostr session links', async () => {
     render(<AppInner />, { wrapper: AppInnerTestWrapper });
 
     await waitFor(() => {
@@ -402,7 +402,7 @@ describe('App Component - Brand New State', () => {
     const openSharedSessionHandler = mockElectron.on.mock.calls.find(
       ([channel]) => channel === 'open-shared-session'
     )?.[1];
-    const link = 'aibuddy://sessions/nostr?nevent=test&key=secret';
+    const link = 'goose://sessions/nostr?nevent=test&key=secret';
 
     expect(openSharedSessionHandler).toBeDefined();
     await openSharedSessionHandler?.({} as any, link);
@@ -499,8 +499,8 @@ describe('App Component - Brand New State', () => {
       .mockResolvedValueOnce(undefined);
     await renderAppInner();
     const handler = getIpcHandler('open-shared-session');
-    const firstLink = 'aibuddy://sessions/nostr?nevent=first&key=secret';
-    const secondLink = 'aibuddy://sessions/nostr?nevent=second&key=secret';
+    const firstLink = 'goose://sessions/nostr?nevent=first&key=secret';
+    const secondLink = 'goose://sessions/nostr?nevent=second&key=secret';
 
     const firstImport = handler?.({} as any, firstLink);
     await handler?.({} as any, firstLink);
@@ -518,7 +518,7 @@ describe('App Component - Brand New State', () => {
 
     await getIpcHandler('open-shared-session')?.(
       {} as any,
-      'aibuddy://sessions/nostr?nevent=test&key=secret'
+      'goose://sessions/nostr?nevent=test&key=secret'
     );
 
     expect(mockToastError).toHaveBeenCalledWith(

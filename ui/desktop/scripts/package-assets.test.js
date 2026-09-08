@@ -50,7 +50,7 @@ describe('packaged AIBuddy asset contracts', () => {
     ]);
   });
 
-  it('requires the macOS AIBuddy Nostr compatibility scheme', () => {
+  it('requires the macOS Goose Nostr compatibility scheme', () => {
     expect(
       verifyInfoPlist(brand, {
         CFBundleIdentifier: brand.bundleId,
@@ -58,7 +58,7 @@ describe('packaged AIBuddy asset contracts', () => {
           { CFBundleURLName: brand.protocolName, CFBundleURLSchemes: [brand.protocol] },
         ],
       })
-    ).toEqual([expect.stringContaining('aibuddy')]);
+    ).toEqual([expect.stringContaining('goose')]);
   });
 
   it('uses the AIBuddy icon for the Windows installer', () => {

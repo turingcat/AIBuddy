@@ -17,7 +17,7 @@ describe('applyLegacyAIBuddyEnvironment', () => {
 
   it('keeps canonical values when both names are set', () => {
     const environment = {
-      AIBUDDY_DEFAULT_PROVIDER: 'legacy-provider',
+      GOOSE_DEFAULT_PROVIDER: 'legacy-provider',
       AIBUDDY_DEFAULT_PROVIDER: 'canonical-provider',
     };
 

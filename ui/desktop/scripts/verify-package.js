@@ -54,8 +54,8 @@ function verifyInfoPlist(brand, plist) {
       `CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected ${brand.protocol}`
     );
   }
-  if (!schemes.includes('aibuddy')) {
-    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected aibuddy`);
+  if (!schemes.includes('goose')) {
+    problems.push(`CFBundleURLTypes registers ${JSON.stringify(schemes)}, expected goose`);
   }
 
   return problems;

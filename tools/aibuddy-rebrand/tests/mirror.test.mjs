@@ -391,7 +391,8 @@ test('establishBridge binds an external proof artifact and only creates an expli
   git(fixture.repo, ['checkout', '--detach', '--force', mirror.mirrorCommit]);
   writeFileSync(join(fixture.repo, 'product-only.txt'), 'AIBuddy product patch\n');
   const p0 = commit(fixture.repo, 'transformed product baseline P0');
-  git(fixture.repo, ['checkout', '-B', 'feat/aibuddy-branding']);
+  const productBranch = 'sync/aibuddy-upstream-test';
+  git(fixture.repo, ['checkout', '-B', productBranch]);
   const p0Tree = tree(fixture.repo, p0);
   const proof = {
     expectedProductCommit: p0,
@@ -410,6 +411,7 @@ test('establishBridge binds an external proof artifact and only creates an expli
   const proofDigest = createHash('sha256').update(proofBytes).digest('hex');
 
   const review = await establishBridge({
+    branch: productBranch,
     cwd: fixture.repo,
     expectedProductCommit: p0,
     migrationProofPath: proofPath,
@@ -428,6 +430,7 @@ test('establishBridge binds an external proof artifact and only creates an expli
 
   const bridge = await establishBridge({
     approve: true,
+    branch: productBranch,
     cwd: fixture.repo,
     dryRun: false,
     expectedProductCommit: p0,

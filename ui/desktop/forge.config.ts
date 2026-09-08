@@ -27,8 +27,8 @@ let cfg = {
       schemes: [brand.protocol],
     },
     {
-      name: 'AIBuddyNostrProtocol',
-      schemes: ['aibuddy'],
+      name: 'GooseNostrProtocol',
+      schemes: ['goose'],
     },
   ],
   // macOS Info.plist extensions for drag-and-drop support

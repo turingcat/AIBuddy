@@ -34,6 +34,7 @@ import { withSub2apiSession } from './sub2apiAuth';
 import { readCredentials, writeCredentials, clearCredentials } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
+import { configureProxy } from './proxy';
 import { startAIBuddyServe } from './aibuddyServe';
 import { buildAIBuddyServeEnv } from './aibuddyServeEnv';
 import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';

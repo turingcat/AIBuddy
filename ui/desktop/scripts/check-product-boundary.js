@@ -33,85 +33,85 @@ const ALLOWED_VIOLATIONS = new Map([
     'ui/desktop/scripts/check-product-boundary.js',
     new Set([
       'ai.linyeyun.cn',
-      'AIBUDDY_AUTH_API_BASE_URL',
-      'AIBuddy provider credential variable',
-      'AIBuddy provider selection',
-      'AIBuddy login copy',
-      'AIBuddy welcome copy',
-      'AIBuddy visible identity',
-      'AIBuddy login component',
+      'HEYBUDDY_AUTH_API_BASE_URL',
+      'HeyBuddy provider credential variable',
+      'HeyBuddy provider selection',
+      'HeyBuddy login copy',
+      'HeyBuddy welcome copy',
+      'HeyBuddy visible identity',
+      'HeyBuddy login component',
       'OA login route',
       'Company OA copy',
-      'AIBuddy product identity',
+      'HeyBuddy product identity',
       'OA login implementation or IPC identifier',
       'AIBuddy legacy migration identifier',
       'APP_EDITION active usage',
-      'AIBuddy artifact or release name',
+      'HeyBuddy artifact or release name',
       'legacy installer icon',
-      'AIBuddy prompt fallback identity',
+      'HeyBuddy prompt fallback identity',
     ]),
   ],
   [
     'ui/desktop/scripts/check-product-boundary.test.js',
     new Set([
       'ai.linyeyun.cn',
-      'AIBUDDY_AUTH_API_BASE_URL',
-      'AIBuddy provider credential variable',
-      'AIBuddy provider selection',
-      'AIBuddy login copy',
-      'AIBuddy welcome copy',
-      'AIBuddy visible identity',
-      'AIBuddy login component',
+      'HEYBUDDY_AUTH_API_BASE_URL',
+      'HeyBuddy provider credential variable',
+      'HeyBuddy provider selection',
+      'HeyBuddy login copy',
+      'HeyBuddy welcome copy',
+      'HeyBuddy visible identity',
+      'HeyBuddy login component',
       'OA login route',
       'Company OA copy',
-      'AIBuddy product identity',
+      'HeyBuddy product identity',
       'OA login implementation or IPC identifier',
       'AIBuddy legacy migration identifier',
       'APP_EDITION active usage',
-      'AIBuddy artifact or release name',
+      'HeyBuddy artifact or release name',
       'legacy installer icon',
-      'AIBuddy prompt fallback identity',
+      'HeyBuddy prompt fallback identity',
     ]),
   ],
   ['ui/desktop/scripts/brand.test.js', new Set(['APP_EDITION active usage'])],
-  ['ui/desktop/scripts/bump-build-version.test.js', new Set(['AIBuddy product identity'])],
-  ['ui/desktop/src/App.test.tsx', new Set(['AIBuddy product identity', 'AIBuddy welcome copy'])],
+  ['ui/desktop/scripts/bump-build-version.test.js', new Set(['HeyBuddy product identity'])],
+  ['ui/desktop/src/App.test.tsx', new Set(['HeyBuddy product identity', 'HeyBuddy welcome copy'])],
   ['ui/desktop/src/viteMainConfig.test.ts', new Set(['APP_EDITION active usage'])],
 ]);
 
 const PRODUCT_PATTERNS = [
   { pattern: 'ai.linyeyun.cn', matches: (content) => content.includes('ai.linyeyun.cn') },
   {
-    pattern: 'AIBUDDY_AUTH_API_BASE_URL',
-    matches: (content) => content.includes('AIBUDDY_AUTH_API_BASE_URL'),
+    pattern: 'HEYBUDDY_AUTH_API_BASE_URL',
+    matches: (content) => content.includes('HEYBUDDY_AUTH_API_BASE_URL'),
   },
   {
-    pattern: 'AIBuddy provider credential variable',
-    matches: (content) => /\bAIBUDDY_(?:API_KEY|BASE_URL)\b/.test(content),
+    pattern: 'HeyBuddy provider credential variable',
+    matches: (content) => /\bHEYBUDDY_(?:API_KEY|BASE_URL)\b/.test(content),
   },
   {
-    pattern: 'AIBuddy provider selection',
-    matches: isAIBuddyProviderSelection,
+    pattern: 'HeyBuddy provider selection',
+    matches: isHeyBuddyProviderSelection,
   },
   {
-    pattern: 'AIBuddy login copy',
-    matches: (content) => /登录\s*AIBuddy|AIBuddy\s*(?:登录|login)\b/i.test(content),
+    pattern: 'HeyBuddy login copy',
+    matches: (content) => /登录\s*HeyBuddy|HeyBuddy\s*(?:登录|login)\b/i.test(content),
   },
   {
-    pattern: 'AIBuddy welcome copy',
-    matches: (content) => /Welcome to\s+AIBuddy\b/i.test(content),
+    pattern: 'HeyBuddy welcome copy',
+    matches: (content) => /Welcome to\s+HeyBuddy\b/i.test(content),
   },
-  { pattern: 'AIBuddy visible identity', matches: isAIBuddyVisibleIdentity },
+  { pattern: 'HeyBuddy visible identity', matches: isHeyBuddyVisibleIdentity },
   {
-    pattern: 'AIBuddy login component',
-    matches: (content) => /\bAIBuddy(?:LoginForm|Login|Auth)\b/.test(content),
+    pattern: 'HeyBuddy login component',
+    matches: (content) => /\bHeyBuddy(?:LoginForm|Login|Auth)\b/.test(content),
   },
   { pattern: 'OA login route', matches: (content) => /\blogin-via-oa\b/i.test(content) },
   { pattern: 'Company OA copy', matches: (content) => /公司\s*OA/i.test(content) },
   {
-    pattern: 'AIBuddy product identity',
+    pattern: 'HeyBuddy product identity',
     matches: (content) =>
-      /(?:^|[\s{,;:])['"]?(?:productName|product_name|appName|app_name|displayName|display_name)['"]?\s*(?::|=)\s*['"]?AIBuddy\b['"]?/im.test(
+      /(?:^|[\s{,;:])['"]?(?:productName|product_name|appName|app_name|displayName|display_name)['"]?\s*(?::|=)\s*['"]?HeyBuddy\b['"]?/im.test(
         content
       ),
   },
@@ -125,9 +125,9 @@ const PRODUCT_PATTERNS = [
     matches: (content) => /\b(?:migrateLegacyAIBuddyData|aibuddyDataMigration)\b/.test(content),
   },
   {
-    pattern: 'AIBuddy artifact or release name',
+    pattern: 'HeyBuddy artifact or release name',
     matches: (content) =>
-      /(?:AIBuddy(?:\*|[-_][^\s"'`]*)?\.(?:zip|exe|app)\b|name:\s*AIBuddy(?:\s|\$))/i.test(
+      /(?:HeyBuddy(?:\*|[-_][^\s"'`]*)?\.(?:zip|exe|app)\b|name:\s*HeyBuddy(?:\s|\$))/i.test(
         content
       ),
   },
@@ -136,8 +136,8 @@ const PRODUCT_PATTERNS = [
     matches: (content) => /SetupIconFile\s*=\s*src[\\/]images[\\/]icon\.ico\b/i.test(content),
   },
   {
-    pattern: 'AIBuddy prompt fallback identity',
-    matches: (content) => /(?:You are|你是)\s*AIBuddy\b/i.test(content),
+    pattern: 'HeyBuddy prompt fallback identity',
+    matches: (content) => /(?:You are|你是)\s*HeyBuddy\b/i.test(content),
   },
   { pattern: 'APP_EDITION active usage', matches: isActiveEditionUsage },
 ];
@@ -150,19 +150,19 @@ function isAllowedViolation(relativeFile, pattern) {
   return ALLOWED_VIOLATIONS.get(relativeFile)?.has(pattern) ?? false;
 }
 
-function isAIBuddyProviderSelection(content) {
+function isHeyBuddyProviderSelection(content) {
   return (
-    /(?:^|[\s{,;:])['"]?AIBUDDY_PROVIDER['"]?\s*(?::|=)\s*['"]?aibuddy\b['"]?/im.test(content) ||
-    /process\.env(?:\.AIBUDDY_PROVIDER|\[['"]AIBUDDY_PROVIDER['"]\])\s*=\s*['"]?aibuddy\b['"]?/i.test(
+    /(?:^|[\s{,;:])['"]?AIBUDDY_PROVIDER['"]?\s*(?::|=)\s*['"]?heybuddy\b['"]?/im.test(content) ||
+    /process\.env(?:\.AIBUDDY_PROVIDER|\[['"]AIBUDDY_PROVIDER['"]\])\s*=\s*['"]?heybuddy\b['"]?/i.test(
       content
     )
   );
 }
 
-function isAIBuddyVisibleIdentity(content) {
+function isHeyBuddyVisibleIdentity(content) {
   return (
-    /<(?:h[1-6]|title|span|p|div|button)\b[^>]*>\s*AIBuddy\s*</i.test(content) ||
-    /(?:^|[\s{,;:])['"]?(?:assistantName|assistant_name)['"]?\s*(?::|=)\s*['"]?AIBuddy\b['"]?/im.test(
+    /<(?:h[1-6]|title|span|p|div|button)\b[^>]*>\s*HeyBuddy\s*</i.test(content) ||
+    /(?:^|[\s{,;:])['"]?(?:assistantName|assistant_name)['"]?\s*(?::|=)\s*['"]?HeyBuddy\b['"]?/im.test(
       content
     )
   );
@@ -282,8 +282,8 @@ function findProductBoundaryViolations(rootDir) {
         .filter(({ pattern }) => !isAllowedViolation(relativeFile, pattern))
         .map(({ pattern }) => ({ file: relativeFile, pattern }));
 
-      if (relativeFile === 'crates/aibuddy-providers/src/declarative/definitions/aibuddy.json') {
-        violations.push({ file: relativeFile, pattern: 'bundled aibuddy provider definition' });
+      if (relativeFile === 'crates/aibuddy-providers/src/declarative/definitions/heybuddy.json') {
+        violations.push({ file: relativeFile, pattern: 'bundled heybuddy provider definition' });
       }
 
       return violations;

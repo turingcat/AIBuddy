@@ -1843,8 +1843,8 @@ pub fn extract_reasoning_effort(model_name: &str) -> (String, Option<String>) {
 /// The Responses API is backwards-compatible with all OpenAI reasoning
 /// models, so every `o`-series (`o1`, `o3`, `o4`, …) and `gpt-5` variant
 /// routes here. The matcher intentionally scans the full model identifier so
-/// hosted aliases like `databricks-gpt-5.4`, `aibuddy-o3-mini`, or
-/// `headless-aibuddy-o3-mini` work without provider-specific normalization.
+/// hosted aliases like `databricks-gpt-5.4`, `goose-o3-mini`, or
+/// `headless-goose-o3-mini` work without provider-specific normalization.
 pub fn is_openai_responses_model(model_name: &str) -> bool {
     static RE: OnceLock<Regex> = OnceLock::new();
     let re =
@@ -5304,8 +5304,8 @@ data: [DONE]"#;
             "gpt-5-4",
             "gpt-5-2-pro",
             "databricks-gpt-5.4",
-            "aibuddy-gpt-5.4-high",
-            "headless-aibuddy-o3-mini",
+            "goose-gpt-5.4-high",
+            "headless-goose-o3-mini",
         ] {
             assert!(is_openai_responses_model(model), "{model} should match");
         }
@@ -5454,7 +5454,7 @@ data: [DONE]"#;
                 Some("high"),
             ),
             ("databricks-o3-low", "databricks-o3", Some("low")),
-            ("aibuddy-gpt-5-high", "aibuddy-gpt-5", Some("high")),
+            ("goose-gpt-5-high", "goose-gpt-5", Some("high")),
             ("gpt-4o", "gpt-4o", None),
         ] {
             let (name, effort) = extract_reasoning_effort(model);

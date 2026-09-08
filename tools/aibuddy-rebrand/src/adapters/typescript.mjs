@@ -4,8 +4,10 @@ import {
   addPreservedValueSpans,
   addStringEdit,
   applyEdits,
+  compatibilityIdentifierIsPreserved,
   deduplicateEdits,
   inputKeyFromLine,
+  legacyIdentifierIsPreserved,
   makeEdit,
   renameBrandSegments,
   stringReplacement,
@@ -338,18 +340,32 @@ export function transformTypeScript({ path, text, policy }) {
     if (ts.isIdentifier(node)) {
       identifierValues.add(node.text);
       if (textHasBrand(node.text)) {
-        const replacement = renameBrandSegments(node.text);
-        if (replacement !== node.text) {
-          edits.push(
-            makeEdit({
-              start: node.getStart(sourceFile),
-              end: node.end,
-              replacement,
-              original: node.text,
-              kind: 'typescript-identifier',
-            }),
-          );
-          symbols.push({ original: node.text, replacement, start: node.getStart(sourceFile), end: node.end });
+        const start = node.getStart(sourceFile);
+        if (
+          legacyIdentifierIsPreserved(node.text, path, undefined, policy) ||
+          compatibilityIdentifierIsPreserved(node.text, path, undefined, policy)
+        ) {
+          preserved.push({
+            path,
+            start,
+            end: node.end,
+            value: node.text,
+            reason: 'explicit legacy identifier compatibility policy',
+          });
+        } else {
+          const replacement = renameBrandSegments(node.text);
+          if (replacement !== node.text) {
+            edits.push(
+              makeEdit({
+                start,
+                end: node.end,
+                replacement,
+                original: node.text,
+                kind: 'typescript-identifier',
+              }),
+            );
+            symbols.push({ original: node.text, replacement, start, end: node.end });
+          }
         }
       }
     }

@@ -1,4 +1,10 @@
-import { applyUpstreamCorrections, createBrandPattern, mappedBrand } from '../brand-map.mjs';
+import {
+  applyUpstreamCorrections,
+  createBrandPattern,
+  findExternalAliases,
+  mappedBrand,
+  mappedExternalAlias,
+} from '../brand-map.mjs';
 
 const BRAND_PATTERN = createBrandPattern('g');
 const BRAND_OCCURRENCE_PATTERN = createBrandPattern('g');
@@ -11,9 +17,8 @@ export function canonicalBrand(value) {
   return mappedBrand(value);
 }
 
-export function renameBrandSegments(value) {
-  const corrected = applyUpstreamCorrections(value);
-  const renamed = corrected.replace(BRAND_PATTERN, (match, offset, source) => {
+function renameProductSegments(value) {
+  return value.replace(BRAND_PATTERN, (match, offset, source) => {
     const before = offset === 0 ? '' : source[offset - 1];
     const after = source[offset + match.length] ?? '';
     const boundary = (character) =>
@@ -54,7 +59,19 @@ export function renameBrandSegments(value) {
     }
     return canonicalBrand(match);
   });
-  return renamed.replace(/@aaif\/(aibuddy(?:-|$))/gu, '@aibuddy/$1');
+}
+
+export function renameBrandSegments(value) {
+  const corrected = applyUpstreamCorrections(value);
+  let output = '';
+  let cursor = 0;
+  for (const match of findExternalAliases(corrected)) {
+    output += renameProductSegments(corrected.slice(cursor, match.index));
+    output += mappedExternalAlias(match[0]);
+    cursor = match.index + match[0].length;
+  }
+  output += renameProductSegments(corrected.slice(cursor));
+  return output.replace(/@aaif\/(aibuddy(?:-|$))/gu, '@aibuddy/$1');
 }
 
 export function findBrandOccurrences(value) {
@@ -135,11 +152,7 @@ export function preservedValueSpans(value, { path, key, policy }) {
     preserveWhole('explicit legal/authorship preservation policy');
   } else {
     for (const match of value.matchAll(URL_PATTERN)) {
-      if (
-        (policy.preserve.ownedExternalUrlReplacements ?? []).some(({ from }) =>
-          match[0].includes(from),
-        )
-      ) {
+      if (ownedExternalUrlIsReplaceable(match[0], path, policy)) {
         continue;
       }
       spans.push({
@@ -188,6 +201,17 @@ export function preservedValueSpans(value, { path, key, policy }) {
           value,
           identity,
           'explicit persistent runtime identity preservation policy',
+        );
+      }
+    }
+    for (const context of policy.preserve.compatibilityValueContexts ?? []) {
+      if (!contextMatches(path, key, context)) continue;
+      for (const compatibilityValue of context.values ?? []) {
+        addValueMatches(
+          spans,
+          value,
+          compatibilityValue,
+          context.reason ?? 'explicit compatibility value preservation policy',
         );
       }
     }
@@ -250,6 +274,16 @@ function contextMatches(path, key, context) {
   return pathMatches && keyMatches;
 }
 
+export function ownedExternalUrlIsReplaceable(value, path, policy) {
+  const owned = (policy.preserve.ownedExternalUrlReplacements ?? []).some(({ from }) =>
+    value.includes(from),
+  );
+  if (!owned) return false;
+  return !(policy.preserve.historicalOwnedUrlContexts ?? []).some((context) =>
+    contextMatches(path, undefined, context),
+  );
+}
+
 export function runtimeKeyIsPreserved(key, path, policy) {
   if (!key || !path) {
     return false;
@@ -271,6 +305,13 @@ export function legacyIdentifierIsPreserved(value, path, key, policy) {
         new RegExp(`^(?:${pattern})$`, 'u').test(value),
       )) &&
     policy.preserve.legacyIdentifierContexts.some((context) => contextMatches(path, key, context))
+  );
+}
+
+export function compatibilityIdentifierIsPreserved(value, path, key, policy) {
+  return (policy.preserve.compatibilityIdentifierContexts ?? []).some(
+    (context) =>
+      contextMatches(path, key, context) && (context.values ?? []).includes(value),
   );
 }
 

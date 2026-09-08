@@ -55,7 +55,7 @@ describe('AIBuddyServeLeaseRegistry', () => {
     expect(() => store.getAcpUrl(1)).toThrow(AIBUDDY_SERVE_EXITED_USER_MESSAGE);
     expect(() => store.getSecretKey(1)).toThrow(AIBUDDY_SERVE_EXITED_USER_MESSAGE);
     expect(AIBUDDY_SERVE_EXITED_USER_MESSAGE).toContain('AIBuddy Desktop');
-    expect(AIBUDDY_SERVE_EXITED_USER_MESSAGE).not.toContain('AIBuddy');
+    expect(AIBUDDY_SERVE_EXITED_USER_MESSAGE).not.toContain('Goose');
     expect(logger.error).toHaveBeenCalledWith(
       'AIBuddy ACP server exited unexpectedly',
       expect.objectContaining({ code: 1, signal: null, windowIds: [1] })

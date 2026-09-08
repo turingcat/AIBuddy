@@ -396,7 +396,7 @@ fn agent_capabilities_meta() -> Option<Meta> {
     let capabilities = serde_json::Value::Object(aibuddy);
     let mut meta = serde_json::Map::new();
     meta.insert("aibuddy".to_string(), capabilities.clone());
-    meta.insert("aibuddy".to_string(), capabilities);
+    meta.insert("goose".to_string(), capabilities);
     Some(meta)
 }
 
@@ -447,7 +447,7 @@ struct ClientCapabilitiesMeta {
     #[serde(default)]
     aibuddy: Option<AIBuddyClientCapabilities>,
     #[serde(default)]
-    aibuddy: Option<AIBuddyClientCapabilities>,
+    goose: Option<AIBuddyClientCapabilities>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -479,7 +479,7 @@ fn extract_client_capabilities_meta(args: &InitializeRequest) -> Option<ClientCa
 pub(super) enum CustomMethodNamespace {
     #[default]
     AIBuddy,
-    AIBuddy,
+    Goose,
 }
 
 fn negotiate_client_capabilities(
@@ -490,16 +490,16 @@ fn negotiate_client_capabilities(
     };
     if let Some(capabilities) = meta.aibuddy {
         (CustomMethodNamespace::AIBuddy, Some(capabilities))
-    } else if let Some(capabilities) = meta.aibuddy {
-        (CustomMethodNamespace::AIBuddy, Some(capabilities))
+    } else if let Some(capabilities) = meta.goose {
+        (CustomMethodNamespace::Goose, Some(capabilities))
     } else {
         (CustomMethodNamespace::AIBuddy, None)
     }
 }
 
-const LEGACY_SESSION_UPDATE_METHOD: &str = "_aibuddy/unstable/session/update";
+const LEGACY_SESSION_UPDATE_METHOD: &str = "_goose/unstable/session/update";
 const LEGACY_PROVIDER_DEVICE_CODE_METHOD: &str =
-    "_aibuddy/unstable/providers/authentication/device-code";
+    "_goose/unstable/providers/authentication/device-code";
 
 #[derive(Debug, Clone)]
 struct LegacyAIBuddySessionNotification(AIBuddySessionNotification);
@@ -566,7 +566,7 @@ pub(super) fn send_custom_session_notification(
 ) -> Result<(), agent_client_protocol::Error> {
     match namespace {
         CustomMethodNamespace::AIBuddy => cx.send_notification(notification),
-        CustomMethodNamespace::AIBuddy => {
+        CustomMethodNamespace::Goose => {
             cx.send_notification(LegacyAIBuddySessionNotification(notification))
         }
     }
@@ -579,7 +579,7 @@ fn send_provider_device_code_notification(
 ) -> Result<(), agent_client_protocol::Error> {
     match namespace {
         CustomMethodNamespace::AIBuddy => cx.send_notification(notification),
-        CustomMethodNamespace::AIBuddy => {
+        CustomMethodNamespace::Goose => {
             cx.send_notification(LegacyProviderDeviceCodeNotification(notification))
         }
     }
@@ -3625,21 +3625,18 @@ print(\"hello, world\")
     }
 
     #[test]
-    fn test_legacy_aibuddy_capabilities_negotiate_legacy_custom_methods() {
-        let mut aibuddy_meta = serde_json::Map::new();
-        aibuddy_meta.insert(
+    fn test_legacy_goose_capabilities_negotiate_legacy_custom_methods() {
+        let mut goose_meta = serde_json::Map::new();
+        goose_meta.insert(
             "customNotifications".to_string(),
             serde_json::Value::Bool(true),
         );
-        aibuddy_meta.insert(
+        goose_meta.insert(
             "recipeParameterRequests".to_string(),
             serde_json::Value::Bool(true),
         );
         let mut meta = serde_json::Map::new();
-        meta.insert(
-            "aibuddy".to_string(),
-            serde_json::Value::Object(aibuddy_meta),
-        );
+        meta.insert("goose".to_string(), serde_json::Value::Object(goose_meta));
         let request = InitializeRequest::new(agent_client_protocol::schema::ProtocolVersion::V1)
             .client_capabilities(
                 agent_client_protocol::schema::v1::ClientCapabilities::new().meta(meta),
@@ -3647,7 +3644,7 @@ print(\"hello, world\")
 
         let (namespace, capabilities) = negotiate_client_capabilities(&request);
 
-        assert_eq!(namespace, CustomMethodNamespace::AIBuddy);
+        assert_eq!(namespace, CustomMethodNamespace::Goose);
         assert!(extract_client_supports_aibuddy_custom_notifications(
             capabilities.as_ref()
         ));
@@ -3661,7 +3658,7 @@ print(\"hello, world\")
         let mut meta = serde_json::Map::new();
         meta.insert("aibuddy".to_string(), serde_json::json!({}));
         meta.insert(
-            "aibuddy".to_string(),
+            "goose".to_string(),
             serde_json::json!({ "customNotifications": true }),
         );
         let request = InitializeRequest::new(agent_client_protocol::schema::ProtocolVersion::V1)
@@ -3678,7 +3675,7 @@ print(\"hello, world\")
     }
 
     #[test]
-    fn test_legacy_outbound_notifications_use_aibuddy_methods() {
+    fn test_legacy_outbound_notifications_use_goose_methods() {
         let session = LegacyAIBuddySessionNotification(AIBuddySessionNotification::default())
             .to_untyped_message()
             .unwrap();
@@ -3694,14 +3691,14 @@ print(\"hello, world\")
     #[test]
     fn test_agent_capabilities_advertise_recipe_parameter_scopes_for_both_namespaces() {
         let meta = agent_capabilities_meta().unwrap();
-        for namespace in ["aibuddy", "aibuddy"] {
+        for namespace in ["aibuddy", "goose"] {
             assert_eq!(
                 meta.get(namespace)
                     .and_then(|capabilities| capabilities.get("recipeParameterScopes")),
                 Some(&serde_json::json!({}))
             );
         }
-        assert_eq!(meta.get("aibuddy"), meta.get("aibuddy"));
+        assert_eq!(meta.get("aibuddy"), meta.get("goose"));
     }
 
     #[test]

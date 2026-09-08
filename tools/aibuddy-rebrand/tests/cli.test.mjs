@@ -24,7 +24,8 @@ test('runs when the command entry point is a symbolic link', (t) => {
   const entry = join(root, 'rebrand.mjs');
   symlinkSync(fileURLToPath(new URL('../cli.mjs', import.meta.url)), entry);
   const output = execFileSync(process.execPath, [entry, '--help'], { encoding: 'utf8' });
-  assert.match(output, /generate --source-ref/);
+  assert.match(output, /tools\/aibuddy-rebrand\/cli\.mjs generate --source-ref/);
+  assert.doesNotMatch(output, /tools\/rebrand/);
 });
 
 test('parses each rebrand command without performing filesystem operations', () => {

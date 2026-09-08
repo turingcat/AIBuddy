@@ -38,7 +38,7 @@ const zhMessages = Object.fromEntries(
 function renderHub(setView = vi.fn()) {
   render(
     <IntlProvider locale="zh-CN" messages={zhMessages}>
-      <Hub setView={setView} />
+      <Hub setView={setView} draftRef={{ current: '' }} />
     </IntlProvider>
   );
   return setView;
@@ -57,7 +57,7 @@ describe('Hub', () => {
     renderHub();
 
     expect(screen.getByText('早上好，我是AIBuddy')).toBeInTheDocument();
-    expect(screen.queryByText(/AIBuddy|广林 AI 助手/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/HeyBuddy|广林 AI 助手/)).not.toBeInTheDocument();
   });
 
   it.each([

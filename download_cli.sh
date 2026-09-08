@@ -11,7 +11,7 @@ set -eu
 # Supported Architectures: macOS arm64; Linux arm64/x86_64; Windows x86_64
 #
 # Usage:
-#   curl -fsSL https://github.com/turingcat/HeyBuddy/releases/download/stable/download_cli.sh | bash
+#   curl -fsSL https://github.com/turingcat/AIBuddy/releases/download/stable/download_cli.sh | bash
 #
 # Environment variables:
 #   AIBUDDY_BIN_DIR  - Directory to which aibuddy will be installed (default: $HOME/.local/bin)

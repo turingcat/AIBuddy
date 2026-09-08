@@ -75,6 +75,12 @@ function cloneEntry(entry, path = entry.path, content = entry.content) {
   };
 }
 
+function upstreamPathIsOmitted(path, policy) {
+  const omit = policy.upstreamOmit ?? {};
+  return (omit.paths ?? []).includes(path) ||
+    (omit.pathPrefixes ?? []).some((prefix) => path === prefix.slice(0, -1) || path.startsWith(prefix));
+}
+
 function isBinary(content) {
   return content.includes(0);
 }
@@ -247,6 +253,7 @@ function normalizeAdapterResult(path, text, result) {
 function adapterFor(path, textAdapter) {
   if (/\.(?:ya?ml)\.disabled$/u.test(path)) return 'yaml';
   if (path === 'Cargo.lock' || path.endsWith('/Cargo.lock')) return 'toml';
+  if (textAdapter?.isMcpReplayPath?.(path)) return 'text';
   const extension = path.slice(path.lastIndexOf('.')).toLowerCase();
   return TEXT_EXTENSIONS.get(extension) ?? (textAdapter?.supportsText(path) ? 'text' : undefined);
 }
@@ -416,6 +423,19 @@ export async function transformSnapshot(entries, { input = 'product' } = {}) {
 
   for (const sourceEntry of sourceEntries) {
     const inputPath = sourceEntry.path;
+    if (input === 'upstream' && upstreamPathIsOmitted(inputPath, policy)) {
+      reportEntries.push(
+        entryReport({
+          inputPath,
+          outputPath: inputPath,
+          sourceEntry,
+          disposition: 'omitted-upstream-tooling',
+          adapter: 'policy',
+          reason: 'upstream branding implementation is replaced by the AIBuddy synchronization tool',
+        }),
+      );
+      continue;
+    }
     const excluded = policyPreservesPath(inputPath, policy);
     if (excluded) {
       let preserved = [];

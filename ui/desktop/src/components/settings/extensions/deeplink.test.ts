@@ -17,12 +17,12 @@ describe('addExtensionFromDeepLink for AIBuddy', () => {
     vi.clearAllMocks();
   });
 
-  it('rejects a deeplink on the legacy AIBuddy scheme', async () => {
+  it('rejects a deeplink on the legacy Goose scheme', async () => {
     vi.mocked(toastService.handleError).mockImplementationOnce(() => {
       throw new Error('Invalid protocol');
     });
 
-    const url = 'aibuddy://extension?cmd=aibuddy&arg=mcp&name=Memory&description=Memory';
+    const url = 'goose://extension?cmd=goose&arg=mcp&name=Memory&description=Memory';
 
     await expect(addExtensionFromDeepLink(url, mockAddExtension, mockSetView)).rejects.toThrow(
       'Invalid protocol'

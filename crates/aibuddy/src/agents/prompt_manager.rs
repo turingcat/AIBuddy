@@ -477,7 +477,7 @@ mod tests {
             .build();
 
         assert!(prompt.contains("AIBuddy"));
-        assert!(!prompt.contains("AIBuddy"));
+        assert!(!prompt.contains("HeyBuddy"));
         assert!(prompt.contains("使用中文"));
         assert!(prompt.contains("当用户问候你或询问你的身份时，你的回复必须以“我是AIBuddy”开头"));
         assert!(!prompt.contains("你可以说"));
@@ -589,7 +589,7 @@ mod tests {
             .build();
 
         assert!(system_prompt.contains("AIBuddy"));
-        assert!(!system_prompt.contains("AIBuddy"));
+        assert!(!system_prompt.contains("HeyBuddy"));
         assert!(system_prompt.contains("默认使用中文"));
 
         #[cfg(feature = "code-mode")]

@@ -397,7 +397,7 @@ mod tests {
             Some("anthropic/claude-sonnet-4.5".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "aibuddy-claude-sonnet-4-5-bedrock", r),
+            map_to_canonical_model("databricks", "goose-claude-sonnet-4-5-bedrock", r),
             Some("anthropic/claude-sonnet-4.5".to_string())
         );
         assert_eq!(
@@ -427,7 +427,7 @@ mod tests {
             Some("openai/gpt-4o".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "kheybuddy-gpt-4o", r),
+            map_to_canonical_model("databricks", "kgoose-gpt-4o", r),
             Some("openai/gpt-4o".to_string())
         );
         assert_eq!(
@@ -441,15 +441,15 @@ mod tests {
 
         // === OpenAI O-series ===
         assert_eq!(
-            map_to_canonical_model("databricks", "aibuddy-o1", r),
+            map_to_canonical_model("databricks", "goose-o1", r),
             Some("openai/o1".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "kheybuddy-o3", r),
+            map_to_canonical_model("databricks", "kgoose-o3", r),
             Some("openai/o3".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "headless-aibuddy-o3-mini", r),
+            map_to_canonical_model("databricks", "headless-goose-o3-mini", r),
             Some("openai/o3-mini".to_string())
         );
 
@@ -495,7 +495,7 @@ mod tests {
             Some("x-ai/grok-4.3".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "kheybuddy-grok-4.3", r),
+            map_to_canonical_model("databricks", "kgoose-grok-4.3", r),
             Some("x-ai/grok-4.3".to_string())
         );
 
@@ -506,7 +506,7 @@ mod tests {
             Some("cohere/command-r-plus-08".to_string())
         );
         assert_eq!(
-            map_to_canonical_model("databricks", "aibuddy-command-r-08-2024", r),
+            map_to_canonical_model("databricks", "goose-command-r-08-2024", r),
             Some("cohere/command-r-08".to_string())
         );
 

@@ -13,6 +13,7 @@ import { tmpdir } from 'node:os';
 import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 
 import { verifySnapshot } from './verify.mjs';
+import { BRAND_MAP } from './brand-map.mjs';
 
 const PROVENANCE_PATH = '.aibuddy-rebrand.json';
 const DEFAULT_BRANCH = 'upstream/aibuddy-mirror';
@@ -610,6 +611,7 @@ function validateMigrationProof(cwd, proofArtifact, expectedProductCommit, produ
 
 export async function establishBridge({
   cwd = process.cwd(),
+  branch = BRIDGE_BRANCH,
   mirrorCommit,
   expectedProductCommit,
   dryRun = true,
@@ -619,9 +621,15 @@ export async function establishBridge({
 } = {}) {
   requireBoolean(dryRun, 'dryRun');
   requireBoolean(approve, 'approve');
+  const normalizedBranch = validateBranch(cwd, branch);
+  if (!BRAND_MAP.allowedApplyBranchPrefixes.some((prefix) => normalizedBranch.name.startsWith(prefix))) {
+    throw new Error(
+      `bridge branch must start with ${BRAND_MAP.allowedApplyBranchPrefixes.join(' or ')}: ${normalizedBranch.name}`,
+    );
+  }
   const currentBranch = gitText(cwd, ['branch', '--show-current']);
-  if (currentBranch !== BRIDGE_BRANCH) {
-    throw new Error(`bridge is restricted to ${BRIDGE_BRANCH}; current branch is ${currentBranch || 'detached'}`);
+  if (currentBranch !== normalizedBranch.name) {
+    throw new Error(`bridge is restricted to ${normalizedBranch.name}; current branch is ${currentBranch || 'detached'}`);
   }
   assertCleanBridgeWorktree(cwd);
   const productCommit = resolveCommit(cwd, requireString(expectedProductCommit, 'expectedProductCommit'), 'expectedProductCommit');
@@ -637,7 +645,7 @@ export async function establishBridge({
 
   const review = {
     action: approve && !dryRun ? 'create' : 'review',
-    branch: BRIDGE_BRANCH,
+    branch: normalizedBranch.name,
     dryRun,
     expectedProductCommit: productCommit,
     mirrorCommit: mirrorInfo.commit,
@@ -673,7 +681,7 @@ export async function establishBridge({
       `Bridge-Known-Product-Patches-SHA256: ${reviewedInputs.knownProductPatchesDigest}`,
     ].join('\n') + '\n',
   );
-  const branchRef = `refs/heads/${BRIDGE_BRANCH}`;
+  const branchRef = normalizedBranch.ref;
   updateRefCas(cwd, branchRef, bridgeCommit, productCommit);
   return {
     ...review,

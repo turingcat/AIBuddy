@@ -53,7 +53,7 @@ function plistFor() {
     CFBundleExecutable: brand.executableName,
     CFBundleURLTypes: [
       { CFBundleURLName: brand.protocolName, CFBundleURLSchemes: [brand.protocol] },
-      { CFBundleURLName: 'AIBuddyNostrProtocol', CFBundleURLSchemes: ['aibuddy'] },
+      { CFBundleURLName: 'GooseNostrProtocol', CFBundleURLSchemes: ['goose'] },
     ],
   };
 }
@@ -79,7 +79,7 @@ describe('verifyPackageTree', () => {
 
   it('rejects a tree named for another product', () => {
     expect(
-      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('AIBuddy-darwin-arm64')))
+      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('OtherApp-darwin-arm64')))
     ).toEqual([expect.stringContaining('AIBuddy-darwin-arm64')]);
   });
 
@@ -102,7 +102,7 @@ describe('verifyInfoPlist', () => {
   it('rejects a missing AIBuddy URL scheme', () => {
     expect(verifyInfoPlist(brand, { ...plistFor(), CFBundleURLTypes: [] })).toEqual([
       expect.stringContaining('aibuddy'),
-      expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
     ]);
   });
 
@@ -112,7 +112,7 @@ describe('verifyInfoPlist', () => {
 
     expect(verifyInfoPlist(brand, plist)).toEqual([
       expect.stringContaining('aibuddy'),
-      expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
     ]);
   });
 
@@ -120,13 +120,13 @@ describe('verifyInfoPlist', () => {
     expect(
       verifyInfoPlist(brand, {
         ...plistFor(),
-        CFBundleIdentifier: 'com.electron.aibuddy',
+        CFBundleIdentifier: 'com.electron.otherapp',
         CFBundleURLTypes: [{}],
       })
     ).toEqual([
-      expect.stringContaining('com.electron.aibuddy'),
+      expect.stringContaining('com.electron.otherapp'),
       expect.stringContaining('aibuddy'),
-      expect.stringContaining('aibuddy'),
+      expect.stringContaining('goose'),
     ]);
   });
 });

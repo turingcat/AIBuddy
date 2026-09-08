@@ -903,11 +903,11 @@ mod tests {
         }
 
         #[test]
-        fn aibuddy_prefixed_reasoning_models() {
+        fn goose_prefixed_reasoning_models() {
             let _guard = env_lock::lock_env(ENV_LOCK_KEYS);
-            assert!(ModelConfig::new("aibuddy-o3-mini").is_openai_reasoning_model());
-            assert!(ModelConfig::new("aibuddy-o4-mini").is_openai_reasoning_model());
-            assert!(ModelConfig::new("aibuddy-gpt-5").is_openai_reasoning_model());
+            assert!(ModelConfig::new("goose-o3-mini").is_openai_reasoning_model());
+            assert!(ModelConfig::new("goose-o4-mini").is_openai_reasoning_model());
+            assert!(ModelConfig::new("goose-gpt-5").is_openai_reasoning_model());
         }
 
         #[test]
@@ -924,7 +924,7 @@ mod tests {
             assert!(!ModelConfig::new("claude-sonnet-4").is_openai_reasoning_model());
             assert!(!ModelConfig::new("gpt-4o").is_openai_reasoning_model());
             assert!(!ModelConfig::new("databricks-claude-sonnet-4").is_openai_reasoning_model());
-            assert!(!ModelConfig::new("aibuddy-claude-sonnet-4").is_openai_reasoning_model());
+            assert!(!ModelConfig::new("goose-claude-sonnet-4").is_openai_reasoning_model());
             assert!(!ModelConfig::new("llama-3-70b").is_openai_reasoning_model());
         }
     }

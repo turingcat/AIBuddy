@@ -47,9 +47,9 @@ export async function main(args = process.argv.slice(2), cwd = process.cwd()) {
   if (options.command === 'help') {
     process.stdout.write([
       'Usage:',
-      '  node tools/rebrand/cli.mjs inventory --source-ref <ref> --report-dir <directory>',
-      '  node tools/rebrand/cli.mjs generate --source-ref <ref> --output <new-directory> [--input product|upstream]',
-      '  node tools/rebrand/cli.mjs verify --output <generated-directory>',
+      '  node tools/aibuddy-rebrand/cli.mjs inventory --source-ref <ref> --report-dir <directory>',
+      '  node tools/aibuddy-rebrand/cli.mjs generate --source-ref <ref> --output <new-directory> [--input product|upstream]',
+      '  node tools/aibuddy-rebrand/cli.mjs verify --output <generated-directory>',
       '',
     ].join('\n'));
     return;

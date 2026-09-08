@@ -6,6 +6,7 @@ import {
   brandOccurrencePattern,
   deduplicateEdits,
   makeEdit,
+  ownedExternalUrlIsReplaceable,
   renameBrandSegments,
   textHasBrand,
 } from './shared.mjs';
@@ -93,8 +94,22 @@ function isYamlFrontmatterTextPath(path) {
   return exactPath(path, TEXT_POLICY.yamlFrontmatterText.exactPaths);
 }
 
+export function isMcpReplayPath(path) {
+  return (TEXT_POLICY.mcpReplay?.pathPrefixes ?? []).some((prefix) =>
+    pathMatchesPrefix(path, prefix),
+  );
+}
+
+function policyContextMatchesPath(path, context) {
+  return (
+    (context.paths ?? []).some((candidate) => exactPath(path, [candidate])) ||
+    (context.pathPrefixes ?? []).some((prefix) => pathMatchesPrefix(path, prefix))
+  );
+}
+
 function pathKind(path) {
   if (isExcludedPath(path)) return undefined;
+  if (isMcpReplayPath(path)) return 'mcp-replay';
   if (isPreservedPath(path)) return 'preserved-external';
   if (isInstaSnapshotPath(path)) return 'insta-snapshot';
   if (isYamlFrontmatterTextPath(path)) return 'yaml-frontmatter-text';
@@ -178,7 +193,11 @@ function protectedCandidates(path, text, policy) {
     ...(preserve.externalIdentifiers ?? []),
     ...(preserve.externalRepositorySlugs ?? []),
     ...(preserve.legacyIdentifiers ?? []),
-    ...(preserve.legacyProtocolContexts ?? []).flatMap((context) => context.protocols ?? []),
+    ...(preserve.legacyProtocolContexts ?? []).flatMap((context) =>
+      (context.protocols ?? []).filter(
+        (protocol) => protocol.includes('://') || policyContextMatchesPath(path, context),
+      ),
+    ),
     ...(preserve.legacyProtocols ?? []),
     ...(TEXT_POLICY.preserve.literalValues ?? []),
   ];
@@ -188,7 +207,7 @@ function protectedCandidates(path, text, policy) {
       let end = match.index + match[0].length;
       while (end > match.index && /[.,;:!?)}\]]/u.test(text[end - 1])) end -= 1;
       const value = text.slice(match.index, end);
-      return textHasBrand(value)
+      return textHasBrand(value) && !ownedExternalUrlIsReplaceable(value, path, policy)
         ? [{
             path,
             start: match.index,
@@ -274,6 +293,36 @@ function scopedLiteralEdits(path, text, ranges, protectedSpans) {
 
 function literalEdits(path, text, protectedSpans) {
   return scopedLiteralEdits(path, text, [{ start: 0, end: text.length }], protectedSpans);
+}
+
+function mcpReplayResult(path, text, policy) {
+  const transformLinePrefixes = TEXT_POLICY.mcpReplay?.transformLinePrefixes ?? [];
+  const lines = lineSpans(text);
+  const ranges = lines.filter(({ value }) =>
+    transformLinePrefixes.some((prefix) => value.startsWith(prefix)),
+  );
+  const protectedSpans = protectedCandidates(path, text, policy).filter((span) =>
+    ranges.some((range) => range.start < span.end && span.start < range.end),
+  );
+  const recordedOutputSpans = lines
+    .filter(({ value }) =>
+      textHasBrand(value) &&
+      !transformLinePrefixes.some((prefix) => value.startsWith(prefix)),
+    )
+    .map(({ start, end, value }) => ({
+      path,
+      start,
+      end,
+      value,
+      reason: 'recorded MCP server output or playback diagnostic preservation policy',
+      disposition: 'preserved-recorded-output',
+    }));
+  const edits = scopedLiteralEdits(path, text, ranges, protectedSpans);
+  const preserved = [
+    ...protectedSpans.map(({ priority, ...span }) => preservedRecord(span)),
+    ...recordedOutputSpans.map((span) => preservedRecord(span)),
+  ];
+  return { adapter: 'text', edits, preserved, symbols: [] };
 }
 
 function svgCommentEdits(path, text, protectedSpans) {
@@ -372,6 +421,9 @@ export function transformText({ path, text, policy }) {
   }
 
   const kind = pathKind(path);
+  if (kind === 'mcp-replay') {
+    return mcpReplayResult(path, text, policy);
+  }
   if (kind === 'preserved-external') {
     return {
       adapter: 'text',

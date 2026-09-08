@@ -47,6 +47,19 @@ test('supports the five reviewed U0 text paths without widening text scopes', ()
   assert.equal(supportsText('documentation/other.goosehints'), false);
 });
 
+test('supports the desktop production environment file', () => {
+  const path = 'ui/desktop/.env.production';
+  const source = 'HEYBUDDY_AUTH_API_BASE_URL=https://ai.linyeyun.cn\n';
+  const result = transformText({ path, text: source, policy });
+
+  assert.equal(supportsText(path), true);
+  assert.equal(result.unresolved, undefined);
+  assert.equal(
+    output(result, source),
+    'AIBUDDY_AUTH_API_BASE_URL=https://ai.linyeyun.cn\n',
+  );
+});
+
 test('transforms the five reviewed U0 snippets in their native text formats', () => {
   const cases = [
     {
@@ -154,6 +167,23 @@ test('applies scoped literal substitutions without reserializing surrounding tex
   assert.ok(result.preserved.some((item) => item.value === 'goose-ai-agent'));
   assert.ok(result.preserved.some((item) => item.value === 'Copyright 2026 Goose contributors'));
   assert.ok(result.preserved.some((item) => item.value === 'SPDX-License-Identifier: MIT; Goose'));
+});
+
+test('rewrites the owned repository URL while preserving historical research URLs', () => {
+  const installer = '# curl -fsSL https://github.com/turingcat/HeyBuddy/releases/download/stable/download_cli.sh | bash\n';
+  const installerResult = transformText({ path: 'download_cli.sh', text: installer, policy });
+  assert.equal(
+    output(installerResult, installer),
+    '# curl -fsSL https://github.com/turingcat/AIBuddy/releases/download/stable/download_cli.sh | bash\n',
+  );
+
+  const research = '[run](https://github.com/turingcat/HeyBuddy/actions/runs/32649684112)\n';
+  const researchResult = transformText({
+    path: 'docs/research/2026-09-02-github-actions-build-time.md',
+    text: research,
+    policy,
+  });
+  assert.equal(output(researchResult, research), research);
 });
 
 test('uses the shared segment renamer for singular, plural, and compound names in scripts', () => {

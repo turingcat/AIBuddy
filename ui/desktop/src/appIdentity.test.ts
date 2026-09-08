@@ -132,7 +132,7 @@ describe('initializeAppIdentity', () => {
     const calls: string[] = [];
     const userDataDir = '/tmp/Application Support/AIBuddy';
     const userDataParent = path.dirname(userDataDir);
-    const siblingUserDataDir = path.join(userDataParent, 'AIBuddy');
+    const siblingUserDataDir = path.join(userDataParent, 'HeyBuddy');
     const settingsFile = path.join(userDataDir, 'settings.json');
     const credentialsFile = path.join(userDataDir, 'credentials.json');
     const pathResolutions: Array<{

@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import {
   addPreservedValueSpans,
   applyEdits,
+  compatibilityIdentifierIsPreserved,
   brandOccurrencePattern,
   deduplicateEdits,
   inputKeyFromLine,
@@ -180,6 +181,35 @@ function literalKey(token, text, start) {
   return token.key ?? rustInputKey(text, start);
 }
 
+function pathMatchesContext(path, context) {
+  return (
+    (context.paths ?? []).includes(path) ||
+    (context.pathPrefixes ?? []).some((prefix) => path === prefix || path.startsWith(prefix))
+  );
+}
+
+function legacyFixtureRustLiteralSpans(value, { path, policy, text, start }) {
+  const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+  const prefix = text.slice(lineStart, start);
+  if (!/assert!\s*\(\s*!\s*[^;\n]*\b(?:contains|system_contains)\s*\(\s*$/u.test(prefix)) {
+    return [];
+  }
+
+  return (policy.preserve.legacyFixtureLiteralContexts ?? [])
+    .filter(
+      (context) =>
+        context.match === 'negative-assertion-literal' &&
+        pathMatchesContext(path, context) &&
+        (context.values ?? []).includes(value),
+    )
+    .map((context) => ({
+      start: 0,
+      end: value.length,
+      value,
+      reason: context.reason ?? 'explicit negative assertion fixture preservation policy',
+    }));
+}
+
 function failureResult(text, reason, errors = []) {
   const unresolved = [{ reason, ...(errors.length > 0 ? { errors } : {}) }];
   return {
@@ -247,7 +277,7 @@ export function transformRust({ path, text, policy }) {
     if (token.kind === 'identifier') {
       identifierValues.add(raw);
       if (!textHasBrand(raw)) continue;
-      if (isExplicitlyPreserved(raw, policy)) {
+      if (isExplicitlyPreserved(raw, policy) || compatibilityIdentifierIsPreserved(raw, path, undefined, policy)) {
         preserved.push(
           preserveReference({
             path,
@@ -293,6 +323,12 @@ export function transformRust({ path, text, policy }) {
       path,
       key,
       policy,
+      additionalPreservedSpans: legacyFixtureRustLiteralSpans(parts.value, {
+        path,
+        policy,
+        text,
+        start: span.start,
+      }),
     });
     addPreservedValueSpans({
       preserved,

@@ -64,7 +64,7 @@ describe('Forge brand identity', () => {
       appBundleId: 'com.electron.aibuddy',
       protocols: [
         { name: 'AIBuddyProtocol', schemes: ['aibuddy'] },
-        { name: 'AIBuddyNostrProtocol', schemes: ['aibuddy'] },
+        { name: 'GooseNostrProtocol', schemes: ['goose'] },
       ],
       extraResource: ['src/bin', 'src/images/aibuddy'],
       icon: 'src/images/aibuddy/icon.icns',

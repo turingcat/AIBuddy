@@ -5338,7 +5338,7 @@ echo start >> "$PLUGIN_ROOT/hook.log"
         let prompt = provider.system_prompt();
         assert!(prompt.contains("AIBuddy"));
         assert!(prompt.contains("默认使用中文"));
-        assert!(!prompt.contains("AIBuddy"));
+        assert!(!prompt.contains("HeyBuddy"));
         Ok(())
     }
 

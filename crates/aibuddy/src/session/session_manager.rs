@@ -29,6 +29,7 @@ pub const SESSIONS_FOLDER: &str = "sessions";
 pub const DB_NAME: &str = "sessions.db";
 const MILLISECOND_TIMESTAMP_THRESHOLD: i64 = 10_000_000_000;
 const SESSION_COUNT_BATCH_SIZE: usize = 900;
+const LEGACY_HEYBUDDY_MODE_COLUMN: &str = "heybuddy_mode";
 
 #[derive(
     Debug,
@@ -85,7 +86,7 @@ pub struct Session {
     pub last_message_at: Option<DateTime<Utc>>,
     pub provider_name: Option<String>,
     pub model_config: Option<ModelConfig>,
-    #[serde(default, alias = "aibuddy_mode")]
+    #[serde(default, alias = "goose_mode", alias = "heybuddy_mode")]
     pub aibuddy_mode: AIBuddyMode,
     #[serde(default)]
     pub archived_at: Option<DateTime<Utc>>,
@@ -1267,23 +1268,36 @@ impl SessionStorage {
     }
 
     async fn migrate_legacy_session_columns(tx: &mut sqlx::Transaction<'_, Sqlite>) -> Result<()> {
-        let columns: Vec<String> = sqlx::query_scalar(
-            "SELECT name FROM pragma_table_info('sessions') WHERE name IN ('aibuddy_mode', 'aibuddy_mode')",
-        )
-        .fetch_all(&mut **tx)
-        .await?;
-        if !columns.iter().any(|column| column == "aibuddy_mode") {
+        let columns_query = format!(
+            "SELECT name FROM pragma_table_info('sessions') WHERE name IN ('goose_mode', '{LEGACY_HEYBUDDY_MODE_COLUMN}', 'aibuddy_mode')"
+        );
+        let columns: Vec<String> = sqlx::query_scalar(AssertSqlSafe(columns_query))
+            .fetch_all(&mut **tx)
+            .await?;
+        let legacy_columns: Vec<&str> = columns
+            .iter()
+            .map(String::as_str)
+            .filter(|column| matches!(*column, "goose_mode" | LEGACY_HEYBUDDY_MODE_COLUMN))
+            .collect();
+        if legacy_columns.is_empty() {
             return Ok(());
         }
         anyhow::ensure!(
             !columns.iter().any(|column| column == "aibuddy_mode"),
-            "sessions contains both aibuddy_mode and aibuddy_mode; refusing an ambiguous mode migration"
+            "sessions contains a legacy mode column and aibuddy_mode; refusing an ambiguous mode migration"
+        );
+        anyhow::ensure!(
+            legacy_columns.len() == 1,
+            "sessions contains both goose_mode and {LEGACY_HEYBUDDY_MODE_COLUMN}; refusing an ambiguous mode migration"
         );
 
         // This fork migration must also run on databases already at the upstream schema version.
-        sqlx::query("ALTER TABLE sessions RENAME COLUMN aibuddy_mode TO aibuddy_mode")
-            .execute(&mut **tx)
-            .await?;
+        sqlx::query(AssertSqlSafe(format!(
+            "ALTER TABLE sessions RENAME COLUMN {} TO aibuddy_mode",
+            legacy_columns[0]
+        )))
+        .execute(&mut **tx)
+        .await?;
         Ok(())
     }
 
@@ -2818,7 +2832,7 @@ mod tests {
     const NUM_CONCURRENT_SESSIONS: i32 = 10;
     const GENERATED_SESSION_NAME: &str = "Generated session name";
 
-    async fn legacy_brand_database() -> (TempDir, Session) {
+    async fn legacy_brand_database_with_column(column: &str) -> (TempDir, Session) {
         let dir = TempDir::new().unwrap();
         let manager = SessionManager::new(dir.path().to_path_buf());
         let session = manager
@@ -2835,12 +2849,19 @@ mod tests {
             .await
             .unwrap();
         let pool = manager.storage().pool().await.unwrap();
-        sqlx::query("ALTER TABLE sessions RENAME COLUMN aibuddy_mode TO aibuddy_mode")
-            .execute(pool)
-            .await
-            .unwrap();
+        assert!(matches!(column, "goose_mode" | LEGACY_HEYBUDDY_MODE_COLUMN));
+        sqlx::query(AssertSqlSafe(format!(
+            "ALTER TABLE sessions RENAME COLUMN aibuddy_mode TO {column}"
+        )))
+        .execute(pool)
+        .await
+        .unwrap();
         pool.close().await;
         (dir, session)
+    }
+
+    async fn legacy_brand_database() -> (TempDir, Session) {
+        legacy_brand_database_with_column("goose_mode").await
     }
 
     #[tokio::test]
@@ -2868,7 +2889,7 @@ mod tests {
             .unwrap();
         assert_eq!(version, CURRENT_SCHEMA_VERSION);
         let old_columns: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'aibuddy_mode'",
+            "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = 'goose_mode'",
         )
         .fetch_one(pool)
         .await
@@ -2884,6 +2905,24 @@ mod tests {
                 .aibuddy_mode,
             AIBuddyMode::Approve
         );
+    }
+
+    #[tokio::test]
+    async fn legacy_heybuddy_column_migrates_at_current_version() {
+        let (dir, session) = legacy_brand_database_with_column(LEGACY_HEYBUDDY_MODE_COLUMN).await;
+        let manager = SessionManager::new(dir.path().to_path_buf());
+        let retained = manager.get_session(&session.id, true).await.unwrap();
+        assert_eq!(retained.aibuddy_mode, AIBuddyMode::Approve);
+        assert_eq!(retained.name, session.name);
+        assert_eq!(retained.conversation.unwrap().messages().len(), 1);
+        let pool = manager.storage().pool().await.unwrap();
+        let old_columns: i64 = sqlx::query_scalar(AssertSqlSafe(format!(
+            "SELECT COUNT(*) FROM pragma_table_info('sessions') WHERE name = '{LEGACY_HEYBUDDY_MODE_COLUMN}'"
+        )))
+        .fetch_one(pool)
+        .await
+        .unwrap();
+        assert_eq!(old_columns, 0);
     }
 
     #[tokio::test]
@@ -2915,7 +2954,14 @@ mod tests {
         let mut json = serde_json::to_value(&session).unwrap();
         let object = json.as_object_mut().unwrap();
         let mode = object.remove("aibuddy_mode").unwrap();
-        object.insert("aibuddy_mode".to_string(), mode);
+        object.insert("goose_mode".to_string(), mode);
+        let restored: Session = serde_json::from_value(json).unwrap();
+        assert_eq!(restored.aibuddy_mode, AIBuddyMode::Approve);
+
+        let mut json = serde_json::to_value(&session).unwrap();
+        let object = json.as_object_mut().unwrap();
+        let mode = object.remove("aibuddy_mode").unwrap();
+        object.insert(LEGACY_HEYBUDDY_MODE_COLUMN.to_string(), mode);
         let restored: Session = serde_json::from_value(json).unwrap();
         assert_eq!(restored.aibuddy_mode, AIBuddyMode::Approve);
     }
@@ -2946,21 +2992,46 @@ mod tests {
         let error = manager.get_session(&session.id, false).await.unwrap_err();
         assert!(error
             .to_string()
-            .contains("both aibuddy_mode and aibuddy_mode"));
-        let row = sqlx::query("SELECT aibuddy_mode, aibuddy_mode FROM sessions WHERE id = ?")
+            .contains("legacy mode column and aibuddy_mode"));
+        let row = sqlx::query("SELECT goose_mode, aibuddy_mode FROM sessions WHERE id = ?")
             .bind(&session.id)
             .fetch_one(&manager.storage().pool)
             .await
             .unwrap();
-        assert_eq!(row.get::<String, _>("aibuddy_mode"), "approve");
+        assert_eq!(row.get::<String, _>("goose_mode"), "approve");
         assert_eq!(row.get::<String, _>("aibuddy_mode"), "auto");
+    }
+
+    #[tokio::test]
+    async fn multiple_legacy_brand_columns_are_left_untouched() {
+        let (dir, session) = legacy_brand_database().await;
+        let manager = SessionManager::new(dir.path().to_path_buf());
+        sqlx::query(AssertSqlSafe(format!(
+            "ALTER TABLE sessions ADD COLUMN {LEGACY_HEYBUDDY_MODE_COLUMN} TEXT NOT NULL DEFAULT 'chat'"
+        )))
+        .execute(&manager.storage().pool)
+        .await
+        .unwrap();
+        let error = manager.get_session(&session.id, false).await.unwrap_err();
+        assert!(error
+            .to_string()
+            .contains("both goose_mode and heybuddy_mode"));
+        let row = sqlx::query(AssertSqlSafe(format!(
+            "SELECT goose_mode, {LEGACY_HEYBUDDY_MODE_COLUMN} FROM sessions WHERE id = ?"
+        )))
+        .bind(&session.id)
+        .fetch_one(&manager.storage().pool)
+        .await
+        .unwrap();
+        assert_eq!(row.get::<String, _>("goose_mode"), "approve");
+        assert_eq!(row.get::<String, _>(LEGACY_HEYBUDDY_MODE_COLUMN), "chat");
     }
 
     #[tokio::test]
     async fn legacy_brand_pre_mode_schema_still_adds_default_column() {
         let (dir, session) = legacy_brand_database().await;
         let manager = SessionManager::new(dir.path().to_path_buf());
-        sqlx::query("ALTER TABLE sessions DROP COLUMN aibuddy_mode")
+        sqlx::query("ALTER TABLE sessions DROP COLUMN goose_mode")
             .execute(&manager.storage().pool)
             .await
             .unwrap();
