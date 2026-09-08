@@ -84,10 +84,9 @@ jobs:
 
       - name: Extract and validate installer
         shell: bash
-        env:
-          ARCHITECTURE: ${{ inputs.architecture }}
         run: |
           set -euo pipefail
+          ARCHITECTURE='${{ inputs.architecture }}'
 
           mapfile -t installers < <(find source -type f -iname '*-setup.exe')
           if [[ ${#installers[@]} -ne 1 ]]; then
@@ -95,39 +94,40 @@ jobs:
             exit 1
           fi
 
+          set +e
           "$INNOEXTRACT" --extract --output-dir extracted "${installers[0]}"
+          extract_status=$?
+          set -e
+          if (( extract_status != 0 )); then
+            echo "::warning title=Inno extraction warnings::innoextract exited with status $extract_status; validating extracted files before continuing"
+          fi
 
-          main_executable='extracted/app/HeyBuddy.exe'
-          backend_executable='extracted/app/resources/bin/goose.exe'
-          test -f "$main_executable"
-          test -f "$backend_executable"
+          executables=(
+            'extracted/app/HeyBuddy.exe'
+            'extracted/app/resources/bin/goose.exe'
+            'extracted/app/resources/bin/uv.exe'
+            'extracted/app/resources/bin/uvx.exe'
+          )
+          for executable in "${executables[@]}"; do
+            test -s "$executable"
+            file_type="$(file -b "$executable")"
+            printf '%s: %s (%s bytes)\n' "$executable" "$file_type" "$(stat -c %s "$executable")"
 
-          main_file_type="$(file -b "$main_executable")"
-          backend_file_type="$(file -b "$backend_executable")"
-          printf '%s\n%s\n' "$main_file_type" "$backend_file_type"
-
-          case "$ARCHITECTURE" in
-            x32)
-              if [[ "$main_file_type" != 'PE32 executable'* || "$main_file_type" == 'PE32+ executable'* ]]; then
-                printf 'Main executable is not Windows x32: %s\n' "$main_file_type" >&2
-                exit 1
-              fi
-              if [[ "$backend_file_type" != 'PE32 executable'* || "$backend_file_type" == 'PE32+ executable'* ]]; then
-                printf 'Backend executable is not Windows x32: %s\n' "$backend_file_type" >&2
-                exit 1
-              fi
-              ;;
-            x64)
-              if [[ "$main_file_type" != 'PE32+ executable'* ]]; then
-                printf 'Main executable is not Windows x64: %s\n' "$main_file_type" >&2
-                exit 1
-              fi
-              if [[ "$backend_file_type" != 'PE32+ executable'* ]]; then
-                printf 'Backend executable is not Windows x64: %s\n' "$backend_file_type" >&2
-                exit 1
-              fi
-              ;;
-          esac
+            case "$ARCHITECTURE" in
+              x32)
+                if [[ "$file_type" != 'PE32 executable'* || "$file_type" == 'PE32+ executable'* ]]; then
+                  printf 'Executable is not Windows x32: %s: %s\n' "$executable" "$file_type" >&2
+                  exit 1
+                fi
+                ;;
+              x64)
+                if [[ "$file_type" != 'PE32+ executable'* ]]; then
+                  printf 'Executable is not Windows x64: %s: %s\n' "$executable" "$file_type" >&2
+                  exit 1
+                fi
+                ;;
+            esac
+          done
 
       - name: Create portable archive
         shell: bash

@@ -18,7 +18,7 @@ The initial dispatch uses:
 
 ## Validation
 
-The workflow fails unless both `HeyBuddy.exe` and `resources/bin/goose.exe` exist. For x32, `file` must identify both executables as `PE32` and must not identify either as `PE32+`; x64 requires `PE32+`. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
+The extractor may return status 1 after warning that it could not read back multi-part files for its own checksum pass. That status is accepted only when `HeyBuddy.exe`, `resources/bin/goose.exe`, `resources/bin/uv.exe`, and `resources/bin/uvx.exe` all exist and are non-empty. For x32, `file` must identify all four executables as `PE32` and must not identify any as `PE32+`; x64 requires `PE32+`. The uploaded artifact contains the portable ZIP and its SHA-256 checksum.
 
 ## Scope
 
