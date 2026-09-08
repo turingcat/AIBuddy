@@ -18,6 +18,11 @@ on:
         required: false
         type: boolean
         default: false
+      package_x32_portable:
+        description: 'Whether to package and upload the x32 portable Desktop archive'
+        required: false
+        type: boolean
+        default: false
       artifact_retention_days:
         description: 'Days to retain final build artifacts'
         required: false
@@ -36,6 +41,11 @@ on:
         default: false
       package_desktop:
         description: 'Whether to package and upload the Desktop artifact'
+        required: false
+        type: boolean
+        default: false
+      package_x32_portable:
+        description: 'Whether to package and upload the x32 portable Desktop archive'
         required: false
         type: boolean
         default: false
@@ -349,11 +359,27 @@ jobs:
           if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
           Get-Item $installer
 
+      - name: Create x32 portable archive
+        if: ${{ inputs.package_x32_portable && matrix.name == 'x32' }}
+        working-directory: ui/desktop/dist-windows-x32
+        shell: bash
+        run: 7z a -tzip "$GITHUB_WORKSPACE/HeyBuddy-windows-x32-portable.zip" ./*
+
       - name: Upload Windows build
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
         with:
           name: HeyBuddy-win32-${{ matrix.name }}
           path: HeyBuddy-windows-${{ matrix.name }}-setup.exe
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifact_retention_days }}
+          overwrite: true
+
+      - name: Upload x32 portable archive
+        if: ${{ inputs.package_x32_portable && matrix.name == 'x32' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: HeyBuddy-windows-x32-portable
+          path: HeyBuddy-windows-x32-portable.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
