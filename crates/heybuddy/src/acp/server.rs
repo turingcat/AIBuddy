@@ -393,8 +393,10 @@ fn agent_capabilities_meta() -> Option<Meta> {
         heybuddy.insert("localInference".to_string(), serde_json::json!({}));
     }
 
+    let capabilities = serde_json::Value::Object(heybuddy);
     let mut meta = serde_json::Map::new();
-    meta.insert("heybuddy".to_string(), serde_json::Value::Object(heybuddy));
+    meta.insert("heybuddy".to_string(), capabilities.clone());
+    meta.insert("goose".to_string(), capabilities);
     Some(meta)
 }
 
@@ -3687,13 +3689,16 @@ print(\"hello, world\")
     }
 
     #[test]
-    fn test_agent_capabilities_advertise_recipe_parameter_scopes() {
-        assert_eq!(
-            agent_capabilities_meta()
-                .and_then(|meta| meta.get("heybuddy").cloned())
-                .and_then(|heybuddy| heybuddy.get("recipeParameterScopes").cloned()),
-            Some(serde_json::json!({}))
-        );
+    fn test_agent_capabilities_advertise_recipe_parameter_scopes_for_both_namespaces() {
+        let meta = agent_capabilities_meta().unwrap();
+        for namespace in ["heybuddy", "goose"] {
+            assert_eq!(
+                meta.get(namespace)
+                    .and_then(|capabilities| capabilities.get("recipeParameterScopes")),
+                Some(&serde_json::json!({}))
+            );
+        }
+        assert_eq!(meta.get("heybuddy"), meta.get("goose"));
     }
 
     #[test]

@@ -205,6 +205,15 @@ pub async fn assert_legacy_client_receives_legacy_custom_notifications(
     let initialize_response: serde_json::Value =
         serde_json::from_str(&initialize_response).unwrap();
     assert_eq!(initialize_response["id"], 1);
+    assert_eq!(
+        initialize_response["result"]["agentCapabilities"]["_meta"]["goose"]
+            ["recipeParameterScopes"],
+        serde_json::json!({})
+    );
+    assert_eq!(
+        initialize_response["result"]["agentCapabilities"]["_meta"]["goose"],
+        initialize_response["result"]["agentCapabilities"]["_meta"]["heybuddy"]
+    );
 
     let new_session = serde_json::json!({
         "jsonrpc": "2.0",
