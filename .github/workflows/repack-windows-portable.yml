@@ -1,0 +1,137 @@
+name: Repack Windows Desktop Portable
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: 'Successful workflow run containing the installer artifact'
+        required: true
+        type: string
+        default: '33966581247'
+      source_artifact_name:
+        description: 'Installer artifact to download from the source run'
+        required: true
+        type: string
+        default: 'Goose-win32-x32'
+      architecture:
+        description: 'Windows architecture contained in the installer'
+        required: true
+        type: choice
+        options:
+          - x32
+          - x64
+        default: x32
+      artifact_retention_days:
+        description: 'Days to retain the portable artifact'
+        required: true
+        type: number
+        default: 90
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  repack:
+    name: Repack Windows ${{ inputs.architecture }} portable
+    runs-on: windows-latest
+    steps:
+      - name: Download installer artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        with:
+          name: ${{ inputs.source_artifact_name }}
+          path: source
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.source_run_id }}
+
+      - name: Stage and validate portable files
+        shell: pwsh
+        env:
+          ARCHITECTURE: ${{ inputs.architecture }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $installers = @(Get-ChildItem -Path source -Recurse -File -Filter '*-setup.exe')
+          if ($installers.Count -ne 1) {
+            throw "Expected one installer, found $($installers.Count)"
+          }
+
+          $stagingDir = Join-Path $env:GITHUB_WORKSPACE 'staged-app'
+          New-Item -ItemType Directory -Force -Path $stagingDir | Out-Null
+          $arguments = @(
+            '/VERYSILENT'
+            '/SUPPRESSMSGBOXES'
+            '/NORESTART'
+            '/SP-'
+            '/NOICONS'
+            "/DIR=$stagingDir"
+          )
+          $process = Start-Process -FilePath $installers[0].FullName -ArgumentList $arguments -Wait -PassThru
+          if ($process.ExitCode -ne 0) {
+            throw "Installer exited with code $($process.ExitCode)"
+          }
+
+          Get-ChildItem -Path $stagingDir -File -Filter 'unins*' | Remove-Item -Force
+
+          $mainExecutable = Join-Path $env:GITHUB_WORKSPACE 'staged-app\HeyBuddy.exe'
+          $backendExecutable = Join-Path $env:GITHUB_WORKSPACE 'staged-app\resources\bin\goose.exe'
+          if (-not (Test-Path $mainExecutable -PathType Leaf)) {
+            throw "Missing main executable: $mainExecutable"
+          }
+          if (-not (Test-Path $backendExecutable -PathType Leaf)) {
+            throw "Missing backend executable: $backendExecutable"
+          }
+
+          function Get-PeMachine([string] $path) {
+            $stream = [System.IO.File]::OpenRead($path)
+            try {
+              $reader = [System.IO.BinaryReader]::new($stream)
+              $stream.Position = 0x3c
+              $peOffset = $reader.ReadInt32()
+              $stream.Position = $peOffset
+              if ($reader.ReadUInt32() -ne 0x00004550) {
+                throw "Invalid PE signature: $path"
+              }
+              return $reader.ReadUInt16()
+            } finally {
+              $stream.Dispose()
+            }
+          }
+
+          $expectedMachine = switch ($env:ARCHITECTURE) {
+            'x32' { [uint16] 0x014c }
+            'x64' { [uint16] 0x8664 }
+            default { throw "Unsupported architecture: $env:ARCHITECTURE" }
+          }
+          foreach ($executable in @($mainExecutable, $backendExecutable)) {
+            $actualMachine = Get-PeMachine $executable
+            if ($actualMachine -ne $expectedMachine) {
+              throw ('Unexpected PE machine for {0}: expected 0x{1:x4}, got 0x{2:x4}' -f $executable, $expectedMachine, $actualMachine)
+            }
+          }
+
+      - name: Create portable archive
+        shell: pwsh
+        env:
+          ARCHITECTURE: ${{ inputs.architecture }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ARCHITECTURE = $env:ARCHITECTURE
+          $archiveName = "HeyBuddy-windows-${ARCHITECTURE}-portable.zip"
+          $archivePath = Join-Path $env:GITHUB_WORKSPACE $archiveName
+          $stagingDir = Join-Path $env:GITHUB_WORKSPACE 'staged-app'
+          Compress-Archive -Path "$stagingDir\*" -DestinationPath $archivePath -CompressionLevel Optimal
+          $hash = (Get-FileHash -Path $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -Path "$archivePath.sha256" -Value "$hash  $archiveName" -Encoding ascii
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: HeyBuddy-windows-${{ inputs.architecture }}-portable
+          path: |
+            HeyBuddy-windows-${{ inputs.architecture }}-portable.zip
+            HeyBuddy-windows-${{ inputs.architecture }}-portable.zip.sha256
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifact_retention_days }}
+          overwrite: true

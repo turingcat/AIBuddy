@@ -128,6 +128,26 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("7z a", workflow)
         self.assertNotIn("HeyBuddy-win32-x64", workflow)
 
+    def test_windows_portable_repack_uses_an_existing_installer_artifact(self) -> None:
+        workflow = (ROOT / ".github/workflows/repack-windows-portable.yml").read_text(
+            encoding="utf-8"
+        )
+
+        self.assertIn("default: '33966581247'", workflow)
+        self.assertIn("default: 'Goose-win32-x32'", workflow)
+        self.assertIn("default: 90", workflow)
+        self.assertIn("run-id: ${{ inputs.source_run_id }}", workflow)
+        self.assertIn("github-token: ${{ secrets.GITHUB_TOKEN }}", workflow)
+        self.assertIn("runs-on: windows-latest", workflow)
+        self.assertIn("/VERYSILENT", workflow)
+        self.assertIn("Start-Process", workflow)
+        self.assertIn("staged-app\\HeyBuddy.exe", workflow)
+        self.assertIn("staged-app\\resources\\bin\\goose.exe", workflow)
+        self.assertIn("0x014c", workflow)
+        self.assertIn("Compress-Archive", workflow)
+        self.assertIn("HeyBuddy-windows-${ARCHITECTURE}-portable.zip", workflow)
+        self.assertIn("retention-days: ${{ inputs.artifact_retention_days }}", workflow)
+
     def test_installers_use_the_heybuddy_release_repository(self) -> None:
         shell_installer = (ROOT / "download_cli.sh").read_text(encoding="utf-8")
         powershell_installer = (ROOT / "download_cli.ps1").read_text(encoding="utf-8")
