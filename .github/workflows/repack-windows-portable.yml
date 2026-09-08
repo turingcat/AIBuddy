@@ -94,10 +94,8 @@ jobs:
             exit 1
           fi
 
-          set +e
-          "$INNOEXTRACT" --extract --output-dir extracted "${installers[0]}"
-          extract_status=$?
-          set -e
+          extract_status=0
+          "$INNOEXTRACT" --extract --output-dir extracted "${installers[0]}" || extract_status=$?
           if (( extract_status != 0 )); then
             echo "::warning title=Inno extraction warnings::innoextract exited with status $extract_status; validating extracted files before continuing"
           fi
