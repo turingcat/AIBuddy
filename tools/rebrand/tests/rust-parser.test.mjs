@@ -8,6 +8,9 @@ import { transformRust } from '../src/adapters/rust.mjs';
 import { transformSnapshot } from '../src/transform.mjs';
 
 const policy = JSON.parse(readFileSync(new URL('../production-policy.json', import.meta.url), 'utf8'));
+const productProvenance = JSON.parse(
+  readFileSync(new URL('../../../.heybuddy-rebrand.json', import.meta.url), 'utf8'),
+);
 
 function transform(text, path = 'crates/goose/src/lib.rs') {
   const result = transformRust({ path, text, policy });
@@ -287,8 +290,11 @@ test('fails closed on syn parse errors without applying lexical edits', () => {
   assert.equal(result.text, source);
 });
 
-test('parses every Rust file in the current H0 snapshot', async () => {
-  const snapshot = readSnapshot({ cwd: process.cwd(), sourceRef: 'HEAD' });
+test('parses every Rust file in the recorded H0 snapshot', async () => {
+  const snapshot = readSnapshot({
+    cwd: process.cwd(),
+    sourceRef: productProvenance.source.commit,
+  });
   const rustEntries = snapshot.entries.filter((entry) => entry.path.endsWith('.rs'));
   const result = await transformSnapshot(rustEntries);
   const parserErrors = result.report.unresolved.filter((item) => item.kind === 'parser-error');
