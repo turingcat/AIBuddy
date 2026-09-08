@@ -174,6 +174,74 @@ pub async fn assert_session_response_precedes_available_commands(
     }
 }
 
+pub async fn assert_legacy_client_receives_legacy_custom_notifications(
+    transport: super::DuplexTransport,
+    cwd: &std::path::Path,
+) {
+    let (mut outgoing, incoming) = transport.into_parts();
+    let mut incoming = BufReader::new(incoming).lines();
+
+    let initialize = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": 1,
+            "clientCapabilities": {
+                "_meta": {
+                    "goose": {
+                        "customNotifications": true
+                    }
+                }
+            }
+        }
+    });
+    outgoing
+        .write_all(format!("{initialize}\n").as_bytes())
+        .await
+        .unwrap();
+    outgoing.flush().await.unwrap();
+    let initialize_response = incoming.next().await.unwrap().unwrap();
+    let initialize_response: serde_json::Value =
+        serde_json::from_str(&initialize_response).unwrap();
+    assert_eq!(initialize_response["id"], 1);
+
+    let new_session = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "session/new",
+        "params": {
+            "cwd": cwd,
+            "mcpServers": []
+        }
+    });
+    outgoing
+        .write_all(format!("{new_session}\n").as_bytes())
+        .await
+        .unwrap();
+    outgoing.flush().await.unwrap();
+    let response = incoming.next().await.unwrap().unwrap();
+    let response: serde_json::Value = serde_json::from_str(&response).unwrap();
+    assert_eq!(response["id"], 2);
+
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
+    loop {
+        let message = tokio::time::timeout_at(deadline, incoming.next())
+            .await
+            .expect("timed out waiting for legacy custom notification")
+            .expect("ACP connection closed")
+            .unwrap();
+        let message: serde_json::Value = serde_json::from_str(&message).unwrap();
+        let Some(method) = message["method"].as_str() else {
+            continue;
+        };
+        assert_ne!(method, "_heybuddy/unstable/session/update");
+        if method == "_goose/unstable/session/update" {
+            break;
+        }
+    }
+}
+
 #[async_trait]
 impl Connection for AcpServerConnection {
     type Session = AcpServerSession;

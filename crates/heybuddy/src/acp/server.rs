@@ -62,7 +62,7 @@ use agent_client_protocol::schema::v1::{
 use agent_client_protocol::util::MatchDispatchFrom;
 use agent_client_protocol::{
     Agent as SacpAgent, ByteStreams, Client, ConnectionTo, Dispatch, HandleDispatchFrom, Handled,
-    Responder,
+    JsonRpcMessage, JsonRpcNotification, Responder, UntypedMessage,
 };
 use anyhow::Result;
 use fs_err as fs;
@@ -351,6 +351,7 @@ pub struct HeyBuddyAcpAgent {
     client_mcp_host_info: OnceCell<HeyBuddyMcpHostInfo>,
     client_supports_acp_elicitation: OnceCell<bool>,
     client_supports_heybuddy_custom_notifications: OnceCell<bool>,
+    client_custom_method_namespace: OnceCell<CustomMethodNamespace>,
     client_supports_recipe_param_requests: OnceCell<bool>,
     client_requests_tool_call_label_enrichment: OnceCell<bool>,
     use_login_shell_path: OnceCell<bool>,
@@ -443,6 +444,8 @@ fn extract_timeout_from_meta(meta: &Option<Meta>) -> Option<u64> {
 struct ClientCapabilitiesMeta {
     #[serde(default)]
     heybuddy: Option<HeyBuddyClientCapabilities>,
+    #[serde(default)]
+    goose: Option<HeyBuddyClientCapabilities>,
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -468,6 +471,116 @@ fn extract_client_capabilities_meta(args: &InitializeRequest) -> Option<ClientCa
         .meta
         .as_ref()
         .and_then(|meta| serde_json::from_value(serde_json::Value::Object(meta.clone())).ok())
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub(super) enum CustomMethodNamespace {
+    #[default]
+    HeyBuddy,
+    Goose,
+}
+
+fn negotiate_client_capabilities(
+    args: &InitializeRequest,
+) -> (CustomMethodNamespace, Option<HeyBuddyClientCapabilities>) {
+    let Some(meta) = extract_client_capabilities_meta(args) else {
+        return (CustomMethodNamespace::HeyBuddy, None);
+    };
+    if let Some(capabilities) = meta.heybuddy {
+        (CustomMethodNamespace::HeyBuddy, Some(capabilities))
+    } else if let Some(capabilities) = meta.goose {
+        (CustomMethodNamespace::Goose, Some(capabilities))
+    } else {
+        (CustomMethodNamespace::HeyBuddy, None)
+    }
+}
+
+const LEGACY_SESSION_UPDATE_METHOD: &str = "_goose/unstable/session/update";
+const LEGACY_PROVIDER_DEVICE_CODE_METHOD: &str =
+    "_goose/unstable/providers/authentication/device-code";
+
+#[derive(Debug, Clone)]
+struct LegacyHeyBuddySessionNotification(HeyBuddySessionNotification);
+
+impl JsonRpcMessage for LegacyHeyBuddySessionNotification {
+    fn matches_method(method: &str) -> bool {
+        method == LEGACY_SESSION_UPDATE_METHOD
+    }
+
+    fn method(&self) -> &str {
+        LEGACY_SESSION_UPDATE_METHOD
+    }
+
+    fn to_untyped_message(&self) -> Result<UntypedMessage, agent_client_protocol::Error> {
+        UntypedMessage::new(LEGACY_SESSION_UPDATE_METHOD, &self.0)
+    }
+
+    fn parse_message(
+        method: &str,
+        params: &impl serde::Serialize,
+    ) -> Result<Self, agent_client_protocol::Error> {
+        if !Self::matches_method(method) {
+            return Err(agent_client_protocol::Error::method_not_found());
+        }
+        Ok(Self(agent_client_protocol::util::json_cast_params(params)?))
+    }
+}
+
+impl JsonRpcNotification for LegacyHeyBuddySessionNotification {}
+
+#[derive(Debug, Clone)]
+struct LegacyProviderDeviceCodeNotification(ProviderDeviceCodeNotification);
+
+impl JsonRpcMessage for LegacyProviderDeviceCodeNotification {
+    fn matches_method(method: &str) -> bool {
+        method == LEGACY_PROVIDER_DEVICE_CODE_METHOD
+    }
+
+    fn method(&self) -> &str {
+        LEGACY_PROVIDER_DEVICE_CODE_METHOD
+    }
+
+    fn to_untyped_message(&self) -> Result<UntypedMessage, agent_client_protocol::Error> {
+        UntypedMessage::new(LEGACY_PROVIDER_DEVICE_CODE_METHOD, &self.0)
+    }
+
+    fn parse_message(
+        method: &str,
+        params: &impl serde::Serialize,
+    ) -> Result<Self, agent_client_protocol::Error> {
+        if !Self::matches_method(method) {
+            return Err(agent_client_protocol::Error::method_not_found());
+        }
+        Ok(Self(agent_client_protocol::util::json_cast_params(params)?))
+    }
+}
+
+impl JsonRpcNotification for LegacyProviderDeviceCodeNotification {}
+
+pub(super) fn send_custom_session_notification(
+    cx: &ConnectionTo<Client>,
+    namespace: CustomMethodNamespace,
+    notification: HeyBuddySessionNotification,
+) -> Result<(), agent_client_protocol::Error> {
+    match namespace {
+        CustomMethodNamespace::HeyBuddy => cx.send_notification(notification),
+        CustomMethodNamespace::Goose => {
+            cx.send_notification(LegacyHeyBuddySessionNotification(notification))
+        }
+    }
+}
+
+fn send_provider_device_code_notification(
+    cx: &ConnectionTo<Client>,
+    namespace: CustomMethodNamespace,
+    notification: ProviderDeviceCodeNotification,
+) -> Result<(), agent_client_protocol::Error> {
+    match namespace {
+        CustomMethodNamespace::HeyBuddy => cx.send_notification(notification),
+        CustomMethodNamespace::Goose => {
+            cx.send_notification(LegacyProviderDeviceCodeNotification(notification))
+        }
+    }
 }
 
 fn extract_client_mcp_host_info(
@@ -874,6 +987,13 @@ impl HeyBuddyAcpAgent {
             .unwrap_or(false)
     }
 
+    pub(super) fn custom_method_namespace(&self) -> CustomMethodNamespace {
+        self.client_custom_method_namespace
+            .get()
+            .copied()
+            .unwrap_or_default()
+    }
+
     pub(super) async fn prepare_session_setup_by_id(
         &self,
         session_id: &str,
@@ -986,6 +1106,7 @@ impl HeyBuddyAcpAgent {
             client_mcp_host_info: OnceCell::new(),
             client_supports_acp_elicitation: OnceCell::new(),
             client_supports_heybuddy_custom_notifications: OnceCell::new(),
+            client_custom_method_namespace: OnceCell::new(),
             client_supports_recipe_param_requests: OnceCell::new(),
             client_requests_tool_call_label_enrichment: OnceCell::new(),
             use_login_shell_path: OnceCell::new(),
@@ -1476,6 +1597,7 @@ impl HeyBuddyAcpAgent {
                 send_status_message_update(
                     cx,
                     self.supports_heybuddy_custom_notifications(),
+                    self.custom_method_namespace(),
                     session_id.0.as_ref(),
                     notification,
                 )?;
@@ -1717,15 +1839,20 @@ fn credits_exhausted_prompt_error(
 fn send_status_message_update(
     cx: &ConnectionTo<Client>,
     supports_heybuddy_custom_notifications: bool,
+    custom_method_namespace: CustomMethodNamespace,
     session_id: &str,
     notification: &SystemNotificationContent,
 ) -> Result<(), agent_client_protocol::Error> {
     if let Some(status) = status_message_from_system_notification(notification) {
         if supports_heybuddy_custom_notifications {
-            cx.send_notification(HeyBuddySessionNotification {
-                session_id: session_id.to_string(),
-                update: HeyBuddySessionUpdate::StatusMessage(StatusMessageUpdate { status }),
-            })?;
+            send_custom_session_notification(
+                cx,
+                custom_method_namespace,
+                HeyBuddySessionNotification {
+                    session_id: session_id.to_string(),
+                    update: HeyBuddySessionUpdate::StatusMessage(StatusMessageUpdate { status }),
+                },
+            )?;
         }
     }
     Ok(())
@@ -1734,16 +1861,21 @@ fn send_status_message_update(
 fn send_progress_message_update(
     cx: &ConnectionTo<Client>,
     supports_heybuddy_custom_notifications: bool,
+    custom_method_namespace: CustomMethodNamespace,
     session_id: &str,
     message: String,
 ) -> Result<(), agent_client_protocol::Error> {
     if supports_heybuddy_custom_notifications {
-        cx.send_notification(HeyBuddySessionNotification {
-            session_id: session_id.to_string(),
-            update: HeyBuddySessionUpdate::StatusMessage(StatusMessageUpdate {
-                status: StatusMessage::Progress { message },
-            }),
-        })?;
+        send_custom_session_notification(
+            cx,
+            custom_method_namespace,
+            HeyBuddySessionNotification {
+                session_id: session_id.to_string(),
+                update: HeyBuddySessionUpdate::StatusMessage(StatusMessageUpdate {
+                    status: StatusMessage::Progress { message },
+                }),
+            },
+        )?;
     }
     Ok(())
 }
@@ -1802,8 +1934,11 @@ impl HeyBuddyAcpAgent {
             .client_fs_capabilities
             .set(args.client_capabilities.fs.clone());
         let _ = self.client_terminal.set(args.client_capabilities.terminal);
-        let heybuddy_client_capabilities =
-            extract_client_capabilities_meta(&args).and_then(|meta| meta.heybuddy);
+        let (custom_method_namespace, heybuddy_client_capabilities) =
+            negotiate_client_capabilities(&args);
+        let _ = self
+            .client_custom_method_namespace
+            .set(custom_method_namespace);
         let _ = self.client_mcp_host_info.set(extract_client_mcp_host_info(
             &args,
             heybuddy_client_capabilities.as_ref(),
@@ -2081,6 +2216,7 @@ impl HeyBuddyAcpAgent {
         send_progress_message_update(
             cx,
             self.supports_heybuddy_custom_notifications(),
+            self.custom_method_namespace(),
             acp_session_id.0.as_ref(),
             format!("Loading local model {model_name}..."),
         )
@@ -2116,7 +2252,7 @@ impl HeyBuddyAcpAgent {
                 .internal_err_ctx("Failed to resolve context limit")?;
         let updates = build_usage_updates(&session, &totals, context_limit);
         if self.supports_heybuddy_custom_notifications() {
-            cx.send_notification(updates.custom)?;
+            send_custom_session_notification(cx, self.custom_method_namespace(), updates.custom)?;
         }
         cx.send_notification(SessionNotification::new(
             acp_session_id.clone(),
@@ -2211,12 +2347,16 @@ impl HeyBuddyAcpAgent {
                 }
                 Ok(crate::agents::AgentEvent::MessageUsage { message_id, usage }) => {
                     if self.supports_heybuddy_custom_notifications() {
-                        cx.send_notification(HeyBuddySessionNotification {
-                            session_id: session_id.to_string(),
-                            update: HeyBuddySessionUpdate::MessageUsage(message_usage_update(
-                                message_id, &usage,
-                            )),
-                        })?;
+                        send_custom_session_notification(
+                            cx,
+                            self.custom_method_namespace(),
+                            HeyBuddySessionNotification {
+                                session_id: session_id.to_string(),
+                                update: HeyBuddySessionUpdate::MessageUsage(message_usage_update(
+                                    message_id, &usage,
+                                )),
+                            },
+                        )?;
                     }
                 }
                 Ok(_) => {}
@@ -3480,6 +3620,70 @@ print(\"hello, world\")
         assert!(!extract_client_supports_heybuddy_custom_notifications(
             heybuddy_client_capabilities.as_ref()
         ));
+    }
+
+    #[test]
+    fn test_legacy_goose_capabilities_negotiate_legacy_custom_methods() {
+        let mut goose_meta = serde_json::Map::new();
+        goose_meta.insert(
+            "customNotifications".to_string(),
+            serde_json::Value::Bool(true),
+        );
+        goose_meta.insert(
+            "recipeParameterRequests".to_string(),
+            serde_json::Value::Bool(true),
+        );
+        let mut meta = serde_json::Map::new();
+        meta.insert("goose".to_string(), serde_json::Value::Object(goose_meta));
+        let request = InitializeRequest::new(agent_client_protocol::schema::ProtocolVersion::V1)
+            .client_capabilities(
+                agent_client_protocol::schema::v1::ClientCapabilities::new().meta(meta),
+            );
+
+        let (namespace, capabilities) = negotiate_client_capabilities(&request);
+
+        assert_eq!(namespace, CustomMethodNamespace::Goose);
+        assert!(extract_client_supports_heybuddy_custom_notifications(
+            capabilities.as_ref()
+        ));
+        assert!(extract_client_supports_recipe_param_requests(
+            capabilities.as_ref()
+        ));
+    }
+
+    #[test]
+    fn test_canonical_capabilities_take_precedence_over_legacy_capabilities() {
+        let mut meta = serde_json::Map::new();
+        meta.insert("heybuddy".to_string(), serde_json::json!({}));
+        meta.insert(
+            "goose".to_string(),
+            serde_json::json!({ "customNotifications": true }),
+        );
+        let request = InitializeRequest::new(agent_client_protocol::schema::ProtocolVersion::V1)
+            .client_capabilities(
+                agent_client_protocol::schema::v1::ClientCapabilities::new().meta(meta),
+            );
+
+        let (namespace, capabilities) = negotiate_client_capabilities(&request);
+
+        assert_eq!(namespace, CustomMethodNamespace::HeyBuddy);
+        assert!(!extract_client_supports_heybuddy_custom_notifications(
+            capabilities.as_ref()
+        ));
+    }
+
+    #[test]
+    fn test_legacy_outbound_notifications_use_goose_methods() {
+        let session = LegacyHeyBuddySessionNotification(HeyBuddySessionNotification::default())
+            .to_untyped_message()
+            .unwrap();
+        let provider =
+            LegacyProviderDeviceCodeNotification(ProviderDeviceCodeNotification::default())
+                .to_untyped_message()
+                .unwrap();
+
+        assert_eq!(session.method(), LEGACY_SESSION_UPDATE_METHOD);
+        assert_eq!(provider.method(), LEGACY_PROVIDER_DEVICE_CODE_METHOD);
     }
 
     #[test]

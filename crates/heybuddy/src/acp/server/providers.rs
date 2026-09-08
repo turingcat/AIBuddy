@@ -1122,6 +1122,7 @@ impl HeyBuddyAcpAgent {
 
             if self.supports_heybuddy_custom_notifications() {
                 let client_cx = self.client_cx.get().cloned();
+                let custom_method_namespace = self.custom_method_namespace();
                 let provider_id = req.provider_id.clone();
                 let announce: Box<dyn Fn(String, String, u64) + Send + Sync> =
                     Box::new(move |user_code, verification_uri, expires_in| {
@@ -1138,7 +1139,11 @@ impl HeyBuddyAcpAgent {
                                 verification_uri,
                                 expires_in,
                             };
-                            if let Err(e) = cx.send_notification(notification) {
+                            if let Err(e) = send_provider_device_code_notification(
+                                cx,
+                                custom_method_namespace,
+                                notification,
+                            ) {
                                 tracing::warn!("Failed to send device code notification: {}", e);
                             }
                         }

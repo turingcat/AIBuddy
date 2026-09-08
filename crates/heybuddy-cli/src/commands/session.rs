@@ -337,8 +337,14 @@ pub async fn handle_session_export(
     Ok(())
 }
 
+fn should_import_from_nostr(input: &str, nostr: bool) -> bool {
+    nostr
+        || input.starts_with("heybuddy://sessions/nostr")
+        || input.starts_with("goose://sessions/nostr")
+}
+
 pub async fn handle_session_import(input: String, nostr: bool) -> Result<()> {
-    let json = if nostr || input.starts_with("heybuddy://sessions/nostr") {
+    let json = if should_import_from_nostr(&input, nostr) {
         #[cfg(feature = "nostr")]
         {
             nostr_share::import_session_json_from_deeplink(&input).await?
@@ -508,6 +514,20 @@ pub async fn prompt_interactive_session_selection(
 mod diagnostics_output_tests {
     use super::*;
     use tempfile::TempDir;
+
+    #[test]
+    fn recognizes_canonical_and_legacy_nostr_import_inputs() {
+        assert!(should_import_from_nostr(
+            "heybuddy://sessions/nostr?event=canonical",
+            false
+        ));
+        assert!(should_import_from_nostr(
+            "goose://sessions/nostr?event=legacy",
+            false
+        ));
+        assert!(should_import_from_nostr("session.json", true));
+        assert!(!should_import_from_nostr("session.json", false));
+    }
 
     #[test]
     fn creates_new_output_file() {

@@ -58,6 +58,7 @@ impl HandleDispatchFrom<Client> for HeyBuddyAcpHandler {
                                             &totals,
                                             context_limit,
                                             agent.supports_heybuddy_custom_notifications(),
+                                            agent.custom_method_namespace(),
                                         )
                                     }) {
                                         tracing::warn!(
@@ -96,6 +97,7 @@ impl HandleDispatchFrom<Client> for HeyBuddyAcpHandler {
                                                 &totals,
                                                 context_limit,
                                                 agent.supports_heybuddy_custom_notifications(),
+                                                agent.custom_method_namespace(),
                                             )
                                         },
                                     ) {
@@ -450,6 +452,7 @@ impl HandleDispatchFrom<Client> for HeyBuddyAcpHandler {
                                             &totals,
                                             context_limit,
                                             agent.supports_heybuddy_custom_notifications(),
+                                            agent.custom_method_namespace(),
                                         )
                                     }) {
                                         tracing::warn!(

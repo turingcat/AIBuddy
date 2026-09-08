@@ -125,6 +125,14 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         self.assertNotIn("aaif-goose/goose/releases", shell_installer)
         self.assertNotIn("aaif-goose/goose/releases", powershell_installer)
 
+    def test_release_attestations_run_for_personal_repositories(self) -> None:
+        workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
+
+        self.assertEqual(workflow.count("actions/attest-build-provenance@"), 2)
+        self.assertNotIn("github.event.repository.owner.type", workflow)
+        self.assertIn("id-token: write", workflow)
+        self.assertIn("attestations: write", workflow)
+
     def test_intel_native_package_was_removed(self) -> None:
         self.assertFalse(
             (ROOT / "ui/heybuddy-binary/heybuddy-binary-darwin-x64/package.json").exists()

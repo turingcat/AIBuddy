@@ -19,7 +19,7 @@ use tokio::sync::oneshot;
 
 mod conversions;
 
-use super::{meta_string, HeyBuddyAcpAgent, ResultExt};
+use super::{meta_string, CustomMethodNamespace, HeyBuddyAcpAgent, ResultExt};
 use crate::agents::Agent;
 use crate::recipe::build_recipe::{build_recipe_from_template, RecipeError};
 use crate::recipe::local_recipes::{self, get_recipe_library_dir};
@@ -416,11 +416,14 @@ impl HeyBuddyAcpAgent {
             parameter_scope_id: parameter_scope_id.map(str::to_string),
         };
         let (tx, rx) = oneshot::channel();
-        cx.send_request(RequestRecipeParamsMessage(request))
-            .on_receiving_result(move |result| async move {
-                let _ = tx.send(result.map(|response| response.0));
-                Ok(())
-            })?;
+        cx.send_request(RequestRecipeParamsMessage::new(
+            request,
+            self.custom_method_namespace(),
+        ))
+        .on_receiving_result(move |result| async move {
+            let _ = tx.send(result.map(|response| response.0));
+            Ok(())
+        })?;
         match rx.await {
             Ok(response) => response,
             Err(_) => Err(agent_client_protocol::Error::internal_error()
@@ -479,20 +482,35 @@ fn recipe_to_dto(recipe: Recipe) -> Result<RecipeDto, agent_client_protocol::Err
         .map_err(|e| agent_client_protocol::Error::invalid_params().data(format!("recipe: {e}")))
 }
 
+const LEGACY_RECIPE_PARAMS_METHOD: &str = "_goose/unstable/session/recipe/request-params";
+
 #[derive(Debug, Clone)]
-struct RequestRecipeParamsMessage(RequestRecipeParams);
+struct RequestRecipeParamsMessage {
+    request: RequestRecipeParams,
+    method: &'static str,
+}
+
+impl RequestRecipeParamsMessage {
+    fn new(request: RequestRecipeParams, namespace: CustomMethodNamespace) -> Self {
+        let method = match namespace {
+            CustomMethodNamespace::HeyBuddy => RECIPE_PARAMS_METHOD,
+            CustomMethodNamespace::Goose => LEGACY_RECIPE_PARAMS_METHOD,
+        };
+        Self { request, method }
+    }
+}
 
 impl JsonRpcMessage for RequestRecipeParamsMessage {
     fn matches_method(method: &str) -> bool {
-        method == RECIPE_PARAMS_METHOD
+        matches!(method, RECIPE_PARAMS_METHOD | LEGACY_RECIPE_PARAMS_METHOD)
     }
 
     fn method(&self) -> &str {
-        RECIPE_PARAMS_METHOD
+        self.method
     }
 
     fn to_untyped_message(&self) -> Result<UntypedMessage, agent_client_protocol::Error> {
-        UntypedMessage::new(RECIPE_PARAMS_METHOD, &self.0)
+        UntypedMessage::new(self.method, &self.request)
     }
 
     fn parse_message(
@@ -502,7 +520,14 @@ impl JsonRpcMessage for RequestRecipeParamsMessage {
         if !Self::matches_method(method) {
             return Err(agent_client_protocol::Error::method_not_found());
         }
-        Ok(Self(agent_client_protocol::util::json_cast_params(params)?))
+        Ok(Self {
+            request: agent_client_protocol::util::json_cast_params(params)?,
+            method: if method == LEGACY_RECIPE_PARAMS_METHOD {
+                LEGACY_RECIPE_PARAMS_METHOD
+            } else {
+                RECIPE_PARAMS_METHOD
+            },
+        })
     }
 }
 
@@ -533,6 +558,26 @@ mod tests {
 
     fn error_data(error: agent_client_protocol::Error) -> String {
         error.data.unwrap().as_str().unwrap().to_string()
+    }
+
+    #[test]
+    fn recipe_parameter_requests_use_the_negotiated_namespace() {
+        let request = RequestRecipeParams {
+            session_id: "session-1".to_string(),
+            parameters: Vec::new(),
+            parameter_scope_id: None,
+        };
+
+        let canonical =
+            RequestRecipeParamsMessage::new(request.clone(), CustomMethodNamespace::HeyBuddy);
+        let legacy = RequestRecipeParamsMessage::new(request, CustomMethodNamespace::Goose);
+
+        assert_eq!(canonical.method(), RECIPE_PARAMS_METHOD);
+        assert_eq!(legacy.method(), LEGACY_RECIPE_PARAMS_METHOD);
+        assert_eq!(
+            legacy.to_untyped_message().unwrap().method(),
+            LEGACY_RECIPE_PARAMS_METHOD
+        );
     }
 
     #[test]

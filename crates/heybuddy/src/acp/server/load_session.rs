@@ -109,6 +109,7 @@ fn replay_conversation_to_client(
     cx: &ConnectionTo<Client>,
     session: &Session,
     supports_heybuddy_custom_notifications: bool,
+    custom_method_namespace: CustomMethodNamespace,
     client_requests_tool_call_label_enrichment: bool,
     replay_tail: Option<usize>,
 ) -> Result<usize, agent_client_protocol::Error> {
@@ -203,13 +204,17 @@ fn replay_conversation_to_client(
 
         if supports_heybuddy_custom_notifications {
             if let Some(usage) = &message.metadata.usage {
-                cx.send_notification(HeyBuddySessionNotification {
-                    session_id: session.id.clone(),
-                    update: HeyBuddySessionUpdate::MessageUsage(message_usage_update(
-                        message.id.clone(),
-                        usage,
-                    )),
-                })?;
+                send_custom_session_notification(
+                    cx,
+                    custom_method_namespace,
+                    HeyBuddySessionNotification {
+                        session_id: session.id.clone(),
+                        update: HeyBuddySessionUpdate::MessageUsage(message_usage_update(
+                            message.id.clone(),
+                            usage,
+                        )),
+                    },
+                )?;
             }
         }
     }
@@ -407,6 +412,7 @@ impl HeyBuddyAcpAgent {
             cx,
             &session,
             self.supports_heybuddy_custom_notifications(),
+            self.custom_method_namespace(),
             self.requests_tool_call_label_enrichment(),
             replay_tail_from_meta(args.meta.as_ref()),
         )?;

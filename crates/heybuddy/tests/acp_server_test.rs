@@ -9,6 +9,7 @@ use agent_client_protocol::schema::v1::{
 };
 use agent_client_protocol::ErrorCode;
 use common_tests::fixtures::server::{
+    assert_legacy_client_receives_legacy_custom_notifications,
     assert_session_response_precedes_available_commands, AcpServerConnection,
 };
 use common_tests::fixtures::{
@@ -851,6 +852,31 @@ fn test_new_session_returns_initial_config() {
 #[test]
 fn test_new_session_uses_current_config_mode() {
     run_test(async { run_new_session_uses_current_config_mode::<AcpServerConnection>().await });
+}
+
+#[test]
+fn test_legacy_client_receives_legacy_custom_notification_namespace() {
+    run_test(async {
+        let data_root = tempfile::tempdir().unwrap();
+        let work_dir = tempfile::tempdir().unwrap();
+        let openai = OpenAiFixture::new(
+            vec![],
+            <AcpServerConnection as Connection>::expected_session_id(),
+        )
+        .await;
+        let (transport, _handle, _permission_manager) = spawn_acp_server_in_process(
+            openai.uri(),
+            &[],
+            data_root.path(),
+            HeyBuddyMode::default(),
+            None,
+            heybuddy_test_support::TEST_MODEL,
+            true,
+        )
+        .await;
+
+        assert_legacy_client_receives_legacy_custom_notifications(transport, work_dir.path()).await;
+    });
 }
 
 #[test]

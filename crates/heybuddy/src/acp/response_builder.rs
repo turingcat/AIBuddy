@@ -18,7 +18,10 @@ use serde::Serialize;
 use strum::{EnumMessage, VariantNames};
 
 use super::provider::resolve_effort_value;
-use super::server::{build_usage_updates, DEFAULT_PROVIDER_ID, DEFAULT_PROVIDER_LABEL};
+use super::server::{
+    build_usage_updates, send_custom_session_notification, CustomMethodNamespace,
+    DEFAULT_PROVIDER_ID, DEFAULT_PROVIDER_LABEL,
+};
 
 pub(super) fn session_provider_selection(session: &Session) -> &str {
     session
@@ -467,11 +470,12 @@ pub(super) fn send_session_setup_notifications(
     totals: &SessionUsageTotals,
     context_limit: usize,
     supports_heybuddy_custom_notifications: bool,
+    custom_method_namespace: CustomMethodNamespace,
 ) -> Result<(), agent_client_protocol::Error> {
     let session_id = SessionId::new(session.id.clone());
     let updates = build_usage_updates(session, totals, context_limit);
     if supports_heybuddy_custom_notifications {
-        cx.send_notification(updates.custom)?;
+        send_custom_session_notification(cx, custom_method_namespace, updates.custom)?;
     }
     cx.send_notification(SessionNotification::new(
         session_id.clone(),
