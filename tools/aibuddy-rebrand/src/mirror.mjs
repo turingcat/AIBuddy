@@ -414,6 +414,18 @@ function baseResult({ branch, dryRun, mirrorCommit, tree: mirrorTree, snapshot, 
   };
 }
 
+export async function materializeSnapshotTree({ cwd = process.cwd(), snapshotDir, writeObjects = false } = {}) {
+  requireBoolean(writeObjects, 'writeObjects');
+  const snapshot = await validateUpstreamSnapshot(cwd, snapshotDir);
+  return {
+    sourceCommit: snapshot.sourceCommit,
+    sourceTree: snapshot.sourceTree,
+    outputDigest: snapshot.outputDigest,
+    transformIdentity: snapshot.transformIdentity,
+    tree: writeSnapshotTree(cwd, snapshot, { writeObjects }),
+  };
+}
+
 export async function prepareMirror({
   cwd = process.cwd(),
   snapshotDir,

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "mode": "snapshot-delta",
+  "sourceRepository": "https://github.com/turingcat/HeyBuddy.git",
+  "sourceRef": "main",
+  "sourceCommit": "389b6a5b09c1e27cc85ff1c42d37d1b20f2a4e01",
+  "sourceTree": "4d8645e79ae6d1b0ab7e9ba448cdcd254609fa4d",
+  "snapshotTree": "b8cdb5c5793182f5d945ef385aecfaad82f7ed82",
+  "outputDigest": "3b1a7e1893c794e4852ca973e67147a4f90fe081efd47f46c916c2ac542ecac3",
+  "transformIdentity": "9d8398ff39e77a8f265bdf1c93bdbc2fa7c1a196a89a5544923774a32d434be3"
+}

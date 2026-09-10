@@ -13,9 +13,27 @@ These standards apply to all code changes in AIBuddy.
 
 ### Upstream Synchronization
 
-Normal AIBuddy updates must use a synchronization branch that fetches and merges `upstream/shared`; never merge `upstream/main` directly. The shared branch is limited to official AIBuddy updates and product-neutral engine, desktop, localization, and tooling work. AIBuddy owns its product name and assets, authentication and service configuration, provider credentials and entitlements, data migration, and user-visible identity.
+Use snapshot-delta synchronization on a new `sync/*` branch. The tracked
+`.aibuddy-upstream.json` identifies the upstream repository/ref and last applied
+source. Generate verified previous/next snapshots with the HeyBuddy → AIBuddy
+mapping, then use `tools/aibuddy-rebrand/sync.mjs prepare` and `apply` to apply only
+their code differences. See `docs/development/aibuddy-upstream-sync.md`.
 
-After a shared merge, run `cd ui/desktop && pnpm run check:product-boundary` before the normal review and verification workflow. Split mixed changes in AIBuddy before they reach `shared`; exceptional cherry-picks from `upstream/main` require the same product-boundary review.
+Never merge raw upstream or transformed mirror branches into product history.
+Never use upstream commits as product parents or replay their author history with
+rebase/cherry-pick. Local fetched objects and temporary snapshot trees are caches,
+not publication branches. Each synchronization produces ordinary single-parent
+AIBuddy commits. Preserve licenses, copyright notices and recorded source hashes.
+
+Preserve AIBuddy product name/assets, tflow authentication and service settings,
+provider credentials/entitlements, data migration and desktop customizations.
+Resolve conflicts before recording the next snapshot baseline. Run
+`cd ui/desktop && pnpm run check:product-boundary` and
+`node tools/aibuddy-rebrand/sync.mjs check-history --base <product-base>` before
+publishing a synchronization PR, alongside applicable tests and review.
+
+Changing synchronization mode does not authorize rewriting published `main`
+history. Existing community authors in already published ancestry remain.
 
 ### Testing
 

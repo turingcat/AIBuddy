@@ -1,60 +1,57 @@
-# AIBuddy source rebranding
+# AIBuddy source rebranding and independent synchronization
 
-This tool transforms pinned Goose or HeyBuddy Git snapshots into AIBuddy-named
-source trees. `brand-map.json` is the authoritative exact-case mapping table used
-for both source families. The generated `.aibuddy-rebrand.json` file records every
-per-file conversion, exception, source commit, tool identity, and output digest.
+Generate AIBuddy-named source snapshots from pinned HeyBuddy or Goose commits.
+`brand-map.json` is the authoritative mapping; `production-policy.json` and
+`text-policy.json` define reviewed preservation exceptions. Unsupported occurrences
+fail closed. Each snapshot includes `.aibuddy-rebrand.json` with conversion and
+source provenance. Licenses, copyright and external identities remain preserved.
 
-The intended upstream workflow is:
-
-1. Fetch and pin a HeyBuddy upstream commit.
-2. Generate and verify an AIBuddy snapshot from that exact commit.
-3. Commit the transformed snapshot to `upstream/aibuddy-mirror`.
-4. Merge the mirror into an AIBuddy synchronization branch and resolve only
-   AIBuddy-owned product boundaries.
-
-## Requirements
-
-Use the Node versions declared in `package.json`, Git, Cargo, rustc, and rustfmt.
-Install this tool's pinned dependencies with `npm ci`. The Rust parser has its own
-locked workspace in `rust-parser`; generated sources never depend on that helper.
-
-## Commands
-
-Run from the product repository root:
+## Generate and verify
 
 ```sh
 node tools/aibuddy-rebrand/cli.mjs inventory --source-ref <commit> --report-dir <new-directory>
-node tools/aibuddy-rebrand/cli.mjs generate --source-ref <commit> --output <new-directory> --input product
-node tools/aibuddy-rebrand/cli.mjs generate --source-ref <upstream-commit> --output <new-directory> --input upstream
-node tools/aibuddy-rebrand/cli.mjs verify --output <generated-directory>
+node tools/aibuddy-rebrand/cli.mjs generate --source-ref <commit> --output <new-directory> --input upstream
+node tools/aibuddy-rebrand/cli.mjs verify --output <snapshot-directory>
 ```
 
-Outputs must be outside source worktrees and must not already exist. Generation
-reads committed Git blobs only, rejects unresolved references and unsafe paths,
-formats changed Rust files, and publishes without replacing existing destinations.
+Outputs must be new directories outside source worktrees. Generation reads
+committed Git blobs, checks paths/collisions/residuals and formats changed Rust.
 
-`brand-map.json` defines canonical name replacements. `production-policy.json`
-and `text-policy.json` define explicit preservation and full-text conversion rules.
-`map.json` contains bounded validation examples; it is not the complete repository
-map. Symbol records are parser-token occurrences, not unique cross-module declarations.
+## Synchronize without upstream commit ancestry
 
-## Application
+The product's `.aibuddy-upstream.json` records the last applied snapshot. On a clean
+`sync/*` branch, generate the verified previous and next snapshots, then:
 
-`src/apply-snapshot.mjs` exports `applySnapshot`. Its default is a dry run; a real
-application requires an explicitly selected `feat/*` or `sync/*` branch and a
-quiescent dedicated worktree. It verifies baseline files, snapshot bytes, target
-paths, and ancestry before writing. It retains explicitly named control paths and
-rolls back owned writes if an error occurs.
+```sh
+node tools/aibuddy-rebrand/sync.mjs prepare --previous <old-snapshot> --next <new-snapshot> --output <new-review-directory>
+node tools/aibuddy-rebrand/sync.mjs apply --plan <review-directory>
+# If conflicts occur, resolve and stage them before recording:
+node tools/aibuddy-rebrand/sync.mjs record --plan <review-directory>
+# After review/testing, create an ordinary product commit and check its history:
+node tools/aibuddy-rebrand/sync.mjs check-history --base origin/main
+```
+
+`prepare` creates trees/blobs and a reviewable binary patch, never commits or refs.
+`apply` uses Git's three-way patch application to preserve product customizations.
+It records the new baseline only on a successful application. `record` finishes a
+previously conflicted application and is unnecessary after a clean one. The helper
+never commits, merges, resets or pushes. The history check is dependency-free.
+
+Do not merge raw upstream or transformed mirror branches, or replay their author
+history. Use [the full workflow](../../docs/development/aibuddy-upstream-sync.md)
+for preparation, conflicts, verification and publication. Existing historical
+mirror APIs and `applySnapshot` (full-tree branding migration) remain available for
+legacy tooling, but neither is the default upstream synchronization mode.
 
 ## Tests
 
 ```sh
-cd tools/aibuddy-rebrand
-npm test
-cargo test --locked --manifest-path rust-parser/Cargo.toml
+npm --prefix tools/aibuddy-rebrand ci
+npm --prefix tools/aibuddy-rebrand test
+cargo test --locked --manifest-path tools/aibuddy-rebrand/rust-parser/Cargo.toml
 ```
 
-Fixtures use temporary repositories or exact pinned source commits. Snapshot
-verification applies to pristine generated output. Keep one pristine output for
-repeatability checks and use a separate copy for build validation.
+Snapshot-sync tests use independent product/source Git roots and two consecutive
+updates. They check ancestry, authors, product preservation, binary/mode/rename
+changes, conflicts and rejected stale inputs. The existing coverage inventory is
+bounded decision-path coverage, not whole-repository path coverage.

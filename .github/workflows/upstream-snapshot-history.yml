@@ -1,0 +1,22 @@
+name: Upstream Snapshot History
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot-history:
+    name: Check independent synchronization history
+    if: startsWith(github.head_ref, 'sync/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Reject upstream ancestry in synchronization commits
+        env:
+          PRODUCT_BASE: ${{ github.event.pull_request.base.sha }}
+        run: node tools/aibuddy-rebrand/sync.mjs check-history --base "$PRODUCT_BASE"
