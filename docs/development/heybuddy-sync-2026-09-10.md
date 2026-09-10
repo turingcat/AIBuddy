@@ -64,3 +64,18 @@ existing pull-request/manual trigger policy.
 Native Windows/macOS packaged applications and live tflow sign-in were not run.
 The PR includes the earlier local branding/bootstrap history because the target
 `main` branch does not contain it yet. No merge into `main` or release is performed.
+
+## Publication history repair
+
+GitHub rejected the initial push because five earlier local commits contained a
+258 MB generated `ui/desktop/src/bin/goose` executable. The final product tree
+already omitted it. Only that historical blob was removed before publishing;
+the original branch remains locally at
+`sync/heybuddy-v1.50-aibuddy-20260910-full-history`.
+
+The repair rewrote 11 local commit IDs and verified that the merge tree remained
+exactly `3c12f6af42f227db2ccc827c49dc6460724c96f5`, retaining both transformed mirror
+commits unchanged. The baseline/mapping IDs above identify original local commits;
+[the history map](heybuddy-sync-2026-09-10-history.json) records their published
+counterparts. No remote history or `main` was rewritten. This documentation was
+added after that byte-identical tree verification.
