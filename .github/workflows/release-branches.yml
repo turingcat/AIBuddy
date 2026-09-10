@@ -1,0 +1,43 @@
+name: Build release candidate Desktop packages
+
+on:
+  pull_request:
+
+jobs:
+  bundle-macos-arm64:
+    if: startsWith(github.head_ref, 'release/')
+    uses: ./.github/workflows/bundle-macos.yml
+    permissions:
+      contents: read
+    with:
+      artifact_retention_days: 14
+
+  bundle-windows:
+    if: startsWith(github.head_ref, 'release/')
+    uses: ./.github/workflows/bundle-windows.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      artifact_retention_days: 14
+
+  comment-on-pr:
+    needs: [bundle-macos-arm64, bundle-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment with download links
+        uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9  # v5.0.0
+        with:
+          issue-number: ${{ github.event.number }}
+          body: |
+            ### Desktop packages
+
+            - [macOS arm64](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/AIBuddy-macos-arm64.zip)
+            - [Windows x32](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/AIBuddy-windows-x32.zip)
+            - [Windows x64](https://nightly.link/${{ github.repository }}/actions/runs/${{ github.run_id }}/AIBuddy-windows-x64.zip)
+
+            For a downloaded macOS package, remove quarantine with:
+
+            `xattr -r -d com.apple.quarantine '/path/to/AIBuddy.app'`

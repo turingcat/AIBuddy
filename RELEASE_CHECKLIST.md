@@ -1,0 +1,29 @@
+# aibuddy Release Manual Testing Checklist
+
+Download the release builds from this PR. Once a build is ready, the actions bot will post a comment on this PR
+with instructions on how to download and sign.
+
+## Manually trigger the MSRV and Windows cross-compilation checks
+
+`rust-msrv` and `rust-build-windows` in `ci.yml` only run via `workflow_dispatch` — they are not part of
+the automatic push/PR checks. Before tagging, manually trigger the `CI` workflow from the Actions tab
+(or `gh workflow run ci.yml --ref <release branch>`) and confirm both jobs succeed.
+
+## Use the following script to create a risk assessment and testing plan:
+```
+./workflow_recipes/release_risk_check/run.sh {{VERSION}}
+```
+
+It will generate an analysis report in `/tmp/release_report_final.md` and perform testing is necessary for high risk pr changes.
+
+## Run the aibuddy self-test recipe
+
+aibuddy run --recipe aibuddy-self-test.yaml
+
+## Have aibuddy produce a test plan
+
+Open the release candidate desktop app and have aibuddy produce a test plan by pointing it at this PR. Use a prompt like
+
+> Look at the notes in PR <release PR> and the report at `/tmp/release_report_final.md` and investigate potential risks in this release. After familiarizing yourself with the scope of each change, produce a suggested test plan that I should follow before publishing the release.
+
+aibuddy will produce a plan. Follow this plan to finish testing.

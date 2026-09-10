@@ -1,0 +1,28 @@
+{
+  "name": "@aibuddy/aibuddy-binary-linux-arm64",
+  "version": "1.0.6",
+  "description": "AIBuddy binary for Linux ARM64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/turingcat/AIBuddy.git"
+  },
+  "keywords": [
+    "aibuddy",
+    "ai",
+    "agent",
+    "binary"
+  ],
+  "os": [
+    "linux"
+  ],
+  "cpu": [
+    "arm64"
+  ],
+  "bin": {
+    "aibuddy-binary-linux-arm64": "./bin/aibuddy"
+  },
+  "files": [
+    "bin/aibuddy"
+  ]
+}

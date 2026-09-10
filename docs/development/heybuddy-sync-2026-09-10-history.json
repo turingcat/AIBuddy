@@ -1,0 +1,27 @@
+{
+  "originalHead": "fed2292853ff4f6608b60f243de4c4f62c622719",
+  "publishedHead": "c1ab54e19e62f63533d6cadf3a410e75728dca55",
+  "treeUnchanged": "3c12f6af42f227db2ccc827c49dc6460724c96f5",
+  "backup": "refs/heads/sync/heybuddy-v1.50-aibuddy-20260910-full-history",
+  "removedBlob": "3ab7b7b51dc23b8dfbb92cd3e53aa367d41dae97",
+  "removedFromCommits": [
+    "0eeef022fc4fb2dbefc7ce90cfe260989ddfeea6",
+    "a17a796d40e09c68eb2fa421b0a2d59ddbcd7d82",
+    "f82bcaadee3dca7c099914c43aab7c432f83bb58",
+    "30b94900c034f22c5c8329fb3126936d94c355bf",
+    "2bf27bb674af0fe818c959e8f0e14f079fc355d2"
+  ],
+  "rewrittenCommits": {
+    "0eeef022fc4fb2dbefc7ce90cfe260989ddfeea6": "929bd95acd3f246644d1de580b8426002a9610ba",
+    "a17a796d40e09c68eb2fa421b0a2d59ddbcd7d82": "fb6bee1937e58b03f7bec76cc858437d50de3b5e",
+    "f82bcaadee3dca7c099914c43aab7c432f83bb58": "83f987ddf07f1c4e66263f9f40de65bbe2820f7d",
+    "30b94900c034f22c5c8329fb3126936d94c355bf": "563b7e71040adea89d191e2968ce415ebfbfbec0",
+    "2bf27bb674af0fe818c959e8f0e14f079fc355d2": "b04eeda8132f7cd6df7e5205a96c71622ade13dc",
+    "5c06167af9af872c746cd81978e8a27490aa5a86": "66c286c80349521f364a1487f02638f3690bcc30",
+    "f0ad0cc87bb9c77ee2039a52b5f3d1a6d48ae1fc": "6dc519fdbed7104ae65fe8e5c1885802ba3e37b7",
+    "b2cceb889cfb55253d9771f7a4cd5971169915b4": "456ad1a13c61c8fdb7d0bb2e5c99d931f5406751",
+    "58734ec0e9f20a562dc2e4055297d9b2fa05e947": "368384063a0bdca6af306ed614e15bdbcf503fd4",
+    "d81baa4dc2179b04736bed0e306479e41004d1ee": "26ecc50e1085dd85725c616f210d087a4fb0d509",
+    "fed2292853ff4f6608b60f243de4c4f62c622719": "c1ab54e19e62f63533d6cadf3a410e75728dca55"
+  }
+}

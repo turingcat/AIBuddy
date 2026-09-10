@@ -1,0 +1,18 @@
+This is a rust project with crates in the crates dir:
+aibuddy: the main code for aibuddy, contains all the core logic
+aibuddy-bench: bench marking
+aibuddy-cli: the command line interface, use aibuddy crate
+aibuddy-mcp: the mcp servers that ship with aibuddy. the developer sub system is of special interest
+aibuddy-server: the server that supports the desktop (electron) app. also known as aibuddyd
+
+
+ui/desktop has an electron app in typescript. 
+
+non trivial features should be implemented in the aibuddy crate and then be called from the aibuddy-cli crate for the cli. for the desktop, you want to add routes to 
+aibuddy-server/src/routes. you can then run `just generate-openapi` to generate the openapi spec which will modify the ui/desktop/src/api files. once you have
+that you can call the functionality from the server from the typescript.
+
+tips: 
+- can look at unstaged changes for what is being worked on if starting
+- always check rust compiles, cargo fmt etc and `cargo clippy --all-targets -- -D warnings` (as well as run tests in files you are working on)
+- in ui/desktop, look at how you can run lint checks and if other tests can run

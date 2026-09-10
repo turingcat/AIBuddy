@@ -1,0 +1,13 @@
+{
+  "edition": "aibuddy",
+  "productName": "AIBuddy",
+  "bundleId": "com.electron.aibuddy",
+  "protocol": "aibuddy",
+  "protocolName": "AIBuddyProtocol",
+  "windowsAppId": "{6D21D2A5-3C17-4F2B-8E61-91B39598A2D7}",
+  "executableName": "AIBuddy",
+  "artifactStem": "AIBuddy",
+  "iconStem": "aibuddy/icon",
+  "authMode": "sub2api",
+  "authApiBaseUrl": "https://tflow.online"
+}

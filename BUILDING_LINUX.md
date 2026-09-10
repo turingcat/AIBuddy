@@ -1,0 +1,218 @@
+# Building aibuddy Desktop on Linux
+
+This guide covers building the aibuddy Desktop application from source on various Linux distributions.
+
+## Prerequisites
+
+### System Dependencies
+
+**Debian/Ubuntu:**
+```bash
+sudo apt update
+sudo apt install -y dpkg fakeroot build-essential clang libxcb1-dev libxcb-util-dev protobuf-compiler libvulkan-dev libvulkan1 glslc
+```
+
+**Arch/Manjaro:**
+```bash
+sudo pacman -S --needed dpkg fakeroot base-devel vulkan-headers vulkan-icd-loader shaderc
+```
+
+**Fedora/RHEL/CentOS:**
+```bash
+sudo dnf install dpkg-dev fakeroot gcc gcc-c++ make libxcb-devel vulkan-headers vulkan-loader glslc
+```
+
+**openSUSE:**
+```bash
+sudo zypper install dpkg fakeroot gcc gcc-c++ make vulkan-headers vulkan-loader glslc
+```
+
+**Android / Termux:**
+
+The `download_cli.sh` installer detects Termux and automatically selects the
+musl portable build (`AIBUDDY_LINUX_VARIANT=musl`). To install:
+
+```bash
+curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
+```
+
+To build from source in Termux:
+
+```bash
+pkg install rust cmake protobuf clang build-essential
+cargo build --release -p aibuddy-cli --bin aibuddy --no-default-features --features portable-default
+```
+
+> **Note:** The musl/portable build disables `local-inference` (V8) and
+> `system-keyring` (D-Bus SecretService) since neither is available on Android.
+
+Original PR: https://github.com/aaif-goose/goose/pull/3890
+
+### Development Tools
+
+- **Rust**: Install via [rustup](https://rustup.rs/)
+- **Node.js**: Version 22.9.0 or later (use [nvm](https://github.com/nvm-sh/nvm) for version management)
+- **pnpm**: Version 10 or later (managed via Hermit, or install globally)
+- **just**: Install via `cargo install just` after Rust is installed. More [info](https://github.com/casey/just#packages)
+
+## Build Process
+
+### 1. Clone and Setup
+```bash
+git clone https://github.com/aaif-goose/goose.git
+cd aibuddy
+```
+
+### 2. Build
+
+Build AIBuddy CLI:
+
+```bash
+cargo build --release -p aibuddy-cli --bin aibuddy
+```
+
+This command should give you a list of possible packages in the
+workspace:
+
+```bash
+cargo test -p
+```
+
+### 3. Prepare the Desktop Application
+```bash
+cd ui/desktop
+pnpm install
+
+# Copy the aibuddy binary to the expected location
+mkdir -p src/bin
+cp ../../target/release/aibuddy src/bin/
+```
+
+### 4. Build the Application
+
+#### Option A: ZIP Distribution (Recommended)
+Works on all Linux distributions:
+```bash
+pnpm run make --targets=@electron-forge/maker-zip
+```
+
+Output: `out/make/zip/linux/x64/aibuddy-linux-x64-{version}.zip`
+
+#### Option B: DEB Package
+For Debian/Ubuntu systems:
+```bash
+pnpm run make --targets=@electron-forge/maker-deb
+```
+
+Output: `out/make/deb/x64/aibuddy_{version}_amd64.deb`
+
+#### Option C: Both Formats
+```bash
+pnpm run make
+```
+
+### 5. Run the Application
+
+#### From Build Directory
+```bash
+./out/aibuddy-linux-x64/aibuddy
+```
+
+#### Install DEB Package (if built)
+```bash
+sudo dpkg -i out/make/deb/x64/aibuddy_*.deb
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Missing System Dependencies
+If you see errors about missing `dpkg`, `fakeroot`, Vulkan headers, or `glslc`:
+```bash
+# Install the missing packages for your distribution (see Prerequisites above)
+```
+
+#### GLib Warnings
+You may see warnings like:
+```
+GLib-GObject: instance has no handler with id
+```
+These are harmless and don't affect functionality. To suppress them, create a launcher script:
+
+```bash
+#!/bin/bash
+cd /path/to/aibuddy/ui/desktop/out/aibuddy-linux-x64
+./aibuddy 2>&1 | grep -v "GLib-GObject" | grep -v "browser_main_loop"
+```
+
+#### AIBuddy Binary Not Found
+If you see "AIBuddy binary not found", ensure you've:
+1. Built the Rust binary: `cargo build --release -p aibuddy-cli --bin aibuddy`
+2. Copied it to the right location: `cp ../../target/release/aibuddy src/bin/`
+3. Rebuilt the application: `pnpm run make`
+
+### Distribution-Specific Notes
+
+#### Arch/Manjaro
+- The RPM maker is disabled by default as it's not compatible with Arch-based systems
+- Use the ZIP distribution method for maximum compatibility
+
+#### Flatpak
+Flatpak builds are supported via CI. To build locally:
+```bash
+# Install flatpak and flatpak-builder
+sudo apt install flatpak flatpak-builder
+
+# Add Flathub remote
+flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+
+# Build with Electron Forge
+pnpm run make --targets=@electron-forge/maker-flatpak
+```
+
+Output: `out/make/flatpak/x86_64/*.flatpak`
+
+#### Snap
+Building as Snap packages is not currently supported but may be added in the future.
+
+## Development Workflow
+
+For active development:
+
+1. **Backend changes**: Rebuild with `cargo build --release -p aibuddy-cli --bin aibuddy` and copy the binary
+2. **Frontend changes**: Use `pnpm run start` for hot reload during development
+3. **Full rebuild**: Run the complete build process above
+
+## Creating System Integration
+
+### Desktop Entry
+Create `~/.local/share/applications/aibuddy.desktop`:
+```ini
+[Desktop Entry]
+Name=aibuddy AI Agent
+Comment=Local AI agent for development tasks
+Exec=/path/to/aibuddy/ui/desktop/out/aibuddy-linux-x64/aibuddy %U
+Icon=/path/to/aibuddy/ui/desktop/out/aibuddy-linux-x64/resources/app.asar.unpacked/src/images/icon.png
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+StartupNotify=true
+MimeType=x-scheme-handler/aibuddy
+```
+
+### System-wide Installation
+To install system-wide:
+```bash
+sudo cp -r out/aibuddy-linux-x64 /opt/aibuddy
+sudo ln -s /opt/aibuddy/aibuddy /usr/local/bin/aibuddy-gui
+```
+
+## Contributing
+
+When contributing changes that affect the Linux build process, please:
+
+1. Test on multiple distributions if possible
+2. Update this documentation
+3. Update `ui/desktop/README.md` if needed
+4. Consider CI/CD implications for automated builds

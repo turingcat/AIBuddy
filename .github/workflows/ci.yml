@@ -1,0 +1,767 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.filter.outputs.docs-only }}
+      code: ${{ steps.filter.outputs.code }}
+      rust: ${{ steps.filter.outputs.rust }}
+      desktop: ${{ steps.filter.outputs.desktop }}
+      schema: ${{ steps.filter.outputs.schema }}
+      windows: ${{ steps.filter.outputs.windows }}
+      uniffi: ${{ steps.filter.outputs.uniffi }}
+      roaming: ${{ steps.filter.outputs.roaming }}
+      workflow-config: ${{ steps.filter.outputs.workflow-config }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Check for file changes
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # pin@v3
+        id: filter
+        with:
+          filters: |
+            docs-only:
+              - 'documentation/**'
+              - 'docs/**'
+              - '*.md'
+            code:
+              - '!documentation/**'
+              - '!docs/**'
+              - '!*.md'
+            rust:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+              - 'clippy.toml'
+              - 'crates/**'
+            desktop:
+              - 'ui/**'
+            schema:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+              - 'crates/aibuddy/**'
+              - 'crates/aibuddy-acp-macros/**'
+              - 'ui/aibuddy-acp-client/**'
+              - 'ui/aibuddy-acp/**'
+              - 'ui/aibuddy-binary/**'
+              - 'ui/scripts/**'
+              - 'ui/package.json'
+              - 'ui/pnpm-lock.yaml'
+              - 'ui/pnpm-workspace.yaml'
+              - 'Justfile'
+            windows:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+              - 'crates/**'
+              - 'build-windows.ps1'
+            uniffi:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+              - 'crates/aibuddy-sdk/**'
+              - 'crates/aibuddy-sdk-types/**'
+              - 'crates/aibuddy-providers/**'
+              - 'crates/aibuddy-context-management/**'
+            roaming:
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'rust-toolchain.toml'
+              - '.cargo/**'
+              - 'crates/aibuddy-roaming/**'
+              - 'crates/aibuddy-cli/**'
+              - 'crates/aibuddy/**'
+              - 'crates/aibuddy-mcp/**'
+              - 'crates/aibuddy-providers/**'
+              - 'crates/aibuddy-context-management/**'
+              - 'crates/aibuddy-download-manager/**'
+              - 'crates/aibuddy-sdk-types/**'
+              - 'crates/aibuddy-agent/**'
+              - 'crates/aibuddy-acp-macros/**'
+              - 'crates/aibuddy-provider-types/**'
+              - 'crates/aibuddy-local-inference/**'
+            workflow-config:
+              - '.github/actions/**'
+              - '.github/scripts/**'
+              - '.github/workflows/**'
+              - 'scripts/test-ci-performance-contracts.rb'
+              - 'build-windows.ps1'
+              - 'bin/**'
+              - 'Justfile'
+
+  dependency-locks:
+    name: Validate Dependency Locks
+    runs-on: ubuntu-latest
+    needs: changes
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.windows == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Validate Cargo lockfile
+        run: cargo metadata --locked --format-version 1 --no-deps > /dev/null
+
+      - name: Validate pnpm lockfiles
+        run: |
+          source ../bin/activate-hermit
+          pnpm install --lockfile-only --frozen-lockfile --ignore-scripts
+        working-directory: ui
+
+  aibuddy-acp-npm-packages:
+    name: aibuddy ACP npm packages
+    runs-on: ubuntu-latest
+    needs: changes
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install dependencies
+        run: source bin/activate-hermit && pnpm --dir ui install --frozen-lockfile
+
+      - name: Check npm versions
+        run: source bin/activate-hermit && node ui/scripts/npm-versions.mjs check
+
+      - name: Test aibuddy-acp
+        run: source bin/activate-hermit && pnpm --dir ui/aibuddy-acp test
+
+      - name: Pack npm packages
+        run: |
+          source bin/activate-hermit
+          set -euo pipefail
+          client_pack_dir="$RUNNER_TEMP/aibuddy-acp-client"
+          wrapper_pack_dir="$RUNNER_TEMP/aibuddy-acp"
+          mkdir -p "$client_pack_dir" "$wrapper_pack_dir"
+
+          pnpm --dir ui/aibuddy-acp-client pack --pack-destination "$client_pack_dir"
+          pnpm --dir ui/aibuddy-acp pack --pack-destination "$wrapper_pack_dir"
+
+          wrapper_tarball=$(find "$wrapper_pack_dir" -name '*.tgz' -print -quit)
+          tar -xzf "$wrapper_tarball" -C "$wrapper_pack_dir"
+          node ui/scripts/npm-versions.mjs check-packed-wrapper \
+            "$wrapper_pack_dir/package/package.json"
+
+  rust-format:
+    name: Check Rust Code Format
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Run cargo fmt
+        run: cargo fmt --check
+
+  rust-build-and-test:
+    name: Build and Test Rust Project
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Free disk space when needed
+        run: |
+          available_kb=$(df -Pk "$GITHUB_WORKSPACE" | awk 'NR==2 {print $4}')
+          threshold_kb=$((25 * 1024 * 1024))
+          if (( available_kb < threshold_kb )); then
+            sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+            sudo docker image prune --all --force
+          else
+            echo "Skipping cleanup: ${available_kb} KiB available"
+          fi
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-default-tests
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev gnome-keyring libxcb1-dev
+
+      - name: Build and Test
+        run: |
+          gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
+          export CARGO_INCREMENTAL=0
+          cargo test --locked -- --skip scenario_tests::scenarios::tests
+          cargo test --locked --jobs 1 scenario_tests::scenarios::tests
+        working-directory: crates
+        env:
+          RUST_MIN_STACK: 8388608
+
+  rust-compat-uniffi:
+    name: Check UniFFI Feature (aibuddy-sdk)
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.uniffi == 'true' || needs.changes.outputs.workflow-config == 'true')))
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-compat-uniffi
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev libxcb1-dev
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Check UniFFI feature
+        run: |
+          export CARGO_INCREMENTAL=0
+          cargo check -p aibuddy-sdk --features uniffi --locked
+          cargo test -p aibuddy-sdk --features uniffi --locked
+        env:
+          RUST_MIN_STACK: 8388608
+
+  rust-compat-roaming:
+    name: Build and Test Roaming Feature (aibuddy-cli)
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (github.event_name == 'workflow_dispatch' || (github.event_name != 'pull_request' && (needs.changes.result != 'success' || needs.changes.outputs.roaming == 'true' || needs.changes.outputs.workflow-config == 'true')))
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-compat-roaming
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev gnome-keyring libxcb1-dev
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Build and Test roaming feature
+        run: |
+          gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
+          export CARGO_INCREMENTAL=0
+          cargo test --locked -p aibuddy-roaming
+          cargo build --locked -p aibuddy-cli --features roaming
+          cargo test --locked -p aibuddy-cli --features roaming --test roam_acp_client
+        env:
+          RUST_MIN_STACK: 8388608
+
+  rust-build-and-test-tls:
+    name: Build and Test TLS Backends
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Free disk space when needed
+        run: |
+          available_kb=$(df -Pk "$GITHUB_WORKSPACE" | awk 'NR==2 {print $4}')
+          threshold_kb=$((25 * 1024 * 1024))
+          if (( available_kb < threshold_kb )); then
+            sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+            sudo docker image prune --all --force
+          else
+            echo "Skipping cleanup: ${available_kb} KiB available"
+          fi
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev gnome-keyring libxcb1-dev
+
+      - name: Cache Cargo artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-tls
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Build and Test with rustls-tls
+        run: |
+          gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
+          export CARGO_INCREMENTAL=0
+          cargo test --locked -p aibuddy --no-default-features --features rustls-tls,code-mode
+          cargo test --locked -p aibuddy-providers --no-default-features --features rustls-tls
+          cargo test --locked -p aibuddy-cli --no-default-features --features rustls-tls,code-mode -- --skip scenario_tests::scenarios::tests
+          cargo test --locked -p aibuddy-cli --no-default-features --features rustls-tls,code-mode --jobs 1 scenario_tests::scenarios::tests
+        env:
+          RUST_MIN_STACK: 8388608
+
+      - name: Build and Test with native-tls
+        if: github.event_name != 'pull_request'
+        run: |
+          gnome-keyring-daemon --components=secrets --daemonize --unlock <<< 'foobar'
+          export CARGO_INCREMENTAL=0
+          cargo test --locked -p aibuddy --no-default-features --features native-tls,code-mode
+          cargo test --locked -p aibuddy-providers --no-default-features --features native-tls
+          cargo test --locked -p aibuddy-cli --no-default-features --features native-tls,code-mode -- --skip scenario_tests::scenarios::tests
+          cargo test --locked -p aibuddy-cli --no-default-features --features native-tls,code-mode --jobs 1 scenario_tests::scenarios::tests
+        env:
+          RUST_MIN_STACK: 8388608
+
+  rust-build-windows:
+    name: Build Rust Project on Windows
+    runs-on: windows-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Cache Cargo artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-windows-x86_64-pc-windows-msvc
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Setup Rust
+        shell: bash
+        run: |
+          rustup show
+          rustup target add x86_64-pc-windows-msvc
+
+      - name: Build Windows CLI
+        run: cargo build --locked -p aibuddy-cli --bin aibuddy --target x86_64-pc-windows-msvc
+        env:
+          CARGO_INCREMENTAL: "0"
+
+  rust-msrv:
+    name: Check MSRV
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Read MSRV from Cargo.toml
+        id: msrv
+        run: |
+          msrv=$(sed -n 's/^rust-version = "\(.*\)"$/\1/p' Cargo.toml)
+          if [ -z "$msrv" ]; then
+            echo "Could not find rust-version in workspace Cargo.toml" >&2
+            exit 1
+          fi
+          echo "msrv=$msrv" >> "$GITHUB_OUTPUT"
+          echo "MSRV: $msrv"
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659  # v1
+        with:
+          toolchain: ${{ steps.msrv.outputs.msrv }}
+          cache: false
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-msrv-${{ steps.msrv.outputs.msrv }}
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev libxcb1-dev
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Check with MSRV toolchain
+        run: cargo check --workspace --locked --all-targets
+        env:
+          CARGO_INCREMENTAL: "0"
+
+  rust-lint:
+    name: Lint Rust Code
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.rust == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-clippy-rustup
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Lint
+        run: |
+          source ./bin/activate-hermit
+          # use the non-hermit rust toolchain because the rust-cache action does not
+          # play nicely with hermit-managed rust
+          hermit uninstall rustup
+          export CARGO_INCREMENTAL=0
+          cargo clippy --locked --workspace --all-targets --exclude v8 -- -D warnings
+
+  schema-check:
+    name: Check Generated Schemas are Up-to-Date
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.schema == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
+        with:
+          cache: false
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        with:
+          key: ci-schema
+          save-if: ${{ github.ref == 'refs/heads/main' && job.status == 'success' }}
+
+      - name: Repair stale v8 prebuilt marker
+        run: .github/scripts/repair-v8-prebuilt.sh
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y libdbus-1-dev libxcb1-dev
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
+
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+
+      - name: Install Node.js Dependencies
+        run: source ../bin/activate-hermit && pnpm install --frozen-lockfile
+        working-directory: ui
+
+      - name: Check ACP Artifacts are Up-to-Date
+        run: |
+          source ./bin/activate-hermit
+          just check-acp-artifacts
+
+      - name: Check ACP Client SDK
+        run: |
+          source ./bin/activate-hermit
+          cd ui/aibuddy-acp-client
+          pnpm run lint
+
+  gdk-api-docs-check:
+    name: Check GDK API Reference is Up-to-Date
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Check generated GDK API reference data
+        run: python3 documentation/automation/gdk-api/generate.py --check
+
+  desktop-lint:
+    name: Test and Lint Electron Desktop App
+    runs-on: ubuntu-latest
+    needs: [changes, dependency-locks]
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.desktop == 'true' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when dependency lock validation fails
+        if: needs.dependency-locks.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Resolve pnpm store path
+        id: pnpm-store
+        shell: bash
+        run: |
+          source ./bin/activate-hermit
+          echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pnpm store
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-v1-${{ runner.os }}-
+
+      - name: Force GitHub HTTPS npm git dependencies
+        run: |
+          git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
+          git config --global --add url."https://github.com/".insteadOf "git@github.com:"
+          git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
+
+      - name: Install Dependencies
+        run: source ../../bin/activate-hermit && pnpm install --frozen-lockfile
+        working-directory: ui/desktop
+
+      - name: Run Lint
+        run: source ../../bin/activate-hermit && pnpm run lint:check
+        working-directory: ui/desktop
+
+      - name: Run Tests
+        run: source ../../bin/activate-hermit && pnpm run test:run
+        working-directory: ui/desktop
+
+  workflow-contracts:
+    name: Verify Workflow Contracts
+    runs-on: ubuntu-latest
+    needs: changes
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.workflow-config == 'true')
+    steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Verify Workflow Contracts
+        run: ruby scripts/test-ci-performance-contracts.rb
+
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    if: cancelled() == false
+    needs:
+      - changes
+      - dependency-locks
+      - rust-format
+      - rust-build-and-test
+      - rust-compat-uniffi
+      - rust-compat-roaming
+      - rust-build-and-test-tls
+      - rust-build-windows
+      - rust-msrv
+      - rust-lint
+      - schema-check
+      - aibuddy-acp-npm-packages
+      - gdk-api-docs-check
+      - desktop-lint
+      - workflow-contracts
+    steps:
+      - name: Verify CI results
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RUST_CHANGED: ${{ needs.changes.outputs.rust }}
+          DESKTOP_CHANGED: ${{ needs.changes.outputs.desktop }}
+          SCHEMA_CHANGED: ${{ needs.changes.outputs.schema }}
+          WINDOWS_CHANGED: ${{ needs.changes.outputs.windows }}
+          UNIFFI_CHANGED: ${{ needs.changes.outputs.uniffi }}
+          ROAMING_CHANGED: ${{ needs.changes.outputs.roaming }}
+          WORKFLOW_CONFIG_CHANGED: ${{ needs.changes.outputs.workflow-config }}
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DEPENDENCY_LOCKS_RESULT: ${{ needs.dependency-locks.result }}
+          RUST_FORMAT_RESULT: ${{ needs.rust-format.result }}
+          RUST_BUILD_AND_TEST_RESULT: ${{ needs.rust-build-and-test.result }}
+          RUST_COMPAT_UNIFFI_RESULT: ${{ needs.rust-compat-uniffi.result }}
+          RUST_COMPAT_ROAMING_RESULT: ${{ needs.rust-compat-roaming.result }}
+          TLS_RESULT: ${{ needs.rust-build-and-test-tls.result }}
+          WINDOWS_RESULT: ${{ needs.rust-build-windows.result }}
+          MSRV_RESULT: ${{ needs.rust-msrv.result }}
+          RUST_LINT_RESULT: ${{ needs.rust-lint.result }}
+          SCHEMA_RESULT: ${{ needs.schema-check.result }}
+          ACP_NPM_RESULT: ${{ needs.aibuddy-acp-npm-packages.result }}
+          GDK_API_DOCS_RESULT: ${{ needs.gdk-api-docs-check.result }}
+          DESKTOP_LINT_RESULT: ${{ needs.desktop-lint.result }}
+          WORKFLOW_CONTRACTS_RESULT: ${{ needs.workflow-contracts.result }}
+        run: |
+          set -euo pipefail
+
+          gate_failed=false
+          require_result() {
+            local job_name="$1"
+            local actual="$2"
+            local expected="$3"
+            if [[ "$actual" != "$expected" ]]; then
+              echo "::error title=CI Gate::$job_name was $actual; expected $expected"
+              gate_failed=true
+            fi
+          }
+
+          case "$EVENT_NAME" in
+            pull_request|workflow_dispatch) ;;
+            *)
+              echo "::error title=CI Gate::Unsupported event $EVENT_NAME"
+              exit 1
+              ;;
+          esac
+
+          require_result changes "$CHANGES_RESULT" success
+          require_result gdk-api-docs-check "$GDK_API_DOCS_RESULT" success
+
+          workflow_contracts_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            workflow_contracts_tier_result=success
+          fi
+          require_result workflow-contracts "$WORKFLOW_CONTRACTS_RESULT" "$workflow_contracts_tier_result"
+
+          dependency_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$DESKTOP_CHANGED" == "true" || "$SCHEMA_CHANGED" == "true" || "$WINDOWS_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            dependency_tier_result=success
+          fi
+
+          require_result dependency-locks "$DEPENDENCY_LOCKS_RESULT" "$dependency_tier_result"
+          require_result aibuddy-acp-npm-packages "$ACP_NPM_RESULT" "$dependency_tier_result"
+
+          rust_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            rust_tier_result=success
+          fi
+
+          require_result rust-format "$RUST_FORMAT_RESULT" "$rust_tier_result"
+          require_result rust-build-and-test "$RUST_BUILD_AND_TEST_RESULT" "$rust_tier_result"
+          require_result rust-build-and-test-tls "$TLS_RESULT" "$rust_tier_result"
+          require_result rust-lint "$RUST_LINT_RESULT" "$rust_tier_result"
+
+          schema_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$SCHEMA_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            schema_tier_result=success
+          fi
+          require_result schema-check "$SCHEMA_RESULT" "$schema_tier_result"
+
+          desktop_tier_result=skipped
+          if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$DESKTOP_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
+            desktop_tier_result=success
+          fi
+          require_result desktop-lint "$DESKTOP_LINT_RESULT" "$desktop_tier_result"
+
+          rust_compat_uniffi_tier_result=skipped
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || ( "$EVENT_NAME" != "pull_request" && ( "$CHANGES_RESULT" != "success" || "$UNIFFI_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ) ) ]]; then
+            rust_compat_uniffi_tier_result=success
+          fi
+          require_result rust-compat-uniffi "$RUST_COMPAT_UNIFFI_RESULT" "$rust_compat_uniffi_tier_result"
+
+          rust_compat_roaming_tier_result=skipped
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || ( "$EVENT_NAME" != "pull_request" && ( "$CHANGES_RESULT" != "success" || "$ROAMING_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ) ) ]]; then
+            rust_compat_roaming_tier_result=success
+          fi
+          require_result rust-compat-roaming "$RUST_COMPAT_ROAMING_RESULT" "$rust_compat_roaming_tier_result"
+
+          # MSRV and Windows cross-compilation only run on manual workflow_dispatch.
+          release_gate_tier_result=skipped
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            release_gate_tier_result=success
+          fi
+          require_result rust-msrv "$MSRV_RESULT" "$release_gate_tier_result"
+          require_result rust-build-windows "$WINDOWS_RESULT" "$release_gate_tier_result"
+
+          if [[ "$gate_failed" == "true" ]]; then
+            exit 1
+          fi
