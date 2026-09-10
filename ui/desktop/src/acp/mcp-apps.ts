@@ -1,5 +1,5 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolListItem } from '@aibuddy/aibuddy-sdk';
+import type { ToolListItem } from '@aibuddy/aibuddy-acp-client';
 import type { AIBuddyApp } from '../types/apps';
 import { getAcpClient } from './acpConnection';
 import { normalizeAcpError } from './errors';

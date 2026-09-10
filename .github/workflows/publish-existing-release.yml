@@ -20,6 +20,9 @@ jobs:
   publish:
     name: Publish Release
     runs-on: ubuntu-latest
+    concurrency:
+      group: aibuddy-cos-stable
+      cancel-in-progress: false
     steps:
       - name: Validate inputs
         shell: bash
@@ -64,15 +67,21 @@ jobs:
             aibuddy-*.tar.gz
             aibuddy-*.zip
             AIBuddy*.zip
-            AIBuddy-windows-*-setup.exe
+            AIBuddy-windows-*-V*.exe
+            README
             download_cli.sh
           allowUpdates: true
           omitBody: true
           prerelease: false
 
+      - name: Checkout current publishing scripts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.sha }}
+          path: publisher
       - name: Upload Windows installers to COS
         shell: bash
         env:
           TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
           TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
-        run: bash .github/scripts/upload-windows-installers-to-cos.sh
+        run: bash publisher/.github/scripts/upload-windows-installers-to-cos.sh

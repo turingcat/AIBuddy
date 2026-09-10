@@ -7,7 +7,7 @@ import type {
   RefreshProviderInventoryResponse_unstable,
   ProviderTemplateCatalogEntryDto,
   ProviderTemplateDto,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import { methods } from '@agentclientprotocol/sdk';
 import type {
   ProviderDetails,

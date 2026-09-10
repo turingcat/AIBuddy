@@ -37,6 +37,7 @@
 AppId={{#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion={#MyAppNumericVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
@@ -54,7 +55,8 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 #else
-ArchitecturesAllowed=x86compatible and not x64compatible
+MinVersion=6.1sp1
+ArchitecturesAllowed=x86compatible
 #endif
 PrivilegesRequired=admin
 ; 升级/卸载时自动关闭正在运行的应用（含其 aibuddy serve 子进程）

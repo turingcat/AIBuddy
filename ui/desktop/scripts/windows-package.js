@@ -1,14 +1,10 @@
 const { resolveBrand } = require('./brand');
 const { resolveWindowsArchitecture } = require('./windows-architecture');
 
-// Inno Setup's AppVersion only accepts a plain numeric release; a suffix or a
-// stray quote would either fail ISCC or leak into the /D command line.
-const VERSION_PATTERN = /^\d+\.\d+\.\d+(\.\d+)?$/;
+const { resolveWindowsVersion } = require('./windows-release-version');
 
 function buildInnoDefinitions(brand, version, sourceDir, outputDir, architecture) {
-  if (!VERSION_PATTERN.test(version)) {
-    throw new Error(`Invalid installer version ${JSON.stringify(version)}; expected x.y.z`);
-  }
+  const releaseVersion = resolveWindowsVersion(version);
   if (!sourceDir) {
     throw new Error('Missing installer source directory');
   }
@@ -19,22 +15,24 @@ function buildInnoDefinitions(brand, version, sourceDir, outputDir, architecture
 
   return Object.entries({
     MyAppName: brand.productName,
-    MyAppVersion: version,
+    MyAppVersion: releaseVersion,
+    MyAppNumericVersion: releaseVersion.split('-')[0],
     MyAppId: brand.windowsAppId,
     MyAppExeName: `${brand.executableName}.exe`,
     SourceDir: sourceDir,
     OutputDir: outputDir,
-    OutputBaseFilename: `${brand.artifactStem}-windows-${windowsArchitecture.name}-setup`,
+    OutputBaseFilename: setupFileName(brand, windowsArchitecture.name, releaseVersion).slice(0, -4),
     MyAppArch: windowsArchitecture.name,
   }).map(([name, value]) => `/D${name}=${value}`);
 }
 
-function setupFileName(brand, architecture) {
+function setupFileName(brand, architecture, version) {
   const windowsArchitecture = resolveWindowsArchitecture(architecture);
-  return `${brand.artifactStem}-windows-${windowsArchitecture.name}-setup.exe`;
+  return `${brand.artifactStem}-windows-${windowsArchitecture.name}-V${resolveWindowsVersion(version)}.exe`;
 }
 
 function resolveWindowsPackage(edition, version, sourceDir, outputDir, architecture) {
+  version = resolveWindowsVersion(version);
   const brand = resolveBrand(edition);
   const windowsArchitecture = resolveWindowsArchitecture(architecture);
 
@@ -47,14 +45,8 @@ function resolveWindowsPackage(edition, version, sourceDir, outputDir, architect
     electronArch: windowsArchitecture.electronArch,
     rustTarget: windowsArchitecture.rustTarget,
     packagedDirName: `${brand.productName}-win32-${windowsArchitecture.electronArch}`,
-    setupFileName: setupFileName(brand, windowsArchitecture.name),
-    isccArgs: buildInnoDefinitions(
-      brand,
-      version,
-      sourceDir,
-      outputDir,
-      windowsArchitecture.name
-    ),
+    setupFileName: setupFileName(brand, windowsArchitecture.name, version),
+    isccArgs: buildInnoDefinitions(brand, version, sourceDir, outputDir, windowsArchitecture.name),
   };
 }
 

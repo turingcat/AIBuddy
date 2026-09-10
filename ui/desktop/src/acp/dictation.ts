@@ -2,7 +2,7 @@ import type {
   DictationDownloadProgress,
   DictationLocalModelStatus,
   DictationProviderStatusEntry,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 export type { DictationProviderStatusEntry };

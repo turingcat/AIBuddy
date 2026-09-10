@@ -1,5 +1,5 @@
 import type { ExtensionConfig, ExtensionEntry } from '../types/extensions';
-import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 export type ConfiguredExtensionEntry = ExtensionEntry & { configKey?: string };

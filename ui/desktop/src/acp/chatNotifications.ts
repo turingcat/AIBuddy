@@ -1,7 +1,7 @@
 import type {
   AIBuddySessionNotification_unstable,
   ProviderDeviceCodeNotification_unstable,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import { AppEvents } from '../constants/events';
 import { maybeHandlePlatformEvent } from '../utils/platform_events';

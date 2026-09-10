@@ -81,10 +81,10 @@ Write-Host "  Dependencies installed." -ForegroundColor Green
 Write-Host ""
 
 # Step 4: Build desktop assets
-Write-Host "[5/7] Building AIBuddy SDK, clearing Vite cache, and compiling i18n messages..." -ForegroundColor Yellow
-pnpm run build-aibuddy-sdk
+Write-Host "[5/7] Building AIBuddy ACP client, clearing Vite cache, and compiling i18n messages..." -ForegroundColor Yellow
+pnpm run build-aibuddy-acp-client
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "AIBuddy SDK build or Vite cache cleanup failed!" -ForegroundColor Red
+    Write-Host "AIBuddy ACP client build or Vite cache cleanup failed!" -ForegroundColor Red
     Pop-Location
     exit 1
 }

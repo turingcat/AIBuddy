@@ -2,7 +2,7 @@ const WINDOWS_ARCHITECTURES = Object.freeze({
   x32: Object.freeze({
     name: 'x32',
     electronArch: 'ia32',
-    rustTarget: 'i686-pc-windows-msvc',
+    rustTarget: 'i686-win7-windows-msvc',
     nodeArch: 'x86',
     uvTarget: 'i686-pc-windows-msvc',
   }),

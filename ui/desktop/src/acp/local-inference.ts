@@ -5,7 +5,7 @@ import type {
   LocalInferenceModelDownloadRequest_unstable,
   LocalInferenceModelDto,
   LocalInferenceModelSettingsDto,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 export type LocalModelResponse = LocalInferenceModelDto;

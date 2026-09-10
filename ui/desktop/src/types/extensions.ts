@@ -1,4 +1,4 @@
-import type { RecipeExtensionDto } from '@aibuddy/aibuddy-sdk';
+import type { RecipeExtensionDto } from '@aibuddy/aibuddy-acp-client';
 
 export type Envs = Record<string, string>;
 

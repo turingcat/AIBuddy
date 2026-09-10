@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { RecipeDto } from '@aibuddy/aibuddy-sdk';
+import type { RecipeDto } from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from '../acpConnection';
 import { encodeRecipe, listRecipes, parseRecipe, saveRecipe } from '../recipe';
 

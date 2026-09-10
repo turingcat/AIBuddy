@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import type { TokenState } from '../types/chat';
 import { ChatState } from '../types/chatState';

@@ -695,7 +695,7 @@ aibuddy acp
 ```
 
 :::info
-This command is automatically invoked by ACP-compatible clients and is not typically run directly by users. The client manages the lifecycle of the `aibuddy acp` process. See [Using aibuddy in ACP Clients](/docs/guides/acp-clients) for details.
+This command is automatically invoked by ACP-compatible clients and is not typically run directly by users. The client manages the lifecycle of the `aibuddy acp` process. See [Using aibuddy in ACP Clients](/docs/gdk/acp) for details.
 :::
 
 ---

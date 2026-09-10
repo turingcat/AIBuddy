@@ -1,4 +1,4 @@
-import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import type { Message } from '../types/message';
 import {

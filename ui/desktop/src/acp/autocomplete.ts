@@ -1,4 +1,4 @@
-import type { AgentMention, AvailableCommand } from '@aibuddy/aibuddy-sdk';
+import type { AgentMention, AvailableCommand } from '@aibuddy/aibuddy-acp-client';
 import type { DisplayItem } from '../components/MentionPopover';
 import { getAcpClient } from './acpConnection';
 

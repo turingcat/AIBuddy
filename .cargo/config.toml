@@ -3,3 +3,6 @@ rustflags = ["-C", "link-args=/FORCE:MULTIPLE /STACK:8388608"]
 
 [target.aarch64-pc-windows-msvc]
 rustflags = ["-C", "link-args=/FORCE:MULTIPLE /STACK:8388608"]
+
+[target.i686-win7-windows-msvc]
+rustflags = ["-C", "link-args=/FORCE:MULTIPLE /STACK:8388608 /SUBSYSTEM:CONSOLE,6.01", "-C", "target-feature=+crt-static"]

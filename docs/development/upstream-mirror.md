@@ -79,6 +79,14 @@ of the parent's recorded upstream source commit. Reusing the same upstream
 commit is rejected unless `sameVersionRuleUpdate: true` is explicit for a
 conversion-rule update.
 
+Release tags may occasionally come from diverged release branches even though
+all old release patches were reapplied on the new source branch. For that case,
+set `allowPatchEquivalentReleaseAdvance: true`. The append then requires a merge
+base, rejects old-only merge commits, and uses Git patch-equivalence detection
+to reject every old release patch absent from the new source. The mirror commit
+records `Mirror-Source-Relation` and `Mirror-Source-Merge-Base` trailers. The
+option is disabled by default, so an unreviewed source-branch divergence fails.
+
 The new mirror commit has exactly one parent: the previous transformed mirror
 commit. The raw upstream commit is provenance only and is never added as a
 parent. A non-dry run advances the branch with compare-and-swap, so a moved

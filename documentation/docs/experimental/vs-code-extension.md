@@ -12,7 +12,7 @@ The [aibuddy for VS Code extension](https://marketplace.visualstudio.com/items?i
 aibuddy for VS Code is in active development. Behavior and configuration may change in future releases.
 :::
 
-The extension uses the [Agent Client Protocol (ACP)](/docs/guides/acp-clients) to communicate with aibuddy.
+The extension uses the [Agent Client Protocol (ACP)](/docs/gdk/acp) to communicate with aibuddy.
 
 ## Install the Extension
 

@@ -112,6 +112,10 @@ After saving, aibuddy Desktop will route all backend requests to the remote `aib
 
 Running `aibuddy serve` in a terminal session is fine for testing, but for everyday use you probably want it managed as a background service so it starts at login and restarts on failure. On macOS, this is done with `launchd`.
 
+The example below uses the CLI binary bundled with aibuddy Desktop. If you installed the CLI separately, replace `/Applications/AIBuddy.app/Contents/Resources/bin/aibuddy` with the absolute path returned by `which aibuddy`.
+
+Because the secret is stored in XML, use a hexadecimal value such as the output of `openssl rand -hex 32`, or escape XML special characters in the value.
+
 Create a LaunchAgent plist at `~/Library/LaunchAgents/com.aibuddy.serve.external.plist`:
 
 ```xml
@@ -152,28 +156,32 @@ Create a LaunchAgent plist at `~/Library/LaunchAgents/com.aibuddy.serve.external
 </plist>
 ```
 
-Replace `YOUR_SECRET` and `YOUR_USERNAME` with appropriate values, and make sure the log directory exists:
+Replace `YOUR_SECRET` and `YOUR_USERNAME` with appropriate values. Then create the log directory and restrict access to the plist, which contains the secret key:
 
 ```bash
 mkdir -p ~/Library/Logs/AIBuddyExternal
+chmod 600 ~/Library/LaunchAgents/com.aibuddy.serve.external.plist
 ```
 
-Then load and start the service:
+Load and start the service:
 
 ```bash
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.aibuddy.serve.external.plist
+```
+
+To restart the service later:
+
+```bash
 launchctl kickstart -k gui/$(id -u)/com.aibuddy.serve.external
 ```
 
-To stop or remove it later:
+To stop and unload the service:
 
 ```bash
 launchctl bootout gui/$(id -u)/com.aibuddy.serve.external
 ```
 
-:::tip
-Because the secret key is stored in plain text in the plist, the file should be readable only by your user. macOS LaunchAgents under `~/Library/LaunchAgents/` are already user-scoped, but you can tighten further with `chmod 600 ~/Library/LaunchAgents/com.aibuddy.serve.external.plist`.
-:::
+To remove the service configuration, delete the plist after unloading it.
 
 ## Troubleshooting
 

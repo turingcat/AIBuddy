@@ -3,11 +3,7 @@ import { Recipe } from './recipe';
 import type { LoginCredentials } from './credentials';
 import type { OaLoginResult } from './oaLogin';
 import type { BalanceResult } from './balance';
-import type {
-  TopupInfoResult,
-  WechatPayOrderResult,
-  WechatPayOrderStatusResult,
-} from './recharge';
+import type { TopupInfoResult, WechatPayOrderResult, WechatPayOrderStatusResult } from './recharge';
 import type { AIBuddyApp } from './types/apps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings } from './utils/settings';
@@ -238,7 +234,8 @@ const electronAPI: ElectronAPI = {
   ensureDirectory: (dirPath: string) => ipcRenderer.invoke('ensure-directory', dirPath),
   listFiles: (dirPath: string, extension?: string) =>
     ipcRenderer.invoke('list-files', dirPath, extension),
-  getPathForFile: (file: File) => webUtils.getPathForFile(file),
+  getPathForFile: (file: File) =>
+    webUtils ? webUtils.getPathForFile(file) : (file as File & { path: string }).path,
   getAllowedExtensions: () => ipcRenderer.invoke('get-allowed-extensions'),
   setMenuBarIcon: (show: boolean) => ipcRenderer.invoke('set-menu-bar-icon', show),
   getMenuBarIconState: () => ipcRenderer.invoke('get-menu-bar-icon-state'),

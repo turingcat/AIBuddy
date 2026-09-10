@@ -1,4 +1,4 @@
-import type { SourceEntry, SourceType } from '@aibuddy/aibuddy-sdk';
+import type { SourceEntry, SourceType } from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 const SKILL_SOURCE_TYPES: SourceType[] = ['skill', 'builtinSkill'];

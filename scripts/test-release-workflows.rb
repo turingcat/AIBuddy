@@ -47,7 +47,7 @@ abort "recovery workflow missing release publish step" unless publish_step
 release_artifacts = publish_step.fetch("with").fetch("artifacts").lines.map(&:strip)
 required_artifacts = [
   "AIBuddy*.zip",
-  "AIBuddy-windows-*-setup.exe",
+  "AIBuddy-windows-*-V*.exe",
 ]
 
 required_artifacts.each do |artifact|

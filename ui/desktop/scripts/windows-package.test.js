@@ -19,7 +19,7 @@ describe('buildInnoDefinitions', () => {
   it('carries the AIBuddy x64 identity into the installer', () => {
     const args = buildInnoDefinitions(
       resolveBrand('aibuddy'),
-      '1.0.1',
+      '1.0.1-b09092210',
       'C:\\build\\dist',
       'C:\\artifacts',
       'x64'
@@ -28,12 +28,13 @@ describe('buildInnoDefinitions', () => {
     expect(args.every((arg) => arg.startsWith('/D'))).toBe(true);
     expect(definitionMap(args)).toEqual({
       MyAppName: 'AIBuddy',
-      MyAppVersion: '1.0.1',
+      MyAppVersion: '1.0.1-b09092210',
+      MyAppNumericVersion: '1.0.1',
       MyAppId: '{FDA43817-EFCC-42D0-AB69-D414B629E300}',
       MyAppExeName: 'AIBuddy.exe',
       SourceDir: 'C:\\build\\dist',
       OutputDir: 'C:\\artifacts',
-      OutputBaseFilename: 'AIBuddy-windows-x64-setup',
+      OutputBaseFilename: 'AIBuddy-windows-x64-V1.0.1-b09092210',
       MyAppArch: 'x64',
     });
   });
@@ -41,24 +42,24 @@ describe('buildInnoDefinitions', () => {
   it('carries the x32 architecture into the installer', () => {
     const args = buildInnoDefinitions(
       resolveBrand('aibuddy'),
-      '1.0.1',
+      '1.0.1-b09092210',
       'C:\\build\\dist',
       'C:\\artifacts',
       'x32'
     );
 
     expect(definitionMap(args)).toMatchObject({
-      OutputBaseFilename: 'AIBuddy-windows-x32-setup',
+      OutputBaseFilename: 'AIBuddy-windows-x32-V1.0.1-b09092210',
       MyAppArch: 'x32',
     });
   });
 
-  it.each(['', '1.0', 'v1.0.1', '1.0.1-rc.1', '1.0.1; shutdown'])(
+  it.each(['', '1.0', '1.0.1-rc.1', '1.0.1; shutdown'])(
     'rejects the malformed version %j',
     (version) => {
-      expect(() =>
-        buildInnoDefinitions(resolveBrand('aibuddy'), version, 'src', 'out')
-      ).toThrow(/version/i);
+      expect(() => buildInnoDefinitions(resolveBrand('aibuddy'), version, 'src', 'out')).toThrow(
+        /version/i
+      );
     }
   );
 
@@ -66,7 +67,7 @@ describe('buildInnoDefinitions', () => {
     const dirs = { src: 'C:\\build\\dist', out: 'C:\\artifacts' };
     dirs[missing] = '';
     expect(() =>
-      buildInnoDefinitions(resolveBrand('aibuddy'), '1.0.1', dirs.src, dirs.out)
+      buildInnoDefinitions(resolveBrand('aibuddy'), '1.0.1-b09092210', dirs.src, dirs.out)
     ).toThrow(/director/i);
   });
 });
@@ -75,8 +76,12 @@ describe('release artifact names', () => {
   it('names the installers after the edition and architecture', () => {
     const brand = resolveBrand('aibuddy');
 
-    expect(setupFileName(brand, 'x32')).toBe('AIBuddy-windows-x32-setup.exe');
-    expect(setupFileName(brand, 'x64')).toBe('AIBuddy-windows-x64-setup.exe');
+    expect(setupFileName(brand, 'x32', '1.0.1-b09092210')).toBe(
+      'AIBuddy-windows-x32-V1.0.1-b09092210.exe'
+    );
+    expect(setupFileName(brand, 'x64', '1.0.1-b09092210')).toBe(
+      'AIBuddy-windows-x64-V1.0.1-b09092210.exe'
+    );
     expect(portableArchiveName).toBeUndefined();
   });
 });
@@ -86,7 +91,7 @@ describe('resolveWindowsPackage', () => {
     expect(
       resolveWindowsPackage(
         'aibuddy',
-        '1.0.1',
+        '1.0.1-b09092210',
         'C:\\build\\dist',
         'C:\\artifacts',
         'x32'
@@ -98,12 +103,12 @@ describe('resolveWindowsPackage', () => {
       executableName: 'AIBuddy.exe',
       architecture: 'x32',
       electronArch: 'ia32',
-      rustTarget: 'i686-pc-windows-msvc',
+      rustTarget: 'i686-win7-windows-msvc',
       packagedDirName: 'AIBuddy-win32-ia32',
-      setupFileName: 'AIBuddy-windows-x32-setup.exe',
+      setupFileName: 'AIBuddy-windows-x32-V1.0.1-b09092210.exe',
       isccArgs: buildInnoDefinitions(
         resolveBrand('aibuddy'),
-        '1.0.1',
+        '1.0.1-b09092210',
         'C:\\build\\dist',
         'C:\\artifacts',
         'x32'
@@ -112,13 +117,17 @@ describe('resolveWindowsPackage', () => {
   });
 
   it.each(['', 'goose', 'AIBUDDY'])('rejects the edition %j', (edition) => {
-    expect(() => resolveWindowsPackage(edition, '1.0.1', 'src', 'out')).toThrow(/APP_EDITION/);
+    expect(() => resolveWindowsPackage(edition, '1.0.1-b09092210', 'src', 'out')).toThrow(
+      /APP_EDITION/
+    );
   });
 
   it('falls back to APP_EDITION when the CLI omits the edition', () => {
     vi.stubEnv('APP_EDITION', 'aibuddy');
 
-    expect(resolveWindowsPackage(undefined, '1.0.1', 'src', 'out').edition).toBe('aibuddy');
+    expect(resolveWindowsPackage(undefined, '1.0.1-b09092210', 'src', 'out').edition).toBe(
+      'aibuddy'
+    );
 
     vi.unstubAllEnvs();
   });

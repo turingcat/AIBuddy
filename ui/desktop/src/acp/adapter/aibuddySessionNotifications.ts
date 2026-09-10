@@ -1,4 +1,4 @@
-import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 import type { MessageUsage } from '../../types/message';
 import { type AcpChatStateChange, type AdapterState, messagesChange } from './shared';
 

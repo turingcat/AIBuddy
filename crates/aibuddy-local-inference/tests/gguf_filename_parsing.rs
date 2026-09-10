@@ -1,6 +1,8 @@
 //! Filename shapes captured from real HuggingFace repos, to keep GGUF discovery
 //! working across publishers that disagree about where the quantization tag goes.
 
+#![cfg(feature = "hf-hub")]
+
 use aibuddy_local_inference::hf_models::{
     is_auxiliary_gguf_file, parse_quantization_from_filename,
 };

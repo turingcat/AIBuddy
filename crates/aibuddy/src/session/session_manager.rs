@@ -1272,18 +1272,24 @@ impl SessionStorage {
         )
         .fetch_all(&mut **tx)
         .await?;
-        if !columns.iter().any(|column| column == "goose_mode") {
-            return Ok(());
-        }
+        let has_aibuddy_mode = columns.iter().any(|column| column == "goose_mode");
+        let has_aibuddy_mode = columns.iter().any(|column| column == "aibuddy_mode");
         anyhow::ensure!(
-            !columns.iter().any(|column| column == "aibuddy_mode"),
+            !(has_aibuddy_mode && has_aibuddy_mode),
             "sessions contains both goose_mode and aibuddy_mode; refusing an ambiguous mode migration"
         );
 
-        // This fork migration must also run on databases already at the upstream schema version.
-        sqlx::query("ALTER TABLE sessions RENAME COLUMN goose_mode TO aibuddy_mode")
+        if has_aibuddy_mode {
+            sqlx::query("ALTER TABLE sessions RENAME COLUMN goose_mode TO aibuddy_mode")
+                .execute(&mut **tx)
+                .await?;
+        } else if !has_aibuddy_mode {
+            sqlx::query(
+                "ALTER TABLE sessions ADD COLUMN aibuddy_mode TEXT NOT NULL DEFAULT 'auto'",
+            )
             .execute(&mut **tx)
             .await?;
+        }
         Ok(())
     }
 
@@ -2957,6 +2963,32 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn missing_mode_column_at_current_version_adds_default_column() {
+        let dir = TempDir::new().unwrap();
+        let manager = SessionManager::new(dir.path().to_path_buf());
+        let session = manager
+            .create_session(
+                PathBuf::from("/tmp"),
+                "Current schema without mode".to_string(),
+                SessionType::User,
+                AIBuddyMode::Approve,
+            )
+            .await
+            .unwrap();
+        let pool = manager.storage().pool().await.unwrap();
+        sqlx::query("ALTER TABLE sessions DROP COLUMN aibuddy_mode")
+            .execute(pool)
+            .await
+            .unwrap();
+        pool.close().await;
+
+        let reopened = SessionManager::new(dir.path().to_path_buf());
+        let retained = reopened.get_session(&session.id, false).await.unwrap();
+        assert_eq!(retained.aibuddy_mode, AIBuddyMode::default());
+        assert_eq!(retained.name, session.name);
+    }
+
+    #[tokio::test]
     async fn legacy_brand_pre_mode_schema_still_adds_default_column() {
         let (dir, session) = legacy_brand_database().await;
         let manager = SessionManager::new(dir.path().to_path_buf());
@@ -3045,6 +3077,8 @@ mod tests {
 
     struct StatefulNamingTestProvider;
 
+    struct LocalNamingTestProvider;
+
     #[async_trait::async_trait]
     impl Provider for NamingTestProvider {
         fn get_name(&self) -> &str {
@@ -3092,6 +3126,27 @@ mod tests {
         }
 
         fn manages_own_context(&self) -> bool {
+            true
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl Provider for LocalNamingTestProvider {
+        fn get_name(&self) -> &str {
+            "local-naming-test"
+        }
+
+        async fn stream(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> Result<MessageStream, ProviderError> {
+            panic!("local session naming must not call the provider")
+        }
+
+        fn uses_local_session_naming(&self) -> bool {
             true
         }
     }
@@ -3519,6 +3574,41 @@ mod tests {
             .unwrap();
 
         assert_eq!(update.name, "investigate session naming with");
+    }
+
+    #[tokio::test]
+    async fn test_maybe_update_name_uses_local_name_for_stateless_provider() {
+        let temp_dir = TempDir::new().unwrap();
+        let sm = SessionManager::new(temp_dir.path().to_path_buf());
+        let session = sm
+            .create_session(
+                temp_dir.path().to_path_buf(),
+                "New Chat".to_string(),
+                SessionType::User,
+                AIBuddyMode::default(),
+            )
+            .await
+            .unwrap();
+
+        sm.update(&session.id)
+            .model_config(ModelConfig::new("test-model"))
+            .apply()
+            .await
+            .unwrap();
+        sm.add_message(
+            &session.id,
+            &Message::user().with_text("investigate local naming without provider completion"),
+        )
+        .await
+        .unwrap();
+
+        let update = sm
+            .maybe_update_name(&session.id, Arc::new(LocalNamingTestProvider))
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(update.name, "investigate local naming without");
     }
 
     #[tokio::test]

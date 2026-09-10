@@ -5,16 +5,13 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 const { resolveWindowsArchitecture } = require('./windows-architecture');
+const { verifyWin7Uv } = require('./win7-runtime');
 
 // Paths
 const srcBinDir = path.join(__dirname, '..', 'src', 'bin');
 const platformWinDir = path.join(__dirname, '..', 'src', 'platform', 'windows', 'bin');
 const uvVersion = '0.11.11';
 const uvBinaryHashes = Object.freeze({
-    'i686-pc-windows-msvc': Object.freeze({
-        'uv.exe': 'cddbdecdf0f488c7d11085d44436a3bf87a40777b1cfebdc0cbca83cb3ebbe85',
-        'uvx.exe': 'b19c9ef61e0caa1a1092fbafb887b4ba4ef6951b15565ad6cd087124598da09a',
-    }),
     'x86_64-pc-windows-msvc': Object.freeze({
         'uv.exe': 'b1645e948603c12dd741987d0c072471195e18dd299b42334477ceac694f0af8',
         'uvx.exe': '0305c488dc29c16df1483c02a902d21a6798b0744f8e9eb34271d6b3e4bf6e2a',
@@ -22,6 +19,9 @@ const uvBinaryHashes = Object.freeze({
 });
 
 function windowsUvRelease(architecture) {
+    if (resolveWindowsArchitecture(architecture).name === 'x32') {
+        throw new Error('Win7 uv must be built from source');
+    }
     const windowsArchitecture = resolveWindowsArchitecture(architecture);
     return {
         url: `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${windowsArchitecture.uvTarget}.zip`,
@@ -122,6 +122,10 @@ function extractZip(zipPath, destDir) {
 }
 
 async function ensureWindowsUvBinaries(architecture) {
+  if (resolveWindowsArchitecture(architecture).name === 'x32') {
+    verifyWin7Uv(srcBinDir);
+    return;
+  }
     const release = windowsUvRelease(architecture);
     const allPresent = Object.entries(release.hashes).every(([name, expectedHash]) =>
         hasExpectedHash(path.join(srcBinDir, name), expectedHash)
@@ -253,6 +257,9 @@ async function copyPlatformFiles(targetPlatform) {
         });
 
         await ensureWindowsUvBinaries(process.env.WINDOWS_ARCH);
+        if (resolveWindowsArchitecture().name === 'x32') {
+            fs.writeFileSync(path.join(srcBinDir, 'npx.cmd'), '@echo off\r\nset "PATH=%~dp0node-runtime;%PATH%"\r\ncall "%~dp0node-runtime\\npx.cmd" %*\r\nexit /b %errorlevel%\r\n');
+        }
     }
 }
 

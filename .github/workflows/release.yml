@@ -56,6 +56,7 @@ jobs:
   # 3) Bundle CLI and Desktop (Windows, standard)
   # ------------------------------------------------------------
   bundle-windows:
+    secrets: inherit
     uses: ./.github/workflows/bundle-windows.yml
     permissions:
       contents: read
@@ -110,7 +111,8 @@ jobs:
             aibuddy-*.tar.gz
             aibuddy-*.zip
             AIBuddy*.zip
-            AIBuddy-windows-*-setup.exe
+            AIBuddy-windows-*-V*.exe
+            README
             download_cli.sh
 
       # Create/update the versioned release
@@ -123,7 +125,8 @@ jobs:
             aibuddy-*.tar.gz
             aibuddy-*.zip
             AIBuddy*.zip
-            AIBuddy-windows-*-setup.exe
+            AIBuddy-windows-*-V*.exe
+            README
             download_cli.sh
           allowUpdates: true
           omitBody: true
@@ -141,18 +144,12 @@ jobs:
             aibuddy-*.tar.gz
             aibuddy-*.zip
             AIBuddy*.zip
-            AIBuddy-windows-*-setup.exe
+            AIBuddy-windows-*-V*.exe
+            README
             download_cli.sh
           allowUpdates: true
           omitBody: true
           prerelease: false
-
-      - name: Upload Windows installers to COS
-        shell: bash
-        env:
-          TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
-          TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
-        run: bash .github/scripts/upload-windows-installers-to-cos.sh
 
       - name: Upload macOS update manifest
         if: ${{ env.ENABLE_MAC_NATIVE_AUTO_UPDATE == 'true' }}

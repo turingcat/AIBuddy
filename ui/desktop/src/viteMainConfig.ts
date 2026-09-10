@@ -10,11 +10,14 @@ export function createMainViteConfig(
   const authApiBaseUrl = resolveAuthApiBaseUrl(environment, edition, brand.authApiBaseUrl);
 
   return {
+    build: { target: environment.WINDOWS_ARCH === 'x32' ? 'node16' : 'node24' },
     define: {
       'process.env.APP_EDITION': JSON.stringify(brand.edition),
       'process.env.GITHUB_OWNER': JSON.stringify(environment.GITHUB_OWNER || 'aaif-aibuddy'),
       'process.env.GITHUB_REPO': JSON.stringify(environment.GITHUB_REPO || 'aibuddy'),
-      'process.env.AIBUDDY_BUNDLE_NAME': JSON.stringify(environment.AIBUDDY_BUNDLE_NAME || 'AIBuddy'),
+      'process.env.AIBUDDY_BUNDLE_NAME': JSON.stringify(
+        environment.AIBUDDY_BUNDLE_NAME || 'AIBuddy'
+      ),
       __AUTH_MODE__: JSON.stringify(brand.authMode),
       __AUTH_API_BASE_URL__: JSON.stringify(authApiBaseUrl),
     },

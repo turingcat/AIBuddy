@@ -3,7 +3,7 @@ import type {
   SaveRecipeResponse_unstable,
   ScanRecipeResponse_unstable,
   RecipeListEntryDto,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 let inFlightListRecipes: Promise<RecipeListEntryDto[]> | null = null;

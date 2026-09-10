@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { ProviderDeviceCodeNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { ProviderDeviceCodeNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 
 export function useProviderDeviceCode(providerId: string) {
   const [deviceCode, setDeviceCode] = useState<ProviderDeviceCodeNotification_unstable | null>(

@@ -34,11 +34,6 @@ The list of experimental features may change as aibuddy development progresses. 
       description="Interact with aibuddy directly from VS Code via ACP."
       link="/docs/experimental/vs-code-extension"
     />
-    <Card 
-      title="Using aibuddy in ACP Clients"
-      description="Interact with aibuddy natively in ACP-compatible clients like Zed."
-      link="/docs/guides/acp-clients"
-    />
   </div>
 </div>
 

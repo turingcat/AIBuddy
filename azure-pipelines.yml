@@ -1,31 +1,8 @@
 # Windows CI on Azure Pipelines for the private GitHub repository.
 # Uses Microsoft-hosted Windows agents and does not consume GitHub Actions minutes.
 
-trigger:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - Cargo.toml
-      - Cargo.lock
-      - rust-toolchain.toml
-      - .cargo/**
-      - crates/**
-      - azure-pipelines.yml
-
-pr:
-  branches:
-    include:
-      - main
-  paths:
-    include:
-      - Cargo.toml
-      - Cargo.lock
-      - rust-toolchain.toml
-      - .cargo/**
-      - crates/**
-      - azure-pipelines.yml
+trigger: none
+pr: none
 
 pool:
   vmImage: windows-2022

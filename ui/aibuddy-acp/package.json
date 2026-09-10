@@ -1,0 +1,51 @@
+{
+  "name": "@aibuddy/aibuddy-acp",
+  "version": "1.0.6",
+  "description": "Install and resolve the AIBuddy executable through npm",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aaif-goose/goose.git"
+  },
+  "keywords": [
+    "aibuddy",
+    "ai",
+    "agent",
+    "acp",
+    "binary"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "aibuddy": "./bin/aibuddy.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "lint": "tsc --noEmit",
+    "format": "prettier --write src/ test/ bin/",
+    "prepack": "npm run build"
+  },
+  "optionalDependencies": {
+    "@aibuddy/aibuddy-binary-darwin-arm64": "workspace:*",
+    "@aibuddy/aibuddy-binary-linux-arm64": "workspace:*",
+    "@aibuddy/aibuddy-binary-linux-x64": "workspace:*",
+    "@aibuddy/aibuddy-binary-win32-x64": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "prettier": "^3.9.6",
+    "typescript": "~5.9.3"
+  }
+}

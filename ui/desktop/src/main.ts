@@ -1,3 +1,5 @@
+import './legacyWebGlobals';
+import { createElectronFetch } from './electronFetch';
 import type { IpcMainInvokeEvent, OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 import {
   app,
@@ -96,6 +98,8 @@ import {
   isAuthorizedFileAccessRequest,
   readSelectedRecipe,
 } from './desktopFileAccess';
+
+const electronFetch = createElectronFetch(net);
 
 applyLegacyAIBuddyEnvironment(process.env);
 
@@ -236,7 +240,7 @@ function listGitWorktreeDirs(dir: string): Promise<string[]> {
 if (started) app.quit();
 
 // Certificate trust for active backend leases. Renderer requests and
-// main-process net.fetch both pin to the exact cert fingerprint. Each backend
+// main-process electronFetch both pin to the exact cert fingerprint. Each backend
 // lease owns a trust record so old windows keep working after settings change.
 interface BackendCertificateTrust {
   hostname: string;
@@ -329,7 +333,7 @@ app.whenReady().then(() => {
   appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
 });
 
-// Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
+// Main-process electronFetch and renderer WebSockets: pin to the exact cert once known.
 app.whenReady().then(() => {
   installBackendCertificateVerifiers(
     [session.defaultSession, session.fromPartition('persist:goose')],
@@ -1061,7 +1065,7 @@ const createChat = async (
       const externalBackendReady = await checkBackendStatus({
         baseUrl: externalBaseUrl,
         serverSecret,
-        fetch: net.fetch as unknown as typeof globalThis.fetch,
+        fetch: electronFetch as unknown as typeof globalThis.fetch,
       });
       if (!externalBackendReady) {
         externalCertificateTrust?.release();
@@ -1148,7 +1152,7 @@ const createChat = async (
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
         logger: log,
         diagnosticsDir: STARTUP_LOGS_DIR,
-        readinessFetch: net.fetch as unknown as typeof globalThis.fetch,
+        readinessFetch: electronFetch as unknown as typeof globalThis.fetch,
       });
       if (!aibuddyServeResult.certFingerprint) {
         await aibuddyServeResult.cleanup();
@@ -1979,7 +1983,7 @@ ipcMain.handle('clear-login-credentials', () => {
 // @author logic
 // @date 2026-08-12
 ipcMain.handle('login-via-oa', (_event, loginName: string, password: string) =>
-  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, net.fetch))
+  runOaLogin(() => performOaLogin(authConfig.apiBaseUrl, loginName, password, electronFetch))
 );
 
 // 用户余额走主进程 fetch new-api：PAT 调 /api/user/self 查余额（绕开 renderer CSP），
@@ -2000,8 +2004,8 @@ ipcMain.handle('get-user-balance', async (): Promise<BalanceResult> => {
   }
   return runBalanceFetch(async () => {
     const [balance, currency] = await Promise.all([
-      fetchUserBalance(authConfig.apiBaseUrl, pat, net.fetch),
-      fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, net.fetch, Date.now()).catch(
+      fetchUserBalance(authConfig.apiBaseUrl, pat, electronFetch),
+      fetchCurrencyWithCache(currencyCache, authConfig.apiBaseUrl, electronFetch, Date.now()).catch(
         () => DEFAULT_CURRENCY_CONFIG
       ),
     ]);
@@ -2033,7 +2037,7 @@ ipcMain.handle('get-topup-info', async (): Promise<TopupInfoResult> => {
     return { ok: false, kind: auth.kind, message: auth.message };
   }
   const result = await runRechargeFetch(() =>
-    fetchTopupInfo(authConfig.apiBaseUrl, auth.pat, net.fetch)
+    fetchTopupInfo(authConfig.apiBaseUrl, auth.pat, electronFetch)
   );
   return result.ok ? { ok: true, info: result.data } : result;
 });
@@ -2046,7 +2050,7 @@ ipcMain.handle(
       return { ok: false, kind: auth.kind, message: auth.message };
     }
     const result = await runRechargeFetch(() =>
-      createWechatPayOrder(authConfig.apiBaseUrl, auth.pat, amount, net.fetch)
+      createWechatPayOrder(authConfig.apiBaseUrl, auth.pat, amount, electronFetch)
     );
     if (!result.ok) {
       log.error(
@@ -2065,7 +2069,7 @@ ipcMain.handle(
       return { ok: false, kind: auth.kind, message: auth.message };
     }
     const result = await runRechargeFetch(() =>
-      fetchWechatPayOrderStatus(authConfig.apiBaseUrl, auth.pat, tradeNo, net.fetch)
+      fetchWechatPayOrderStatus(authConfig.apiBaseUrl, auth.pat, tradeNo, electronFetch)
     );
     return result.ok ? { ok: true, status: result.data } : result;
   }
@@ -2078,7 +2082,7 @@ ipcMain.handle('list-models-via-api', async () => {
   const creds = readCredentials(CREDENTIALS_FILE, getCredentialsCodec());
   if (!creds) return [];
   try {
-    const res = await net.fetch(`${creds.baseUrl}/models`, {
+    const res = await electronFetch(`${creds.baseUrl}/models`, {
       headers: { Authorization: `Bearer ${creds.apiKey}` },
     });
     const body = await res.json();

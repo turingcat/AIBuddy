@@ -1,73 +1,107 @@
-name: "Bundle CLI and Desktop (Windows)"
-
+name: Bundle CLI and Desktop (Windows)
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to set for the build'
+        description: Version to set for the build
         required: false
         type: string
         default: ''
       package_cli:
-        description: 'Whether to package and upload the CLI artifact'
+        description: Whether to package and upload the CLI artifact
         required: false
         type: boolean
         default: false
       package_desktop:
-        description: 'Whether to package and upload the Desktop artifact'
+        description: Whether to package and upload the Desktop artifact
         required: false
         type: boolean
-        default: false
+        default: true
       package_x32_portable:
-        description: 'Whether to package and upload the x32 portable Desktop archive'
+        description: Whether to package and upload the x32 portable Desktop archive
         required: false
         type: boolean
         default: false
       artifact_retention_days:
-        description: 'Days to retain final build artifacts'
+        description: Days to retain final build artifacts
         required: false
         default: 7
         type: number
+      publish_cos:
+        description: Upload both installers and README to COS after a successful build
+        required: false
+        type: boolean
+        default: true
   workflow_call:
     inputs:
       version:
-        description: 'Version to build'
+        description: Version to build
         required: false
         type: string
       package_cli:
-        description: 'Whether to package and upload the CLI artifact'
+        description: Whether to package and upload the CLI artifact
         required: false
         type: boolean
         default: false
       package_desktop:
-        description: 'Whether to package and upload the Desktop artifact'
+        description: Whether to package and upload the Desktop artifact
         required: false
         type: boolean
-        default: false
+        default: true
       package_x32_portable:
-        description: 'Whether to package and upload the x32 portable Desktop archive'
+        description: Whether to package and upload the x32 portable Desktop archive
         required: false
         type: boolean
         default: false
       ref:
-        description: 'Git ref to checkout'
+        description: Git ref to checkout
         required: false
         type: string
         default: ''
       artifact_retention_days:
-        description: 'Days to retain final build artifacts'
+        description: Days to retain final build artifacts
         required: false
         default: 7
         type: number
-
+      publish_cos:
+        description: Upload both installers and README to COS after a successful build
+        required: false
+        type: boolean
+        default: true
+    secrets:
+      TENCENT_CLOUD_SECRET_ID:
+        required: false
+      TENCENT_CLOUD_SECRET_KEY:
+        required: false
 concurrency:
   group: bundle-windows-${{ inputs.ref || github.ref }}
   cancel-in-progress: true
-
 permissions:
   contents: read
-
 jobs:
+  prepare-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Test Windows release helpers
+        run: |-
+          node --test ui/desktop/scripts/windows-release-version.test.cjs ui/desktop/scripts/win7-runtime.test.cjs
+          python3 -m unittest discover -s .github/scripts -p 'test_*windows*cos*.py'
+      - name: Resolve shared Windows version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: node ui/desktop/scripts/windows-release-version.js
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: AIBuddy-windows-README
+          path: README
+          if-no-files-found: error
+          retention-days: ${{ inputs.artifact_retention_days }}
   build-aibuddy-windows:
     name: Build AIBuddy (Windows ${{ matrix.name }})
     runs-on: windows-latest
@@ -77,7 +111,7 @@ jobs:
         include:
           - name: x32
             electron_arch: ia32
-            rust_target: i686-pc-windows-msvc
+            rust_target: i686-win7-windows-msvc
             cargo_features: aws-providers,nostr,otel,rustls-tls,system-keyring
           - name: x64
             electron_arch: x64
@@ -85,57 +119,78 @@ jobs:
             cargo_features: code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ inputs.ref != '' && inputs.ref || '' }}
-
       - name: Update Cargo version
-        if: ${{ inputs.version != '' }}
         shell: bash
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.prepare-version.outputs.version }}
         run: bash scripts/set-cargo-version.sh "$VERSION"
-
       - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6  # v2.9.2
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
         with:
           key: bundle-windows-${{ matrix.rust_target }}
-
       - name: Setup Rust
         shell: bash
-        run: |
-          rustup show
-          rustup target add "${{ matrix.rust_target }}"
-
+        run: |-
+          if [[ "${{ matrix.name }}" == x32 ]]; then
+            rustup toolchain install nightly-2026-09-01 --profile minimal --component rust-src
+          else
+            rustup target add "${{ matrix.rust_target }}"
+          fi
       - name: Build Windows executable
         shell: pwsh
         env:
           RUST_TARGET: ${{ matrix.rust_target }}
           CARGO_FEATURES: ${{ matrix.cargo_features }}
-        run: |
-          if ($env:CARGO_FEATURES) {
-            cargo build --release --target $env:RUST_TARGET -p aibuddy-cli --bin aibuddy --no-default-features --features $env:CARGO_FEATURES
+        run: |-
+          $cargoArgs = @('build', '--release', '--target', $env:RUST_TARGET, '-p', 'aibuddy-cli', '--bin', 'aibuddy', '--no-default-features', '--features', $env:CARGO_FEATURES)
+          if ($env:RUST_TARGET -eq 'i686-win7-windows-msvc') {
+            cargo +nightly-2026-09-01 @cargoArgs -Z build-std=std,panic_abort
           } else {
-            cargo build --release --target $env:RUST_TARGET -p aibuddy-cli --bin aibuddy
+            cargo @cargoArgs
           }
-
-          $binaryPath = "./target/$env:RUST_TARGET/release/aibuddy.exe"
-          if (-not (Test-Path $binaryPath)) {
-            Write-Error "Windows binary not found: $binaryPath"
-            Get-ChildItem "./target/$env:RUST_TARGET/release/" -ErrorAction SilentlyContinue
-            exit 1
-          }
-          Get-Item $binaryPath
-
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Item "./target/$env:RUST_TARGET/release/aibuddy.exe"
       - name: Upload binary artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: internal-aibuddy-${{ matrix.rust_target }}
           path: target/${{ matrix.rust_target }}/release/aibuddy.exe
           if-no-files-found: error
           retention-days: 1
           overwrite: true
-
+      - name: Checkout uv for x32
+        if: ${{ matrix.name == 'x32' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: astral-sh/uv
+          ref: 0.11.11
+          path: .uv-source
+      - name: Build Win7 uv and uvx
+        if: ${{ matrix.name == 'x32' }}
+        shell: pwsh
+        run: |-
+          Push-Location .uv-source
+          cargo +nightly-2026-09-01 build --locked --release -p uv --bin uv --bin uvx --target i686-win7-windows-msvc -Z build-std=std,panic_abort
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Pop-Location
+          New-Item -ItemType Directory -Force win7-uv | Out-Null
+          Copy-Item .uv-source/target/i686-win7-windows-msvc/release/uv.exe win7-uv/
+          Copy-Item .uv-source/target/i686-win7-windows-msvc/release/uvx.exe win7-uv/
+          $hashes = @{}
+          foreach ($name in @('uv.exe', 'uvx.exe')) { $hashes[$name] = (Get-FileHash "win7-uv/$name" -Algorithm SHA256).Hash.ToLower() }
+          @{ target = 'i686-win7-windows-msvc'; version = '0.11.11'; hashes = $hashes } | ConvertTo-Json | Set-Content -Encoding utf8 win7-uv/win7-uv.json
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: ${{ matrix.name == 'x32' }}
+        with:
+          name: internal-win7-uv
+          path: win7-uv/*
+          retention-days: 1
+          if-no-files-found: error
+    needs:
+      - prepare-version
   package-cli-windows:
     name: Package CLI (Windows)
     if: ${{ inputs.package_cli }}
@@ -143,30 +198,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download binary artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: internal-aibuddy-x86_64-pc-windows-msvc
           path: package
-
       - name: Package CLI
         run: |
           mkdir -p aibuddy-package
           cp package/aibuddy.exe aibuddy-package/
           zip -r "aibuddy-x86_64-pc-windows-msvc.zip" aibuddy-package/
-
       - name: Upload CLI artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: aibuddy-x86_64-pc-windows-msvc.zip
           path: aibuddy-x86_64-pc-windows-msvc.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
-
   build-desktop-windows:
     name: Build Desktop (Windows ${{ matrix.name }})
     if: ${{ inputs.package_desktop }}
-    needs: build-aibuddy-windows
+    needs:
+      - build-aibuddy-windows
+      - prepare-version
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -174,7 +228,7 @@ jobs:
         include:
           - name: x32
             electron_arch: ia32
-            rust_target: i686-pc-windows-msvc
+            rust_target: i686-win7-windows-msvc
           - name: x64
             electron_arch: x64
             rust_target: x86_64-pc-windows-msvc
@@ -182,54 +236,45 @@ jobs:
       ELECTRON_CACHE: ${{ github.workspace }}/.cache/electron
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ inputs.ref != '' && inputs.ref || '' }}
-
       - name: Set up Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
           node-version: 24.10.0
-
       - name: Update desktop version
-        if: ${{ inputs.version != '' }}
         shell: bash
         env:
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.prepare-version.outputs.version }}
         run: |
           cd ui/desktop
           npm pkg set "version=${VERSION}"
-
       - name: Install pnpm
         run: npm install -g pnpm@10.30.3
-
       - name: Resolve pnpm store path
         id: pnpm-store
         shell: bash
         run: echo "path=$(pnpm store path)" >> "$GITHUB_OUTPUT"
-
       - name: Cache pnpm store
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: pnpm-store-v1-${{ runner.os }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
             pnpm-store-v1-${{ runner.os }}-
-
       - name: Cache Electron downloads
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ env.ELECTRON_CACHE }}
           key: electron-cache-v1-${{ runner.os }}-${{ matrix.electron_arch }}-${{ hashFiles('ui/pnpm-lock.yaml') }}
           restore-keys: |
             electron-cache-v1-${{ runner.os }}-${{ matrix.electron_arch }}-
-
       - name: Download binary artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: internal-aibuddy-${{ matrix.rust_target }}
           path: backend
-
       - name: Prepare Windows binary
         shell: bash
         run: |
@@ -249,14 +294,27 @@ jobs:
               cp -r ./ui/desktop/src/platform/windows/bin/aibuddy-npm/ ./ui/desktop/src/bin/aibuddy-npm/
             fi
           fi
-
       - name: Force GitHub HTTPS npm git dependencies
         shell: bash
         run: |
           git config --global --add url."https://github.com/".insteadOf "ssh://git@github.com/"
           git config --global --add url."https://github.com/".insteadOf "git@github.com:"
           git config --global --add url."https://github.com/".insteadOf "git+ssh://git@github.com/"
-
+      - name: Download Win7 uv
+        if: ${{ matrix.name == 'x32' }}
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: internal-win7-uv
+          path: ui/desktop/src/bin
+      - name: Bundle Win7 Node runtime
+        if: ${{ matrix.name == 'x32' }}
+        shell: pwsh
+        run: |-
+          $archive = Join-Path $env:RUNNER_TEMP 'node-v12.22.12-win-x86.zip'
+          Invoke-WebRequest 'https://nodejs.org/dist/v12.22.12/node-v12.22.12-win-x86.zip' -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLower() -ne '2f7fa563c9477d5e9fddc5c22451b21b8a963c9b5004c80dd0140c3a3675a4e8') { throw 'Node checksum mismatch' }
+          Expand-Archive $archive -DestinationPath "$env:RUNNER_TEMP/win7-node" -Force
+          Move-Item "$env:RUNNER_TEMP/win7-node/node-v12.22.12-win-x86" ui/desktop/src/bin/node-runtime
       - name: Build desktop UI with pnpm
         shell: bash
         env:
@@ -267,10 +325,13 @@ jobs:
         run: |
           cd ui/desktop
           pnpm install --frozen-lockfile
+          if [[ "$WINDOWS_ARCH" == x32 ]]; then
+            npm pkg set devDependencies.electron=22.3.27
+          fi
+          pnpm exec vitest run src/electronFetch.test.ts src/legacyWebGlobals.test.ts src/preload.fileAccess.test.ts src/viteMainConfig.test.ts scripts/windows-package.test.js scripts/windows-architecture.test.js scripts/prepare-platform-binaries.test.js
           node scripts/build-main.js
           node scripts/prepare-platform-binaries.js
           pnpm run package:windows -- --arch="$ELECTRON_ARCH"
-
       - name: Prepare flat distribution
         shell: bash
         env:
@@ -287,19 +348,27 @@ jobs:
 
           ls -la "./dist-windows-${WINDOWS_ARCH}/"
           ls -la "./dist-windows-${WINDOWS_ARCH}/resources/bin/"
-
+      - name: Check Win7 PE requirements
+        if: ${{ matrix.name == 'x32' }}
+        shell: pwsh
+        run: |-
+          python -m pip install pefile==2024.8.26
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python .github/scripts/check_win7_pe.py ui/desktop/dist-windows-x32
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload unsigned distribution
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: internal-windows-unsigned-${{ matrix.name }}
           path: ui/desktop/dist-windows-${{ matrix.name }}/
           if-no-files-found: error
           retention-days: 1
           overwrite: true
-
   package-desktop-windows:
     name: Package Desktop (Windows ${{ matrix.name }})
-    needs: build-desktop-windows
+    needs:
+      - build-desktop-windows
+      - prepare-version
     if: ${{ inputs.package_desktop }}
     runs-on: windows-latest
     strategy:
@@ -308,39 +377,33 @@ jobs:
         include:
           - name: x32
             electron_arch: ia32
-            rust_target: i686-pc-windows-msvc
+            rust_target: i686-win7-windows-msvc
           - name: x64
             electron_arch: x64
             rust_target: x86_64-pc-windows-msvc
     steps:
       - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           ref: ${{ inputs.ref != '' && inputs.ref || '' }}
-
       - name: Download unsigned distribution
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: internal-windows-unsigned-${{ matrix.name }}
           path: ui/desktop/dist-windows-${{ matrix.name }}
-
       - name: Set up Inno Setup
         shell: pwsh
-        run: |
+        run: |-
+          choco install innosetup --version=6.5.4 --allow-downgrade --no-progress -y --force
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) {
-            choco install innosetup --no-progress -y
-          }
-          if (-not (Test-Path $iscc)) {
-            throw "Inno Setup compiler not found: $iscc"
-          }
+          if (-not (Test-Path $iscc)) { throw "Pinned Inno Setup not found: $iscc" }
           "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
-
       - name: Create Windows installer
         shell: pwsh
         env:
           APP_EDITION: aibuddy
-          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_VERSION: ${{ needs.prepare-version.outputs.version }}
           WINDOWS_ARCH: ${{ matrix.name }}
         run: |
           $version = $env:INPUT_VERSION
@@ -358,28 +421,53 @@ jobs:
           $installer = Join-Path $outputDir $pkg.setupFileName
           if (-not (Test-Path $installer)) { throw "Installer not found: $installer" }
           Get-Item $installer
-
       - name: Create x32 portable archive
         if: ${{ inputs.package_x32_portable && matrix.name == 'x32' }}
         working-directory: ui/desktop/dist-windows-x32
         shell: bash
         run: 7z a -tzip "$GITHUB_WORKSPACE/AIBuddy-windows-x32-portable.zip" ./*
-
       - name: Upload Windows build
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: AIBuddy-win32-${{ matrix.name }}
-          path: AIBuddy-windows-${{ matrix.name }}-setup.exe
+          path: AIBuddy-windows-${{ matrix.name }}-V${{ needs.prepare-version.outputs.version }}.exe
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
-
       - name: Upload x32 portable archive
         if: ${{ inputs.package_x32_portable && matrix.name == 'x32' }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: AIBuddy-windows-x32-portable
           path: AIBuddy-windows-x32-portable.zip
           if-no-files-found: error
           retention-days: ${{ inputs.artifact_retention_days }}
           overwrite: true
+  publish-windows-cos:
+    if: ${{ inputs.package_desktop && inputs.publish_cos }}
+    needs:
+      - package-desktop-windows
+    runs-on: ubuntu-latest
+    concurrency:
+      group: aibuddy-cos-stable
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          pattern: AIBuddy-win32-*
+          path: windows-release
+          merge-multiple: true
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: AIBuddy-windows-README
+          path: windows-release
+      - name: Upload Windows installers to COS
+        working-directory: windows-release
+        shell: bash
+        env:
+          TENCENT_CLOUD_SECRET_ID: ${{ secrets.TENCENT_CLOUD_SECRET_ID }}
+          TENCENT_CLOUD_SECRET_KEY: ${{ secrets.TENCENT_CLOUD_SECRET_KEY }}
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/upload-windows-installers-to-cos.sh"

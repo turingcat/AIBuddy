@@ -44,10 +44,11 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "crates/aibuddy-sdk/maven/README.md",
             "documentation/src/components/SupportedEnvironments.js",
             "flake.nix",
-            "ui/scripts/publish.sh",
-            "ui/sdk/package.json",
-            "ui/sdk/scripts/build-native.ts",
-            "ui/sdk/src/resolve-binary.ts",
+            "ui/scripts/prepare-npm-packages.sh",
+            "ui/scripts/publish-npm-packages.sh",
+            "ui/aibuddy-acp/package.json",
+            "ui/aibuddy-acp/src/resolve-binary.ts",
+            "ui/aibuddy-acp-client/package.json",
         ]
         forbidden = (
             "x86_64-apple-darwin",
@@ -97,7 +98,7 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
         package = json.loads((ROOT / "ui/desktop/package.json").read_text(encoding="utf-8"))
 
-        self.assertIn("i686-pc-windows-msvc", workflow)
+        self.assertIn("i686-win7-windows-msvc", workflow)
         self.assertIn("x86_64-pc-windows-msvc", workflow)
         self.assertIn("electron_arch: ia32", workflow)
         self.assertIn("electron_arch: x64", workflow)
@@ -117,12 +118,12 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "  build-desktop-windows:", 1
         )[0]
         self.assertIn("internal-aibuddy-x86_64-pc-windows-msvc", package_cli_job)
-        self.assertNotIn("internal-aibuddy-i686-pc-windows-msvc", package_cli_job)
+        self.assertNotIn("internal-aibuddy-i686-win7-windows-msvc", package_cli_job)
 
     def test_windows_workflow_can_publish_an_x32_portable_archive(self) -> None:
         workflow = (ROOT / ".github/workflows/bundle-windows.yml").read_text(encoding="utf-8")
 
-        self.assertIn("AIBuddy-windows-${{ matrix.name }}-setup.exe", workflow)
+        self.assertIn("AIBuddy-windows-${{ matrix.name }}-V${{ needs.prepare-version.outputs.version }}.exe", workflow)
         self.assertIn("package_x32_portable", workflow)
         self.assertIn("inputs.package_x32_portable && matrix.name == 'x32'", workflow)
         self.assertIn("AIBuddy-windows-x32-portable.zip", workflow)

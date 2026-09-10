@@ -16,7 +16,7 @@ import {
   zAIBuddySessionNotification_unstable,
   zProviderDeviceCodeNotification_unstable,
   zRequestRecipeParams_unstable,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 
 const [aibuddySessionUpdate, providerDeviceCode] = AIBUDDY_EXT_NOTIFICATIONS;
 const [aibuddyRecipeParamsRequest] = AIBUDDY_EXT_AGENT_REQUESTS;

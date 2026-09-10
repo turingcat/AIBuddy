@@ -35,7 +35,7 @@ aibuddy supports the [Agent Client Protocol (ACP)](https://agentclientprotocol.c
 
 ### aibuddy as an ACP Server
 
-`aibuddy acp` starts aibuddy as an ACP server over stdio, letting editors like JetBrains and Zed connect to it directly. See [Using aibuddy in ACP Clients](/docs/guides/acp-clients).
+`aibuddy acp` starts aibuddy as an ACP server over stdio, letting editors like JetBrains and Zed connect to it directly. See [Using aibuddy in ACP Clients](/docs/gdk/acp).
 
 ### ACP Agents as Providers
 
@@ -72,5 +72,4 @@ While aibuddy is free and open source, there is typically a cost associated with
 * aibuddy includes everything versus a semantic search
 * aibuddy uses algorithms to delete old or irrelevant content
 * aibuddy will use find and replace instead of rewriting large files, use ripgrep to skip system files, and summarize verbose command outputs 
-
 
