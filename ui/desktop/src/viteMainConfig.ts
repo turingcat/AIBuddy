@@ -5,6 +5,7 @@ export function createMainViteConfig(environment: NodeJS.ProcessEnv) {
   const authApiBaseUrl = resolveAuthApiBaseUrl(environment, appBrand.authApiBaseUrl);
 
   return {
+    build: { target: environment.WINDOWS_ARCH === 'x32' ? 'node16' : 'node24' },
     define: {
       'process.env.GITHUB_OWNER': JSON.stringify(environment.GITHUB_OWNER || 'aaif-goose'),
       'process.env.GITHUB_REPO': JSON.stringify(environment.GITHUB_REPO || 'aibuddy'),

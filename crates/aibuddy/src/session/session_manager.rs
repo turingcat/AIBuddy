@@ -1280,6 +1280,13 @@ impl SessionStorage {
             .filter(|column| matches!(*column, "goose_mode" | LEGACY_HEYBUDDY_MODE_COLUMN))
             .collect();
         if legacy_columns.is_empty() {
+            if !columns.iter().any(|column| column == "aibuddy_mode") {
+                sqlx::query(
+                    "ALTER TABLE sessions ADD COLUMN aibuddy_mode TEXT NOT NULL DEFAULT 'auto'",
+                )
+                .execute(&mut **tx)
+                .await?;
+            }
             return Ok(());
         }
         anyhow::ensure!(
@@ -2860,6 +2867,14 @@ mod tests {
         (dir, session)
     }
 
+    async fn legacy_database_pool(dir: &TempDir) -> sqlx::SqlitePool {
+        sqlx::SqlitePool::connect_with(
+            SqliteConnectOptions::new().filename(dir.path().join(SESSIONS_FOLDER).join(DB_NAME)),
+        )
+        .await
+        .unwrap()
+    }
+
     async fn legacy_brand_database() -> (TempDir, Session) {
         legacy_brand_database_with_column("goose_mode").await
     }
@@ -2969,9 +2984,10 @@ mod tests {
     #[tokio::test]
     async fn legacy_brand_column_does_not_collide_with_upstream_migration_eight() {
         let (dir, session) = legacy_brand_database().await;
+        let pool = legacy_database_pool(&dir).await;
         let manager = SessionManager::new(dir.path().to_path_buf());
         sqlx::query("UPDATE schema_version SET version = 7")
-            .execute(&manager.storage().pool)
+            .execute(&pool)
             .await
             .unwrap();
         let retained = manager.get_session(&session.id, true).await.unwrap();
@@ -2984,9 +3000,10 @@ mod tests {
     #[tokio::test]
     async fn legacy_brand_column_conflict_leaves_both_values_untouched() {
         let (dir, session) = legacy_brand_database().await;
+        let pool = legacy_database_pool(&dir).await;
         let manager = SessionManager::new(dir.path().to_path_buf());
         sqlx::query("ALTER TABLE sessions ADD COLUMN aibuddy_mode TEXT NOT NULL DEFAULT 'auto'")
-            .execute(&manager.storage().pool)
+            .execute(&pool)
             .await
             .unwrap();
         let error = manager.get_session(&session.id, false).await.unwrap_err();
@@ -2995,7 +3012,7 @@ mod tests {
             .contains("legacy mode column and aibuddy_mode"));
         let row = sqlx::query("SELECT goose_mode, aibuddy_mode FROM sessions WHERE id = ?")
             .bind(&session.id)
-            .fetch_one(&manager.storage().pool)
+            .fetch_one(&pool)
             .await
             .unwrap();
         assert_eq!(row.get::<String, _>("goose_mode"), "approve");
@@ -3005,11 +3022,12 @@ mod tests {
     #[tokio::test]
     async fn multiple_legacy_brand_columns_are_left_untouched() {
         let (dir, session) = legacy_brand_database().await;
+        let pool = legacy_database_pool(&dir).await;
         let manager = SessionManager::new(dir.path().to_path_buf());
         sqlx::query(AssertSqlSafe(format!(
             "ALTER TABLE sessions ADD COLUMN {LEGACY_HEYBUDDY_MODE_COLUMN} TEXT NOT NULL DEFAULT 'chat'"
         )))
-        .execute(&manager.storage().pool)
+        .execute(&pool)
         .await
         .unwrap();
         let error = manager.get_session(&session.id, false).await.unwrap_err();
@@ -3020,7 +3038,7 @@ mod tests {
             "SELECT goose_mode, {LEGACY_HEYBUDDY_MODE_COLUMN} FROM sessions WHERE id = ?"
         )))
         .bind(&session.id)
-        .fetch_one(&manager.storage().pool)
+        .fetch_one(&pool)
         .await
         .unwrap();
         assert_eq!(row.get::<String, _>("goose_mode"), "approve");
@@ -3028,15 +3046,42 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn missing_mode_column_at_current_version_adds_default_column() {
+        let dir = TempDir::new().unwrap();
+        let manager = SessionManager::new(dir.path().to_path_buf());
+        let session = manager
+            .create_session(
+                PathBuf::from("/tmp"),
+                "Current schema without mode".to_string(),
+                SessionType::User,
+                AIBuddyMode::Approve,
+            )
+            .await
+            .unwrap();
+        let pool = manager.storage().pool().await.unwrap();
+        sqlx::query("ALTER TABLE sessions DROP COLUMN aibuddy_mode")
+            .execute(pool)
+            .await
+            .unwrap();
+        pool.close().await;
+
+        let reopened = SessionManager::new(dir.path().to_path_buf());
+        let retained = reopened.get_session(&session.id, false).await.unwrap();
+        assert_eq!(retained.aibuddy_mode, AIBuddyMode::default());
+        assert_eq!(retained.name, session.name);
+    }
+
+    #[tokio::test]
     async fn legacy_brand_pre_mode_schema_still_adds_default_column() {
         let (dir, session) = legacy_brand_database().await;
+        let pool = legacy_database_pool(&dir).await;
         let manager = SessionManager::new(dir.path().to_path_buf());
         sqlx::query("ALTER TABLE sessions DROP COLUMN goose_mode")
-            .execute(&manager.storage().pool)
+            .execute(&pool)
             .await
             .unwrap();
         sqlx::query("UPDATE schema_version SET version = 7")
-            .execute(&manager.storage().pool)
+            .execute(&pool)
             .await
             .unwrap();
         let retained = manager.get_session(&session.id, false).await.unwrap();
@@ -3116,6 +3161,8 @@ mod tests {
 
     struct StatefulNamingTestProvider;
 
+    struct LocalNamingTestProvider;
+
     #[async_trait::async_trait]
     impl Provider for NamingTestProvider {
         fn get_name(&self) -> &str {
@@ -3163,6 +3210,27 @@ mod tests {
         }
 
         fn manages_own_context(&self) -> bool {
+            true
+        }
+    }
+
+    #[async_trait::async_trait]
+    impl Provider for LocalNamingTestProvider {
+        fn get_name(&self) -> &str {
+            "local-naming-test"
+        }
+
+        async fn stream(
+            &self,
+            _model_config: &ModelConfig,
+            _system: &str,
+            _messages: &[Message],
+            _tools: &[Tool],
+        ) -> Result<MessageStream, ProviderError> {
+            panic!("local session naming must not call the provider")
+        }
+
+        fn uses_local_session_naming(&self) -> bool {
             true
         }
     }
@@ -3593,6 +3661,41 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_maybe_update_name_uses_local_name_for_stateless_provider() {
+        let temp_dir = TempDir::new().unwrap();
+        let sm = SessionManager::new(temp_dir.path().to_path_buf());
+        let session = sm
+            .create_session(
+                temp_dir.path().to_path_buf(),
+                "New Chat".to_string(),
+                SessionType::User,
+                AIBuddyMode::default(),
+            )
+            .await
+            .unwrap();
+
+        sm.update(&session.id)
+            .model_config(ModelConfig::new("test-model"))
+            .apply()
+            .await
+            .unwrap();
+        sm.add_message(
+            &session.id,
+            &Message::user().with_text("investigate local naming without provider completion"),
+        )
+        .await
+        .unwrap();
+
+        let update = sm
+            .maybe_update_name(&session.id, Arc::new(LocalNamingTestProvider))
+            .await
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(update.name, "investigate local naming without");
+    }
+
+    #[tokio::test]
     async fn test_maybe_update_name_preserves_user_renamed_session() {
         let temp_dir = TempDir::new().unwrap();
         let sm = SessionManager::new(temp_dir.path().to_path_buf());
@@ -3882,7 +3985,7 @@ mod tests {
             .await
             .unwrap();
 
-        let pool = session_manager.storage().pool.clone();
+        let pool = session_manager.storage().pool().await.unwrap().clone();
 
         let results = run_lock_upgrade_race(pool.clone(), session.id.clone(), "BEGIN", true).await;
         assert!(
@@ -4674,7 +4777,7 @@ mod tests {
             .await
             .unwrap();
 
-        let pool = &sm.storage().pool;
+        let pool = sm.storage().pool().await.unwrap();
         sqlx::query("UPDATE sessions SET aibuddy_mode = 'garbage' WHERE id = ?")
             .bind(&session.id)
             .execute(pool)

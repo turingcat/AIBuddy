@@ -3,7 +3,7 @@ import { createSession } from '../sessions';
 import type { ExtensionConfig } from '../types/extensions';
 import type { Session } from '../types/session';
 import type { FixedExtensionEntry } from '../components/ConfigContext';
-import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-acp-client';
 import { getConfiguredAIBuddyExtensions } from '../acp/extensions';
 import { acpChatSessionController } from '../acp/chatSessionController';
 import { beginConfiguredRecipeParameterScope } from '../acp/recipeParamRequests';

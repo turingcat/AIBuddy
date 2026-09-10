@@ -1,8 +1,8 @@
 {
   "private": true,
   "workspaces": [
-    "acp",
-    "text",
+    "aibuddy-acp-client",
+    "aibuddy-acp",
     "desktop",
     "aibuddy-binary/*"
   ],

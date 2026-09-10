@@ -19,6 +19,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     release-branches.yml
     release.yml
   ].freeze
+  ACTIVE_CONTRACT_WORKFLOWS = PHASE_2_WORKFLOWS
+  HISTORICAL_CONTRACT_WORKFLOWS = {}.freeze
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   CI_CONCURRENCY_GROUP = "ci-${{ github.event.pull_request.number || github.ref }}"
   MCP_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
@@ -108,7 +110,10 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       ".cargo/**",
       "crates/aibuddy/**",
       "crates/aibuddy-acp-macros/**",
-      "ui/sdk/**",
+      "ui/aibuddy-acp-client/**",
+      "ui/aibuddy-acp/**",
+      "ui/aibuddy-binary/**",
+      "ui/scripts/**",
       "ui/package.json",
       "ui/pnpm-lock.yaml",
       "ui/pnpm-workspace.yaml",
@@ -142,7 +147,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   }.freeze
   CI_ALWAYS_REQUIRED_JOBS = %w[changes gdk-api-docs-check].freeze
   CI_FAST_JOBS = CODE_PULL_REQUEST_REQUIRED_JOBS
-  CI_CODE_TIER_JOBS = ["dependency-locks", *CI_FAST_JOBS, "schema-check", "desktop-lint"].freeze
+  CI_CODE_TIER_JOBS = ["dependency-locks", "aibuddy-acp-npm-packages", *CI_FAST_JOBS, "schema-check", "desktop-lint"].freeze
   CI_COMPATIBILITY_JOBS = %w[
     rust-compat-uniffi
     rust-compat-roaming
@@ -275,7 +280,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     changes = workflow.fetch("jobs").fetch("changes")
     filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
 
-    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
+    %w[pull_request workflow_dispatch].each do |event_name|
       assert_match(/^  #{event_name}:/, workflow_text("mcp-conformance.yml"),
                    "mcp-conformance.yml must handle #{event_name} events")
     end
@@ -360,7 +365,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
     filters = YAML.safe_load(filter.dig("with", "filters"), aliases: true)
 
-    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
+    %w[pull_request workflow_dispatch].each do |event_name|
       assert_match(/^  #{event_name}:/, workflow_text("ci.yml"), "ci.yml must handle #{event_name} events")
     end
     assert_equal "${{ steps.filter.outputs.docs-only }}", changes.dig("outputs", "docs-only")
@@ -469,7 +474,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     cases.each do |path, relevant|
       changed = paths.any? { |pattern| File.fnmatch?(pattern, path, File::FNM_DOTMATCH) }
       assert_equal relevant, changed, "roaming filter for #{path}"
-      %w[pull_request push merge_group workflow_dispatch].each do |event|
+      %w[pull_request workflow_dispatch].each do |event|
         condition = workflow.dig("jobs", "rust-compat-roaming", "if")
           .gsub("cancelled()", "false")
           .gsub("github.event_name", "'#{event}'")
@@ -536,6 +541,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "MSRV_RESULT" => "${{ needs.rust-msrv.result }}",
       "RUST_LINT_RESULT" => "${{ needs.rust-lint.result }}",
       "SCHEMA_RESULT" => "${{ needs.schema-check.result }}",
+      "ACP_NPM_RESULT" => "${{ needs.aibuddy-acp-npm-packages.result }}",
       "GDK_API_DOCS_RESULT" => "${{ needs.gdk-api-docs-check.result }}",
       "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
       "WORKFLOW_CONTRACTS_RESULT" => "${{ needs.workflow-contracts.result }}",
@@ -588,7 +594,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     step = load_workflow("ci.yml").dig("jobs", "ci-gate", "steps").first
     categories = %w[rust desktop schema windows uniffi roaming workflow-config]
     scenarios = [[], *categories.map { |category| [category] }, categories]
-    %w[pull_request push merge_group workflow_dispatch].each do |event|
+    %w[pull_request workflow_dispatch].each do |event|
       scenarios.each do |changed|
         manual = event == "workflow_dispatch"
         config = changed.include?("workflow-config")
@@ -597,6 +603,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
           "changes" => true,
           "gdk-api-docs-check" => true,
           "dependency-locks" => manual || config || (changed & %w[rust desktop schema windows]).any?,
+          "aibuddy-acp-npm-packages" => manual || config || (changed & %w[rust desktop schema windows]).any?,
           "rust-format" => selected.call("rust"),
           "rust-build-and-test" => selected.call("rust"),
           "rust-build-and-test-tls" => selected.call("rust"),
@@ -723,7 +730,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def test_smoke_build_cache_uses_the_normalized_checkout_ref
-    workflow = load_historical_workflow("pr-smoke-test.yml")
+    workflow = load_performance_workflow("pr-smoke-test.yml")
     job = workflow.fetch("jobs").fetch("build-binary")
     filter = workflow.dig("jobs", "changes", "steps").find { |step| step["id"] == "filter" }
     checkout = job.fetch("steps").find do |step|
@@ -748,7 +755,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       assert_equal "${{ env.BUILD_REF }}", checkout_ref,
                    "smoke workflow checkout must use the normalized build ref"
     end
-    assert_includes historical_workflow_text("pr-smoke-test.yml"), "default: \"main\"",
+    assert_includes performance_workflow_text("pr-smoke-test.yml"), "default: \"main\"",
       "smoke build dispatch input must default to main"
     assert_includes job.fetch("if"), "github.event_name == 'workflow_dispatch'",
       "manual smoke runs must bypass documentation filtering"

@@ -1,4 +1,4 @@
-import type { ToolListItem, ToolPermissionEntry, ToolPermissionLevel } from '@aibuddy/aibuddy-sdk';
+import type { ToolListItem, ToolPermissionEntry, ToolPermissionLevel } from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 export type { ToolListItem, ToolPermissionEntry, ToolPermissionLevel };

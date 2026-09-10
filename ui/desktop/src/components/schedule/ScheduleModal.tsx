@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, FormEvent, useCallback, useRef } from 'react';
-import type { ScheduledJobDto } from '@aibuddy/aibuddy-sdk';
+import type { ScheduledJobDto } from '@aibuddy/aibuddy-acp-client';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';

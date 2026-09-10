@@ -3,7 +3,7 @@ import { Button } from '../../../../ui/button';
 import { Search, ExternalLink, Check } from 'lucide-react';
 import { Input } from '../../../../ui/input';
 import { Select } from '../../../../ui/Select';
-import type { ProviderTemplateCatalogEntryDto, ProviderTemplateDto } from '@aibuddy/aibuddy-sdk';
+import type { ProviderTemplateCatalogEntryDto, ProviderTemplateDto } from '@aibuddy/aibuddy-acp-client';
 import {
   acpGetProviderTemplate,
   acpListProviderCatalogEntries,

@@ -1,7 +1,7 @@
 use rmcp::model::Tool;
 use std::any::Any;
 
-use crate::local_model_registry::ModelSettings;
+use crate::model::ModelSettings;
 use aibuddy_provider_types::conversation::message::Message;
 use aibuddy_provider_types::errors::ProviderError;
 use aibuddy_provider_types::request_log::RequestLogHandle;

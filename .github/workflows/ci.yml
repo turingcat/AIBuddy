@@ -56,7 +56,10 @@ jobs:
               - '.cargo/**'
               - 'crates/aibuddy/**'
               - 'crates/aibuddy-acp-macros/**'
-              - 'ui/sdk/**'
+              - 'ui/aibuddy-acp-client/**'
+              - 'ui/aibuddy-acp/**'
+              - 'ui/aibuddy-binary/**'
+              - 'ui/scripts/**'
               - 'ui/package.json'
               - 'ui/pnpm-lock.yaml'
               - 'ui/pnpm-workspace.yaml'
@@ -128,6 +131,44 @@ jobs:
           source ../bin/activate-hermit
           pnpm install --lockfile-only --frozen-lockfile --ignore-scripts
         working-directory: ui
+
+  aibuddy-acp-npm-packages:
+    name: aibuddy ACP npm packages
+    runs-on: ubuntu-latest
+    needs: changes
+    if: cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')
+    steps:
+      - name: Fail when change detection fails
+        if: needs.changes.result != 'success'
+        run: exit 1
+
+      - name: Checkout Code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install dependencies
+        run: source bin/activate-hermit && pnpm --dir ui install --frozen-lockfile
+
+      - name: Check npm versions
+        run: source bin/activate-hermit && node ui/scripts/npm-versions.mjs check
+
+      - name: Test aibuddy-acp
+        run: source bin/activate-hermit && pnpm --dir ui/aibuddy-acp test
+
+      - name: Pack npm packages
+        run: |
+          source bin/activate-hermit
+          set -euo pipefail
+          client_pack_dir="$RUNNER_TEMP/aibuddy-acp-client"
+          wrapper_pack_dir="$RUNNER_TEMP/aibuddy-acp"
+          mkdir -p "$client_pack_dir" "$wrapper_pack_dir"
+
+          pnpm --dir ui/aibuddy-acp-client pack --pack-destination "$client_pack_dir"
+          pnpm --dir ui/aibuddy-acp pack --pack-destination "$wrapper_pack_dir"
+
+          wrapper_tarball=$(find "$wrapper_pack_dir" -name '*.tgz' -print -quit)
+          tar -xzf "$wrapper_tarball" -C "$wrapper_pack_dir"
+          node ui/scripts/npm-versions.mjs check-packed-wrapper \
+            "$wrapper_pack_dir/package/package.json"
 
   rust-format:
     name: Check Rust Code Format
@@ -513,15 +554,15 @@ jobs:
         run: source ../bin/activate-hermit && pnpm install --frozen-lockfile
         working-directory: ui
 
-      - name: Check ACP Schema is Up-to-Date
+      - name: Check ACP Artifacts are Up-to-Date
         run: |
           source ./bin/activate-hermit
-          just check-acp-schema
+          just check-acp-artifacts
 
       - name: Check ACP Client SDK
         run: |
           source ./bin/activate-hermit
-          cd ui/sdk
+          cd ui/aibuddy-acp-client
           pnpm run lint
 
   gdk-api-docs-check:
@@ -610,6 +651,7 @@ jobs:
       - rust-msrv
       - rust-lint
       - schema-check
+      - aibuddy-acp-npm-packages
       - gdk-api-docs-check
       - desktop-lint
       - workflow-contracts
@@ -635,6 +677,7 @@ jobs:
           MSRV_RESULT: ${{ needs.rust-msrv.result }}
           RUST_LINT_RESULT: ${{ needs.rust-lint.result }}
           SCHEMA_RESULT: ${{ needs.schema-check.result }}
+          ACP_NPM_RESULT: ${{ needs.aibuddy-acp-npm-packages.result }}
           GDK_API_DOCS_RESULT: ${{ needs.gdk-api-docs-check.result }}
           DESKTOP_LINT_RESULT: ${{ needs.desktop-lint.result }}
           WORKFLOW_CONTRACTS_RESULT: ${{ needs.workflow-contracts.result }}
@@ -653,7 +696,7 @@ jobs:
           }
 
           case "$EVENT_NAME" in
-            pull_request|push|merge_group|workflow_dispatch) ;;
+            pull_request|workflow_dispatch) ;;
             *)
               echo "::error title=CI Gate::Unsupported event $EVENT_NAME"
               exit 1
@@ -675,6 +718,7 @@ jobs:
           fi
 
           require_result dependency-locks "$DEPENDENCY_LOCKS_RESULT" "$dependency_tier_result"
+          require_result aibuddy-acp-npm-packages "$ACP_NPM_RESULT" "$dependency_tier_result"
 
           rust_tier_result=skipped
           if [[ "$CHANGES_RESULT" != "success" || "$EVENT_NAME" == "workflow_dispatch" || "$RUST_CHANGED" == "true" || "$WORKFLOW_CONFIG_CHANGED" == "true" ]]; then
@@ -710,8 +754,7 @@ jobs:
           fi
           require_result rust-compat-roaming "$RUST_COMPAT_ROAMING_RESULT" "$rust_compat_roaming_tier_result"
 
-          # MSRV and Windows cross-compilation only run on manual workflow_dispatch
-          # (e.g. pre-release verification), not on every push/merge_group.
+          # MSRV and Windows cross-compilation only run on manual workflow_dispatch.
           release_gate_tier_result=skipped
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             release_gate_tier_result=success

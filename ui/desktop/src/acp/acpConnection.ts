@@ -1,4 +1,4 @@
-import { DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES } from '@aibuddy/aibuddy-sdk';
+import { DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES } from '@aibuddy/aibuddy-acp-client';
 import { methods, PROTOCOL_VERSION, type InitializeResponse } from '@agentclientprotocol/sdk';
 import { createWebSocketStream } from '@agentclientprotocol/sdk/experimental/ws-client';
 import packageJson from '../../package.json';

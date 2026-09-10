@@ -1,4 +1,4 @@
-import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 import { describe, expect, it } from 'vitest';
 import type { Message, MessageUsage } from '../../types/message';
 import { applyAIBuddySessionNotification } from '../adapter/aibuddySessionNotifications';

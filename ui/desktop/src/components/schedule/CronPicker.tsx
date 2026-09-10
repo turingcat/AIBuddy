@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import type { ScheduledJobDto } from '@aibuddy/aibuddy-sdk';
+import type { ScheduledJobDto } from '@aibuddy/aibuddy-acp-client';
 import { errorMessage } from '../../utils/conversionUtils';
 import { defineMessages, useIntl } from '../../i18n';
 import {

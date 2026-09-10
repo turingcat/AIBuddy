@@ -1,5 +1,5 @@
 import { v7 as uuidv7 } from 'uuid';
-import type { AIBuddyExtension } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddyExtension } from '@aibuddy/aibuddy-acp-client';
 import { AppEvents } from '../constants/events';
 import { ChatState } from '../types/chatState';
 import type { Session } from '../types/session';

@@ -1,3 +1,5 @@
+import './legacyWebGlobals';
+import { createElectronFetch } from './electronFetch';
 import type { IpcMainInvokeEvent, OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 import {
   app,
@@ -82,6 +84,8 @@ import {
   isAuthorizedFileAccessRequest,
   readSelectedRecipe,
 } from './desktopFileAccess';
+
+const electronFetch = createElectronFetch(net);
 
 applyLegacyAIBuddyEnvironment(process.env);
 
@@ -223,7 +227,7 @@ function listGitWorktreeDirs(dir: string): Promise<string[]> {
 if (started) app.quit();
 
 // Certificate trust for active backend leases. Renderer requests and
-// main-process net.fetch both pin to the exact cert fingerprint. Each backend
+// main-process electronFetch both pin to the exact cert fingerprint. Each backend
 // lease owns a trust record so old windows keep working after settings change.
 interface BackendCertificateTrust {
   hostname: string;
@@ -316,7 +320,7 @@ app.whenReady().then(() => {
   appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
 });
 
-// Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
+// Main-process electronFetch and renderer WebSockets: pin to the exact cert once known.
 app.whenReady().then(() => {
   installBackendCertificateVerifiers(
     [session.defaultSession, session.fromPartition('persist:goose')],
@@ -1047,7 +1051,7 @@ const createChat = async (
       const externalBackendReady = await checkBackendStatus({
         baseUrl: externalBaseUrl,
         serverSecret,
-        fetch: net.fetch as unknown as typeof globalThis.fetch,
+        fetch: electronFetch as unknown as typeof globalThis.fetch,
       });
       if (!externalBackendReady) {
         externalCertificateTrust?.release();
@@ -1134,7 +1138,7 @@ const createChat = async (
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
         logger: log,
         diagnosticsDir: STARTUP_LOGS_DIR,
-        readinessFetch: net.fetch as unknown as typeof globalThis.fetch,
+        readinessFetch: electronFetch as unknown as typeof globalThis.fetch,
       });
       if (!aibuddyServeResult.certFingerprint) {
         await aibuddyServeResult.cleanup();
@@ -1965,7 +1969,7 @@ ipcMain.handle('clear-login-credentials', () => {
 
 registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
-  fetchImpl: net.fetch,
+  fetchImpl: electronFetch,
   idempotencyKeyFactory: () => crypto.randomUUID(),
   writeCredentials: (credentials) =>
     writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
@@ -1973,7 +1977,7 @@ registerAIBuddyAuthIpc(ipcMain, {
 
 registerAIBuddyRuntimeIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
-  fetchImpl: net.fetch,
+  fetchImpl: electronFetch,
   readCredentials: () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
   writeCredentials: (credentials) =>
     writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
@@ -3067,9 +3071,7 @@ async function appMain() {
     try {
       const appWindow = appWindows.get(aibuddyApp.name);
       if (!appWindow || appWindow.isDestroyed()) {
-        console.log(
-          `App window for '${aibuddyApp.name}' not found or destroyed, skipping refresh`
-        );
+        console.log(`App window for '${aibuddyApp.name}' not found or destroyed, skipping refresh`);
         return;
       }
 

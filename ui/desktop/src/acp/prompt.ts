@@ -1,5 +1,5 @@
 import { methods, type ContentBlock, type PromptResponse } from '@agentclientprotocol/sdk';
-import type { SteerSessionRequest_unstable, SteerSessionResponse_unstable } from '@aibuddy/aibuddy-sdk';
+import type { SteerSessionRequest_unstable, SteerSessionResponse_unstable } from '@aibuddy/aibuddy-acp-client';
 import type { Message } from '../types/message';
 import { getAcpClient } from './acpConnection';
 

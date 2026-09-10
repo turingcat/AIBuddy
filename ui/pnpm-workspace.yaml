@@ -1,5 +1,6 @@
 packages:
-  - 'sdk'
+  - 'aibuddy-acp-client'
+  - 'aibuddy-acp'
   - 'desktop'
   - 'aibuddy-binary/*'
 

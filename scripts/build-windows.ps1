@@ -82,7 +82,7 @@ Write-Host ""
 
 # Step 4: Build desktop assets
 Write-Host "[5/7] Building AIBuddy SDK, clearing Vite cache, and compiling i18n messages..." -ForegroundColor Yellow
-pnpm run build-aibuddy-sdk
+pnpm run build-aibuddy-acp-client
 if ($LASTEXITCODE -ne 0) {
     Write-Host "AIBuddy SDK build or Vite cache cleanup failed!" -ForegroundColor Red
     Pop-Location

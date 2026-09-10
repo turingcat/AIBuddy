@@ -6,7 +6,7 @@ import {
   type NewSessionRequest,
   type SessionInfo,
 } from '@agentclientprotocol/sdk';
-import type { AIBuddyExtension, SessionExportFormat, SessionImportSource } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddyExtension, SessionExportFormat, SessionImportSource } from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 import type { ExtensionLoadResult } from '../types/extensions';
 import type { Session } from '../types/session';

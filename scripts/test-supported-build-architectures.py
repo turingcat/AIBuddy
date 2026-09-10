@@ -8,11 +8,10 @@ ROOT = Path(__file__).resolve().parent.parent
 ACTIVE_MACOS_WORKFLOW_FILES = (
     ".github/workflows/bundle-macos.yml",
     ".github/workflows/release.yml",
+    ".github/workflows/canary.yml",
+    ".github/workflows/release-branches.yml",
 )
-HISTORIC_MACOS_WORKFLOW_FILES = (
-    ".github/workflows/canary.yml.disabled",
-    ".github/workflows/release-branches.yml.disabled",
-)
+HISTORIC_MACOS_WORKFLOW_FILES = ()
 
 
 class SupportedBuildArchitecturesTest(unittest.TestCase):
@@ -43,10 +42,10 @@ class SupportedBuildArchitecturesTest(unittest.TestCase):
             "crates/aibuddy-sdk/maven/README.md",
             "documentation/src/components/SupportedEnvironments.js",
             "flake.nix",
-            "ui/scripts/publish.sh",
-            "ui/sdk/package.json",
-            "ui/sdk/scripts/build-native.ts",
-            "ui/sdk/src/resolve-binary.ts",
+            "ui/scripts/publish-npm-packages.sh",
+            "ui/aibuddy-acp-client/package.json",
+            "ui/aibuddy-acp/package.json",
+            "ui/aibuddy-acp/src/resolve-binary.ts",
         ]
         forbidden = (
             "x86_64-apple-darwin",

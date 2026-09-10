@@ -5,7 +5,7 @@ import type {
   RunScheduleNowResponse_unstable,
   ScheduledJobDto,
   SessionInfo,
-} from '@aibuddy/aibuddy-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import { getAcpClient } from './acpConnection';
 
 let inFlightListSchedules: Promise<ScheduledJobDto[]> | null = null;

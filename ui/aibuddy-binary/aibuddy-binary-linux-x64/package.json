@@ -1,14 +1,11 @@
 {
   "name": "@aibuddy/aibuddy-binary-linux-x64",
-  "version": "0.20.2",
+  "version": "1.0.6",
   "description": "AIBuddy binary for Linux x64",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aaif-goose/goose.git"
-  },
-  "bin": {
-    "aibuddy": "bin/aibuddy"
+    "url": "git+https://github.com/turingcat/AIBuddy.git"
   },
   "keywords": [
     "aibuddy",
@@ -22,6 +19,9 @@
   "cpu": [
     "x64"
   ],
+  "bin": {
+    "aibuddy-binary-linux-x64": "./bin/aibuddy"
+  },
   "files": [
     "bin/aibuddy"
   ]

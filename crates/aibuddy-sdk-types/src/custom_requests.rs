@@ -118,6 +118,7 @@ pub struct AIBuddyToolCallResponse {
     pub meta: Option<serde_json::Value>,
 }
 
+/// List available aibuddy apps, optionally scoped to a session.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/apps/list", response = AppsListResponse)]
 #[serde(rename_all = "camelCase")]
@@ -132,6 +133,7 @@ pub struct AppsListResponse {
     pub apps: Vec<serde_json::Value>,
 }
 
+/// Export a aibuddy app as HTML.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/apps/export", response = AppsExportResponse)]
 #[serde(rename_all = "camelCase")]
@@ -144,6 +146,7 @@ pub struct AppsExportResponse {
     pub html: String,
 }
 
+/// Import a aibuddy app from HTML.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/apps/import", response = AppsImportResponse)]
 #[serde(rename_all = "camelCase")]
@@ -157,6 +160,7 @@ pub struct AppsImportResponse {
     pub message: String,
 }
 
+/// Delete a aibuddy app by name.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/apps/delete", response = AppsDeleteResponse)]
 #[serde(rename_all = "camelCase")]
@@ -192,7 +196,7 @@ pub enum SessionSystemPromptMode {
 
 /// Set, append, or clear system prompt text for a session.
 ///
-/// `mode: "set"` replaces AIBuddy's base system prompt. `mode: "append"` adds an
+/// `mode: "set"` replaces aibuddy's base system prompt. `mode: "append"` adds an
 /// instruction under "Additional Instructions". Reusing a key replaces the
 /// previous value for that mode/key; sending empty text clears it.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
@@ -234,6 +238,7 @@ pub struct SteerSessionResponse {
     pub message_id: String,
 }
 
+/// Get a diagnostic report for a session.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/diagnostics/get",
@@ -271,7 +276,7 @@ pub struct PromptTemplateEntry {
     pub is_customized: bool,
 }
 
-/// List all available AIBuddy prompt templates.
+/// List all available aibuddy prompt templates.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/prompts/list", response = ListPromptsResponse)]
 #[serde(rename_all = "camelCase")]
@@ -283,7 +288,7 @@ pub struct ListPromptsResponse {
     pub prompts: Vec<PromptTemplateEntry>,
 }
 
-/// Read a AIBuddy prompt template.
+/// Read a aibuddy prompt template.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/prompts/get", response = GetPromptResponse)]
 #[serde(rename_all = "camelCase")]
@@ -300,7 +305,7 @@ pub struct GetPromptResponse {
     pub is_customized: bool,
 }
 
-/// Save a custom AIBuddy prompt template.
+/// Save a custom aibuddy prompt template.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/prompts/save", response = PromptOperationResponse)]
 #[serde(rename_all = "camelCase")]
@@ -309,7 +314,7 @@ pub struct SavePromptRequest {
     pub content: String,
 }
 
-/// Reset a AIBuddy prompt template to its default content.
+/// Reset a aibuddy prompt template to its default content.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/prompts/reset", response = PromptOperationResponse)]
 #[serde(rename_all = "camelCase")]
@@ -461,6 +466,7 @@ pub struct SetConfigExtensionEnabledRequest {
     pub enabled: bool,
 }
 
+/// List extensions enabled for an active session.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/session/extensions/list", response = GetSessionExtensionsResponse)]
 #[serde(rename_all = "camelCase")]
@@ -491,6 +497,7 @@ pub struct PreferencesSaveRequest {
     pub values: Vec<PreferenceValue>,
 }
 
+/// Read one aibuddy configuration value.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/read", response = ConfigReadResponse)]
 #[serde(rename_all = "camelCase")]
@@ -507,6 +514,7 @@ pub struct ConfigReadResponse {
     pub value: serde_json::Value,
 }
 
+/// Create or replace one aibuddy configuration value.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/upsert", response = EmptyResponse)]
 #[serde(rename_all = "camelCase")]
@@ -517,6 +525,7 @@ pub struct ConfigUpsertRequest {
     pub is_secret: bool,
 }
 
+/// Remove one aibuddy configuration value.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/remove", response = EmptyResponse)]
 #[serde(rename_all = "camelCase")]
@@ -526,6 +535,7 @@ pub struct ConfigRemoveRequest {
     pub is_secret: bool,
 }
 
+/// Read all non-secret aibuddy configuration values.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/config/read-all", response = ConfigReadAllResponse)]
 #[serde(rename_all = "camelCase")]
@@ -563,7 +573,7 @@ pub struct PreferencesReadResponse {
     pub values: Vec<PreferenceValue>,
 }
 
-/// Read AIBuddy default provider and model configuration.
+/// Read aibuddy default provider and model configuration.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/defaults/read", response = DefaultsReadResponse)]
 #[serde(rename_all = "camelCase")]
@@ -576,7 +586,7 @@ pub struct DefaultsReadResponse {
     pub model_id: Option<String>,
 }
 
-/// Save AIBuddy default provider and model configuration.
+/// Save aibuddy default provider and model configuration.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/defaults/save", response = DefaultsReadResponse)]
 #[serde(rename_all = "camelCase")]
@@ -586,7 +596,7 @@ pub struct DefaultsSaveRequest {
     pub model_id: Option<String>,
 }
 
-/// Clear AIBuddy default provider and model configuration.
+/// Clear aibuddy default provider and model configuration.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(method = "_aibuddy/unstable/defaults/clear", response = DefaultsReadResponse)]
 #[serde(rename_all = "camelCase")]
@@ -624,7 +634,7 @@ pub struct OnboardingImportCandidate {
     pub warnings: Vec<String>,
 }
 
-/// Scan for existing AIBuddy and compatible app data that onboarding can import.
+/// Scan for existing aibuddy and compatible app data that onboarding can import.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/onboarding/import/scan",
@@ -774,6 +784,7 @@ pub enum SessionImportSource {
     Nostr,
 }
 
+/// Share a session through Nostr and return its share links.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/session/share/nostr",
@@ -957,7 +968,7 @@ pub struct ProviderSecretDto {
     pub configure_provider: Option<String>,
 }
 
-/// List provider credentials stored locally by AIBuddy.
+/// List provider credentials stored locally by aibuddy.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/providers/secrets/list",
@@ -1233,7 +1244,7 @@ pub struct CustomProviderUpsertDto {
     pub preserves_thinking: Option<bool>,
 }
 
-/// Create a custom provider backed by AIBuddy's declarative provider store.
+/// Create a custom provider backed by aibuddy's declarative provider store.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/providers/custom/create",
@@ -1272,7 +1283,7 @@ pub struct CustomProviderReadResponse {
     pub status: ProviderConfigStatusDto,
 }
 
-/// Update a custom provider backed by AIBuddy's declarative provider store.
+/// Update a custom provider backed by aibuddy's declarative provider store.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/providers/custom/update",
@@ -1293,7 +1304,7 @@ pub struct CustomProviderUpdateResponse {
     pub refresh: RefreshProviderInventoryResponse,
 }
 
-/// Delete a custom provider from AIBuddy's declarative provider store.
+/// Delete a custom provider from aibuddy's declarative provider store.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/providers/custom/delete",
@@ -1988,6 +1999,7 @@ pub struct LocalInferenceHfModelInfoDto {
     pub variants: Vec<LocalInferenceHfModelVariantDto>,
 }
 
+/// List locally available inference models.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/list",
@@ -2002,6 +2014,7 @@ pub struct LocalInferenceModelsListResponse {
     pub models: Vec<LocalInferenceModelDto>,
 }
 
+/// Download a model for local inference.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/download",
@@ -2022,6 +2035,7 @@ pub struct LocalInferenceModelDownloadResponse {
     pub model_id: String,
 }
 
+/// Get the progress of a local model download.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/download/progress",
@@ -2039,6 +2053,7 @@ pub struct LocalInferenceModelDownloadProgressResponse {
     pub progress: Option<LocalInferenceDownloadProgressDto>,
 }
 
+/// Cancel a local model download.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/download/cancel",
@@ -2049,6 +2064,7 @@ pub struct LocalInferenceModelDownloadCancelRequest {
     pub model_id: String,
 }
 
+/// Delete a downloaded local inference model.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/delete",
@@ -2059,6 +2075,7 @@ pub struct LocalInferenceModelDeleteRequest {
     pub model_id: String,
 }
 
+/// Evict a local inference model from memory.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/evict",
@@ -2069,6 +2086,7 @@ pub struct LocalInferenceModelEvictRequest {
     pub model_id: String,
 }
 
+/// Read the sampling settings for a local inference model.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/settings/read",
@@ -2085,6 +2103,7 @@ pub struct LocalInferenceModelSettingsReadResponse {
     pub settings: LocalInferenceModelSettingsDto,
 }
 
+/// Update the sampling settings for a local inference model.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/models/settings/update",
@@ -2102,6 +2121,7 @@ pub struct LocalInferenceModelSettingsUpdateResponse {
     pub settings: LocalInferenceModelSettingsDto,
 }
 
+/// Search Hugging Face for local inference models.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/huggingface/search",
@@ -2120,6 +2140,7 @@ pub struct LocalInferenceHuggingFaceSearchResponse {
     pub models: Vec<LocalInferenceHfModelInfoDto>,
 }
 
+/// List downloadable variants of a Hugging Face model repository.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/huggingface/repo/variants",
@@ -2141,6 +2162,7 @@ pub struct LocalInferenceHuggingFaceRepoVariantsResponse {
     pub downloaded_variants: Vec<String>,
 }
 
+/// List built-in chat templates for local inference.
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema, JsonRpcRequest)]
 #[request(
     method = "_aibuddy/unstable/local-inference/chat-templates/builtin/list",

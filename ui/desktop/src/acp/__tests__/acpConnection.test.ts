@@ -37,7 +37,7 @@ const transport = vi.hoisted(() => ({
   createWebSocketStream: vi.fn(),
 }));
 
-vi.mock('@aibuddy/aibuddy-sdk', () => ({
+vi.mock('@aibuddy/aibuddy-acp-client', () => ({
   DEFAULT_AIBUDDY_MCP_HOST_CAPABILITIES: {},
 }));
 

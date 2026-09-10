@@ -1,4 +1,4 @@
-import { zRecipeDto } from '@aibuddy/aibuddy-sdk';
+import { zRecipeDto } from '@aibuddy/aibuddy-acp-client';
 import { z } from 'zod';
 
 type JsonSchema = Record<string, unknown>;

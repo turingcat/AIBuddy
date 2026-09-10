@@ -1,4 +1,4 @@
-import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-sdk';
+import type { AIBuddySessionNotification_unstable } from '@aibuddy/aibuddy-acp-client';
 import type { RequestPermissionRequest, SessionNotification } from '@agentclientprotocol/sdk';
 import { describe, expect, it } from 'vitest';
 import { getToolResponses, type Message, type NotificationEvent } from '../../types/message';
