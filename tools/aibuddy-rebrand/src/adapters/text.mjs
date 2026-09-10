@@ -50,7 +50,7 @@ function isExcludedPath(path) {
   return TEXT_POLICY.excludedPathPrefixes.some((prefix) => pathMatchesPrefix(path, prefix));
 }
 
-function isPreservedPath(path) {
+export function isPreservedPath(path) {
   return (
     exactPath(path, TEXT_POLICY.preserve.exactPaths) ||
     TEXT_POLICY.preserve.pathPrefixes.some((prefix) => pathMatchesPrefix(path, prefix))

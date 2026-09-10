@@ -251,6 +251,7 @@ function normalizeAdapterResult(path, text, result) {
 }
 
 function adapterFor(path, textAdapter) {
+  if (textAdapter?.isPreservedPath?.(path)) return 'text';
   if (/\.(?:ya?ml)\.disabled$/u.test(path)) return 'yaml';
   if (path === 'Cargo.lock' || path.endsWith('/Cargo.lock')) return 'toml';
   if (textAdapter?.isMcpReplayPath?.(path)) return 'text';

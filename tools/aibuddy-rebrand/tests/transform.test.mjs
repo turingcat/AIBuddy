@@ -1114,3 +1114,13 @@ test('the checked-in production policy participates in the transform identity', 
   const policy = JSON.parse(readFileSync(new URL('../production-policy.json', import.meta.url), 'utf8'));
   assert.equal(policy.version, 1);
 });
+
+
+test('preserves Whisper vocabulary bytes while mapping the containing crate path', async () => {
+  const source = '{"model":{"vocab":{"Ġgoose":24717,"Ġgoosebumps":48305},"merges":["Ġgoose bumps"]}}\n';
+  const result = await transformSnapshot([
+    entry('crates/heybuddy/src/dictation/whisper_data/tokens.json', source),
+  ]);
+  assert.equal(result.report.complete, true);
+  assert.equal(text(result, 'crates/aibuddy/src/dictation/whisper_data/tokens.json'), source);
+});

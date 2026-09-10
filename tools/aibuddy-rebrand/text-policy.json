@@ -67,7 +67,10 @@
       "ui/goose-binary/README.md",
       "ui/sdk/README.md",
       "ui/text/README.md",
-      "documentation/static/files/thoughts/plans/2025-12-23-remove-tool-selection-strategy.raw"
+      "documentation/static/files/thoughts/plans/2025-12-23-remove-tool-selection-strategy.raw",
+      "ui/desktop/src/platform/windows/bin/README.md",
+      "ui/goose-acp-client/README.md",
+      "ui/goose-acp/README.md"
     ]
   },
   "scripts": {
@@ -132,7 +135,14 @@
       "ui/desktop/src/bin/uvx",
       "ui/scripts/publish.sh",
       "workflow_recipes/release_risk_check/release_risk_report.py",
-      "workflow_recipes/release_risk_check/run.sh"
+      "workflow_recipes/release_risk_check/run.sh",
+      ".github/scripts/test_check_win7_pe.py",
+      ".github/scripts/test_windows_cos_publish.py",
+      ".github/scripts/windows_cos_publish.py",
+      "crates/goose-sdk/scripts/gdk-release.py",
+      "documentation/scripts/generate-released-acp-docs.sh",
+      "ui/scripts/prepare-npm-packages.sh",
+      "ui/scripts/publish-npm-packages.sh"
     ]
   },
   "literalPaths": [
@@ -213,13 +223,14 @@
   "preserve": {
     "exactPaths": [
       "crates/goose-sdk/maven/gradlew",
-      "ui/desktop/src/platform/windows/bin/npx.cmd"
+      "ui/desktop/src/platform/windows/bin/npx.cmd",
+      "crates/goose/src/dictation/whisper_data/tokens.json"
     ],
     "pathPrefixes": [
       "evals/harbor/"
     ],
     "legalLinePatterns": [
-      "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?copyright(?:\\s+\\(c\\))?\\s+\\d{4}(?:\\s*[-\u2013]\\s*\\d{4})?\\b",
+      "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?copyright(?:\\s+\\(c\\))?\\s+\\d{4}(?:\\s*[-–]\\s*\\d{4})?\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?spdx-license-identifier\\s*:\\s*[a-z0-9.+-]+\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?licensed under\\s+(?:the\\s+)?(?:apache|mit|bsd(?:[- ]\\d+(?:\\.\\d+)?)?|mozilla public) license\\b",
       "^\\s*(?:(?:[#;]|//|/\\*|\\*|<!--)\\s*)?all rights reserved\\b"

@@ -358,3 +358,26 @@ test('transforms product names inside percent-encoded deep-link arguments', () =
     '[Launch](goose://extension?arg=https%3A%2F%2Fexample%2Faibuddy%2F&id=aibuddy-docs)\n',
   );
 });
+
+
+test('converts v1.50 release scripts and package documentation within reviewed paths', () => {
+  const paths = [
+    '.github/scripts/test_check_win7_pe.py',
+    '.github/scripts/test_windows_cos_publish.py',
+    '.github/scripts/windows_cos_publish.py',
+    'crates/heybuddy-sdk/scripts/gdk-release.py',
+    'documentation/scripts/generate-released-acp-docs.sh',
+    'ui/scripts/prepare-npm-packages.sh',
+    'ui/scripts/publish-npm-packages.sh',
+    'ui/desktop/src/platform/windows/bin/README.md',
+    'ui/heybuddy-acp-client/README.md',
+    'ui/heybuddy-acp/README.md',
+  ];
+  for (const path of paths) {
+    const source = 'HeyBuddy heybuddy HEYBUDDY @heybuddy/heybuddy-acp https://github.com/aaif-goose/goose\n';
+    assert.equal(supportsText(path), true, path);
+    const result = transformText({ path, text: source, policy });
+    assert.equal(output(result, source), 'AIBuddy aibuddy AIBUDDY @aibuddy/aibuddy-acp https://github.com/aaif-goose/goose\n', path);
+  }
+  assert.equal(supportsText('ui/scripts/unreviewed-release.sh'), false);
+});
