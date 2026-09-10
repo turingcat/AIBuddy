@@ -25,23 +25,23 @@ function makeRuntimeAssets(resourcesDir, omitAsset) {
   }
 }
 
-function makeDarwinTree(root, { omitGoose = false, omitAsset = null } = {}) {
+function makeDarwinTree(root, { omitAIBuddy = false, omitAsset = null } = {}) {
   const contents = path.join(root, `${brand.productName}.app`, 'Contents');
   fs.mkdirSync(path.join(contents, 'MacOS'), { recursive: true });
   fs.writeFileSync(path.join(contents, 'MacOS', brand.executableName), '');
   fs.writeFileSync(path.join(contents, 'Info.plist'), '');
-  if (!omitGoose) {
+  if (!omitAIBuddy) {
     fs.mkdirSync(path.join(contents, 'Resources', 'bin'), { recursive: true });
-    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'goose'), '');
+    fs.writeFileSync(path.join(contents, 'Resources', 'bin', 'aibuddy'), '');
   }
   makeRuntimeAssets(path.join(contents, 'Resources'), omitAsset);
   return root;
 }
 
-function makeWin32Tree(root, { omitGoose = false, omitAsset = null } = {}) {
+function makeWin32Tree(root, { omitAIBuddy = false, omitAsset = null } = {}) {
   fs.mkdirSync(path.join(root, 'resources', 'bin'), { recursive: true });
   fs.writeFileSync(path.join(root, `${brand.executableName}.exe`), '');
-  if (!omitGoose) fs.writeFileSync(path.join(root, 'resources', 'bin', 'goose.exe'), '');
+  if (!omitAIBuddy) fs.writeFileSync(path.join(root, 'resources', 'bin', 'aibuddy.exe'), '');
   makeRuntimeAssets(path.join(root, 'resources'), omitAsset);
   return root;
 }
@@ -79,16 +79,16 @@ describe('verifyPackageTree', () => {
 
   it('rejects a tree named for another product', () => {
     expect(
-      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('HeyBuddy-darwin-arm64')))
+      verifyPackageTree(brand, 'darwin', makeDarwinTree(tempRoot('OtherApp-darwin-arm64')))
     ).toEqual([expect.stringContaining('AIBuddy-darwin-arm64')]);
   });
 
   it.each([
-    ['darwin', makeDarwinTree, 'goose'],
-    ['win32', makeWin32Tree, 'goose.exe'],
+    ['darwin', makeDarwinTree, 'aibuddy'],
+    ['win32', makeWin32Tree, 'aibuddy.exe'],
   ])('rejects a %s package without the embedded CLI', (platform, make, binary) => {
     const name = platform === 'darwin' ? 'AIBuddy-darwin-arm64' : 'AIBuddy-win32-x64';
-    expect(verifyPackageTree(brand, platform, make(tempRoot(name), { omitGoose: true }))).toEqual([
+    expect(verifyPackageTree(brand, platform, make(tempRoot(name), { omitAIBuddy: true }))).toEqual([
       expect.stringContaining(binary),
     ]);
   });
@@ -120,11 +120,11 @@ describe('verifyInfoPlist', () => {
     expect(
       verifyInfoPlist(brand, {
         ...plistFor(),
-        CFBundleIdentifier: 'com.electron.heybuddy',
+        CFBundleIdentifier: 'com.electron.otherapp',
         CFBundleURLTypes: [{}],
       })
     ).toEqual([
-      expect.stringContaining('com.electron.heybuddy'),
+      expect.stringContaining('com.electron.otherapp'),
       expect.stringContaining('aibuddy'),
       expect.stringContaining('goose'),
     ]);

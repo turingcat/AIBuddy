@@ -40,7 +40,7 @@ const i18n = defineMessages({
   },
   workingDirPlaceholder: {
     id: 'externalBackendSection.workingDirPlaceholder',
-    defaultMessage: '/home/goose/workspace',
+    defaultMessage: '/home/aibuddy/workspace',
   },
   workingDirHelp: {
     id: 'externalBackendSection.workingDirHelp',
@@ -57,7 +57,7 @@ const i18n = defineMessages({
   },
   secretKeyHelp: {
     id: 'externalBackendSection.secretKeyHelp',
-    defaultMessage: 'The secret key configured on the external backend (GOOSE_SERVER__SECRET_KEY).',
+    defaultMessage: 'The secret key configured on the external backend (AIBUDDY_SERVER__SECRET_KEY).',
   },
   certFingerprint: {
     id: 'externalBackendSection.certFingerprint',
@@ -98,14 +98,14 @@ const i18n = defineMessages({
 
 export default function ExternalBackendSection() {
   const intl = useIntl();
-  const [config, setConfig] = useState<ExternalBackendConfig>(defaultSettings.externalGoosed);
+  const [config, setConfig] = useState<ExternalBackendConfig>(defaultSettings.externalAIBuddyd);
   const [isSaving, setIsSaving] = useState(false);
   const [urlError, setUrlError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const externalGoosed = await window.electron.getSetting('externalGoosed');
-      setConfig(externalGoosed);
+      const externalAIBuddyd = await window.electron.getSetting('externalAIBuddyd');
+      setConfig(externalAIBuddyd);
     };
     loadSettings();
   }, []);
@@ -143,7 +143,7 @@ export default function ExternalBackendSection() {
   const saveConfig = async (newConfig: ExternalBackendConfig): Promise<void> => {
     setIsSaving(true);
     try {
-      await window.electron.setSetting('externalGoosed', newConfig);
+      await window.electron.setSetting('externalAIBuddyd', newConfig);
     } catch (error) {
       console.error('Failed to save external backend settings:', error);
     } finally {

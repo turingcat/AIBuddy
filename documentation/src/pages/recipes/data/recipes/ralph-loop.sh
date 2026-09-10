@@ -14,13 +14,13 @@
 #   RALPH_REVIEWER_MODEL  - Model for review phase (prompts if not set)
 #   RALPH_REVIEWER_PROVIDER - Provider for review phase (prompts if not set)
 #   RALPH_MAX_ITERATIONS  - Max iterations (default: 10)
-#   RALPH_RECIPE_DIR      - Recipe directory (default: ~/.config/goose/recipes)
+#   RALPH_RECIPE_DIR      - Recipe directory (default: ~/.config/aibuddy/recipes)
 #
 
 set -e
 
 INPUT="$1"
-RECIPE_DIR="${RALPH_RECIPE_DIR:-$HOME/.config/goose/recipes}"
+RECIPE_DIR="${RALPH_RECIPE_DIR:-$HOME/.config/aibuddy/recipes}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -37,8 +37,8 @@ fi
 
 # Function to prompt for settings
 prompt_for_settings() {
-    local default_model="${GOOSE_MODEL:-}"
-    local default_provider="${GOOSE_PROVIDER:-}"
+    local default_model="${AIBUDDY_MODEL:-}"
+    local default_provider="${AIBUDDY_PROVIDER:-}"
     
     # Worker model
     if [ -n "$default_model" ]; then
@@ -131,7 +131,7 @@ while true; do
     fi
 done
 
-STATE_DIR=".goose/ralph"
+STATE_DIR=".aibuddy/ralph"
 mkdir -p "$STATE_DIR"
 
 if [ -f "$INPUT" ]; then
@@ -168,7 +168,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
     echo ""
     echo -e "${YELLOW}▶ WORK PHASE${NC}"
     
-    GOOSE_PROVIDER="$WORKER_PROVIDER" GOOSE_MODEL="$WORKER_MODEL" goose run --recipe "$RECIPE_DIR/ralph-work.yaml" || {
+    AIBUDDY_PROVIDER="$WORKER_PROVIDER" AIBUDDY_MODEL="$WORKER_MODEL" aibuddy run --recipe "$RECIPE_DIR/ralph-work.yaml" || {
         echo -e "${RED}✗ WORK PHASE FAILED${NC}"
         exit 1
     }
@@ -183,7 +183,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
     echo ""
     echo -e "${YELLOW}▶ REVIEW PHASE${NC}"
     
-    GOOSE_PROVIDER="$REVIEWER_PROVIDER" GOOSE_MODEL="$REVIEWER_MODEL" goose run --recipe "$RECIPE_DIR/ralph-review.yaml" || {
+    AIBUDDY_PROVIDER="$REVIEWER_PROVIDER" AIBUDDY_MODEL="$REVIEWER_MODEL" aibuddy run --recipe "$RECIPE_DIR/ralph-review.yaml" || {
         echo -e "${RED}✗ REVIEW PHASE FAILED${NC}"
         exit 1
     }

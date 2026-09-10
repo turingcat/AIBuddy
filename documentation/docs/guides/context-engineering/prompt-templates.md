@@ -2,42 +2,42 @@
 sidebar_position: 6
 title: Customizing Prompt Templates
 sidebar_label: Prompt Templates
-description: Learn how to customize the prompt templates that define goose's behavior in different situations
+description: Learn how to customize the prompt templates that define aibuddy's behavior in different situations
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import { PanelLeft } from 'lucide-react';
 
-goose comes with built-in prompt templates that guide its behavior in different situations. You can edit these templates to customize how goose responds, creates plans, decides what to save during compaction, and more.
+aibuddy comes with built-in prompt templates that guide its behavior in different situations. You can edit these templates to customize how aibuddy responds, creates plans, decides what to save during compaction, and more.
 
 ## How It Works
 
-goose's default prompt templates are defined in the codebase and embedded in the application. You can override any default by creating a custom version in your local config directory (either directly or via goose Desktop).
+aibuddy's default prompt templates are defined in the codebase and embedded in the application. You can override any default by creating a custom version in your local config directory (either directly or via aibuddy Desktop).
 
 When you customize a template:
 
-- Your customizations persist across goose updates
+- Your customizations persist across aibuddy updates
 - Changes to defaults in the codebase don't affect your customized templates
 - You can reset to default templates at any time
 - Changes take effect in new sessions
 
 Your changes can range from major updates to minor adjustments such as:
-- Edit `system.md` to have goose respond in Dutch by adding an instruction to "Reply in Dutch"
+- Edit `system.md` to have aibuddy respond in Dutch by adding an instruction to "Reply in Dutch"
 - Edit `plan.md` to add time estimates by adding instructions to "Include an estimated time for each step (e.g., "~5 min", "~30 min", "~2 hours")."
 
 See [Template Variable Syntax](#template-variable-syntax) for important information about modifying template variables.
 
 :::info Related Configuration
-Other goose settings and features can also affect behavior or provide context, such as [config files](/docs/guides/config-files), [.goosehints](/docs/guides/context-engineering/using-goosehints), and [skills](/docs/guides/context-engineering/using-skills).
+Other aibuddy settings and features can also affect behavior or provide context, such as [config files](/docs/guides/config-files), [.aibuddyhints](/docs/guides/context-engineering/using-aibuddyhints), and [skills](/docs/guides/context-engineering/using-skills).
 :::
 
 ## Managing Prompt Templates
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
   
-  goose Desktop users can manage templates from the `Settings` page.
+  aibuddy Desktop users can manage templates from the `Settings` page.
 
   **To customize a template:**
 
@@ -61,14 +61,14 @@ Other goose settings and features can also affect behavior or provide context, s
   Or click `Reset All` at the top of the tab to delete all of your local template files. 
 
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="aibuddy CLI">
 
-  goose CLI users can edit template files directly in the file system.
+  aibuddy CLI users can edit template files directly in the file system.
 
   Custom templates are stored in:
 
-  - **macOS/Linux:** `~/.config/goose/prompts/`
-  - **Windows:** `%APPDATA%\Block\goose\config\prompts\`
+  - **macOS/Linux:** `~/.config/aibuddy/prompts/`
+  - **Windows:** `%APPDATA%\Block\aibuddy\config\prompts\`
 
   **To customize a template:**
 
@@ -90,7 +90,7 @@ The following default templates can be customized.
 
 | Template | Description | Applies To |
 |----------|-------------|------------|
-| [system.md](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/prompts/system.md) | General system prompt defining goose's role, capabilities, and response format | Desktop and CLI |
+| [system.md](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/prompts/system.md) | General system prompt defining aibuddy's role, capabilities, and response format | Desktop and CLI |
 | [apps_create.md](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/prompts/apps_create.md) | Prompt for generating new standalone apps (in development) | Desktop only |
 | [apps_iterate.md](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/prompts/apps_iterate.md) | Prompt for updating existing standalone apps (in development) | Desktop only |
 | [compaction.md](https://github.com/aaif-goose/goose/blob/main/crates/goose/src/prompts/compaction.md) | Prompt for summarizing conversation history when context limits are reached | Desktop and CLI |

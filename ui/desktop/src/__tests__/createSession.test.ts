@@ -3,8 +3,8 @@ import { createSession } from '../sessions';
 import type { ExtensionConfig } from '../types/extensions';
 import type { Session } from '../types/session';
 import type { FixedExtensionEntry } from '../components/ConfigContext';
-import type { GooseExtension, GooseExtensionEntry } from '@aaif/goose-sdk';
-import { getConfiguredGooseExtensions } from '../acp/extensions';
+import type { AIBuddyExtension, AIBuddyExtensionEntry } from '@aibuddy/aibuddy-acp-client';
+import { getConfiguredAIBuddyExtensions } from '../acp/extensions';
 import { acpChatSessionController } from '../acp/chatSessionController';
 import { beginConfiguredRecipeParameterScope } from '../acp/recipeParamRequests';
 import { getAcpFeatureCapabilities } from '../acp/capabilities';
@@ -13,7 +13,7 @@ vi.mock('../acp/extensions', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../acp/extensions')>();
   return {
     ...actual,
-    getConfiguredGooseExtensions: vi.fn(),
+    getConfiguredAIBuddyExtensions: vi.fn(),
   };
 });
 
@@ -52,18 +52,18 @@ const configuredExtension = (name: string, enabled: boolean): FixedExtensionEntr
   enabled,
 });
 
-const gooseExtension = (name: string): GooseExtension => ({
+const aibuddyExtension = (name: string): AIBuddyExtension => ({
   type: 'builtin',
   name,
   description: `${name} extension`,
 });
 
-const gooseExtensionEntry = (name: string): GooseExtensionEntry => ({
-  extension: gooseExtension(name),
+const aibuddyExtensionEntry = (name: string): AIBuddyExtensionEntry => ({
+  extension: aibuddyExtension(name),
   enabled: true,
 });
 
-const mockedGetConfiguredGooseExtensions = vi.mocked(getConfiguredGooseExtensions);
+const mockedGetConfiguredAIBuddyExtensions = vi.mocked(getConfiguredAIBuddyExtensions);
 const mockedCreateAcpSession = vi.mocked(acpChatSessionController.createSession);
 const mockedBeginConfiguredRecipeParameterScope = vi.mocked(beginConfiguredRecipeParameterScope);
 const mockedGetAcpFeatureCapabilities = vi.mocked(getAcpFeatureCapabilities);
@@ -71,10 +71,10 @@ const finishConfiguredRecipeParameterScope = vi.fn();
 
 describe('createSession ACP session extensions', () => {
   beforeEach(() => {
-    mockedGetConfiguredGooseExtensions.mockReset();
-    mockedGetConfiguredGooseExtensions.mockResolvedValue([
-      gooseExtensionEntry('developer'),
-      gooseExtensionEntry('memory'),
+    mockedGetConfiguredAIBuddyExtensions.mockReset();
+    mockedGetConfiguredAIBuddyExtensions.mockResolvedValue([
+      aibuddyExtensionEntry('developer'),
+      aibuddyExtensionEntry('memory'),
     ]);
     mockedCreateAcpSession.mockReset();
     mockedCreateAcpSession.mockResolvedValue(testSession);
@@ -96,8 +96,8 @@ describe('createSession ACP session extensions', () => {
       extensionConfigs: [extensionConfig('developer')],
     });
 
-    expect(mockedGetConfiguredGooseExtensions).toHaveBeenCalledOnce();
-    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [gooseExtension('developer')], {
+    expect(mockedGetConfiguredAIBuddyExtensions).toHaveBeenCalledOnce();
+    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [aibuddyExtension('developer')], {
       recipeDeeplink: undefined,
       recipeId: undefined,
       recipeParameterScopeId: undefined,
@@ -110,8 +110,8 @@ describe('createSession ACP session extensions', () => {
       allExtensions: [configuredExtension('developer', true), configuredExtension('memory', false)],
     });
 
-    expect(mockedGetConfiguredGooseExtensions).toHaveBeenCalledOnce();
-    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [gooseExtension('developer')], {
+    expect(mockedGetConfiguredAIBuddyExtensions).toHaveBeenCalledOnce();
+    expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [aibuddyExtension('developer')], {
       recipeDeeplink: undefined,
       recipeId: undefined,
       recipeParameterScopeId: undefined,
@@ -123,7 +123,7 @@ describe('createSession ACP session extensions', () => {
       allExtensions: [configuredExtension('developer', false)],
     });
 
-    expect(mockedGetConfiguredGooseExtensions).not.toHaveBeenCalled();
+    expect(mockedGetConfiguredAIBuddyExtensions).not.toHaveBeenCalled();
     expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [], {
       recipeDeeplink: undefined,
       recipeId: undefined,
@@ -132,11 +132,11 @@ describe('createSession ACP session extensions', () => {
   });
 
   it('scopes startup parameters to recipe deeplink session creation', async () => {
-    await createSession('/tmp', { recipeDeeplink: 'goose://recipe?url=example' });
+    await createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' });
 
     expect(mockedBeginConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
     expect(mockedCreateAcpSession).toHaveBeenCalledWith('/tmp', [], {
-      recipeDeeplink: 'goose://recipe?url=example',
+      recipeDeeplink: 'aibuddy://recipe?url=example',
       recipeId: undefined,
       recipeParameterScopeId: 'scope-1',
     });
@@ -147,7 +147,7 @@ describe('createSession ACP session extensions', () => {
     mockedCreateAcpSession.mockRejectedValueOnce(new Error('session creation failed'));
 
     await expect(
-      createSession('/tmp', { recipeDeeplink: 'goose://recipe?url=example' })
+      createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' })
     ).rejects.toThrow('session creation failed');
 
     expect(mockedBeginConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
@@ -155,11 +155,11 @@ describe('createSession ACP session extensions', () => {
   });
 
   it('finishes the deeplink parameter scope when extension lookup fails', async () => {
-    mockedGetConfiguredGooseExtensions.mockRejectedValueOnce(new Error('extension lookup failed'));
+    mockedGetConfiguredAIBuddyExtensions.mockRejectedValueOnce(new Error('extension lookup failed'));
 
     await expect(
       createSession('/tmp', {
-        recipeDeeplink: 'goose://recipe?url=example',
+        recipeDeeplink: 'aibuddy://recipe?url=example',
         extensionConfigs: [extensionConfig('developer')],
       })
     ).rejects.toThrow('extension lookup failed');
@@ -169,16 +169,16 @@ describe('createSession ACP session extensions', () => {
     expect(finishConfiguredRecipeParameterScope).toHaveBeenCalledOnce();
   });
 
-  it('reports incompatible Goose servers before sending scoped parameters', async () => {
+  it('reports incompatible AIBuddy servers before sending scoped parameters', async () => {
     mockedGetAcpFeatureCapabilities.mockResolvedValueOnce({
       localInference: false,
       recipeParameterScopes: false,
     });
 
     await expect(
-      createSession('/tmp', { recipeDeeplink: 'goose://recipe?url=example' })
+      createSession('/tmp', { recipeDeeplink: 'aibuddy://recipe?url=example' })
     ).rejects.toThrow(
-      'The connected Goose server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
+      'The connected AIBuddy server does not support securely scoped deeplink recipe parameters. Update the server and try again.'
     );
 
     expect(mockedCreateAcpSession).not.toHaveBeenCalled();

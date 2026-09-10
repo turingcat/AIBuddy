@@ -13,9 +13,9 @@ These standards apply to all code changes in AIBuddy.
 
 ### Upstream Synchronization
 
-Normal AIBuddy updates must use a synchronization branch that fetches and merges `upstream/shared`; never merge `upstream/main` directly. The shared branch is limited to official Goose updates and product-neutral engine, desktop, localization, and tooling work. AIBuddy owns its product name and assets, authentication and service configuration, provider credentials and entitlements, data migration, and user-visible identity.
+Normal AIBuddy updates must use a synchronization branch that fetches and merges `upstream/shared`; never merge `upstream/main` directly. The shared branch is limited to official AIBuddy updates and product-neutral engine, desktop, localization, and tooling work. AIBuddy owns its product name and assets, authentication and service configuration, provider credentials and entitlements, data migration, and user-visible identity.
 
-After a shared merge, run `cd ui/desktop && pnpm run check:product-boundary` before the normal review and verification workflow. Split mixed changes in HeyBuddy before they reach `shared`; exceptional cherry-picks from `upstream/main` require the same product-boundary review.
+After a shared merge, run `cd ui/desktop && pnpm run check:product-boundary` before the normal review and verification workflow. Split mixed changes in AIBuddy before they reach `shared`; exceptional cherry-picks from `upstream/main` require the same product-boundary review.
 
 ### Testing
 
@@ -33,7 +33,7 @@ When fixing a bug:
 
 ## Contribution Workflow
 
-The issue is the source of truth for work intended for an upstream pull request. Track issue status on the [Goose Issues board](https://github.com/orgs/aaif-goose/projects/1).
+The issue is the source of truth for work intended for an upstream pull request. Track issue status on the [AIBuddy Issues board](https://github.com/orgs/aaif-goose/projects/1).
 
 - Before implementing an issue for a pull request, confirm that it is on the board with Status **Ready**.
 - Do not implement issues in **Inbox**, **Needs info**, or **Accepted / design**. Help resolve the issue discussion instead.
@@ -56,7 +56,7 @@ Write issue and pull request comments for humans, not as exhaustive work logs.
 
 ## Agent Loop Migration
 
-We are replacing the legacy agent loop in `crates/goose/src/agents/agent.rs` with the state machine in `crates/goose/src/agents/state_machine/`. The state-machine path is enabled with `GOOSE_STATE_MACHINE=1`.
+We are replacing the legacy agent loop in `crates/aibuddy/src/agents/agent.rs` with the state machine in `crates/aibuddy/src/agents/state_machine/`. The state-machine path is enabled with `AIBUDDY_STATE_MACHINE=1`.
 
 Until the migration is complete, changes to agent-loop behavior must be implemented and tested in both paths. When reviewing code, check whether a change to either path also applies to the other and flag missing parity.
 
@@ -78,8 +78,8 @@ just release-binary           # release binary
 ### Test
 ```bash
 cargo test                   # all tests
-cargo test -p goose          # specific crate
-cargo test --package goose --test mcp_integration_test
+cargo test -p aibuddy          # specific crate
+cargo test --package aibuddy --test mcp_integration_test
 just record-mcp-tests        # record MCP
 ```
 
@@ -98,15 +98,9 @@ cd ui/desktop && pnpm test   # test UI
 
 ## Structure
 ```
-crates/
-├── goose              # core logic
-├── goose-acp-macros   # ACP proc macros
-├── goose-cli          # CLI entry
-├── goose-mcp          # MCP extensions
-├── goose-test         # test utilities
-└── goose-test-support # test helpers
-
-ui/desktop/            # Electron app
+crates/       # Rust workspace members — see root Cargo.toml (`members = ["crates/*"]`)
+ui/desktop/   # Electron app
+ui/text/      # deprecated ACP TUI (see ui/text/README.md)
 ```
 
 ## Development Loop
@@ -125,11 +119,11 @@ ui/desktop/            # Electron app
 
 ## Rules
 
-- Test: Prefer tests/ folder, e.g. crates/goose/tests/
-- Test: When adding features, update goose-self-test.yaml, rebuild, then run `goose run --recipe goose-self-test.yaml` to validate
+- Test: Prefer tests/ folder, e.g. crates/aibuddy/tests/
+- Test: When adding features, update aibuddy-self-test.yaml, rebuild, then run `aibuddy run --recipe aibuddy-self-test.yaml` to validate
 - Error: Use anyhow::Result
 - Provider: Implement Provider trait see providers/base.rs
-- MCP: Extensions in crates/goose-mcp/
+- MCP: Extensions in crates/aibuddy-mcp/
 - UI Desktop: Use ACP SDK types or local `src/types/*` types. Do not import generated OpenAPI types/client code from `ui/desktop/src/api`
 
 ## Code Quality
@@ -154,6 +148,6 @@ ui/desktop/            # Electron app
 - Never: Overwrite a live binary in place (e.g. `cp`/`fs.copyFileSync` onto an existing executable) - unlink or atomic-rename the destination first, otherwise macOS SIGKILLs running processes with "Code Signature Invalid"
 
 ## Entry Points
-- CLI: crates/goose-cli/src/main.rs
+- CLI: crates/aibuddy-cli/src/main.rs
 - UI: ui/desktop/src/main.ts
-- Agent: crates/goose/src/agents/agent.rs
+- Agent: crates/aibuddy/src/agents/agent.rs

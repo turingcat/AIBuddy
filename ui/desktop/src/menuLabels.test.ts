@@ -3,24 +3,24 @@ import { translateMenuLabel } from './menuLabels';
 
 describe('translateMenuLabel', () => {
   it('translates plain labels for Simplified Chinese', () => {
-    expect(translateMenuLabel('File', 'zh-CN', 'HeyBuddy')).toBe('文件');
+    expect(translateMenuLabel('File', 'zh-CN', 'AIBuddy')).toBe('文件');
   });
 
   it.each(['en', 'zh-TW', 'zh-Hant', 'ja'])('leaves labels untouched for %s', (locale) => {
-    expect(translateMenuLabel('File', locale, 'HeyBuddy')).toBe('File');
+    expect(translateMenuLabel('File', locale, 'AIBuddy')).toBe('File');
   });
 
   it('accepts POSIX-style locale tags', () => {
-    expect(translateMenuLabel('File', 'zh_CN', 'HeyBuddy')).toBe('文件');
+    expect(translateMenuLabel('File', 'zh_CN', 'AIBuddy')).toBe('文件');
   });
 
   it('falls back to the original label when untranslated', () => {
-    expect(translateMenuLabel('Nonexistent', 'zh-CN', 'HeyBuddy')).toBe('Nonexistent');
+    expect(translateMenuLabel('Nonexistent', 'zh-CN', 'AIBuddy')).toBe('Nonexistent');
   });
 
   // Electron generates role labels like "Hide <productName>" from the bundle
   // name, so the dictionary is keyed on {app} and must match either edition.
-  describe.each(['HeyBuddy', 'AIBuddy'])('for the %s product name', (appName) => {
+  describe.each(['AIBuddy', 'AIBuddy'])('for the %s product name', (appName) => {
     it('translates labels that embed the product name', () => {
       expect(translateMenuLabel(`Hide ${appName}`, 'zh-CN', appName)).toBe(`隐藏 ${appName}`);
       expect(translateMenuLabel('About {app}', 'zh-CN', appName)).toBe(`关于 ${appName}`);

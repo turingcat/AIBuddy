@@ -11,11 +11,11 @@ function initializeResponseWithMeta(meta?: unknown): Pick<InitializeResponse, 'a
 }
 
 describe('ACP capabilities', () => {
-  it('detects local inference support from Goose metadata', () => {
+  it('detects local inference support from AIBuddy metadata', () => {
     expect(
       hasLocalInferenceCapability(
         initializeResponseWithMeta({
-          goose: {
+          aibuddy: {
             localInference: {},
           },
         })
@@ -23,11 +23,11 @@ describe('ACP capabilities', () => {
     ).toBe(true);
   });
 
-  it('detects scoped recipe-parameter support from Goose metadata', () => {
+  it('detects scoped recipe-parameter support from AIBuddy metadata', () => {
     expect(
       hasRecipeParameterScopesCapability(
         initializeResponseWithMeta({
-          goose: {
+          aibuddy: {
             recipeParameterScopes: {},
           },
         })
@@ -38,10 +38,10 @@ describe('ACP capabilities', () => {
   it('treats missing or malformed scoped recipe-parameter metadata as unsupported', () => {
     expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta())).toBe(false);
     expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta({}))).toBe(false);
-    expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta({ goose: {} }))).toBe(
+    expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta({ aibuddy: {} }))).toBe(
       false
     );
-    expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta({ goose: true }))).toBe(
+    expect(hasRecipeParameterScopesCapability(initializeResponseWithMeta({ aibuddy: true }))).toBe(
       false
     );
   });
@@ -49,11 +49,11 @@ describe('ACP capabilities', () => {
   it('treats missing local inference metadata as unsupported', () => {
     expect(hasLocalInferenceCapability(initializeResponseWithMeta())).toBe(false);
     expect(hasLocalInferenceCapability(initializeResponseWithMeta({}))).toBe(false);
-    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ goose: {} }))).toBe(false);
+    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ aibuddy: {} }))).toBe(false);
   });
 
-  it('ignores malformed Goose metadata', () => {
-    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ goose: true }))).toBe(false);
-    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ goose: null }))).toBe(false);
+  it('ignores malformed AIBuddy metadata', () => {
+    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ aibuddy: true }))).toBe(false);
+    expect(hasLocalInferenceCapability(initializeResponseWithMeta({ aibuddy: null }))).toBe(false);
   });
 });

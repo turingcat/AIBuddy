@@ -1,6 +1,6 @@
 {
   "client_id": "https://goose-docs.ai/oauth/client-metadata.json",
-  "client_name": "goose",
+  "client_name": "aibuddy",
   "logo_uri": "https://goose-docs.ai/img/logo_light.png",
   "redirect_uris": [
     "http://127.0.0.1/oauth_callback",

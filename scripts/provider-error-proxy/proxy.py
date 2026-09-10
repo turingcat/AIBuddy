@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Provider Error Proxy - Simulates provider errors for testing Goose error handling.
+Provider Error Proxy - Simulates provider errors for testing AIBuddy error handling.
 
 This proxy intercepts HTTP traffic to AI providers and can inject errors interactively.
 It supports the major providers: OpenAI, Anthropic, Google, OpenRouter, Tetrate, and Databricks.
@@ -18,7 +18,7 @@ Interactive commands:
     u - Unknown server error (500)
     q - Quit
 
-To use with Goose, set the provider host environment variables:
+To use with AIBuddy, set the provider host environment variables:
     export OPENAI_HOST=http://localhost:8888
     export ANTHROPIC_HOST=http://localhost:8888
     # etc.
@@ -69,7 +69,7 @@ ALWAYS_FORWARD_PATHS = [
 # upstream 500), so injecting them into metadata traffic such as model listing
 # is meaningless. It is also actively harmful in count mode: a pre-flight
 # request would silently consume the error budget intended for a completion,
-# making "inject N errors" depend on goose's incidental call pattern rather
+# making "inject N errors" depend on aibuddy's incidental call pattern rather
 # than on the completions the test is actually exercising.
 COMPLETION_PATHS = [
     '/chat/completions',  # OpenAI and compatible
@@ -793,7 +793,7 @@ async def create_app(proxy: ErrorProxy) -> web.Application:
 
 def main():
     """Main entry point."""
-    parser = ArgumentParser(description='Provider Error Proxy for Goose testing')
+    parser = ArgumentParser(description='Provider Error Proxy for AIBuddy testing')
     parser.add_argument(
         '--port',
         type=int,
@@ -818,7 +818,7 @@ def main():
     print("=" * 60)
     print(f"Port: {args.port}")
     print()
-    print("To use with Goose, set these environment variables:")
+    print("To use with AIBuddy, set these environment variables:")
     print(f"  export OPENAI_HOST=http://localhost:{args.port}")
     print(f"  export ANTHROPIC_HOST=http://localhost:{args.port}")
     print(f"  export GOOGLE_HOST=http://localhost:{args.port}")

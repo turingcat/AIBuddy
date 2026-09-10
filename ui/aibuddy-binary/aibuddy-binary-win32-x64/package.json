@@ -1,0 +1,28 @@
+{
+  "name": "@aibuddy/aibuddy-binary-win32-x64",
+  "version": "1.0.6",
+  "description": "AIBuddy binary for Windows x64",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/turingcat/AIBuddy.git"
+  },
+  "keywords": [
+    "aibuddy",
+    "ai",
+    "agent",
+    "binary"
+  ],
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "bin": {
+    "aibuddy-binary-win32-x64": "./bin/aibuddy.exe"
+  },
+  "files": [
+    "bin/aibuddy.exe"
+  ]
+}

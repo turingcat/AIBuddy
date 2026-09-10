@@ -23,7 +23,7 @@ const REPOSITORY_CONTRACT_FILES = [
   '.github/workflows/publish-existing-release.yml',
   '.github/workflows/release-branches.yml',
   '.github/workflows/release.yml',
-  'crates/goose/src/agents/prompt_manager.rs',
+  'crates/aibuddy/src/agents/prompt_manager.rs',
   'scripts/test-release-workflows.rb',
   'scripts/test-supported-build-architectures.py',
 ];
@@ -152,8 +152,8 @@ function isAllowedViolation(relativeFile, pattern) {
 
 function isHeyBuddyProviderSelection(content) {
   return (
-    /(?:^|[\s{,;:])['"]?GOOSE_PROVIDER['"]?\s*(?::|=)\s*['"]?heybuddy\b['"]?/im.test(content) ||
-    /process\.env(?:\.GOOSE_PROVIDER|\[['"]GOOSE_PROVIDER['"]\])\s*=\s*['"]?heybuddy\b['"]?/i.test(
+    /(?:^|[\s{,;:])['"]?AIBUDDY_PROVIDER['"]?\s*(?::|=)\s*['"]?heybuddy\b['"]?/im.test(content) ||
+    /process\.env(?:\.AIBUDDY_PROVIDER|\[['"]AIBUDDY_PROVIDER['"]\])\s*=\s*['"]?heybuddy\b['"]?/i.test(
       content
     )
   );
@@ -256,8 +256,8 @@ function activeProductFiles(repositoryRoot) {
     path.join(repositoryRoot, 'ui', 'desktop', 'branding'),
     path.join(repositoryRoot, 'ui', 'desktop', 'announcements'),
     path.join(repositoryRoot, 'branding'),
-    path.join(repositoryRoot, 'crates', 'goose', 'src', 'prompts'),
-    path.join(repositoryRoot, 'crates', 'goose-providers'),
+    path.join(repositoryRoot, 'crates', 'aibuddy', 'src', 'prompts'),
+    path.join(repositoryRoot, 'crates', 'aibuddy-providers'),
   ];
 
   return [
@@ -282,7 +282,7 @@ function findProductBoundaryViolations(rootDir) {
         .filter(({ pattern }) => !isAllowedViolation(relativeFile, pattern))
         .map(({ pattern }) => ({ file: relativeFile, pattern }));
 
-      if (relativeFile === 'crates/goose-providers/src/declarative/definitions/heybuddy.json') {
+      if (relativeFile === 'crates/aibuddy-providers/src/declarative/definitions/heybuddy.json') {
         violations.push({ file: relativeFile, pattern: 'bundled heybuddy provider definition' });
       }
 

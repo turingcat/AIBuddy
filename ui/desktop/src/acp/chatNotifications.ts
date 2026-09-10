@@ -1,7 +1,7 @@
 import type {
-  GooseSessionNotification_unstable,
+  AIBuddySessionNotification_unstable,
   ProviderDeviceCodeNotification_unstable,
-} from '@aaif/goose-sdk';
+} from '@aibuddy/aibuddy-acp-client';
 import type { SessionNotification } from '@agentclientprotocol/sdk';
 import { AppEvents } from '../constants/events';
 import { maybeHandlePlatformEvent } from '../utils/platform_events';
@@ -46,16 +46,16 @@ function maybeHandleLivePlatformEvent(notification: SessionNotification): void {
   }
 }
 
-export function handleAcpGooseSessionNotification(
-  notification: GooseSessionNotification_unstable
+export function handleAcpAIBuddySessionNotification(
+  notification: AIBuddySessionNotification_unstable
 ): Promise<void> {
-  acpChatSessionActions.applyAcpGooseSessionNotification(notification);
+  acpChatSessionActions.applyAcpAIBuddySessionNotification(notification);
   return Promise.resolve();
 }
 
 export function handleAcpProviderDeviceCodeNotification(
   notification: ProviderDeviceCodeNotification_unstable
 ): Promise<void> {
-  window.dispatchEvent(new CustomEvent('goose:device-code', { detail: notification }));
+  window.dispatchEvent(new CustomEvent('aibuddy:device-code', { detail: notification }));
   return Promise.resolve();
 }

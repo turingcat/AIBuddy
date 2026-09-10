@@ -14,7 +14,7 @@ import {
 const tempDirectories: string[] = [];
 
 function makeTempDirectory(): string {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'goose-desktop-file-access-'));
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'aibuddy-desktop-file-access-'));
   tempDirectories.push(directory);
   return directory;
 }
@@ -27,16 +27,16 @@ afterEach(() => {
 });
 
 describe('DesktopFileAccess', () => {
-  it('reads .goosehints from the bound working directory', async () => {
+  it('reads .aibuddyhints from the bound working directory', async () => {
     const workingDirectory = makeTempDirectory();
-    fs.writeFileSync(path.join(workingDirectory, '.goosehints'), 'project guidance');
+    fs.writeFileSync(path.join(workingDirectory, '.aibuddyhints'), 'project guidance');
     const access = new DesktopFileAccess();
     await access.bindWindow(7, workingDirectory);
     const canonicalWorkingDirectory = fs.realpathSync(workingDirectory);
 
-    await expect(access.readGoosehints(7)).resolves.toEqual({
+    await expect(access.readAIBuddyhints(7)).resolves.toEqual({
       file: 'project guidance',
-      filePath: path.join(canonicalWorkingDirectory, '.goosehints'),
+      filePath: path.join(canonicalWorkingDirectory, '.aibuddyhints'),
       error: null,
       found: true,
     });
@@ -48,24 +48,24 @@ describe('DesktopFileAccess', () => {
     await access.bindWindow(7, workingDirectory);
     const canonicalWorkingDirectory = fs.realpathSync(workingDirectory);
 
-    await expect(access.readGoosehints(7)).resolves.toEqual({
+    await expect(access.readAIBuddyhints(7)).resolves.toEqual({
       file: '',
-      filePath: path.join(canonicalWorkingDirectory, '.goosehints'),
+      filePath: path.join(canonicalWorkingDirectory, '.aibuddyhints'),
       error: null,
       found: false,
     });
   });
 
-  it('creates and updates .goosehints in the bound working directory', async () => {
+  it('creates and updates .aibuddyhints in the bound working directory', async () => {
     const workingDirectory = makeTempDirectory();
     const access = new DesktopFileAccess();
     await access.bindWindow(7, workingDirectory);
-    const filePath = path.join(fs.realpathSync(workingDirectory), '.goosehints');
+    const filePath = path.join(fs.realpathSync(workingDirectory), '.aibuddyhints');
 
-    await expect(access.writeGoosehints(7, 'first guidance')).resolves.toBe(true);
+    await expect(access.writeAIBuddyhints(7, 'first guidance')).resolves.toBe(true);
     expect(fs.readFileSync(filePath, 'utf8')).toBe('first guidance');
 
-    await expect(access.writeGoosehints(7, 'updated guidance')).resolves.toBe(true);
+    await expect(access.writeAIBuddyhints(7, 'updated guidance')).resolves.toBe(true);
     expect(fs.readFileSync(filePath, 'utf8')).toBe('updated guidance');
   });
 
@@ -78,22 +78,22 @@ describe('DesktopFileAccess', () => {
       const replacementDirectory = path.join(root, 'replacement-project');
       fs.mkdirSync(workingDirectory);
       fs.mkdirSync(replacementDirectory);
-      fs.writeFileSync(path.join(workingDirectory, '.goosehints'), 'original guidance');
-      fs.writeFileSync(path.join(replacementDirectory, '.goosehints'), 'replacement guidance');
+      fs.writeFileSync(path.join(workingDirectory, '.aibuddyhints'), 'original guidance');
+      fs.writeFileSync(path.join(replacementDirectory, '.aibuddyhints'), 'replacement guidance');
       const access = new DesktopFileAccess();
       await access.bindWindow(7, workingDirectory);
 
       fs.renameSync(workingDirectory, originalDirectory);
       fs.symlinkSync(replacementDirectory, workingDirectory);
 
-      const result = await access.readGoosehints(7);
-      await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
+      const result = await access.readAIBuddyhints(7);
+      await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
       expect(result.found).toBe(false);
       expect(result.error).toContain('working directory changed');
-      expect(fs.readFileSync(path.join(originalDirectory, '.goosehints'), 'utf8')).toBe(
+      expect(fs.readFileSync(path.join(originalDirectory, '.aibuddyhints'), 'utf8')).toBe(
         'original guidance'
       );
-      expect(fs.readFileSync(path.join(replacementDirectory, '.goosehints'), 'utf8')).toBe(
+      expect(fs.readFileSync(path.join(replacementDirectory, '.aibuddyhints'), 'utf8')).toBe(
         'replacement guidance'
       );
     }
@@ -104,22 +104,22 @@ describe('DesktopFileAccess', () => {
     const workingDirectory = path.join(root, 'project');
     const originalDirectory = path.join(root, 'original-project');
     fs.mkdirSync(workingDirectory);
-    fs.writeFileSync(path.join(workingDirectory, '.goosehints'), 'original guidance');
+    fs.writeFileSync(path.join(workingDirectory, '.aibuddyhints'), 'original guidance');
     const access = new DesktopFileAccess();
     await access.bindWindow(7, workingDirectory);
 
     fs.renameSync(workingDirectory, originalDirectory);
     fs.mkdirSync(workingDirectory);
-    fs.writeFileSync(path.join(workingDirectory, '.goosehints'), 'replacement guidance');
+    fs.writeFileSync(path.join(workingDirectory, '.aibuddyhints'), 'replacement guidance');
 
-    const result = await access.readGoosehints(7);
-    await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
+    const result = await access.readAIBuddyhints(7);
+    await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
     expect(result.found).toBe(false);
     expect(result.error).toContain('working directory changed');
-    expect(fs.readFileSync(path.join(originalDirectory, '.goosehints'), 'utf8')).toBe(
+    expect(fs.readFileSync(path.join(originalDirectory, '.aibuddyhints'), 'utf8')).toBe(
       'original guidance'
     );
-    expect(fs.readFileSync(path.join(workingDirectory, '.goosehints'), 'utf8')).toBe(
+    expect(fs.readFileSync(path.join(workingDirectory, '.aibuddyhints'), 'utf8')).toBe(
       'replacement guidance'
     );
   });
@@ -129,28 +129,28 @@ describe('DesktopFileAccess', () => {
     const workingDirectory = path.join(root, 'project');
     const renamedDirectory = path.join(root, 'renamed-project');
     fs.mkdirSync(workingDirectory);
-    fs.writeFileSync(path.join(workingDirectory, '.goosehints'), 'original guidance');
+    fs.writeFileSync(path.join(workingDirectory, '.aibuddyhints'), 'original guidance');
     const access = new DesktopFileAccess();
     await access.bindWindow(7, workingDirectory);
 
     fs.renameSync(workingDirectory, renamedDirectory);
 
-    const result = await access.readGoosehints(7);
-    await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
+    const result = await access.readAIBuddyhints(7);
+    await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
     expect(result.found).toBe(false);
     expect(result.error).toContain('working directory changed');
-    expect(fs.readFileSync(path.join(renamedDirectory, '.goosehints'), 'utf8')).toBe(
+    expect(fs.readFileSync(path.join(renamedDirectory, '.aibuddyhints'), 'utf8')).toBe(
       'original guidance'
     );
   });
 
   it.skipIf(process.platform === 'win32')(
-    'rechecks the working directory before truncating an opened .goosehints',
+    'rechecks the working directory before truncating an opened .aibuddyhints',
     async () => {
       const root = makeTempDirectory();
       const workingDirectory = path.join(root, 'project');
       const renamedDirectory = path.join(root, 'renamed-project');
-      const filePath = path.join(workingDirectory, '.goosehints');
+      const filePath = path.join(workingDirectory, '.aibuddyhints');
       fs.mkdirSync(workingDirectory);
       fs.writeFileSync(filePath, 'original guidance');
       const access = new DesktopFileAccess();
@@ -160,26 +160,26 @@ describe('DesktopFileAccess', () => {
         fs.renameSync(workingDirectory, renamedDirectory);
         fs.mkdirSync(workingDirectory);
         fs.linkSync(
-          path.join(renamedDirectory, '.goosehints'),
-          path.join(workingDirectory, '.goosehints')
+          path.join(renamedDirectory, '.aibuddyhints'),
+          path.join(workingDirectory, '.aibuddyhints')
         );
         return open(...args);
       });
 
-      await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
-      expect(fs.readFileSync(path.join(renamedDirectory, '.goosehints'), 'utf8')).toBe(
+      await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
+      expect(fs.readFileSync(path.join(renamedDirectory, '.aibuddyhints'), 'utf8')).toBe(
         'original guidance'
       );
     }
   );
 
   it.skipIf(process.platform === 'win32')(
-    'rechecks the working directory before reading an opened .goosehints',
+    'rechecks the working directory before reading an opened .aibuddyhints',
     async () => {
       const root = makeTempDirectory();
       const workingDirectory = path.join(root, 'project');
       const renamedDirectory = path.join(root, 'renamed-project');
-      const filePath = path.join(workingDirectory, '.goosehints');
+      const filePath = path.join(workingDirectory, '.aibuddyhints');
       fs.mkdirSync(workingDirectory);
       fs.writeFileSync(filePath, 'original guidance');
       const access = new DesktopFileAccess();
@@ -189,13 +189,13 @@ describe('DesktopFileAccess', () => {
         fs.renameSync(workingDirectory, renamedDirectory);
         fs.mkdirSync(workingDirectory);
         fs.linkSync(
-          path.join(renamedDirectory, '.goosehints'),
-          path.join(workingDirectory, '.goosehints')
+          path.join(renamedDirectory, '.aibuddyhints'),
+          path.join(workingDirectory, '.aibuddyhints')
         );
         return open(...args);
       });
 
-      const result = await access.readGoosehints(7);
+      const result = await access.readAIBuddyhints(7);
 
       expect(result.found).toBe(false);
       expect(result.file).toBe('');
@@ -203,7 +203,7 @@ describe('DesktopFileAccess', () => {
     }
   );
 
-  it('rechecks the working directory before creating a missing .goosehints', async () => {
+  it('rechecks the working directory before creating a missing .aibuddyhints', async () => {
     const root = makeTempDirectory();
     const workingDirectory = path.join(root, 'project');
     const renamedDirectory = path.join(root, 'renamed-project');
@@ -215,7 +215,7 @@ describe('DesktopFileAccess', () => {
       try {
         return await lstat(...args);
       } catch (error) {
-        if (path.basename(args[0].toString()) === '.goosehints') {
+        if (path.basename(args[0].toString()) === '.aibuddyhints') {
           fs.renameSync(workingDirectory, renamedDirectory);
           fs.mkdirSync(workingDirectory);
         }
@@ -224,32 +224,32 @@ describe('DesktopFileAccess', () => {
     });
     const open = vi.spyOn(fsPromises, 'open');
 
-    await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
+    await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
     expect(open).not.toHaveBeenCalled();
-    expect(fs.existsSync(path.join(workingDirectory, '.goosehints'))).toBe(false);
+    expect(fs.existsSync(path.join(workingDirectory, '.aibuddyhints'))).toBe(false);
   });
 
   it('rejects a renderer without a bound working directory', async () => {
     const access = new DesktopFileAccess();
 
-    await expect(access.readGoosehints(99)).rejects.toThrow('not authorized');
-    await expect(access.writeGoosehints(99, 'project guidance')).rejects.toThrow('not authorized');
+    await expect(access.readAIBuddyhints(99)).rejects.toThrow('not authorized');
+    await expect(access.writeAIBuddyhints(99, 'project guidance')).rejects.toThrow('not authorized');
   });
 
   it.skipIf(process.platform === 'win32')(
-    'blocks a .goosehints symlink that escapes the working directory',
+    'blocks a .aibuddyhints symlink that escapes the working directory',
     async () => {
       const root = makeTempDirectory();
       const workingDirectory = path.join(root, 'project');
       const secretPath = path.join(root, 'secret');
       fs.mkdirSync(workingDirectory);
       fs.writeFileSync(secretPath, 'host secret');
-      fs.symlinkSync('../secret', path.join(workingDirectory, '.goosehints'));
+      fs.symlinkSync('../secret', path.join(workingDirectory, '.aibuddyhints'));
       const access = new DesktopFileAccess();
       await access.bindWindow(7, workingDirectory);
 
-      const result = await access.readGoosehints(7);
-      const saved = await access.writeGoosehints(7, 'replacement');
+      const result = await access.readAIBuddyhints(7);
+      const saved = await access.writeAIBuddyhints(7, 'replacement');
 
       expect(result.found).toBe(false);
       expect(result.file).toBe('');
@@ -261,8 +261,8 @@ describe('DesktopFileAccess', () => {
 
   it('does not truncate a replacement file opened after validation', async () => {
     const workingDirectory = makeTempDirectory();
-    const filePath = path.join(workingDirectory, '.goosehints');
-    const originalPath = path.join(workingDirectory, 'original.goosehints');
+    const filePath = path.join(workingDirectory, '.aibuddyhints');
+    const originalPath = path.join(workingDirectory, 'original.aibuddyhints');
     fs.writeFileSync(filePath, 'original guidance');
     const access = new DesktopFileAccess();
     await access.bindWindow(7, workingDirectory);
@@ -273,7 +273,7 @@ describe('DesktopFileAccess', () => {
       return open(...args);
     });
 
-    await expect(access.writeGoosehints(7, 'new guidance')).resolves.toBe(false);
+    await expect(access.writeAIBuddyhints(7, 'new guidance')).resolves.toBe(false);
     expect(fs.readFileSync(filePath, 'utf8')).toBe('replacement guidance');
     expect(fs.readFileSync(originalPath, 'utf8')).toBe('original guidance');
   });
@@ -287,8 +287,8 @@ describe('DesktopFileAccess', () => {
       const workingDirectory = path.join(root, 'current-project');
       fs.mkdirSync(firstProject);
       fs.mkdirSync(secondProject);
-      fs.writeFileSync(path.join(firstProject, '.goosehints'), 'first guidance');
-      fs.writeFileSync(path.join(secondProject, '.goosehints'), 'second guidance');
+      fs.writeFileSync(path.join(firstProject, '.aibuddyhints'), 'first guidance');
+      fs.writeFileSync(path.join(secondProject, '.aibuddyhints'), 'second guidance');
       fs.symlinkSync(firstProject, workingDirectory);
       const access = new DesktopFileAccess();
       await access.bindWindow(7, workingDirectory);
@@ -297,31 +297,31 @@ describe('DesktopFileAccess', () => {
       fs.unlinkSync(workingDirectory);
       fs.symlinkSync(secondProject, workingDirectory);
 
-      await expect(access.readGoosehints(7)).resolves.toEqual({
+      await expect(access.readAIBuddyhints(7)).resolves.toEqual({
         file: 'first guidance',
-        filePath: path.join(canonicalFirstProject, '.goosehints'),
+        filePath: path.join(canonicalFirstProject, '.aibuddyhints'),
         error: null,
         found: true,
       });
-      await expect(access.writeGoosehints(7, 'updated first guidance')).resolves.toBe(true);
-      expect(fs.readFileSync(path.join(firstProject, '.goosehints'), 'utf8')).toBe(
+      await expect(access.writeAIBuddyhints(7, 'updated first guidance')).resolves.toBe(true);
+      expect(fs.readFileSync(path.join(firstProject, '.aibuddyhints'), 'utf8')).toBe(
         'updated first guidance'
       );
-      expect(fs.readFileSync(path.join(secondProject, '.goosehints'), 'utf8')).toBe(
+      expect(fs.readFileSync(path.join(secondProject, '.aibuddyhints'), 'utf8')).toBe(
         'second guidance'
       );
     }
   );
 
   it.skipIf(process.platform === 'win32')(
-    'rejects a non-regular .goosehints target without blocking',
+    'rejects a non-regular .aibuddyhints target without blocking',
     async () => {
       const workingDirectory = makeTempDirectory();
-      execFileSync('mkfifo', [path.join(workingDirectory, '.goosehints')]);
+      execFileSync('mkfifo', [path.join(workingDirectory, '.aibuddyhints')]);
       const access = new DesktopFileAccess();
       await access.bindWindow(7, workingDirectory);
 
-      await expect(access.writeGoosehints(7, 'project guidance')).resolves.toBe(false);
+      await expect(access.writeAIBuddyhints(7, 'project guidance')).resolves.toBe(false);
     }
   );
 });
@@ -336,8 +336,8 @@ describe('renderer provenance', () => {
     );
     expect(
       isAppRendererUrl(
-        'file:///Applications/Goose.app/Contents/Resources/renderer/main_window/index.html#/settings',
-        new URL('file:///Applications/Goose.app/Contents/Resources/renderer/main_window/index.html')
+        'file:///Applications/AIBuddy.app/Contents/Resources/renderer/main_window/index.html#/settings',
+        new URL('file:///Applications/AIBuddy.app/Contents/Resources/renderer/main_window/index.html')
       )
     ).toBe(true);
   });
@@ -348,14 +348,14 @@ describe('renderer provenance', () => {
     expect(isAppRendererUrl('https://attacker.example/#/settings', devServerUrl)).toBe(false);
     expect(
       isAppRendererUrl(
-        'file://attacker/Applications/Goose.app/Contents/Resources/renderer/main_window/index.html',
-        new URL('file:///Applications/Goose.app/Contents/Resources/renderer/main_window/index.html')
+        'file://attacker/Applications/AIBuddy.app/Contents/Resources/renderer/main_window/index.html',
+        new URL('file:///Applications/AIBuddy.app/Contents/Resources/renderer/main_window/index.html')
       )
     ).toBe(false);
     expect(isAppRendererUrl('not a URL', devServerUrl)).toBe(false);
   });
 
-  it('requires a registered top-level Goose window', () => {
+  it('requires a registered top-level AIBuddy window', () => {
     const legitimateRequest = {
       isRegisteredWindow: true,
       isMainFrame: true,

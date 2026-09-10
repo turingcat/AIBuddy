@@ -1,7 +1,8 @@
 packages:
-  - 'sdk'
+  - 'aibuddy-acp-client'
+  - 'aibuddy-acp'
   - 'desktop'
-  - 'goose-binary/*'
+  - 'aibuddy-binary/*'
 
 registry: https://registry.npmjs.org/
 preferOffline: true

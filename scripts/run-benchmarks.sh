@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-benchmarks.sh - Script to run goose benchmarks across multiple provider:model pairs
+# run-benchmarks.sh - Script to run aibuddy benchmarks across multiple provider:model pairs
 
 set -e
 
@@ -12,8 +12,8 @@ function show_usage() {
   echo "  -s, --suites             Comma-separated list of benchmark suites to run (e.g., 'core,small_models')"
   echo "  -o, --output-dir         Directory to store benchmark results (default: './benchmark-results')"
   echo "  -d, --debug              Use debug build instead of release build"
-  echo "  -t, --toolshim           Enable toolshim mode by setting GOOSE_TOOLSHIM=1"
-  echo "  -m, --toolshim-model     Set the toolshim model (sets GOOSE_TOOLSHIM_MODEL)"
+  echo "  -t, --toolshim           Enable toolshim mode by setting AIBUDDY_TOOLSHIM=1"
+  echo "  -m, --toolshim-model     Set the toolshim model (sets AIBUDDY_TOOLSHIM_MODEL)"
   echo "  -h, --help               Show this help message"
   echo ""
   echo "Example:"
@@ -101,20 +101,20 @@ fi
 echo "" >> "$SUMMARY_FILE"
 
 # Determine which binary to use
-GOOSE_CMD="goose"
+AIBUDDY_CMD="aibuddy"
 if [ "$DEBUG_MODE" = true ]; then
-  if [ -f "./target/debug/goose" ]; then
-    GOOSE_CMD="./target/debug/goose"
-    echo "Using debug binary: $GOOSE_CMD"
+  if [ -f "./target/debug/aibuddy" ]; then
+    AIBUDDY_CMD="./target/debug/aibuddy"
+    echo "Using debug binary: $AIBUDDY_CMD"
   else
-    echo "Warning: Debug binary not found at ./target/debug/goose. Falling back to system-installed goose."
+    echo "Warning: Debug binary not found at ./target/debug/aibuddy. Falling back to system-installed aibuddy."
   fi
 else
-  if [ -f "./target/release/goose" ]; then
-    GOOSE_CMD="./target/release/goose"
-    echo "Using release binary: $GOOSE_CMD"
+  if [ -f "./target/release/aibuddy" ]; then
+    AIBUDDY_CMD="./target/release/aibuddy"
+    echo "Using release binary: $AIBUDDY_CMD"
   else
-    echo "Warning: Release binary not found at ./target/release/goose. Falling back to system-installed goose."
+    echo "Warning: Release binary not found at ./target/release/aibuddy. Falling back to system-installed aibuddy."
   fi
 fi
 
@@ -155,14 +155,14 @@ for ((i=0; i<$COUNT; i++)); do
   echo "## Provider: $provider, Model: $model" >> "$SUMMARY_FILE"
   
   # Set environment variables for this provider/model instead of using configure
-  export GOOSE_PROVIDER="$provider"
-  export GOOSE_MODEL="$model"
+  export AIBUDDY_PROVIDER="$provider"
+  export AIBUDDY_MODEL="$model"
   
   # Set toolshim environment variables if enabled
   if [ "$TOOLSHIM" = true ]; then
-    export GOOSE_TOOLSHIM=1
+    export AIBUDDY_TOOLSHIM=1
     if [[ -n "$TOOLSHIM_MODEL" ]]; then
-      export GOOSE_TOOLSHIM_OLLAMA_MODEL="$TOOLSHIM_MODEL"
+      export AIBUDDY_TOOLSHIM_OLLAMA_MODEL="$TOOLSHIM_MODEL"
     fi
   fi
   
@@ -171,7 +171,7 @@ for ((i=0; i<$COUNT; i++)); do
   OUTPUT_FILE="$OUTPUT_DIR/${provider}-${model}.json"
   ANALYSIS_FILE="$OUTPUT_DIR/${provider}-${model}-analysis.txt"
   
-  if $GOOSE_CMD bench --suites "$SUITES" --output "$OUTPUT_FILE" --format json; then
+  if $AIBUDDY_CMD bench --suites "$SUITES" --output "$OUTPUT_FILE" --format json; then
     echo "✅ Benchmark completed successfully" | tee -a "$SUMMARY_FILE"
     
     # Parse the JSON to check for failures

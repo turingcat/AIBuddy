@@ -4,7 +4,7 @@ import { IconDownload } from "@site/src/components/icons/download";
 const DesktopInstallButtons = () => {
   return (
     <div>
-      <p>Download goose Desktop for macOS Apple Silicon:</p>
+      <p>Download aibuddy Desktop for macOS Apple Silicon:</p>
       <div className="pill-button" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
         <Link
           className="button button--primary button--lg"

@@ -39,13 +39,13 @@ const i18n = defineMessages({
   },
 });
 
-export interface GooseMode {
+export interface AIBuddyMode {
   key: string;
   labelDescriptor: { id: string; defaultMessage: string };
   descriptionDescriptor: { id: string; defaultMessage: string };
 }
 
-export const all_goose_modes: GooseMode[] = [
+export const all_aibuddy_modes: AIBuddyMode[] = [
   {
     key: 'auto',
     labelDescriptor: i18n.autonomousLabel,
@@ -70,7 +70,7 @@ export const all_goose_modes: GooseMode[] = [
 
 interface ModeSelectionItemProps {
   currentMode: string;
-  mode: GooseMode;
+  mode: AIBuddyMode;
   showDescription: boolean;
   isApproveModeConfigure: boolean;
   handleModeChange: (newMode: string) => void;

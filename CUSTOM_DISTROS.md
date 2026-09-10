@@ -1,12 +1,12 @@
-# Custom Distributions of goose
+# Custom Distributions of aibuddy
 
 > **Tip:** This is sometimes referred to as "white labelling" — creating a branded or tailored version of an open source project for your organization.
 
-This guide explains how to create custom distributions of goose tailored to your organization's needs—whether that's preconfigured models, custom tools, branded interfaces, or entirely new user experiences.
+This guide explains how to create custom distributions of aibuddy tailored to your organization's needs—whether that's preconfigured models, custom tools, branded interfaces, or entirely new user experiences.
 
 ## Overview
 
-goose's architecture is designed for extensibility. Organizations can create "remixed" versions that:
+aibuddy's architecture is designed for extensibility. Organizations can create "remixed" versions that:
 
 - **Preconfigure AI providers**: Ship with a specific model (local or cloud) and API credentials
 - **Bundle custom tools**: Include proprietary extensions for internal data sources
@@ -20,19 +20,19 @@ goose's architecture is designed for extensibility. Organizations can create "re
 │                        User Interfaces                          │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │  CLI        │  │  Desktop    │  │  Your Custom UI         │  │
-│  │  (goose-cli)│  │  (Electron) │  │  (web, mobile, etc.)    │  │
+│  │  (aibuddy-cli)│  │  (Electron) │  │  (web, mobile, etc.)    │  │
 │  └──────┬──────┘  └──────┬──────┘  └────────────┬────────────┘  │
 └─────────┼────────────────┼──────────────────────┼───────────────┘
           │                │                      │
           ▼                ▼                      ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                    goose serve (ACP)                            │
+│                    aibuddy serve (ACP)                            │
 │         ACP HTTP/WebSocket server for custom clients            │
 └─────────────────────────────────────────────────────────────────┘
           │
           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Core (goose crate)                         │
+│                      Core (aibuddy crate)                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │  Providers  │  │  Extensions │  │  Config & Recipes       │  │
 │  │  (AI models)│  │  (MCP tools)│  │  (behavior & defaults)  │  │
@@ -45,11 +45,11 @@ goose's architecture is designed for extensibility. Organizations can create "re
 | What You Want | Where to Look | Complexity |
 |---------------|---------------|------------|
 | Preconfigure a model/provider | `config.yaml`, `init-config.yaml`, environment variables | Low |
-| Add custom AI providers | `crates/goose/src/providers/declarative/` | Low |
+| Add custom AI providers | `crates/aibuddy/src/providers/declarative/` | Low |
 | Bundle custom MCP extensions | `config.yaml` extensions section, `ui/desktop/src/built-in-extensions.json`, `ui/desktop/src/components/settings/extensions/bundled-extensions.json` | Medium |
-| Modify system prompts | `crates/goose/src/prompts/` | Low |
+| Modify system prompts | `crates/aibuddy/src/prompts/` | Low |
 | Customize desktop branding | `ui/desktop/` (icons, names, colors) | Medium |
-| Build a new UI (web, mobile) | Integrate with `goose serve` over ACP | High |
+| Build a new UI (web, mobile) | Integrate with `aibuddy serve` over ACP | High |
 | Create guided workflows | Recipes (YAML-based task definitions) | Low |
 | Build complex multi-step workflows | Recipes with sub-recipes and subagents | Medium |
 
@@ -59,7 +59,7 @@ goose's architecture is designed for extensibility. Organizations can create "re
 
 ```bash
 git clone https://github.com/YOUR_ORG/goose.git
-cd goose
+cd aibuddy
 ```
 
 ### 2. Choose Your Customization Strategy
@@ -76,10 +76,10 @@ See [BUILDING_LINUX.md](BUILDING_LINUX.md) and [ui/desktop/README.md](ui/desktop
 
 ### Licensing
 
-goose is licensed under Apache License 2.0 (ASL v2). Custom distributions must:
+aibuddy is licensed under Apache License 2.0 (ASL v2). Custom distributions must:
 - Include the original license and copyright notices
 - Clearly indicate any modifications made
-- Not use "Goose" trademarks in ways that imply official endorsement
+- Not use "AIBuddy" trademarks in ways that imply official endorsement
 
 For detailed guidance on ASL v2 compliance, see the [Apache License FAQ](https://www.apache.org/foundation/license-faq.html).
 
@@ -101,7 +101,7 @@ To benefit from upstream improvements:
 
 ## A. Preconfigured Local Model Distribution
 
-**Goal**: Ship goose preconfigured to use a local Ollama model, requiring no API keys.
+**Goal**: Ship aibuddy preconfigured to use a local Ollama model, requiring no API keys.
 
 ### Steps
 
@@ -109,15 +109,15 @@ To benefit from upstream improvements:
 
 ```yaml
 # init-config.yaml - Applied on first run if no config exists
-GOOSE_PROVIDER: ollama
-GOOSE_MODEL: qwen3-coder:latest
+AIBUDDY_PROVIDER: ollama
+AIBUDDY_MODEL: qwen3-coder:latest
 ```
 
 2. **Set environment defaults** in your launcher script or packaging:
 
 ```bash
-export GOOSE_PROVIDER=ollama
-export GOOSE_MODEL=qwen3-coder:latest
+export AIBUDDY_PROVIDER=ollama
+export AIBUDDY_MODEL=qwen3-coder:latest
 export OLLAMA_HOST=http://localhost:11434  # Or your hosted instance
 ```
 
@@ -125,41 +125,41 @@ export OLLAMA_HOST=http://localhost:11434  # Or your hosted instance
 
 ### Technical Details
 
-- Provider configuration: `crates/goose/src/config/base.rs`
-- Ollama provider implementation: `crates/goose/src/providers/ollama.rs`
+- Provider configuration: `crates/aibuddy/src/config/base.rs`
+- Ollama provider implementation: `crates/aibuddy/src/providers/ollama.rs`
 - Config precedence: Environment variables → config.yaml → defaults
 
 ---
 
 ## B. Corporate Distribution with Managed API Keys
 
-**Goal**: Distribute goose internally with pre-provisioned API keys for a frontier model.
+**Goal**: Distribute aibuddy internally with pre-provisioned API keys for a frontier model.
 
 ### Steps
 
-1. **Store API keys securely** using goose's secret management:
+1. **Store API keys securely** using aibuddy's secret management:
 
 ```yaml
 # config.yaml (distributed with your package)
-GOOSE_PROVIDER: anthropic
-GOOSE_MODEL: claude-sonnet-4-20250514
+AIBUDDY_PROVIDER: anthropic
+AIBUDDY_MODEL: claude-sonnet-4-20250514
 ```
 
 2. **Inject secrets at install time** or via your MDM/configuration management:
 
 ```bash
-# Secrets are stored in system keyring or ~/.config/goose/secrets.yaml
-# if GOOSE_DISABLE_KEYRING=1
-goose configure set-secret ANTHROPIC_API_KEY "your-corporate-key"
+# Secrets are stored in system keyring or ~/.config/aibuddy/secrets.yaml
+# if AIBUDDY_DISABLE_KEYRING=1
+aibuddy configure set-secret ANTHROPIC_API_KEY "your-corporate-key"
 ```
 
 3. **Lock down provider changes** (optional) by modifying the settings UI or using a recipe that enforces the provider.
 
 ### Technical Details
 
-- Secret storage: `crates/goose/src/config/base.rs` (SecretStorage enum)
+- Secret storage: `crates/aibuddy/src/config/base.rs` (SecretStorage enum)
 - Keyring integration: Uses system keyring by default, file-based fallback available
-- Config file location: `~/.config/goose/config.yaml`
+- Config file location: `~/.config/aibuddy/config.yaml`
 
 ---
 
@@ -210,22 +210,22 @@ Example:
 ```yaml
 # data-analyst.yaml
 title: Data Analyst Assistant
-description: goose configured for data analysis
+description: aibuddy configured for data analysis
 instructions: |
   You have access to the corporate data lake. Help users query and analyze data.
 extensions:
   - type: stdio
     name: internal-data
     cmd: python
-    args: ["/opt/corp-goose/internal_data_mcp.py"]
+    args: ["/opt/corp-aibuddy/internal_data_mcp.py"]
     description: Corporate data lake access
 ```
 
 ### Technical Details
 
-- Extension types: `crates/goose/src/agents/extension.rs` (ExtensionConfig enum)
-- Built-in MCP servers: `crates/goose-mcp/`
-- Extension loading: `crates/goose/src/agents/extension_manager.rs`
+- Extension types: `crates/aibuddy/src/agents/extension.rs` (ExtensionConfig enum)
+- Built-in MCP servers: `crates/aibuddy-mcp/`
+- Extension loading: `crates/aibuddy/src/agents/extension_manager.rs`
 
 ---
 
@@ -254,7 +254,7 @@ module.exports = {
 };
 ```
 
-3. **Update the system prompt** to reflect your branding in `crates/goose/src/prompts/system.md`:
+3. **Update the system prompt** to reflect your branding in `crates/aibuddy/src/prompts/system.md`:
 
 ```markdown
 You are an AI assistant called [YourName], created by [YourCompany].
@@ -271,14 +271,14 @@ You are an AI assistant called [YourName], created by [YourCompany].
 
    - Set build/release environment variables consistently:
      - `GITHUB_OWNER` and `GITHUB_REPO` for publisher + updater repository lookup
-     - `GOOSE_BUNDLE_NAME` for bundle/debug scripts and updater asset naming (defaults to `Goose`)
+     - `AIBUDDY_BUNDLE_NAME` for bundle/debug scripts and updater asset naming (defaults to `AIBuddy`)
 
 Example:
 
 ```bash
 export GITHUB_OWNER="your-org"
-export GITHUB_REPO="your-goose-fork"
-export GOOSE_BUNDLE_NAME="InsightStream-goose"
+export GITHUB_REPO="your-aibuddy-fork"
+export AIBUDDY_BUNDLE_NAME="InsightStream-aibuddy"
 ```
 
 6. **Use this branding consistency checklist** before release:
@@ -290,23 +290,23 @@ export GOOSE_BUNDLE_NAME="InsightStream-goose"
 
 - Electron config: `ui/desktop/forge.config.ts`
 - UI entry point: `ui/desktop/src/renderer.tsx`
-- System prompts: `crates/goose/src/prompts/`
+- System prompts: `crates/aibuddy/src/prompts/`
 
 ---
 
 ## E. Building a New Interface (Web, Mobile, etc.)
 
-**Goal**: Create an entirely new frontend while leveraging goose's backend.
+**Goal**: Create an entirely new frontend while leveraging aibuddy's backend.
 
-goose provides two ACP transport options for building custom clients:
+aibuddy provides two ACP transport options for building custom clients:
 
-### Option 1: ACP HTTP/WebSocket (`goose serve`)
+### Option 1: ACP HTTP/WebSocket (`aibuddy serve`)
 
-Use `goose serve` for process-separated integrations such as web apps, desktop shells, and other clients:
+Use `aibuddy serve` for process-separated integrations such as web apps, desktop shells, and other clients:
 
 ```bash
 # Start the server
-GOOSE_SERVER__SECRET_KEY='a-long-random-secret' goose serve
+AIBUDDY_SERVER__SECRET_KEY='a-long-random-secret' aibuddy serve
 
 # ACP endpoint available at http://localhost:3284/acp
 ```
@@ -319,11 +319,11 @@ ws://localhost:3284/acp?token=a-long-random-secret
 
 For browser clients served from a non-loopback origin, pass the exact UI origin with `--allowed-origin`. When you pass `--allowed-origin`, it replaces the default loopback origin allowlist, so include every origin the client needs.
 
-For the ACP protocol and client flow, see [Agent Client Protocol clients](documentation/docs/guides/acp-clients.md).
+For the ACP protocol and client flow, see [Use aibuddy as an ACP agent](documentation/docs/gdk/acp/index.md).
 
 ### Option 2: Agent Client Protocol (ACP) over stdio
 
-For richer local integrations (IDEs and embedded agents), run goose as an ACP agent over stdio.
+For richer local integrations (IDEs and embedded agents), run aibuddy as an ACP agent over stdio.
 
 ACP provides:
 - **Bidirectional communication**: Agents can request permissions, stream updates, and receive cancellations
@@ -331,14 +331,14 @@ ACP provides:
 - **Session management**: Create, load, and resume sessions with full conversation history
 - **MCP server integration**: Dynamically add MCP servers to sessions
 
-**Start goose as an ACP agent**:
+**Start aibuddy as an ACP agent**:
 
 ```bash
-# Run goose as an ACP server on stdio
-goose acp --with-builtin developer,memory
+# Run aibuddy as an ACP server on stdio
+aibuddy acp --with-builtin developer,memory
 
 # Or programmatically
-cargo run -p goose-cli -- acp --with-builtin developer
+cargo run -p aibuddy-cli -- acp --with-builtin developer
 ```
 
 **Key ACP methods**:
@@ -360,7 +360,7 @@ import json
 class AcpClient:
     def __init__(self):
         self.process = subprocess.Popen(
-            ['goose', 'acp', '--with-builtin', 'developer'],
+            ['aibuddy', 'acp', '--with-builtin', 'developer'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             text=True
@@ -397,8 +397,8 @@ For the full ACP specification, see the [Agent Client Protocol documentation](ht
 ### Technical Details
 
 **ACP**:
-- ACP server implementation: `crates/goose/src/acp/server.rs`
-- CLI integration: `crates/goose-cli/src/cli.rs` (Command::Acp)
+- ACP server implementation: `crates/aibuddy/src/acp/server.rs`
+- CLI integration: `crates/aibuddy-cli/src/cli.rs` (Command::Acp)
 - Protocol library: `agent-client-protocol` crate (Rust implementation of ACP)
 - Test client example: `test_acp_client.py`
 
@@ -406,7 +406,7 @@ For the full ACP specification, see the [Agent Client Protocol documentation](ht
 
 ## F. Audience-Specific Distributions (Legal, Design, etc.)
 
-**Goal**: Create a version of goose tailored for a specific professional audience.
+**Goal**: Create a version of aibuddy tailored for a specific professional audience.
 
 ### Steps
 
@@ -433,7 +433,7 @@ extensions:
   - type: stdio
     name: legal-database
     cmd: python
-    args: ["/opt/legal-goose/legal_db_mcp.py"]
+    args: ["/opt/legal-aibuddy/legal_db_mcp.py"]
     description: Legal database search
 
 activities:
@@ -442,8 +442,8 @@ activities:
   - "Find precedents for..."
 
 settings:
-  goose_provider: anthropic
-  goose_model: claude-sonnet-4-20250514
+  aibuddy_provider: anthropic
+  aibuddy_model: claude-sonnet-4-20250514
 ```
 
 2. **Customize the UI** to show only relevant features and use domain-appropriate language.
@@ -452,8 +452,8 @@ settings:
 
 ### Technical Details
 
-- Recipe format: `crates/goose/src/recipe/mod.rs`
-- Recipe loading: `crates/goose/src/recipe/local_recipes.rs`
+- Recipe format: `crates/aibuddy/src/recipe/mod.rs`
+- Recipe loading: `crates/aibuddy/src/recipe/local_recipes.rs`
 - Activity suggestions: Shown in UI as quick-start prompts
 
 ---
@@ -464,7 +464,7 @@ settings:
 
 ### Option 1: Declarative Provider (No Code)
 
-Create a JSON file in `~/.config/goose/custom_providers/` or bundle in your distribution:
+Create a JSON file in `~/.config/aibuddy/custom_providers/` or bundle in your distribution:
 
 ```json
 {
@@ -491,16 +491,16 @@ Supported engines: `openai`, `anthropic`, `ollama`
 
 For providers with unique APIs, implement the Provider trait:
 
-1. Create a new file in `crates/goose/src/providers/`
+1. Create a new file in `crates/aibuddy/src/providers/`
 2. Implement the `Provider` trait from `base.rs`
-3. Register in `crates/goose/src/providers/factory.rs`
+3. Register in `crates/aibuddy/src/providers/factory.rs`
 
 ### Technical Details
 
-- Declarative providers: `crates/goose/src/config/declarative_providers.rs`
-- Provider trait: `crates/goose/src/providers/base.rs`
-- Provider registration: `crates/goose/src/providers/factory.rs`
-- Example providers: `crates/goose/src/providers/declarative/*.json`
+- Declarative providers: `crates/aibuddy/src/config/declarative_providers.rs`
+- Provider trait: `crates/aibuddy/src/providers/base.rs`
+- Provider registration: `crates/aibuddy/src/providers/factory.rs`
+- Example providers: `crates/aibuddy/src/providers/declarative/*.json`
 
 ---
 
@@ -508,7 +508,7 @@ For providers with unique APIs, implement the Provider trait:
 
 **Goal**: Create standardized, repeatable workflows that users can run with minimal setup.
 
-Recipes are YAML files that define complete goose experiences—instructions, extensions, parameters, and prompts bundled together. They're ideal for custom distributions because they require no code changes and can be distributed as simple files.
+Recipes are YAML files that define complete aibuddy experiences—instructions, extensions, parameters, and prompts bundled together. They're ideal for custom distributions because they require no code changes and can be distributed as simple files.
 
 ### Basic Recipe Structure
 
@@ -578,9 +578,9 @@ prompt: |
 
 ### Technical Details
 
-- Recipe schema: `crates/goose/src/recipe/mod.rs`
-- Parameter handling: `crates/goose/src/recipe/template_recipe.rs`
-- Recipe validation: `crates/goose/src/recipe/validate_recipe.rs`
+- Recipe schema: `crates/aibuddy/src/recipe/mod.rs`
+- Parameter handling: `crates/aibuddy/src/recipe/template_recipe.rs`
+- Recipe validation: `crates/aibuddy/src/recipe/validate_recipe.rs`
 
 ---
 
@@ -588,7 +588,7 @@ prompt: |
 
 **Goal**: Build sophisticated multi-step workflows that orchestrate multiple specialized tasks.
 
-For complex workflows, goose supports two powerful composition mechanisms:
+For complex workflows, aibuddy supports two powerful composition mechanisms:
 
 1. **Sub-recipes**: Predefined recipe templates that can be invoked by name
 2. **Subagents**: Independent AI agents spawned to handle specific tasks
@@ -800,7 +800,7 @@ prompt: |
 
 ### Technical Details
 
-- Subagent tool: `crates/goose/src/agents/subagent_tool.rs`
-- Subagent execution: `crates/goose/src/agents/subagent_handler.rs`
-- Recipe sub_recipes field: `crates/goose/src/recipe/mod.rs` (SubRecipe struct)
-- Template rendering: `crates/goose/src/recipe/template_recipe.rs`
+- Subagent tool: `crates/aibuddy/src/agents/subagent_tool.rs`
+- Subagent execution: `crates/aibuddy/src/agents/subagent_handler.rs`
+- Recipe sub_recipes field: `crates/aibuddy/src/recipe/mod.rs` (SubRecipe struct)
+- Template rendering: `crates/aibuddy/src/recipe/template_recipe.rs`

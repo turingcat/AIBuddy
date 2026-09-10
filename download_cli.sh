@@ -2,39 +2,39 @@
 set -eu
 
 ##############################################################################
-# goose CLI Install Script
+# aibuddy CLI Install Script
 #
-# This script downloads the latest stable 'goose' CLI binary from GitHub releases
+# This script downloads the latest stable 'aibuddy' CLI binary from GitHub releases
 # and installs it to your system.
 #
 # Supported OS: macOS (darwin), Linux, Windows (MSYS2/Git Bash/WSL), Android (Termux)
 # Supported Architectures: macOS arm64; Linux arm64/x86_64; Windows x86_64
 #
 # Usage:
-#   curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh | bash
+#   curl -fsSL https://github.com/turingcat/AIBuddy/releases/download/stable/download_cli.sh | bash
 #
 # Environment variables:
-#   GOOSE_BIN_DIR  - Directory to which goose will be installed (default: $HOME/.local/bin)
-#   GOOSE_VERSION  - Optional: specific version to install (e.g., "v1.0.25"). Overrides CANARY. Can be in the format vX.Y.Z, vX.Y.Z-suffix, or X.Y.Z
-#   GOOSE_PROVIDER - Optional: provider for goose
-#   GOOSE_MODEL    - Optional: model for goose
-#   GOOSE_LINUX_VARIANT - Optional: Linux package variant to install (`standard`, `vulkan`, or `musl`)
-#   GOOSE_WINDOWS_VARIANT - Optional: Windows package variant to install (`standard` or `cuda`)
+#   AIBUDDY_BIN_DIR  - Directory to which aibuddy will be installed (default: $HOME/.local/bin)
+#   AIBUDDY_VERSION  - Optional: specific version to install (e.g., "v1.0.25"). Overrides CANARY. Can be in the format vX.Y.Z, vX.Y.Z-suffix, or X.Y.Z
+#   AIBUDDY_PROVIDER - Optional: provider for aibuddy
+#   AIBUDDY_MODEL    - Optional: model for aibuddy
+#   AIBUDDY_LINUX_VARIANT - Optional: Linux package variant to install (`standard`, `vulkan`, or `musl`)
+#   AIBUDDY_WINDOWS_VARIANT - Optional: Windows package variant to install (`standard` or `cuda`)
 #   CANARY         - Optional: if set to "true", downloads from canary release instead of stable
-#   CONFIGURE      - Optional: if set to "false", disables running goose configure interactively
+#   CONFIGURE      - Optional: if set to "false", disables running aibuddy configure interactively
 #   ** other provider specific environment variables (eg. DATABRICKS_HOST)
 ##############################################################################
 
 # --- 1) Check for dependencies ---
 # Check for curl
 if ! command -v curl >/dev/null 2>&1; then
-  echo "Error: 'curl' is required to download goose. Please install curl and try again."
+  echo "Error: 'curl' is required to download aibuddy. Please install curl and try again."
   exit 1
 fi
 
 # Check for tar or unzip (depending on OS)
 if ! command -v tar >/dev/null 2>&1 && ! command -v unzip >/dev/null 2>&1; then
-  echo "Error: Either 'tar' or 'unzip' is required to extract goose. Please install one and try again."
+  echo "Error: Either 'tar' or 'unzip' is required to extract aibuddy. Please install one and try again."
   exit 1
 fi
 
@@ -54,34 +54,34 @@ fi
 
 
 # --- 2) Variables ---
-REPO="aaif-goose/goose"
-OUT_FILE="goose"
+REPO="turingcat/AIBuddy"
+OUT_FILE="aibuddy"
 
 # Set default bin directory based on detected OS environment
 if [[ "${WINDIR:-}" ]] || [[ "${windir:-}" ]] || [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
     # Native Windows environments - use Windows user profile path
-    DEFAULT_BIN_DIR="$USERPROFILE/goose"
+    DEFAULT_BIN_DIR="$USERPROFILE/aibuddy"
 else
     # Linux, macOS, and WSL all use the same bin directory
     DEFAULT_BIN_DIR="$HOME/.local/bin"
 fi
 
-GOOSE_BIN_DIR="${GOOSE_BIN_DIR:-$DEFAULT_BIN_DIR}"
+AIBUDDY_BIN_DIR="${AIBUDDY_BIN_DIR:-$DEFAULT_BIN_DIR}"
 RELEASE="${CANARY:-false}"
 CONFIGURE="${CONFIGURE:-true}"
-GOOSE_LINUX_VARIANT="${GOOSE_LINUX_VARIANT:-}"
-GOOSE_WINDOWS_VARIANT="${GOOSE_WINDOWS_VARIANT:-standard}"
-if [ -n "${GOOSE_VERSION:-}" ]; then
+AIBUDDY_LINUX_VARIANT="${AIBUDDY_LINUX_VARIANT:-}"
+AIBUDDY_WINDOWS_VARIANT="${AIBUDDY_WINDOWS_VARIANT:-standard}"
+if [ -n "${AIBUDDY_VERSION:-}" ]; then
   # Validate the version format
-  if [[ ! "$GOOSE_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
-    echo "[error]: invalid version '$GOOSE_VERSION'."
+  if [[ ! "$AIBUDDY_VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-.*)?$ ]]; then
+    echo "[error]: invalid version '$AIBUDDY_VERSION'."
     echo "  expected: semver format vX.Y.Z, vX.Y.Z-suffix, or X.Y.Z"
     exit 1
   fi
-  GOOSE_VERSION=$(echo "$GOOSE_VERSION" | sed 's/^v\{0,1\}/v/') # Ensure the version string is prefixed with 'v' if not already present
-  RELEASE_TAG="$GOOSE_VERSION"
+  AIBUDDY_VERSION=$(echo "$AIBUDDY_VERSION" | sed 's/^v\{0,1\}/v/') # Ensure the version string is prefixed with 'v' if not already present
+  RELEASE_TAG="$AIBUDDY_VERSION"
 else
-  # If GOOSE_VERSION is not set, fall back to existing behavior for backwards compatibility
+  # If AIBUDDY_VERSION is not set, fall back to existing behavior for backwards compatibility
   RELEASE_TAG="$([[ "$RELEASE" == "true" ]] && echo "canary" || echo "stable")"
 fi
 
@@ -126,7 +126,7 @@ case "$OS" in
     OS="windows"
     ;;
   *)
-    echo "Error: Unsupported OS '$OS'. goose currently supports Linux, macOS, and Windows."
+    echo "Error: Unsupported OS '$OS'. aibuddy currently supports Linux, macOS, and Windows."
     exit 1
     ;;
 esac
@@ -163,19 +163,19 @@ detect_linux_musl() {
 }
 
 # Termux on Android: the musl portable build is the best fit (no system-keyring, no local-inference).
-if [ "$OS" = "linux" ] && [ -n "${TERMUX_VERSION:-}" ] && [ -z "$GOOSE_LINUX_VARIANT" ]; then
+if [ "$OS" = "linux" ] && [ -n "${TERMUX_VERSION:-}" ] && [ -z "$AIBUDDY_LINUX_VARIANT" ]; then
   echo "Termux detected (v$TERMUX_VERSION). Using musl portable build."
-  GOOSE_LINUX_VARIANT="musl"
+  AIBUDDY_LINUX_VARIANT="musl"
 fi
 
-if [ "$OS" = "linux" ] && [ -z "$GOOSE_LINUX_VARIANT" ]; then
+if [ "$OS" = "linux" ] && [ -z "$AIBUDDY_LINUX_VARIANT" ]; then
   if detect_linux_musl; then
-    GOOSE_LINUX_VARIANT="musl"
+    AIBUDDY_LINUX_VARIANT="musl"
   else
-    GOOSE_LINUX_VARIANT="standard"
+    AIBUDDY_LINUX_VARIANT="standard"
   fi
-elif [ -z "$GOOSE_LINUX_VARIANT" ]; then
-  GOOSE_LINUX_VARIANT="standard"
+elif [ -z "$AIBUDDY_LINUX_VARIANT" ]; then
+  AIBUDDY_LINUX_VARIANT="standard"
 fi
 
 # Debug output (safely handle undefined variables)
@@ -190,13 +190,13 @@ echo "Detected OS: $OS with ARCH $ARCH"
 
 # Build the filename and URL for the stable release
 if [ "$OS" = "darwin" ]; then
-  FILE="goose-$ARCH-apple-darwin.tar.bz2"
+  FILE="aibuddy-$ARCH-apple-darwin.tar.bz2"
   EXTRACT_CMD="tar"
 elif [ "$OS" = "windows" ]; then
-  case "$GOOSE_WINDOWS_VARIANT" in
+  case "$AIBUDDY_WINDOWS_VARIANT" in
     standard|cuda) ;;
     *)
-      echo "Error: Unsupported GOOSE_WINDOWS_VARIANT '$GOOSE_WINDOWS_VARIANT'. Expected 'standard' or 'cuda'."
+      echo "Error: Unsupported AIBUDDY_WINDOWS_VARIANT '$AIBUDDY_WINDOWS_VARIANT'. Expected 'standard' or 'cuda'."
       exit 1
       ;;
   esac
@@ -205,37 +205,37 @@ elif [ "$OS" = "windows" ]; then
     echo "Error: Windows currently only supports x86_64 architecture."
     exit 1
   fi
-  FILE="goose-$ARCH-pc-windows-msvc.zip"
-  if [ "$GOOSE_WINDOWS_VARIANT" = "cuda" ]; then
-    FILE="goose-$ARCH-pc-windows-msvc-cuda.zip"
+  FILE="aibuddy-$ARCH-pc-windows-msvc.zip"
+  if [ "$AIBUDDY_WINDOWS_VARIANT" = "cuda" ]; then
+    FILE="aibuddy-$ARCH-pc-windows-msvc-cuda.zip"
   fi
   EXTRACT_CMD="unzip"
-  OUT_FILE="goose.exe"
+  OUT_FILE="aibuddy.exe"
 else
-  case "$GOOSE_LINUX_VARIANT" in
+  case "$AIBUDDY_LINUX_VARIANT" in
     standard|vulkan|musl) ;;
     *)
-      echo "Error: Unsupported GOOSE_LINUX_VARIANT '$GOOSE_LINUX_VARIANT'. Expected 'standard', 'vulkan', or 'musl'."
+      echo "Error: Unsupported AIBUDDY_LINUX_VARIANT '$AIBUDDY_LINUX_VARIANT'. Expected 'standard', 'vulkan', or 'musl'."
       exit 1
       ;;
   esac
-  FILE="goose-$ARCH-unknown-linux-gnu.tar.bz2"
-  if [ "$GOOSE_LINUX_VARIANT" = "vulkan" ]; then
-    FILE="goose-$ARCH-unknown-linux-gnu-vulkan.tar.bz2"
-  elif [ "$GOOSE_LINUX_VARIANT" = "musl" ]; then
-    FILE="goose-$ARCH-unknown-linux-musl.tar.bz2"
+  FILE="aibuddy-$ARCH-unknown-linux-gnu.tar.bz2"
+  if [ "$AIBUDDY_LINUX_VARIANT" = "vulkan" ]; then
+    FILE="aibuddy-$ARCH-unknown-linux-gnu-vulkan.tar.bz2"
+  elif [ "$AIBUDDY_LINUX_VARIANT" = "musl" ]; then
+    FILE="aibuddy-$ARCH-unknown-linux-musl.tar.bz2"
   fi
   EXTRACT_CMD="tar"
 fi
 
 DOWNLOAD_URL="https://github.com/$REPO/releases/download/$RELEASE_TAG/$FILE"
 
-# --- 4) Download & extract 'goose' binary ---
+# --- 4) Download & extract 'aibuddy' binary ---
 echo "Downloading $RELEASE_TAG release: $FILE..."
 if ! curl -sLf "$DOWNLOAD_URL" --output "$FILE"; then
   # If the download fails, only fall back to latest stable when no version was specified and canary was not requested).
-  if ! [ -n "${GOOSE_VERSION:-}" ] && [ "${CANARY:-false}" != "true" ]; then
-    LATEST_TAG=$(curl -s https://api.github.com/repos/aaif-goose/goose/releases/latest | \
+  if ! [ -n "${AIBUDDY_VERSION:-}" ] && [ "${CANARY:-false}" != "true" ]; then
+    LATEST_TAG=$(curl -s https://api.github.com/repos/${REPO}/releases/latest | \
       grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
     if [ -z "$LATEST_TAG" ]; then
       echo "Error: Failed to download $DOWNLOAD_URL and latest tag unavailable"
@@ -257,7 +257,7 @@ if ! curl -sLf "$DOWNLOAD_URL" --output "$FILE"; then
 fi
 
 # Create a temporary directory for extraction
-TMP_DIR="${TMPDIR:-/tmp}/goose_install_$RANDOM"
+TMP_DIR="${TMPDIR:-/tmp}/aibuddy_install_$RANDOM"
 if ! mkdir -p "$TMP_DIR"; then
   echo "Error: Could not create temporary extraction directory"
   exit 1
@@ -304,44 +304,44 @@ set -e  # Re-enable immediate exit on error
 rm "$FILE" # clean up the downloaded archive
 
 # Determine the extraction directory (handle subdirectory in Windows packages)
-# Windows releases may contain files in a 'goose-package' subdirectory
+# Windows releases may contain files in a 'aibuddy-package' subdirectory
 EXTRACT_DIR="$TMP_DIR"
-if [ "$OS" = "windows" ] && [ -d "$TMP_DIR/goose-package" ]; then
-  echo "Found goose-package subdirectory, using that as extraction directory"
-  EXTRACT_DIR="$TMP_DIR/goose-package"
+if [ "$OS" = "windows" ] && [ -d "$TMP_DIR/aibuddy-package" ]; then
+  echo "Found aibuddy-package subdirectory, using that as extraction directory"
+  EXTRACT_DIR="$TMP_DIR/aibuddy-package"
 fi
 
 # Make binary executable
 if [ "$OS" = "windows" ]; then
-  chmod +x "$EXTRACT_DIR/goose.exe"
+  chmod +x "$EXTRACT_DIR/aibuddy.exe"
 else
-  chmod +x "$EXTRACT_DIR/goose"
+  chmod +x "$EXTRACT_DIR/aibuddy"
 fi
 
-# --- 5) Install to $GOOSE_BIN_DIR ---
-if [ ! -d "$GOOSE_BIN_DIR" ]; then
-  echo "Creating directory: $GOOSE_BIN_DIR"
-  mkdir -p "$GOOSE_BIN_DIR"
+# --- 5) Install to $AIBUDDY_BIN_DIR ---
+if [ ! -d "$AIBUDDY_BIN_DIR" ]; then
+  echo "Creating directory: $AIBUDDY_BIN_DIR"
+  mkdir -p "$AIBUDDY_BIN_DIR"
 fi
 
-echo "Moving goose to $GOOSE_BIN_DIR/$OUT_FILE"
+echo "Moving aibuddy to $AIBUDDY_BIN_DIR/$OUT_FILE"
 if [ "$OS" = "windows" ]; then
-  mv "$EXTRACT_DIR/goose.exe" "$GOOSE_BIN_DIR/$OUT_FILE"
+  mv "$EXTRACT_DIR/aibuddy.exe" "$AIBUDDY_BIN_DIR/$OUT_FILE"
 else
   # On Linux, if the target binary is currently running, writing to it fails
   # with ETXTBSY ("Text file busy"). Rename the old binary out of the way
   # first, then move the new one in. If the move fails, restore the old binary
   # so the user is never left without an executable.
-  if [ -f "$GOOSE_BIN_DIR/$OUT_FILE" ]; then
-    mv "$GOOSE_BIN_DIR/$OUT_FILE" "$GOOSE_BIN_DIR/$OUT_FILE.old"
-    if ! mv "$EXTRACT_DIR/goose" "$GOOSE_BIN_DIR/$OUT_FILE"; then
+  if [ -f "$AIBUDDY_BIN_DIR/$OUT_FILE" ]; then
+    mv "$AIBUDDY_BIN_DIR/$OUT_FILE" "$AIBUDDY_BIN_DIR/$OUT_FILE.old"
+    if ! mv "$EXTRACT_DIR/aibuddy" "$AIBUDDY_BIN_DIR/$OUT_FILE"; then
       echo "Error: failed to install new binary, restoring previous version"
-      mv "$GOOSE_BIN_DIR/$OUT_FILE.old" "$GOOSE_BIN_DIR/$OUT_FILE"
+      mv "$AIBUDDY_BIN_DIR/$OUT_FILE.old" "$AIBUDDY_BIN_DIR/$OUT_FILE"
       exit 1
     fi
-    rm -f "$GOOSE_BIN_DIR/$OUT_FILE.old"
+    rm -f "$AIBUDDY_BIN_DIR/$OUT_FILE.old"
   else
-    mv "$EXTRACT_DIR/goose" "$GOOSE_BIN_DIR/$OUT_FILE"
+    mv "$EXTRACT_DIR/aibuddy" "$AIBUDDY_BIN_DIR/$OUT_FILE"
   fi
 fi
 
@@ -350,39 +350,39 @@ if [ "$OS" = "windows" ]; then
   for dll in "$EXTRACT_DIR"/*.dll; do
     if [ -f "$dll" ]; then
       echo "Moving Windows runtime DLL: $(basename "$dll")"
-      mv "$dll" "$GOOSE_BIN_DIR/"
+      mv "$dll" "$AIBUDDY_BIN_DIR/"
     fi
   done
 fi
 
 # skip configuration for non-interactive installs e.g. automation, docker
 if [ "$CONFIGURE" = true ]; then
-  # --- 6) Configure goose (Optional) ---
+  # --- 6) Configure aibuddy (Optional) ---
   echo ""
-  echo "Configuring goose"
+  echo "Configuring aibuddy"
   echo ""
   if [ -t 0 ]; then
-    "$GOOSE_BIN_DIR/$OUT_FILE" configure
+    "$AIBUDDY_BIN_DIR/$OUT_FILE" configure
   elif [ -r /dev/tty ]; then
-    "$GOOSE_BIN_DIR/$OUT_FILE" configure < /dev/tty
+    "$AIBUDDY_BIN_DIR/$OUT_FILE" configure < /dev/tty
   else
     echo "Non-interactive shell detected (e.g. 'curl ... | bash')."
-    echo "Skipping 'goose configure' — please run it manually after installation:"
-    echo "    $GOOSE_BIN_DIR/$OUT_FILE configure"
+    echo "Skipping 'aibuddy configure' — please run it manually after installation:"
+    echo "    $AIBUDDY_BIN_DIR/$OUT_FILE configure"
   fi
 else
-  echo "Skipping 'goose configure', you may need to run this manually later"
+  echo "Skipping 'aibuddy configure', you may need to run this manually later"
 fi
 
 
 
 # --- 7) Check PATH and give instructions if needed ---
-if [[ ":$PATH:" != *":$GOOSE_BIN_DIR:"* ]]; then
+if [[ ":$PATH:" != *":$AIBUDDY_BIN_DIR:"* ]]; then
   echo ""
-  echo "Warning: goose installed, but $GOOSE_BIN_DIR is not in your PATH."
+  echo "Warning: aibuddy installed, but $AIBUDDY_BIN_DIR is not in your PATH."
 
   if [ "$OS" = "windows" ]; then
-    echo "To add goose to your PATH in PowerShell:"
+    echo "To add aibuddy to your PATH in PowerShell:"
     echo ""
     echo "# Add to your PowerShell profile"
     echo '$profilePath = $PROFILE'
@@ -392,13 +392,13 @@ if [[ ":$PATH:" != *":$GOOSE_BIN_DIR:"* ]]; then
     echo '. $PROFILE'
     echo ""
     echo "Alternatively, you can run:"
-    echo "    goose configure"
+    echo "    aibuddy configure"
     echo "or rerun this install script after updating your PATH."
   else
     SHELL_NAME=$(basename "$SHELL")
 
     echo ""
-    echo "The \$GOOSE_BIN_DIR is not in your PATH."
+    echo "The \$AIBUDDY_BIN_DIR is not in your PATH."
 
     if [ "$CONFIGURE" = true ]; then
       echo "What would you like to do?"
@@ -420,23 +420,23 @@ if [[ ":$PATH:" != *":$GOOSE_BIN_DIR:"* ]]; then
       case "$choice" in
       1)
         RC_FILE="$HOME/.${SHELL_NAME}rc"
-        echo "Adding \$GOOSE_BIN_DIR to $RC_FILE..."
-        echo "export PATH=\"$GOOSE_BIN_DIR:\$PATH\"" >> "$RC_FILE"
+        echo "Adding \$AIBUDDY_BIN_DIR to $RC_FILE..."
+        echo "export PATH=\"$AIBUDDY_BIN_DIR:\$PATH\"" >> "$RC_FILE"
         echo "Done! Reload your shell or run 'source $RC_FILE' to apply changes."
         ;;
       2)
         echo ""
         echo "Add it to your PATH by editing ~/.${SHELL_NAME}rc or similar:"
-        echo "    export PATH=\"$GOOSE_BIN_DIR:\$PATH\""
+        echo "    export PATH=\"$AIBUDDY_BIN_DIR:\$PATH\""
         echo "Then reload your shell (e.g. 'source ~/.${SHELL_NAME}rc') to apply changes."
         ;;
       *)
-        echo "Invalid choice. Please add \$GOOSE_BIN_DIR to your PATH manually."
+        echo "Invalid choice. Please add \$AIBUDDY_BIN_DIR to your PATH manually."
         ;;
       esac
     else
       echo ""
-      echo "Configure disabled. Please add \$GOOSE_BIN_DIR to your PATH manually."
+      echo "Configure disabled. Please add \$AIBUDDY_BIN_DIR to your PATH manually."
     fi
 
   fi

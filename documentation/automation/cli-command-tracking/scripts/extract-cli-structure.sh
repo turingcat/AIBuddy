@@ -1,5 +1,5 @@
 #!/bin/bash
-# Extract CLI command structure from goose at a specific version
+# Extract CLI command structure from aibuddy at a specific version
 # Usage: ./extract-cli-structure.sh <version>
 # Example: ./extract-cli-structure.sh v1.15.0
 #
@@ -10,7 +10,7 @@ set -e
 set -o pipefail
 
 VERSION=${1:-"HEAD"}
-GOOSE_REPO=${GOOSE_REPO:-"$HOME/Development/goose"}
+AIBUDDY_REPO=${AIBUDDY_REPO:-"$HOME/Development/aibuddy"}
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Create a temporary directory
@@ -29,37 +29,37 @@ download_release_binary() {
     local bin_dir="$TEMP_DIR/bin"
     mkdir -p "$bin_dir"
     
-    echo "Downloading goose $version from GitHub releases..." >&2
+    echo "Downloading aibuddy $version from GitHub releases..." >&2
     
     # Use the official download script with custom bin dir and specific version
     curl -fsSL "https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh" | \
-        CONFIGURE=false GOOSE_BIN_DIR="$bin_dir" GOOSE_VERSION="$version" bash >&2 2>&1 || {
-        echo "Error: Failed to download goose $version" >&2
+        CONFIGURE=false AIBUDDY_BIN_DIR="$bin_dir" AIBUDDY_VERSION="$version" bash >&2 2>&1 || {
+        echo "Error: Failed to download aibuddy $version" >&2
         return 1
     }
     
-    echo "$bin_dir/goose"
+    echo "$bin_dir/aibuddy"
 }
 
-# Build goose from source
+# Build aibuddy from source
 build_from_source() {
     local version=$1
     local safe_version=${version//\//-}
     
-    if [ ! -d "$GOOSE_REPO" ]; then
-        echo "Error: GOOSE_REPO directory not found: $GOOSE_REPO" >&2
+    if [ ! -d "$AIBUDDY_REPO" ]; then
+        echo "Error: AIBUDDY_REPO directory not found: $AIBUDDY_REPO" >&2
         exit 1
     fi
     
-    cd "$GOOSE_REPO"
+    cd "$AIBUDDY_REPO"
     
     if [ "$version" = "HEAD" ]; then
-        echo "Building goose from HEAD..." >&2
+        echo "Building aibuddy from HEAD..." >&2
         cargo build --release --quiet >&2 2>&1 || {
-            echo "Error: Failed to build goose from HEAD" >&2
+            echo "Error: Failed to build aibuddy from HEAD" >&2
             return 1
         }
-        echo "$GOOSE_REPO/target/release/goose"
+        echo "$AIBUDDY_REPO/target/release/aibuddy"
     else
         # Verify version exists
         if ! git rev-parse "$version" >/dev/null 2>&1; then
@@ -67,10 +67,10 @@ build_from_source() {
             return 1
         fi
         
-        echo "Building goose from $version..." >&2
+        echo "Building aibuddy from $version..." >&2
         
         # Create a worktree for the version
-        local worktree_dir="$TEMP_DIR/goose-$safe_version"
+        local worktree_dir="$TEMP_DIR/aibuddy-$safe_version"
         git worktree add --quiet "$worktree_dir" "$version" >&2 2>&1 || {
             echo "Error: Failed to create worktree for $version" >&2
             return 1
@@ -78,38 +78,38 @@ build_from_source() {
         
         cd "$worktree_dir"
         cargo build --release --quiet >&2 2>&1 || {
-            echo "Error: Failed to build goose from $version" >&2
-            cd "$GOOSE_REPO"
+            echo "Error: Failed to build aibuddy from $version" >&2
+            cd "$AIBUDDY_REPO"
             git worktree remove "$worktree_dir" 2>/dev/null || true
             return 1
         }
         
         # Clean up worktree but keep the binary accessible
-        local bin_path="$worktree_dir/target/release/goose"
-        local temp_bin="$TEMP_DIR/goose-$safe_version-bin"
+        local bin_path="$worktree_dir/target/release/aibuddy"
+        local temp_bin="$TEMP_DIR/aibuddy-$safe_version-bin"
         cp "$bin_path" "$temp_bin"
         
-        cd "$GOOSE_REPO"
+        cd "$AIBUDDY_REPO"
         git worktree remove "$worktree_dir" 2>/dev/null || true
         
         echo "$temp_bin"
     fi
 }
 
-# Get the goose binary
+# Get the aibuddy binary
 if is_release_tag "$VERSION"; then
-    GOOSE_BIN=$(download_release_binary "$VERSION")
+    AIBUDDY_BIN=$(download_release_binary "$VERSION")
 else
-    GOOSE_BIN=$(build_from_source "$VERSION")
+    AIBUDDY_BIN=$(build_from_source "$VERSION")
 fi
 
-if [ -z "$GOOSE_BIN" ] || [ ! -x "$GOOSE_BIN" ]; then
-    echo "Error: Goose binary not found or not executable" >&2
+if [ -z "$AIBUDDY_BIN" ] || [ ! -x "$AIBUDDY_BIN" ]; then
+    echo "Error: AIBuddy binary not found or not executable" >&2
     exit 1
 fi
 
-echo "Using binary: $GOOSE_BIN" >&2
-echo "Binary version: $($GOOSE_BIN --version 2>&1)" >&2
+echo "Using binary: $AIBUDDY_BIN" >&2
+echo "Binary version: $($AIBUDDY_BIN --version 2>&1)" >&2
 
 # Run the Python extraction script
-python3 "$SCRIPT_DIR/extract-cli-structure.py" "$GOOSE_BIN" "$VERSION"
+python3 "$SCRIPT_DIR/extract-cli-structure.py" "$AIBUDDY_BIN" "$VERSION"

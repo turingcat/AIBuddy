@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { MemoryRouter } from 'react-router';
-import type { ScheduledJobDto } from '@aaif/goose-sdk';
+import type { ScheduledJobDto } from '@aibuddy/aibuddy-acp-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import zhCatalog from '../../../i18n/messages/zh-CN.json';
 import ScheduleDetailView from '../ScheduleDetailView';

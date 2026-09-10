@@ -81,6 +81,8 @@ interface ImportRecipeFormProps {
   onSuccess: () => void;
 }
 
+const MAX_RECIPE_FILE_SIZE_BYTES = 1024 * 1024;
+
 // Define Zod schema for the import form
 const importRecipeSchema = z
   .object({
@@ -95,7 +97,7 @@ const importRecipeSchema = z
       .nullable()
       .refine((file) => {
         if (!file) return true;
-        return file.size <= 1024 * 1024;
+        return file.size <= MAX_RECIPE_FILE_SIZE_BYTES;
       }, 'File is too large, max size is 1MB'),
   })
   .refine((data) => (data.deeplink && data.deeplink.trim()) || data.recipeUploadFile, {
@@ -131,7 +133,11 @@ export default function ImportRecipeForm({ isOpen, onClose, onSuccess }: ImportR
           }
           recipe = parsedRecipe;
         } else {
-          const fileContent = await value.recipeUploadFile!.text();
+          const recipeFile = value.recipeUploadFile!;
+          if (recipeFile.size > MAX_RECIPE_FILE_SIZE_BYTES) {
+            throw new Error('File is too large, max size is 1MB');
+          }
+          const fileContent = await recipeFile.text();
           recipe = await parseRecipeFromFile(fileContent);
         }
 
@@ -194,6 +200,9 @@ export default function ImportRecipeForm({ isOpen, onClose, onSuccess }: ImportR
     importRecipeForm.setFieldValue('recipeUploadFile', file || null);
 
     if (file) {
+      if (file.size > MAX_RECIPE_FILE_SIZE_BYTES) {
+        return;
+      }
       try {
         const fileContent = await file.text();
         await parseRecipeFromFile(fileContent);

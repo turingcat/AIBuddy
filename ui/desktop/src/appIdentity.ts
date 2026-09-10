@@ -8,7 +8,7 @@ export interface AppIdentityTarget {
 
 export interface AppDataPaths {
   userDataDir: string;
-  goosePathRoot: string;
+  aibuddyPathRoot: string;
   settingsFile: string;
   credentialsFile: string;
   startupLogsDir: string;
@@ -19,7 +19,7 @@ export function initializeAppIdentity(app: AppIdentityTarget): AppDataPaths {
   const userDataDir = app.getPath('userData');
   return {
     userDataDir,
-    goosePathRoot: path.join(userDataDir, 'goose'),
+    aibuddyPathRoot: path.join(userDataDir, 'aibuddy'),
     settingsFile: path.join(userDataDir, 'settings.json'),
     credentialsFile: path.join(userDataDir, 'credentials.json'),
     startupLogsDir: path.join(userDataDir, 'logs', 'startup'),

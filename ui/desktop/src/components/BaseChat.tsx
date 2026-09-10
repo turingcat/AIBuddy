@@ -3,7 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { defineMessages, useIntl } from '../i18n';
 import { useLocation, useNavigate } from 'react-router';
 import { SearchView } from './conversation/SearchView';
-import LoadingGoose from './LoadingGoose';
+import LoadingAIBuddy from './LoadingAIBuddy';
 import ProgressiveMessageList from './ProgressiveMessageList';
 import { MainPanelLayout } from './Layout/MainPanelLayout';
 import ChatInput from './ChatInput';
@@ -32,7 +32,7 @@ import {
 } from '../types/message';
 import { substituteParameters } from '../utils/parameterSubstitution';
 import { useAutoSubmit } from '../hooks/useAutoSubmit';
-import EnvironmentBadge from './GooseSidebar/EnvironmentBadge';
+import EnvironmentBadge from './AIBuddySidebar/EnvironmentBadge';
 import ChatBrand from './ChatBrand';
 import SessionActionsHeader from './SessionActionsHeader';
 import { isAcpRecovering, subscribeToAcpRecovery } from '../acp/acpConnection';
@@ -55,6 +55,8 @@ const i18n = defineMessages({
     defaultMessage: 'Connection lost. Reconnecting…',
   },
 });
+
+const isUserMessage = (message: Message) => message.role === 'user';
 
 interface BaseChatProps {
   setChat: (chat: ChatType) => void;
@@ -122,6 +124,10 @@ export default function BaseChat({
     sessionId,
     onStreamFinish,
   });
+  const appendToChat = useCallback(
+    (text: string) => handleSubmit({ msg: text, images: [] }),
+    [handleSubmit]
+  );
 
   const handleWorkingDirChange = useCallback(
     async (newDir: string) => {
@@ -445,7 +451,7 @@ export default function BaseChat({
             {recipe && (
               <div className={hasStartedUsingRecipe ? 'mb-6' : ''}>
                 <RecipeActivities
-                  append={(text: string) => handleSubmit({ msg: text, images: [] })}
+                  append={appendToChat}
                   activities={Array.isArray(recipe.activities) ? recipe.activities : null}
                   title={recipe.title}
                   parameterValues={session?.user_recipe_values || {}}
@@ -458,10 +464,10 @@ export default function BaseChat({
                 <SearchView>
                   <ProgressiveMessageList
                     messages={messages}
-                    chat={{ sessionId }}
+                    sessionId={sessionId}
                     toolCallNotifications={toolCallNotifications}
-                    append={(text: string) => handleSubmit({ msg: text, images: [] })}
-                    isUserMessage={(m: Message) => m.role === 'user'}
+                    append={appendToChat}
+                    isUserMessage={isUserMessage}
                     isStreamingMessage={chatState !== ChatState.Idle}
                     onRenderingComplete={handleRenderingComplete}
                     onMessageUpdate={onMessageUpdate}
@@ -476,7 +482,7 @@ export default function BaseChat({
 
           {chatState !== ChatState.Idle && (
             <div className="absolute bottom-1 left-4 z-20 pointer-events-none">
-              <LoadingGoose chatState={chatState} message={progressMessage} />
+              <LoadingAIBuddy chatState={chatState} message={progressMessage} />
             </div>
           )}
         </div>
@@ -506,6 +512,7 @@ export default function BaseChat({
             initialValue={initialPrompt}
             setView={setView}
             totalTokens={tokenState?.totalTokens ?? session?.usage?.total_tokens ?? undefined}
+            contextLimit={tokenState?.contextLimit}
             droppedFiles={droppedFiles}
             onFilesProcessed={() => setDroppedFiles([])} // Clear dropped files after processing
             messages={messages}

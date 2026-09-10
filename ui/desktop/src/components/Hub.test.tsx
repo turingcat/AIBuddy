@@ -21,7 +21,7 @@ vi.mock('./ChatInputCard', () => ({
   ChatInputCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 vi.mock('./ConfigContext', () => ({ useConfig: () => ({ extensionsList: [] }) }));
-vi.mock('./LoadingGoose', () => ({ default: () => null }));
+vi.mock('./LoadingAIBuddy', () => ({ default: () => null }));
 vi.mock('../sessions', () => ({ createSession: mocks.createSession }));
 vi.mock('../utils/workingDir', () => ({
   getInitialWorkingDir: () => '/workspace',
@@ -38,7 +38,7 @@ const zhMessages = Object.fromEntries(
 function renderHub(setView = vi.fn()) {
   render(
     <IntlProvider locale="zh-CN" messages={zhMessages}>
-      <Hub setView={setView} />
+      <Hub setView={setView} draftRef={{ current: '' }} />
     </IntlProvider>
   );
   return setView;

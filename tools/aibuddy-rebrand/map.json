@@ -1,0 +1,97 @@
+{
+  "$schema": "./map.schema.json",
+  "version": 1,
+  "description": "Representative bounded Goose/HeyBuddy to AIBuddy conversion rules; the generated provenance is the complete repository map.",
+  "rules": [
+    {
+      "id": "cli.package-name",
+      "category": "public-entry-point",
+      "selector": {
+        "kind": "literal",
+        "paths": [
+          "Cargo.toml",
+          "crates/goose-cli/Cargo.toml"
+        ],
+        "boundary": "token"
+      },
+      "from": "goose-cli",
+      "to": "aibuddy-cli",
+      "reason": "Rename the first-party CLI package in the workspace and its package manifest.",
+      "appliesTo": [
+        "upstream",
+        "product"
+      ]
+    },
+    {
+      "id": "cli.package-path",
+      "category": "public-entry-point",
+      "selector": {
+        "kind": "path",
+        "paths": [
+          "crates/goose-cli/Cargo.toml"
+        ]
+      },
+      "from": "crates/goose-cli/Cargo.toml",
+      "to": "crates/aibuddy-cli/Cargo.toml",
+      "reason": "Rename the first-party CLI manifest path as an explicit path action.",
+      "appliesTo": [
+        "upstream",
+        "product"
+      ]
+    },
+    {
+      "id": "cli.binary-name",
+      "category": "public-entry-point",
+      "selector": {
+        "kind": "literal",
+        "paths": [
+          "crates/goose-cli/src/main.rs"
+        ],
+        "boundary": "token"
+      },
+      "from": "goose",
+      "to": "aibuddy",
+      "reason": "Rename the first-party CLI executable reference in its entry point.",
+      "appliesTo": [
+        "upstream",
+        "product"
+      ]
+    },
+    {
+      "id": "compatibility.legacy-deeplink",
+      "category": "preserved-reference",
+      "selector": {
+        "kind": "literal",
+        "paths": [
+          "ui/desktop/src/__tests__/createSession.test.ts"
+        ],
+        "boundary": "literal"
+      },
+      "from": "goose://",
+      "preserve": true,
+      "reason": "Legacy deep links remain supported and must use the existing validation path.",
+      "appliesTo": [
+        "upstream",
+        "product"
+      ]
+    },
+    {
+      "id": "compatibility.legacy-cli-env",
+      "category": "preserved-reference",
+      "selector": {
+        "kind": "literal",
+        "paths": [
+          "ui/desktop/src/gooseServe.ts"
+        ],
+        "boundary": "literal"
+      },
+      "from": "GOOSE_BINARY",
+      "preserve": true,
+      "reason": "Existing environment-variable compatibility is intentionally outside mechanical renaming.",
+      "appliesTo": [
+        "upstream",
+        "product"
+      ]
+    }
+  ]
+}

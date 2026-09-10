@@ -44,7 +44,7 @@ describe('chat toolbar labels', () => {
   it('shows an accessible Chinese directory label next to the current directory', () => {
     render(
       <IntlProvider locale="zh-CN" messages={zhMessages}>
-        <DirSwitcher className="" sessionId={undefined} workingDir="/workspace/heybuddy" />
+        <DirSwitcher className="" sessionId={undefined} workingDir="/workspace/aibuddy" />
       </IntlProvider>
     );
 

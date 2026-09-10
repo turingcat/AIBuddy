@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Generate GDK API reference data from the UniFFI surface in goose-sdk.
+"""Generate GDK API reference data from the UniFFI surface in aibuddy-sdk.
 
-`crates/goose-sdk/src/bindings.rs` is the single source of truth for the Rust,
+`crates/aibuddy-sdk/src/bindings.rs` is the single source of truth for the Rust,
 Python, and Kotlin GDK APIs, so the docs are derived from it instead of being
 written by hand. Output is `documentation/src/data/gdk-api.json`, holding one
 entry per GDK release series, consumed by the GdkApiReference component.
@@ -20,8 +20,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-BINDINGS = REPO_ROOT / "crates/goose-sdk/src/bindings.rs"
-CARGO_TOML = REPO_ROOT / "crates/goose-sdk/Cargo.toml"
+BINDINGS = REPO_ROOT / "crates/aibuddy-sdk/src/bindings.rs"
+CARGO_TOML = REPO_ROOT / "crates/aibuddy-sdk/Cargo.toml"
 OUT_FILE = REPO_ROOT / "documentation/src/data/gdk-api.json"
 
 
@@ -177,7 +177,19 @@ def parse_variants(block: str) -> list[dict]:
     return variants
 
 
-def parse_signature(signature: str, docs: str) -> Func:
+def parse_arg_defaults(attrs: str) -> dict[str, str]:
+    """Reads argument defaults from `#[uniffi::export(default(arg = value))]`."""
+    defaults: dict[str, str] = {}
+    for group in re.findall(r"default\s*\(([^()]*)\)", attrs):
+        for part in split_top_level(group):
+            name, _, value = part.partition("=")
+            if value:
+                defaults[name.strip()] = value.strip()
+    return defaults
+
+
+def parse_signature(signature: str, docs: str, defaults: dict[str, str] | None = None) -> Func:
+    defaults = defaults or {}
     signature = re.sub(r"\s+", " ", signature).strip().rstrip("{;").strip()
     is_async = " async fn " in f" {signature} "
     match = re.search(r"fn\s+(\w+)\s*\((.*)\)\s*(?:->\s*(.+))?$", signature, re.DOTALL)
@@ -191,7 +203,8 @@ def parse_signature(signature: str, docs: str) -> Func:
             continue
         param_name, _, type_text = part.partition(":")
         if type_text:
-            params.append(Param(param_name.strip(), clean_type(type_text)))
+            name_text = param_name.strip()
+            params.append(Param(name_text, clean_type(type_text), defaults.get(name_text)))
 
     returns, throws = None, None
     if raw_return:
@@ -200,7 +213,7 @@ def parse_signature(signature: str, docs: str) -> Func:
         if inner:
             parts = split_top_level(inner)
             returns = clean_type(parts[0])
-            throws = clean_type(parts[1]) if len(parts) > 1 else "GooseError"
+            throws = clean_type(parts[1]) if len(parts) > 1 else "AIBuddyError"
         else:
             returns = result
     if returns in ("()", ""):
@@ -270,7 +283,7 @@ def parse_bindings(source: str) -> dict[str, list[Item] | list[Func]]:
             continue
         if exported and re.match(r"pub\s+(async\s+)?fn", stripped):
             block = scanner.block()
-            functions.append(parse_signature(block.split("{")[0], docs))
+            functions.append(parse_signature(block.split("{")[0], docs, parse_arg_defaults(attrs)))
             continue
 
         scanner.index += 1
@@ -336,7 +349,7 @@ def build(version: str) -> dict:
     return {
         "version": version,
         "docVersion": doc_version(version),
-        "source": "crates/goose-sdk/src/bindings.rs",
+        "source": "crates/aibuddy-sdk/src/bindings.rs",
         "functions": [serialize_func(func) for func in sorted(functions, key=lambda f: f.name)],
         "items": [serialize_item(item) for item in items],
     }
@@ -373,7 +386,7 @@ def main() -> int:
 
     OUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUT_FILE.write_text(payload)
-    print(f"wrote {relative} for goose-sdk {version}")
+    print(f"wrote {relative} for aibuddy-sdk {version}")
     return 0
 
 

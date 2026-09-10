@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Generate a release risk assessment report for a Goose release PR.
+Generate a release risk assessment report for a AIBuddy release PR.
 
 Usage:
     .release_risk_report.py --version 1.27.0
@@ -24,12 +24,12 @@ DOC_PATTERNS = [
 
 # Paths considered high-risk core code
 CORE_PATHS = [
-    "crates/goose/src/agents/",
-    "crates/goose/src/providers/",
-    "crates/goose/src/acp/",
-    "crates/goose-cli/",
-    "crates/goose/src/session",
-    "crates/goose/src/permission",
+    "crates/aibuddy/src/agents/",
+    "crates/aibuddy/src/providers/",
+    "crates/aibuddy/src/acp/",
+    "crates/aibuddy-cli/",
+    "crates/aibuddy/src/session",
+    "crates/aibuddy/src/permission",
 ]
 
 # Dependency lock files (safe to skip — lock files only, not manifests)

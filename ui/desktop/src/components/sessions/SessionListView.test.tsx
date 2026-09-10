@@ -190,7 +190,7 @@ describe('SessionListView Nostr import', () => {
       relays: [],
     });
     Object.assign(window.electron, {
-      getConfig: vi.fn().mockReturnValue({ GOOSE_DISABLE_NOSTR_SHARING: false }),
+      getConfig: vi.fn().mockReturnValue({ AIBUDDY_DISABLE_NOSTR_SHARING: false }),
       createChatWindow: vi.fn(),
       selectImportSessionFile: undefined,
     });
@@ -248,7 +248,10 @@ describe('SessionListView Nostr import', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Scheduled Jobs/ }));
     expect(screen.getByText('Session scheduled')).toBeInTheDocument();
-    expect(acpListSessions).toHaveBeenNthCalledWith(2, 'next-page', { keyword: '' });
+    expect(acpListSessions).toHaveBeenNthCalledWith(2, 'next-page', {
+      keyword: '',
+      includeAcp: false,
+    });
   });
 
   it('searches sessions and restores the normal empty state when cleared', async () => {
@@ -306,7 +309,7 @@ describe('SessionListView Nostr import', () => {
 
   it('hides Nostr controls when sharing is disabled', async () => {
     vi.mocked(window.electron.getConfig).mockReturnValue({
-      GOOSE_DISABLE_NOSTR_SHARING: true,
+      AIBUDDY_DISABLE_NOSTR_SHARING: true,
     } as any);
 
     await renderSessionList([session('restricted')]);

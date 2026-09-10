@@ -17,7 +17,7 @@ The Ollama tool shim enables tool calling for models that don't natively support
    ```bash
    ollama pull mistral-nemo
    ```
-3. Start goose with the shim enabled:
+3. Start aibuddy with the shim enabled:
    ```bash
-   GOOSE_TOOLSHIM=true goose session
+   AIBUDDY_TOOLSHIM=true aibuddy session
    ```

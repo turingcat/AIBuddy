@@ -1,22 +1,22 @@
 ---
 title: Rube Extension
-description: Add Rube as a goose Extension to connect with 500+ apps
+description: Add Rube as a aibuddy Extension to connect with 500+ apps
 ---
 
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import CLIExtensionInstructions from '@site/src/components/CLIExtensionInstructions';
-import GooseDesktopInstaller from '@site/src/components/GooseDesktopInstaller';
+import AIBuddyDesktopInstaller from '@site/src/components/AIBuddyDesktopInstaller';
 
-This tutorial covers how to add [Rube](https://rube.app) as a goose extension to enable seamless integration with 500+ apps including Slack, Gmail, Notion, Google Workspace, Microsoft Office, GitHub, and many more.
+This tutorial covers how to add [Rube](https://rube.app) as a aibuddy extension to enable seamless integration with 500+ apps including Slack, Gmail, Notion, Google Workspace, Microsoft Office, GitHub, and many more.
 
 :::tip Quick Install
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
+  <TabItem value="ui" label="aibuddy Desktop" default>
     [Launch the installer](goose://extension?type=streamable_http&url=https%3A%2F%2Frube.app%2Fmcp&id=rube-mcp&name=Rube&description=Seamlessly%20connect%20across%20500%2B%20applications%20including%20Slack%2C%20Gmail%2C%20Notion%2C%20Google%20Workspace%2C%20Microsoft%20Office%2C%20GitHub%2C%20and%20many%20more)
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
-    Use `goose configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
+  <TabItem value="cli" label="aibuddy CLI">
+    Use `aibuddy configure` to add a `Remote Extension (Streamable HTTP)` extension type with:
     
     **Endpoint URL**
     ```
@@ -37,8 +37,8 @@ Rube is a platform powered by Composio that provides unified access to 500+ apps
 ## Configuration
 
 <Tabs groupId="interface">
-  <TabItem value="ui" label="goose Desktop" default>
-    <GooseDesktopInstaller
+  <TabItem value="ui" label="aibuddy Desktop" default>
+    <AIBuddyDesktopInstaller
       extensionId="rube-mcp"
       extensionName="Rube"
       description="Seamlessly connect across 500+ applications including Slack, Gmail, Notion, Google Workspace, Microsoft Office, GitHub, and many more"
@@ -46,7 +46,7 @@ Rube is a platform powered by Composio that provides unified access to 500+ apps
       url="https://rube.app/mcp"
     />
   </TabItem>
-  <TabItem value="cli" label="goose CLI">
+  <TabItem value="cli" label="aibuddy CLI">
     <CLIExtensionInstructions
       name="rube"
       description="Seamlessly connect across 500+ applications including Slack, Gmail, Notion, Google Workspace, Microsoft Office, GitHub, and many more"
@@ -69,7 +69,7 @@ Rube uses OAuth browser authentication, which means:
 
 ## Example Usage
 
-Once Rube is configured, you can interact with 500+ apps directly through goose. Here are some examples:
+Once Rube is configured, you can interact with 500+ apps directly through aibuddy. Here are some examples:
 
 **Email Management**
 ```

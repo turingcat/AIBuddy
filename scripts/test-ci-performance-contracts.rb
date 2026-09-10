@@ -19,6 +19,8 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     release-branches.yml
     release.yml
   ].freeze
+  ACTIVE_CONTRACT_WORKFLOWS = PHASE_2_WORKFLOWS
+  HISTORICAL_CONTRACT_WORKFLOWS = {}.freeze
   PR_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
   CI_CONCURRENCY_GROUP = "ci-${{ github.event.pull_request.number || github.ref }}"
   MCP_CONCURRENCY_GROUP = "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
@@ -30,24 +32,24 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     {
       "spec-version" => "2025-11-25",
       "conformance-version" => "0.1.16",
-      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.1.16.yaml",
     },
     {
       "spec-version" => "2025-11-25",
       "conformance-version" => "0.2.0-alpha.10",
-      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2025-11-25-0.2.0-alpha.10.yaml",
     },
     {
       "spec-version" => "2026-07-28",
       "conformance-version" => "0.2.0-alpha.10",
-      "baseline" => "crates/goose-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml",
+      "baseline" => "crates/aibuddy-cli/tests/mcp-conformance/expected-failures-2026-07-28-0.2.0-alpha.10.yaml",
     },
   ].freeze
   CI_REQUIRED_CHECK_NAMES = {
     "rust-format" => "Check Rust Code Format",
     "rust-build-and-test" => "Build and Test Rust Project",
-    "rust-compat-uniffi" => "Check UniFFI Feature (goose-sdk)",
-    "rust-compat-roaming" => "Build and Test Roaming Feature (goose-cli)",
+    "rust-compat-uniffi" => "Check UniFFI Feature (aibuddy-sdk)",
+    "rust-compat-roaming" => "Build and Test Roaming Feature (aibuddy-cli)",
     "rust-build-and-test-tls" => "Build and Test TLS Backends",
     "rust-build-windows" => "Build Rust Project on Windows",
     "rust-msrv" => "Check MSRV",
@@ -106,9 +108,12 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "Cargo.lock",
       "rust-toolchain.toml",
       ".cargo/**",
-      "crates/goose/**",
-      "crates/goose-acp-macros/**",
-      "ui/sdk/**",
+      "crates/aibuddy/**",
+      "crates/aibuddy-acp-macros/**",
+      "ui/aibuddy-acp-client/**",
+      "ui/aibuddy-acp/**",
+      "ui/aibuddy-binary/**",
+      "ui/scripts/**",
       "ui/package.json",
       "ui/pnpm-lock.yaml",
       "ui/pnpm-workspace.yaml",
@@ -122,13 +127,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "crates/**",
       "build-windows.ps1",
     ],
-    "uniffi" => %w[Cargo.toml Cargo.lock rust-toolchain.toml .cargo/** crates/goose-sdk/** crates/goose-sdk-types/** crates/goose-providers/** crates/goose-context-management/**],
+    "uniffi" => %w[Cargo.toml Cargo.lock rust-toolchain.toml .cargo/** crates/aibuddy-sdk/** crates/aibuddy-sdk-types/** crates/aibuddy-providers/** crates/aibuddy-context-management/**],
     "roaming" => %w[
       Cargo.toml Cargo.lock rust-toolchain.toml .cargo/**
-      crates/goose-roaming/** crates/goose-cli/** crates/goose/**
-      crates/goose-mcp/** crates/goose-providers/** crates/goose-context-management/**
-      crates/goose-download-manager/** crates/goose-sdk-types/** crates/goose-agent/**
-      crates/goose-acp-macros/** crates/goose-provider-types/** crates/goose-local-inference/**
+      crates/aibuddy-roaming/** crates/aibuddy-cli/** crates/aibuddy/**
+      crates/aibuddy-mcp/** crates/aibuddy-providers/** crates/aibuddy-context-management/**
+      crates/aibuddy-download-manager/** crates/aibuddy-sdk-types/** crates/aibuddy-agent/**
+      crates/aibuddy-acp-macros/** crates/aibuddy-provider-types/** crates/aibuddy-local-inference/**
     ],
     "workflow-config" => [
       ".github/actions/**",
@@ -142,7 +147,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   }.freeze
   CI_ALWAYS_REQUIRED_JOBS = %w[changes gdk-api-docs-check].freeze
   CI_FAST_JOBS = CODE_PULL_REQUEST_REQUIRED_JOBS
-  CI_CODE_TIER_JOBS = ["dependency-locks", *CI_FAST_JOBS, "schema-check", "desktop-lint"].freeze
+  CI_CODE_TIER_JOBS = ["dependency-locks", "aibuddy-acp-npm-packages", *CI_FAST_JOBS, "schema-check", "desktop-lint"].freeze
   CI_COMPATIBILITY_JOBS = %w[
     rust-compat-uniffi
     rust-compat-roaming
@@ -160,13 +165,13 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   CI_RELEASE_TIER_IF = "cancelled() == false && github.event_name == 'workflow_dispatch'"
   MCP_SELECTED_TIER_IF = "cancelled() == false && (needs.changes.result != 'success' || github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true')"
   CI_EVENT_TIER_TRUTH_TABLE = [
-    { event: "pull_request", selected: true, fast: "success", compatibility: "skipped" },
-    { event: "pull_request", selected: false, fast: "skipped", compatibility: "skipped" },
-    { event: "push", selected: true, fast: "success", compatibility: "success" },
-    { event: "push", selected: false, fast: "skipped", compatibility: "skipped" },
-    { event: "merge_group", selected: true, fast: "success", compatibility: "success" },
-    { event: "merge_group", selected: false, fast: "skipped", compatibility: "skipped" },
-    { event: "workflow_dispatch", selected: false, fast: "success", compatibility: "success" },
+    { event: "pull_request", selected: true, fast: "success", uniffi: "skipped", roaming: "skipped", release: "skipped" },
+    { event: "pull_request", selected: false, fast: "skipped", uniffi: "skipped", roaming: "skipped", release: "skipped" },
+    { event: "push", selected: true, fast: "success", uniffi: "success", roaming: "success", release: "skipped" },
+    { event: "push", selected: false, fast: "skipped", uniffi: "skipped", roaming: "skipped", release: "skipped" },
+    { event: "merge_group", selected: true, fast: "success", uniffi: "success", roaming: "success", release: "skipped" },
+    { event: "merge_group", selected: false, fast: "skipped", uniffi: "skipped", roaming: "skipped", release: "skipped" },
+    { event: "workflow_dispatch", selected: false, fast: "success", uniffi: "success", roaming: "success", release: "success" },
   ].freeze
   MCP_EVENT_TIER_TRUTH_TABLE = [
     { event: "pull_request", code: true, selected: true },
@@ -184,6 +189,20 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
     assert_equal CI_CONCURRENCY_GROUP, workflow.dig("concurrency", "group")
     assert_equal true, workflow.dig("concurrency", "cancel-in-progress")
+  end
+
+  def test_contract_workflow_matrix_keeps_active_and_historical_paths_explicit
+    ACTIVE_CONTRACT_WORKFLOWS.each do |workflow_name|
+      assert File.file?(File.join(WORKFLOW_DIRECTORY, workflow_name)),
+             "active contract workflow is missing: #{workflow_name}"
+    end
+
+    HISTORICAL_CONTRACT_WORKFLOWS.each do |active_name, disabled_name|
+      refute File.exist?(File.join(WORKFLOW_DIRECTORY, active_name)),
+             "retired workflow must not be treated as active: #{active_name}"
+      assert File.file?(File.join(WORKFLOW_DIRECTORY, disabled_name)),
+             "historical contract workflow is missing: #{disabled_name}"
+    end
   end
 
   def test_ci_cancels_superseded_runs_for_the_same_source
@@ -218,19 +237,19 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       },
     ]
 
-    assert_equal "windows-latest", workflow.dig("jobs", "build-goose-windows", "runs-on")
+    assert_equal "windows-latest", workflow.dig("jobs", "build-aibuddy-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "build-desktop-windows", "runs-on")
     assert_equal "windows-latest", workflow.dig("jobs", "package-desktop-windows", "runs-on")
-    %w[build-goose-windows build-desktop-windows package-desktop-windows].each do |job_name|
+    %w[build-aibuddy-windows build-desktop-windows package-desktop-windows].each do |job_name|
       matrix = workflow.dig("jobs", job_name, "strategy", "matrix", "include")
       expected = expected_matrix
-      if job_name == "build-goose-windows"
+      if job_name == "build-aibuddy-windows"
         features = %w[aws-providers,nostr,otel,rustls-tls,system-keyring code-mode,aws-providers,nostr,otel,rustls-tls,system-keyring,update]
         expected = expected_matrix.zip(features).map { |entry, value| entry.merge("cargo_features" => value) }
       end
       assert_equal expected, matrix
     end
-    build = workflow.dig("jobs", "build-goose-windows", "steps").find { |step| step["run"].to_s.include?("cargo build") }
+    build = workflow.dig("jobs", "build-aibuddy-windows", "steps").find { |step| step["run"].to_s.include?("cargo build") }
     assert_equal "${{ matrix.cargo_features }}", build.dig("env", "CARGO_FEATURES")
     assert_includes build.fetch("run"), "--no-default-features --features $env:CARGO_FEATURES"
     refute_match(/local-inference/, text)
@@ -261,7 +280,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     changes = workflow.fetch("jobs").fetch("changes")
     filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
 
-    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
+    %w[pull_request workflow_dispatch].each do |event_name|
       assert_match(/^  #{event_name}:/, workflow_text("mcp-conformance.yml"),
                    "mcp-conformance.yml must handle #{event_name} events")
     end
@@ -346,7 +365,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     filter = changes.fetch("steps").find { |step| step["id"] == "filter" }
     filters = YAML.safe_load(filter.dig("with", "filters"), aliases: true)
 
-    %w[push pull_request merge_group workflow_dispatch].each do |event_name|
+    %w[pull_request workflow_dispatch].each do |event_name|
       assert_match(/^  #{event_name}:/, workflow_text("ci.yml"), "ci.yml must handle #{event_name} events")
     end
     assert_equal "${{ steps.filter.outputs.docs-only }}", changes.dig("outputs", "docs-only")
@@ -429,12 +448,12 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     refute jobs.key?("rust-compatibility")
     uniffi = job_run_commands("ci.yml", "rust-compat-uniffi").join("\n")
     roaming = job_run_commands("ci.yml", "rust-compat-roaming").join("\n")
-    assert_includes uniffi, "cargo check -p goose-sdk --features uniffi --locked"
-    assert_includes uniffi, "cargo test -p goose-sdk --features uniffi --locked"
+    assert_includes uniffi, "cargo check -p aibuddy-sdk --features uniffi --locked"
+    assert_includes uniffi, "cargo test -p aibuddy-sdk --features uniffi --locked"
     refute_includes uniffi, "--features roaming"
-    assert_includes roaming, "cargo test --locked -p goose-roaming"
-    assert_includes roaming, "cargo build --locked -p goose-cli --features roaming"
-    assert_includes roaming, "cargo test --locked -p goose-cli --features roaming --test roam_acp_client"
+    assert_includes roaming, "cargo test --locked -p aibuddy-roaming"
+    assert_includes roaming, "cargo build --locked -p aibuddy-cli --features roaming"
+    assert_includes roaming, "cargo test --locked -p aibuddy-cli --features roaming --test roam_acp_client"
     refute_includes roaming, "--features uniffi"
   end
 
@@ -443,19 +462,19 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     filter = workflow.dig("jobs", "changes", "steps").find { |step| step["id"] == "filter" }
     paths = YAML.safe_load(filter.dig("with", "filters")).fetch("roaming")
     dependencies = %w[
-      goose goose-cli goose-roaming goose-mcp goose-providers goose-context-management
-      goose-download-manager goose-sdk-types goose-agent goose-acp-macros
-      goose-provider-types goose-local-inference
+      aibuddy aibuddy-cli aibuddy-roaming aibuddy-mcp aibuddy-providers aibuddy-context-management
+      aibuddy-download-manager aibuddy-sdk-types aibuddy-agent aibuddy-acp-macros
+      aibuddy-provider-types aibuddy-local-inference
     ]
     cases = dependencies.to_h { |crate| ["crates/#{crate}/src/lib.rs", true] }
-    cases["crates/goose/src/agents/agent.rs"] = true
-    %w[goose-sdk goose-server goose-test goose-test-support].each do |crate|
+    cases["crates/aibuddy/src/agents/agent.rs"] = true
+    %w[aibuddy-sdk aibuddy-server aibuddy-test aibuddy-test-support].each do |crate|
       cases["crates/#{crate}/src/lib.rs"] = false
     end
     cases.each do |path, relevant|
       changed = paths.any? { |pattern| File.fnmatch?(pattern, path, File::FNM_DOTMATCH) }
       assert_equal relevant, changed, "roaming filter for #{path}"
-      %w[pull_request push merge_group workflow_dispatch].each do |event|
+      %w[pull_request workflow_dispatch].each do |event|
         condition = workflow.dig("jobs", "rust-compat-roaming", "if")
           .gsub("cancelled()", "false")
           .gsub("github.event_name", "'#{event}'")
@@ -487,7 +506,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     refute job.fetch("steps").any? { |step| step["name"] == "Check Windows CLI" }
     build = job.fetch("steps").find { |step| step["name"] == "Build Windows CLI" }
     refute build.key?("if")
-    assert_includes build.fetch("run"), "cargo build --locked -p goose-cli --bin goose --target x86_64-pc-windows-msvc"
+    assert_includes build.fetch("run"), "cargo build --locked -p aibuddy-cli --bin aibuddy --target x86_64-pc-windows-msvc"
   end
 
   def test_ci_required_check_names_remain_stable
@@ -522,6 +541,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "MSRV_RESULT" => "${{ needs.rust-msrv.result }}",
       "RUST_LINT_RESULT" => "${{ needs.rust-lint.result }}",
       "SCHEMA_RESULT" => "${{ needs.schema-check.result }}",
+      "ACP_NPM_RESULT" => "${{ needs.aibuddy-acp-npm-packages.result }}",
       "GDK_API_DOCS_RESULT" => "${{ needs.gdk-api-docs-check.result }}",
       "DESKTOP_LINT_RESULT" => "${{ needs.desktop-lint.result }}",
       "WORKFLOW_CONTRACTS_RESULT" => "${{ needs.workflow-contracts.result }}",
@@ -564,7 +584,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     assert_includes run, 'require_result rust-build-windows "$WINDOWS_RESULT" "$release_gate_tier_result"'
 
     CI_EVENT_TIER_TRUTH_TABLE.each do |row|
-      assert_equal row.values_at(:fast, :compatibility),
+      assert_equal row.values_at(:fast, :uniffi, :roaming, :release),
         ci_tier_results(row[:event], row[:selected]),
         "CI tier mismatch for #{row[:event]} with selected=#{row[:selected]}"
     end
@@ -574,7 +594,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     step = load_workflow("ci.yml").dig("jobs", "ci-gate", "steps").first
     categories = %w[rust desktop schema windows uniffi roaming workflow-config]
     scenarios = [[], *categories.map { |category| [category] }, categories]
-    %w[pull_request push merge_group workflow_dispatch].each do |event|
+    %w[pull_request workflow_dispatch].each do |event|
       scenarios.each do |changed|
         manual = event == "workflow_dispatch"
         config = changed.include?("workflow-config")
@@ -583,6 +603,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
           "changes" => true,
           "gdk-api-docs-check" => true,
           "dependency-locks" => manual || config || (changed & %w[rust desktop schema windows]).any?,
+          "aibuddy-acp-npm-packages" => manual || config || (changed & %w[rust desktop schema windows]).any?,
           "rust-format" => selected.call("rust"),
           "rust-build-and-test" => selected.call("rust"),
           "rust-build-and-test-tls" => selected.call("rust"),
@@ -620,7 +641,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def test_all_rust_toolchain_setup_steps_disable_builtin_caching
     workflow_files.each do |workflow_name|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
 
       workflow.fetch("jobs", {}).each do |job_name, job|
         job.fetch("steps", []).each do |step|
@@ -687,7 +708,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def test_rust_caches_use_distinct_identities_and_safe_save_policies
     expected_caches = RUST_CACHE_IDENTITIES.flat_map do |workflow_name, jobs|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
 
       jobs.map do |job_name, key|
         job = workflow.fetch("jobs").fetch(job_name)
@@ -709,7 +730,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def test_smoke_build_cache_uses_the_normalized_checkout_ref
-    workflow = load_workflow("pr-smoke-test.yml")
+    workflow = load_performance_workflow("pr-smoke-test.yml")
     job = workflow.fetch("jobs").fetch("build-binary")
     filter = workflow.dig("jobs", "changes", "steps").find { |step| step["id"] == "filter" }
     checkout = job.fetch("steps").find do |step|
@@ -734,7 +755,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       assert_equal "${{ env.BUILD_REF }}", checkout_ref,
                    "smoke workflow checkout must use the normalized build ref"
     end
-    assert_includes workflow_text("pr-smoke-test.yml"), "default: \"main\"",
+    assert_includes performance_workflow_text("pr-smoke-test.yml"), "default: \"main\"",
       "smoke build dispatch input must default to main"
     assert_includes job.fetch("if"), "github.event_name == 'workflow_dispatch'",
       "manual smoke runs must bypass documentation filtering"
@@ -777,7 +798,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "bundle-macos.yml" => ["package-desktop"],
       "bundle-windows.yml" => ["build-desktop-windows"],
     }.each do |workflow_name, job_names|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
 
       job_names.each do |job_name|
         steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
@@ -842,7 +863,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "bundle-macos.yml" => ["package-desktop"],
       "bundle-windows.yml" => ["build-desktop-windows"],
     }.each do |workflow_name, job_names|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
 
       job_names.each do |job_name|
         steps = workflow.fetch("jobs").fetch(job_name).fetch("steps")
@@ -882,7 +903,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def test_release_workflows_retain_macos_arm64_and_windows_x32_x64_targets
     macos_workflow = load_workflow("bundle-macos.yml")
     windows_matrix = load_workflow("bundle-windows.yml")
-      .dig("jobs", "build-goose-windows", "strategy", "matrix", "include")
+      .dig("jobs", "build-aibuddy-windows", "strategy", "matrix", "include")
 
     assert_equal "aarch64-apple-darwin", macos_workflow.dig("env", "MACOS_TARGET"),
                  "bundle-macos.yml must retain the macOS ARM64 release target"
@@ -898,7 +919,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "bundle-macos.yml" => %w[package-desktop],
       "bundle-windows.yml" => %w[package-desktop-windows],
     }.each do |workflow_name, job_names|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
 
       %w[workflow_dispatch workflow_call].each do |trigger|
         retention = workflow.fetch(true).fetch(trigger).dig("inputs", "artifact_retention_days")
@@ -930,7 +951,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
       "release.yml" => %w[bundle-macos-arm64 bundle-windows],
       "canary.yml" => %w[bundle-macos-arm64 bundle-windows],
     }.each do |workflow_name, jobs|
-      workflow = load_workflow(workflow_name)
+      workflow = load_performance_workflow(workflow_name)
       jobs.each do |job_name|
         assert_equal 7, workflow.dig("jobs", job_name, "with", "artifact_retention_days")
       end
@@ -949,9 +970,9 @@ class WorkflowPerformanceContractsTest < Minitest::Test
 
   def test_internal_transfer_artifacts_expire_after_one_day
     {
-      "bundle-macos.yml" => ["internal-goose-aarch64-apple-darwin"],
+      "bundle-macos.yml" => ["internal-aibuddy-aarch64-apple-darwin"],
       "bundle-windows.yml" => [
-        "internal-goose-${{ matrix.artifact_arch }}",
+        "internal-aibuddy-${{ matrix.artifact_arch }}",
         "internal-windows-unsigned-${{ matrix.artifact_arch }}",
       ],
     }.each do |workflow_name, artifact_names|
@@ -973,6 +994,18 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     YAML.safe_load(workflow_text(workflow_name), aliases: true)
   end
 
+  def load_historical_workflow(workflow_name)
+    load_workflow(HISTORICAL_CONTRACT_WORKFLOWS.fetch(workflow_name))
+  end
+
+  def load_performance_workflow(workflow_name)
+    if HISTORICAL_CONTRACT_WORKFLOWS.key?(workflow_name)
+      load_historical_workflow(workflow_name)
+    else
+      load_workflow(workflow_name)
+    end
+  end
+
   def workflow_files
     Dir.glob(File.join(WORKFLOW_DIRECTORY, "*.{yml,yaml}")).map { |path| File.basename(path) }.sort
   end
@@ -981,15 +1014,27 @@ class WorkflowPerformanceContractsTest < Minitest::Test
     File.read(File.join(WORKFLOW_DIRECTORY, workflow_name))
   end
 
+  def historical_workflow_text(workflow_name)
+    workflow_text(HISTORICAL_CONTRACT_WORKFLOWS.fetch(workflow_name))
+  end
+
   def cargo_commands(workflow_name)
-    workflow_text(workflow_name).lines.map do |line|
+    performance_workflow_text(workflow_name).lines.map do |line|
       command = line.strip
       command if command.match?(/\bcargo\s+(build|check|clippy|test|fetch)\b/)
     end.compact
   end
 
   def job_run_commands(workflow_name, job_name)
-    load_workflow(workflow_name).dig("jobs", job_name, "steps").map { |step| step["run"] }.compact
+    load_performance_workflow(workflow_name).dig("jobs", job_name, "steps").map { |step| step["run"] }.compact
+  end
+
+  def performance_workflow_text(workflow_name)
+    if HISTORICAL_CONTRACT_WORKFLOWS.key?(workflow_name)
+      historical_workflow_text(workflow_name)
+    else
+      workflow_text(workflow_name)
+    end
   end
 
   def external_action_references(node)
@@ -1082,8 +1127,14 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   def ci_tier_results(event_name, selected)
     code_tier = event_name == "workflow_dispatch" || selected
     compatibility_tier = event_name == "workflow_dispatch" || (event_name != "pull_request" && selected)
+    release_tier = event_name == "workflow_dispatch"
 
-    [code_tier ? "success" : "skipped", compatibility_tier ? "success" : "skipped"]
+    [
+      code_tier ? "success" : "skipped",
+      compatibility_tier ? "success" : "skipped",
+      compatibility_tier ? "success" : "skipped",
+      release_tier ? "success" : "skipped",
+    ]
   end
 
   def mcp_tier_selected?(event_name, code_changed)
@@ -1091,7 +1142,7 @@ class WorkflowPerformanceContractsTest < Minitest::Test
   end
 
   def cache_paths(workflow_name)
-    load_workflow(workflow_name).fetch("jobs").values.flat_map do |job|
+    load_performance_workflow(workflow_name).fetch("jobs").values.flat_map do |job|
       job.fetch("steps", []).map do |step|
         next unless step["uses"].to_s.start_with?("actions/cache@")
 

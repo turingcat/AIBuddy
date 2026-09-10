@@ -1020,7 +1020,7 @@
     "defaultMessage": "Working directory must be an absolute path"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "Enter an absolute path (e.g. /home/goose/workspace)"
+    "defaultMessage": "Enter an absolute path (e.g. /home/aibuddy/workspace)"
   },
   "dirSwitcher.failedToUpdateWorkingDir": {
     "defaultMessage": "Failed to update working directory"
@@ -1135,9 +1135,6 @@
   },
   "extensionInfoFields.typeLabel": {
     "defaultMessage": "Type"
-  },
-  "extensionInfoFields.typeSseUnsupported": {
-    "defaultMessage": "SSE (unsupported)"
   },
   "extensionInfoFields.typeStandardIo": {
     "defaultMessage": "Standard IO (STDIO)"
@@ -1335,7 +1332,7 @@
     "defaultMessage": "Secret Key"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "The secret key configured on the external backend (GOOSE_SERVER__SECRET_KEY)."
+    "defaultMessage": "The secret key configured on the external backend (AIBUDDY_SERVER__SECRET_KEY)."
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "Enter the server's secret key"
@@ -1371,7 +1368,7 @@
     "defaultMessage": "Absolute path on the external backend. Leave blank to send the local working directory."
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/aibuddy/workspace"
   },
   "gitBranchIndicator.failedToSwitch": {
     "defaultMessage": "Failed to switch to {branch}"
@@ -1385,67 +1382,67 @@
   "gitBranchIndicator.uncommittedChanges": {
     "defaultMessage": "You may have uncommitted changes."
   },
-  "goosehintsModal.close": {
+  "aibuddyhintsModal.close": {
     "defaultMessage": "Close"
   },
-  "goosehintsModal.developer": {
+  "aibuddyhintsModal.developer": {
     "defaultMessage": "Developer"
   },
-  "goosehintsModal.dialogDescription": {
+  "aibuddyhintsModal.dialogDescription": {
     "defaultMessage": "Provide additional context about your project to improve communication with {appName}"
   },
-  "goosehintsModal.dialogTitle": {
-    "defaultMessage": "Configure Project Hints (.goosehints)"
+  "aibuddyhintsModal.dialogTitle": {
+    "defaultMessage": "Configure Project Hints (.aibuddyhints)"
   },
-  "goosehintsModal.errorReading": {
-    "defaultMessage": "Error reading .goosehints file: {error}"
+  "aibuddyhintsModal.errorReading": {
+    "defaultMessage": "Error reading .aibuddyhints file: {error}"
   },
-  "goosehintsModal.failedToAccess": {
-    "defaultMessage": "Failed to access .goosehints file"
+  "aibuddyhintsModal.failedToAccess": {
+    "defaultMessage": "Failed to access .aibuddyhints file"
   },
-  "goosehintsModal.failedToSave": {
-    "defaultMessage": "Failed to save .goosehints file"
+  "aibuddyhintsModal.failedToSave": {
+    "defaultMessage": "Failed to save .aibuddyhints file"
   },
-  "goosehintsModal.fileCreating": {
-    "defaultMessage": "Creating new .goosehints file at: {filePath}"
+  "aibuddyhintsModal.fileCreating": {
+    "defaultMessage": "Creating new .aibuddyhints file at: {filePath}"
   },
-  "goosehintsModal.fileFound": {
-    "defaultMessage": ".goosehints file found at: {filePath}"
+  "aibuddyhintsModal.fileFound": {
+    "defaultMessage": ".aibuddyhints file found at: {filePath}"
   },
-  "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints is a text file used to provide additional context about your project and improve the communication with {appName}."
+  "aibuddyhintsModal.helpText1": {
+    "defaultMessage": ".aibuddyhints is a text file used to provide additional context about your project and improve the communication with {appName}."
   },
-  "goosehintsModal.helpText2": {
-    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .goosehints. You'll need to restart your session for .goosehints updates to take effect."
+  "aibuddyhintsModal.helpText2": {
+    "defaultMessage": "Please make sure {bold} extension is enabled in the extensions page. This extension is required to use .aibuddyhints. You'll need to restart your session for .aibuddyhints updates to take effect."
   },
-  "goosehintsModal.helpText3": {
+  "aibuddyhintsModal.helpText3": {
     "defaultMessage": "See {link} for more information."
   },
-  "goosehintsModal.helpTextLink": {
-    "defaultMessage": "using .goosehints"
+  "aibuddyhintsModal.helpTextLink": {
+    "defaultMessage": "using .aibuddyhints"
   },
-  "goosehintsModal.placeholder": {
+  "aibuddyhintsModal.placeholder": {
     "defaultMessage": "Enter project hints here..."
   },
-  "goosehintsModal.save": {
+  "aibuddyhintsModal.save": {
     "defaultMessage": "Save"
   },
-  "goosehintsModal.savedSuccessfully": {
+  "aibuddyhintsModal.savedSuccessfully": {
     "defaultMessage": "Saved successfully"
   },
-  "goosehintsModal.saving": {
+  "aibuddyhintsModal.saving": {
     "defaultMessage": "Saving..."
   },
-  "goosehintsSection.configure": {
+  "aibuddyhintsSection.configure": {
     "defaultMessage": "Configure"
   },
-  "goosehintsSection.description": {
-    "defaultMessage": "Configure your project's .goosehints file to provide additional context to {appName}"
+  "aibuddyhintsSection.description": {
+    "defaultMessage": "Configure your project's .aibuddyhints file to provide additional context to {appName}"
   },
-  "goosehintsSection.title": {
-    "defaultMessage": "Project Hints (.goosehints)"
+  "aibuddyhintsSection.title": {
+    "defaultMessage": "Project Hints (.aibuddyhints)"
   },
-  "groupedExtensionLoadingToast.askGoose": {
+  "groupedExtensionLoadingToast.askAIBuddy": {
     "defaultMessage": "Ask {appName}"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
@@ -1862,38 +1859,35 @@
   "launcher.placeholder": {
     "defaultMessage": "Ask {appName} anything..."
   },
-  "loadingGoose.compacting": {
+  "loadingAIBuddy.compacting": {
     "defaultMessage": "{appName} is compacting the conversation..."
   },
-  "loadingGoose.idle": {
+  "loadingAIBuddy.idle": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingGoose.loadingConversation": {
+  "loadingAIBuddy.loadingConversation": {
     "defaultMessage": "loading conversation..."
   },
-  "loadingGoose.restartingAgent": {
+  "loadingAIBuddy.restartingAgent": {
     "defaultMessage": "restarting session..."
   },
-  "loadingGoose.streaming": {
+  "loadingAIBuddy.streaming": {
     "defaultMessage": "{appName} is working on it…"
   },
-  "loadingGoose.thinking": {
+  "loadingAIBuddy.thinking": {
     "defaultMessage": "{appName} is thinking…"
   },
-  "loadingGoose.waiting": {
+  "loadingAIBuddy.waiting": {
     "defaultMessage": "{appName} is waiting…"
   },
   "localInferenceSettings.deleteConfirm": {
     "defaultMessage": "Delete this model? You can re-download it later."
   },
   "localInferenceSettings.description": {
-    "defaultMessage": "Download and manage local LLM models for inference without API keys. Search HuggingFace for GGUF or MLX models, or use the featured picks below."
+    "defaultMessage": "Download and manage local LLM models for inference without API keys. Search Hugging Face for GGUF or MLX models."
   },
   "localInferenceSettings.dismiss": {
     "defaultMessage": "Dismiss"
-  },
-  "localInferenceSettings.download": {
-    "defaultMessage": "Download"
   },
   "localInferenceSettings.downloadCancelled": {
     "defaultMessage": "Download cancelled"
@@ -1912,9 +1906,6 @@
   },
   "localInferenceSettings.evictFromMemory": {
     "defaultMessage": "Evict from memory"
-  },
-  "localInferenceSettings.featuredModels": {
-    "defaultMessage": "Featured Models"
   },
   "localInferenceSettings.huggingFaceSignInNote": {
     "defaultMessage": "Sign in to increase rate limits when searching and downloading models, and to access private or gated Hugging Face repositories."
@@ -1939,12 +1930,6 @@
   },
   "localInferenceSettings.retry": {
     "defaultMessage": "Retry"
-  },
-  "localInferenceSettings.showAllFeatured": {
-    "defaultMessage": "Show all featured ({count} more)"
-  },
-  "localInferenceSettings.showRecommendedOnly": {
-    "defaultMessage": "Show recommended only"
   },
   "localInferenceSettings.title": {
     "defaultMessage": "Local Inference Models"
@@ -3827,6 +3812,9 @@
   "sessionIndicators.streaming": {
     "defaultMessage": "Streaming"
   },
+  "sessions.acpBadge": {
+    "defaultMessage": "ACP"
+  },
   "sessions.action.delete": {
     "defaultMessage": "Delete session"
   },
@@ -3901,6 +3889,9 @@
   },
   "sessions.importing": {
     "defaultMessage": "Importing..."
+  },
+  "sessions.includeAcp": {
+    "defaultMessage": "Include ACP sessions"
   },
   "sessions.loadingMore": {
     "defaultMessage": "Loading more sessions..."
@@ -4137,7 +4128,7 @@
     "defaultMessage": "No matching skills found"
   },
   "skillsView.noSkillsDescription": {
-    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .goose/skills/, or other supported directories."
+    "defaultMessage": "Skills are loaded from SKILL.md files in ~/.config/agents/skills/, .aibuddy/skills/, or other supported directories."
   },
   "skillsView.noSkillsInstalled": {
     "defaultMessage": "No skills installed"
@@ -4415,7 +4406,7 @@
   "toolConfirmation.allowToolCallWithName": {
     "defaultMessage": "Allow {toolName}?"
   },
-  "toolConfirmation.gooseWouldLikeToCallWithName": {
+  "toolConfirmation.aibuddyWouldLikeToCallWithName": {
     "defaultMessage": "{appName} would like to call {toolName}. Allow?"
   },
   "userMessage.cancel": {

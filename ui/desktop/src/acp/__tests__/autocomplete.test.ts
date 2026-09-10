@@ -1,4 +1,4 @@
-import type { AgentMention, AvailableCommand } from '@aaif/goose-sdk';
+import type { AgentMention, AvailableCommand } from '@aibuddy/aibuddy-acp-client';
 import { describe, expect, it } from 'vitest';
 import { agentMentionToDisplayItem, availableCommandToDisplayItem } from '../autocomplete';
 

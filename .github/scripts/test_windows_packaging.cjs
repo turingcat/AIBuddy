@@ -37,7 +37,7 @@ test('both entry points default to a normal full build', () => {
 });
 
 test('reuse skips both expensive build jobs', () => {
-  for (const job of ['build-goose-windows', 'build-desktop-windows']) {
+  for (const job of ['build-aibuddy-windows', 'build-desktop-windows']) {
     assert.equal(jobs[job].if, "${{ inputs.reuse_run_id == '' }}");
   }
 });

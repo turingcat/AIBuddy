@@ -45,17 +45,17 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(root, 'ui/desktop/src/migration.ts', 'migrateLegacyAIBuddyData();');
     writeFixture(
       root,
-      'crates/goose-providers/src/declarative/definitions/heybuddy.json',
+      'crates/aibuddy-providers/src/declarative/definitions/heybuddy.json',
       '{"name":"heybuddy","api_key_env":"HEYBUDDY_API_KEY"}'
     );
 
     expect(findProductBoundaryViolations(root)).toEqual([
       {
-        file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json',
+        file: 'crates/aibuddy-providers/src/declarative/definitions/heybuddy.json',
         pattern: 'bundled heybuddy provider definition',
       },
       {
-        file: 'crates/goose-providers/src/declarative/definitions/heybuddy.json',
+        file: 'crates/aibuddy-providers/src/declarative/definitions/heybuddy.json',
         pattern: 'HeyBuddy provider credential variable',
       },
       { file: 'ui/desktop/forge.config.ts', pattern: 'APP_EDITION active usage' },
@@ -84,14 +84,14 @@ describe('findProductBoundaryViolations', () => {
     ]);
   });
 
-  it('rejects a HeyBuddy provider selection without rejecting Goose compatibility configuration', () => {
+  it('rejects a HeyBuddy provider selection without rejecting AIBuddy compatibility configuration', () => {
     const root = createFixture();
     writeFixture(
       root,
-      'ui/desktop/src/gooseServeEnv.ts',
-      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };"
+      'ui/desktop/src/aibuddyServeEnv.ts',
+      "const env = { AIBUDDY_PROVIDER: 'aibuddy', AIBUDDY_PATH_ROOT: '/aibuddy/aibuddy' };"
     );
-    writeFixture(root, 'ui/desktop/scripts/start.sh', 'GOOSE_PROVIDER=heybuddy goose serve');
+    writeFixture(root, 'ui/desktop/scripts/start.sh', 'AIBUDDY_PROVIDER=heybuddy aibuddy serve');
 
     expect(findProductBoundaryViolations(root)).toEqual([
       { file: 'ui/desktop/scripts/start.sh', pattern: 'HeyBuddy provider selection' },
@@ -100,39 +100,39 @@ describe('findProductBoundaryViolations', () => {
 
   it('rejects HeyBuddy provider values in shell, object, JSON, and YAML configuration', () => {
     const root = createFixture();
-    writeFixture(root, 'ui/desktop/scripts/start.sh', 'export GOOSE_PROVIDER = heybuddy');
+    writeFixture(root, 'ui/desktop/scripts/start.sh', 'export AIBUDDY_PROVIDER = heybuddy');
     writeFixture(
       root,
-      'ui/desktop/src/gooseServeEnv.ts',
-      "const env = { 'GOOSE_PROVIDER': 'heybuddy' };"
+      'ui/desktop/src/aibuddyServeEnv.ts',
+      "const env = { 'AIBUDDY_PROVIDER': 'heybuddy' };"
     );
-    writeFixture(root, 'ui/desktop/src/provider.json', '{"GOOSE_PROVIDER": "heybuddy"}');
-    writeFixture(root, 'ui/desktop/src/provider.yaml', 'GOOSE_PROVIDER : "heybuddy"');
+    writeFixture(root, 'ui/desktop/src/provider.json', '{"AIBUDDY_PROVIDER": "heybuddy"}');
+    writeFixture(root, 'ui/desktop/src/provider.yaml', 'AIBUDDY_PROVIDER : "heybuddy"');
 
     expect(findProductBoundaryViolations(root)).toEqual([
       { file: 'ui/desktop/scripts/start.sh', pattern: 'HeyBuddy provider selection' },
-      { file: 'ui/desktop/src/gooseServeEnv.ts', pattern: 'HeyBuddy provider selection' },
+      { file: 'ui/desktop/src/aibuddyServeEnv.ts', pattern: 'HeyBuddy provider selection' },
       { file: 'ui/desktop/src/provider.json', pattern: 'HeyBuddy provider selection' },
       { file: 'ui/desktop/src/provider.yaml', pattern: 'HeyBuddy provider selection' },
     ]);
   });
 
-  it('rejects HeyBuddy process environment provider assignments without rejecting AIBuddy or Goose paths', () => {
+  it('rejects HeyBuddy process environment provider assignments without rejecting AIBuddy paths', () => {
     const root = createFixture();
     writeFixture(
       root,
       'ui/desktop/src/provider-dot.ts',
-      'process.env.GOOSE_PROVIDER = "heybuddy";'
+      'process.env.AIBUDDY_PROVIDER = "heybuddy";'
     );
     writeFixture(
       root,
       'ui/desktop/src/provider-bracket.ts',
-      "process.env['GOOSE_PROVIDER'] = 'heybuddy';"
+      "process.env['AIBUDDY_PROVIDER'] = 'heybuddy';"
     );
     writeFixture(
       root,
       'ui/desktop/src/provider-aibuddy.ts',
-      "process.env.GOOSE_PROVIDER = 'aibuddy'; process.env.GOOSE_PATH_ROOT = '/aibuddy/goose';"
+      "process.env.AIBUDDY_PROVIDER = 'aibuddy'; process.env.AIBUDDY_PATH_ROOT = '/aibuddy/aibuddy';"
     );
 
     expect(findProductBoundaryViolations(root)).toEqual([
@@ -148,8 +148,8 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(root, 'ui/desktop/forge.config.ts', 'const app = { productName: "HeyBuddy" };');
     writeFixture(
       root,
-      'ui/desktop/src/gooseServeEnv.ts',
-      "const env = { GOOSE_PROVIDER: 'aibuddy', GOOSE_PATH_ROOT: '/aibuddy/goose' };"
+      'ui/desktop/src/aibuddyServeEnv.ts',
+      "const env = { AIBUDDY_PROVIDER: 'aibuddy', AIBUDDY_PATH_ROOT: '/aibuddy/aibuddy' };"
     );
 
     expect(findProductBoundaryViolations(root)).toEqual([
@@ -165,7 +165,7 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(
       root,
       'ui/desktop/scripts/check-product-boundary.test.js',
-      ['GOOSE_PROVIDER=heybuddy', '登录 HeyBuddy', '公司OA'].join('\n')
+      ['AIBUDDY_PROVIDER=heybuddy', '登录 HeyBuddy', '公司OA'].join('\n')
     );
     writeFixture(root, 'ui/desktop/src/unrelated.test.ts', 'const legacy = "登录 HeyBuddy";');
 
@@ -176,7 +176,7 @@ describe('findProductBoundaryViolations', () => {
 
   it('scans prompt, HTML, and announcement product surfaces', () => {
     const root = createFixture();
-    writeFixture(root, 'crates/goose/src/prompts/system.md', '<h1>HeyBuddy</h1>');
+    writeFixture(root, 'crates/aibuddy/src/prompts/system.md', '<h1>HeyBuddy</h1>');
     writeFixture(
       root,
       'ui/desktop/index.html',
@@ -185,7 +185,7 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(root, 'ui/desktop/announcements/release.md', 'HeyBuddyLoginForm login-via-oa');
 
     expect(findProductBoundaryViolations(root)).toEqual([
-      { file: 'crates/goose/src/prompts/system.md', pattern: 'HeyBuddy visible identity' },
+      { file: 'crates/aibuddy/src/prompts/system.md', pattern: 'HeyBuddy visible identity' },
       { file: 'ui/desktop/announcements/release.md', pattern: 'HeyBuddy login component' },
       { file: 'ui/desktop/announcements/release.md', pattern: 'OA login route' },
       { file: 'ui/desktop/index.html', pattern: 'HeyBuddy visible identity' },
@@ -201,7 +201,7 @@ describe('findProductBoundaryViolations', () => {
     writeFixture(root, 'ui/desktop/desktop-setup.iss', 'SetupIconFile=src\\images\\icon.ico');
     writeFixture(
       root,
-      'crates/goose/src/agents/prompt_manager.rs',
+      'crates/aibuddy/src/agents/prompt_manager.rs',
       '"你是 HeyBuddy，默认使用中文".to_string()'
     );
 
@@ -209,7 +209,7 @@ describe('findProductBoundaryViolations', () => {
       { file: '.github/workflows/canary.yml', pattern: 'HeyBuddy artifact or release name' },
       { file: '.github/workflows/release.yml', pattern: 'HeyBuddy artifact or release name' },
       {
-        file: 'crates/goose/src/agents/prompt_manager.rs',
+        file: 'crates/aibuddy/src/agents/prompt_manager.rs',
         pattern: 'HeyBuddy prompt fallback identity',
       },
       {

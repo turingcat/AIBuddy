@@ -1,12 +1,12 @@
 # CLI Command Tracking
 
-Automated pipeline for detecting and documenting CLI command changes between goose releases.
+Automated pipeline for detecting and documenting CLI command changes between aibuddy releases.
 
 ## Overview
 
 This automation keeps the [CLI Commands Guide](https://goose-docs.ai/docs/guides/goose-cli-commands) synchronized with code changes by:
 
-1. **Extracting** CLI structure from goose binary using `--help` output (deterministic)
+1. **Extracting** CLI structure from aibuddy binary using `--help` output (deterministic)
 2. **Detecting** changes between versions (deterministic diff)
 3. **Synthesizing** human-readable change documentation (AI-powered)
 4. **Updating** the CLI Commands Guide (AI-powered)
@@ -22,8 +22,8 @@ The automation runs automatically when a new release is published. See [TESTING.
 ### Manual (Local Testing)
 
 ```bash
-# Set the goose repository path
-export GOOSE_REPO=/path/to/goose
+# Set the aibuddy repository path
+export AIBUDDY_REPO=/path/to/aibuddy
 
 # Run the complete pipeline with auto-detected versions
 ./scripts/run-pipeline.sh
@@ -42,10 +42,10 @@ python3 scripts/diff-cli-structures.py output/old-cli-structure.json \
                                        > output/cli-changes.json
 
 # 3. Generate human-readable change documentation
-cd output && goose run --recipe ../recipes/synthesize-cli-changes.yaml
+cd output && aibuddy run --recipe ../recipes/synthesize-cli-changes.yaml
 
-# 4. Update goose-cli-commands.md
-cd output && goose run --recipe ../recipes/update-cli-commands.yaml
+# 4. Update aibuddy-cli-commands.md
+cd output && aibuddy run --recipe ../recipes/update-cli-commands.yaml
 ```
 
 ### Version Detection
@@ -96,14 +96,14 @@ The automation uses a **hybrid approach**: deterministic scripts for data extrac
 ├─────────────────────────────────────────────────────────────────┤
 │  update-cli-commands.yaml                                        │
 │  ↓                                                               │
-│  goose-cli-commands.md (updated) + update-summary.md             │
+│  aibuddy-cli-commands.md (updated) + update-summary.md             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Why This Design?
 
 **Scripts handle deterministic tasks:**
-- Building goose from specific git tags
+- Building aibuddy from specific git tags
 - Running `--help` commands and parsing output
 - JSON structure comparison
 - No interpretation or inference - direct extraction
@@ -137,14 +137,14 @@ All stages communicate via JSON/Markdown files in the `output/` directory:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GOOSE_REPO` | Yes (local) | - | Path to goose repository root |
-| `CLI_COMMANDS_PATH` | No | `$GOOSE_REPO/documentation/docs/guides/goose-cli-commands.md` | Full path to target doc file |
+| `AIBUDDY_REPO` | Yes (local) | - | Path to aibuddy repository root |
+| `CLI_COMMANDS_PATH` | No | `$AIBUDDY_REPO/documentation/docs/guides/aibuddy-cli-commands.md` | Full path to target doc file |
 | `RELEASE_TAG` | No | - | Used by GitHub Actions to specify the new version |
 
 **Example:**
 ```bash
-export GOOSE_REPO=/Users/you/goose
-# CLI_COMMANDS_PATH is auto-constructed from GOOSE_REPO
+export AIBUDDY_REPO=/Users/you/aibuddy
+# CLI_COMMANDS_PATH is auto-constructed from AIBUDDY_REPO
 ```
 
 ### Skipped Commands
@@ -157,7 +157,7 @@ Some commands are intentionally excluded from extraction and documentation track
   "skip_commands": [
     {
       "name": "term",
-      "reason": "Terminal integration documented via @goose/@g aliases"
+      "reason": "Terminal integration documented via @aibuddy/@g aliases"
     }
   ]
 }
@@ -169,7 +169,7 @@ To add or remove skipped commands, edit the config file - no code changes requir
 
 ### `extract-cli-structure.sh`
 
-Builds goose from a specific git tag and extracts CLI structure using `--help` output.
+Builds aibuddy from a specific git tag and extracts CLI structure using `--help` output.
 
 **Usage:**
 ```bash
@@ -238,7 +238,7 @@ Analyzes detected changes and generates human-readable documentation.
 **Usage:**
 ```bash
 cd output
-goose run --recipe ../recipes/synthesize-cli-changes.yaml
+aibuddy run --recipe ../recipes/synthesize-cli-changes.yaml
 ```
 
 ### `update-cli-commands.yaml`
@@ -247,17 +247,17 @@ Updates the CLI Commands Guide based on synthesized changes.
 
 **Inputs:**
 - `output/cli-changes.md` - Change documentation from synthesis recipe
-- `goose-cli-commands.md` - Target documentation file (path from `CLI_COMMANDS_PATH` or `GOOSE_REPO` env var)
+- `aibuddy-cli-commands.md` - Target documentation file (path from `CLI_COMMANDS_PATH` or `AIBUDDY_REPO` env var)
 
 **Outputs:**
-- Updated `goose-cli-commands.md` with changes applied
+- Updated `aibuddy-cli-commands.md` with changes applied
 - `output/update-summary.md` - Summary of changes for review
 
 **Usage:**
 ```bash
-export CLI_COMMANDS_PATH=/path/to/goose-cli-commands.md
+export CLI_COMMANDS_PATH=/path/to/aibuddy-cli-commands.md
 cd output
-goose run --recipe ../recipes/update-cli-commands.yaml
+aibuddy run --recipe ../recipes/update-cli-commands.yaml
 ```
 
 ## Directory Structure
@@ -270,7 +270,7 @@ cli-command-tracking/
 ├── config/                             # Configuration files
 │   └── skip-commands.json              # Commands to exclude from tracking
 ├── scripts/                            # Extraction and diff scripts
-│   ├── extract-cli-structure.sh        # Wrapper that builds goose and runs Python
+│   ├── extract-cli-structure.sh        # Wrapper that builds aibuddy and runs Python
 │   ├── extract-cli-structure.py        # Python script to parse --help output
 │   ├── diff-cli-structures.py          # Compare structures and detect changes
 │   └── run-pipeline.sh                 # End-to-end pipeline runner
@@ -293,8 +293,8 @@ cli-command-tracking/
 The automation runs via `.github/workflows/docs-update-cli-ref.yml`:
 
 - **Trigger**: Automatically on new releases, or manually for testing
-- **Process**: Builds goose for both versions, extracts CLI structures, detects changes, updates documentation
-- **Output**: Creates a PR with updated `goose-cli-commands.md` if changes detected
+- **Process**: Builds aibuddy for both versions, extracts CLI structures, detects changes, updates documentation
+- **Output**: Creates a PR with updated `aibuddy-cli-commands.md` if changes detected
 - **Testing**: See [TESTING.md](./TESTING.md) for detailed testing instructions
 
 ## What Gets Tracked
@@ -333,4 +333,4 @@ When modifying the automation:
 
 - [TESTING.md](./TESTING.md) - How to test the GitHub Actions workflow
 - [Automation Overview](../README.md) - All automation projects
-- [CLI Commands Guide](../../docs/guides/goose-cli-commands.md) - Target documentation
+- [CLI Commands Guide](../../docs/guides/aibuddy-cli-commands.md) - Target documentation

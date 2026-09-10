@@ -1,3 +1,5 @@
+import './legacyWebGlobals';
+import { createElectronFetch } from './electronFetch';
 import type { IpcMainInvokeEvent, OpenDialogOptions, OpenDialogReturnValue } from 'electron';
 import {
   app,
@@ -34,11 +36,12 @@ import { withSub2apiSession } from './sub2apiAuth';
 import { readCredentials, writeCredentials, clearCredentials } from './credentials';
 import { getCredentialsCodec } from './credentialsCrypto';
 import { installBackendCertificateVerifiers } from './backendCertificateVerifier';
-import { startGooseServe } from './gooseServe';
-import { buildGooseServeEnv } from './gooseServeEnv';
+import { configureProxy } from './proxy';
+import { startAIBuddyServe } from './aibuddyServe';
+import { buildAIBuddyServeEnv } from './aibuddyServeEnv';
 import { fetchSub2apiEntitlement, fetchSub2apiModels } from './siteRuntime/sub2apiAdapter';
 import { getLoginShellPath } from './loginShellPath';
-import { GooseServeLeaseRegistry, type GooseServeLease } from './gooseServeLeaseRegistry';
+import { AIBuddyServeLeaseRegistry, type AIBuddyServeLease } from './aibuddyServeLeaseRegistry';
 import { createAuthSessionTransition } from './authSessionTransition';
 import { acpWebSocketUrlFromHttpBase, normalizeAcpHttpBaseUrl } from './acp/url';
 import { expandTilde } from './utils/pathUtils';
@@ -46,7 +49,7 @@ import log from './utils/logger';
 import { ensureWinShims } from './utils/winShims';
 import { addRecentDir, loadRecentDirs } from './utils/recentDirs';
 import { formatAppName, errorMessage, formatErrorForLogging } from './utils/conversionUtils';
-import { isRetiredGooseChatApp } from './utils/retiredApps';
+import { isRetiredAIBuddyChatApp } from './utils/retiredApps';
 import type { Settings, SettingKey } from './utils/settings';
 import { defaultSettings, getKeyboardShortcuts } from './utils/settings';
 import * as crypto from 'crypto';
@@ -69,23 +72,28 @@ import {
 import { initializeAppIdentity } from './appIdentity';
 import './utils/gitBranchIpc';
 import './utils/recipeHash';
-import type { GooseApp } from './types/apps';
+import type { AIBuddyApp } from './types/apps';
 import installExtension, { REACT_DEVELOPER_TOOLS } from 'electron-devtools-installer';
 import { WEB_PROTOCOLS } from './utils/urlSecurity';
 import { openExternalUrl } from './utils/openExternalUrl';
 import { buildCSP } from './utils/csp';
 import { resolveWorkingDir } from './utils/workingDir';
+import { applyLegacyAIBuddyEnvironment } from './legacyEnv';
 import {
   DesktopFileAccess,
   isAuthorizedFileAccessRequest,
   readSelectedRecipe,
 } from './desktopFileAccess';
 
+const electronFetch = createElectronFetch(net);
+
+applyLegacyAIBuddyEnvironment(process.env);
+
 // =======================================================================
 // Native menu localization
 // -----------------------------------------------------------------------
 function detectMenuLocale(): string {
-  return getConfiguredGooseLocale() ?? 'en';
+  return getConfiguredAIBuddyLocale() ?? 'en';
 }
 
 function menuT(label: string): string {
@@ -115,7 +123,7 @@ function translateMenuLabels(items: MenuItem[]): void {
 
 // Settings management
 const {
-  goosePathRoot: GOOSE_PATH_ROOT,
+  aibuddyPathRoot: AIBUDDY_PATH_ROOT,
   settingsFile: SETTINGS_FILE,
   credentialsFile: CREDENTIALS_FILE,
   startupLogsDir: STARTUP_LOGS_DIR,
@@ -140,9 +148,9 @@ function getSettings(): Settings {
     return {
       ...defaultSettings,
       ...stored,
-      externalGoosed: {
-        ...defaultSettings.externalGoosed,
-        ...(stored.externalGoosed ?? {}),
+      externalAIBuddyd: {
+        ...defaultSettings.externalAIBuddyd,
+        ...(stored.externalAIBuddyd ?? {}),
       },
       keyboardShortcuts: {
         ...defaultSettings.keyboardShortcuts,
@@ -159,14 +167,14 @@ function updateSettings(modifier: (settings: Settings) => void): void {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 }
 
-function getConfiguredGooseLocale(): string | undefined {
+function getConfiguredAIBuddyLocale(): string | undefined {
   const language = getSettings().language;
   if (isValidLanguageSetting(language) && language !== 'system') {
     return language;
   }
 
-  if (process.env.GOOSE_LOCALE) {
-    return process.env.GOOSE_LOCALE;
+  if (process.env.AIBUDDY_LOCALE) {
+    return process.env.AIBUDDY_LOCALE;
   }
 
   try {
@@ -216,27 +224,10 @@ function listGitWorktreeDirs(dir: string): Promise<string[]> {
   });
 }
 
-async function configureProxy() {
-  const httpsProxy = process.env.HTTPS_PROXY || process.env.https_proxy;
-  const httpProxy = process.env.HTTP_PROXY || process.env.http_proxy;
-  const noProxy = process.env.NO_PROXY || process.env.no_proxy || '';
-
-  const proxyUrl = httpsProxy || httpProxy;
-
-  if (proxyUrl) {
-    console.log('[Main] Configuring proxy');
-    await session.defaultSession.setProxy({
-      proxyRules: proxyUrl,
-      proxyBypassRules: noProxy,
-    });
-    console.log('[Main] Proxy configured successfully');
-  }
-}
-
 if (started) app.quit();
 
 // Certificate trust for active backend leases. Renderer requests and
-// main-process net.fetch both pin to the exact cert fingerprint. Each backend
+// main-process electronFetch both pin to the exact cert fingerprint. Each backend
 // lease owns a trust record so old windows keep working after settings change.
 interface BackendCertificateTrust {
   hostname: string;
@@ -326,10 +317,10 @@ app.on('certificate-error', (event, _webContents, url, _error, certificate, call
 });
 
 app.whenReady().then(() => {
-  appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
+  appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
 });
 
-// Main-process net.fetch and renderer WebSockets: pin to the exact cert once known.
+// Main-process electronFetch and renderer WebSockets: pin to the exact cert once known.
 app.whenReady().then(() => {
   installBackendCertificateVerifiers(
     [session.defaultSession, session.fromPartition('persist:goose')],
@@ -811,12 +802,12 @@ interface BundledConfig {
 
 const getBundledConfig = (): BundledConfig => {
   //{env-macro-start}//
-  //needed when goose is bundled for a specific provider
+  //needed when aibuddy is bundled for a specific provider
   //{env-macro-end}//
   return {
-    defaultProvider: process.env.GOOSE_DEFAULT_PROVIDER,
-    defaultModel: process.env.GOOSE_DEFAULT_MODEL,
-    version: process.env.GOOSE_VERSION,
+    defaultProvider: process.env.AIBUDDY_DEFAULT_PROVIDER,
+    defaultModel: process.env.AIBUDDY_DEFAULT_MODEL,
+    version: process.env.AIBUDDY_VERSION,
   };
 };
 
@@ -833,16 +824,16 @@ interface ExternalBackend {
 }
 
 const getExternalBackendUrlFromEnv = (): string | null => {
-  if (!process.env.GOOSE_EXTERNAL_BACKEND) {
+  if (!process.env.AIBUDDY_EXTERNAL_BACKEND) {
     return null;
   }
 
-  const configuredUrl = process.env.GOOSE_EXTERNAL_BACKEND_URL?.trim();
+  const configuredUrl = process.env.AIBUDDY_EXTERNAL_BACKEND_URL?.trim();
   if (configuredUrl) {
     return configuredUrl;
   }
 
-  return `http://127.0.0.1:${process.env.GOOSE_PORT || '3000'}`;
+  return `http://127.0.0.1:${process.env.AIBUDDY_PORT || '3000'}`;
 };
 
 const getExternalBackendFromEnv = (): ExternalBackend | null => {
@@ -851,10 +842,10 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
     return null;
   }
 
-  const secret = process.env.GOOSE_SERVER__SECRET_KEY;
+  const secret = process.env.AIBUDDY_SERVER__SECRET_KEY;
   if (!secret) {
     throw new Error(
-      'GOOSE_SERVER__SECRET_KEY must be set when using GOOSE_EXTERNAL_BACKEND. ' +
+      'AIBUDDY_SERVER__SECRET_KEY must be set when using AIBUDDY_EXTERNAL_BACKEND. ' +
         'Set it to the same value on both the server and the desktop client.'
     );
   }
@@ -867,8 +858,8 @@ const getExternalBackendFromEnv = (): ExternalBackend | null => {
 };
 
 const getServerSecret = (settings: Settings): string => {
-  if (settings.externalGoosed?.enabled && settings.externalGoosed.secret) {
-    return settings.externalGoosed.secret;
+  if (settings.externalAIBuddyd?.enabled && settings.externalAIBuddyd.secret) {
+    return settings.externalAIBuddyd.secret;
   }
   return GENERATED_SECRET;
 };
@@ -878,17 +869,17 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
   if (envBackend) {
     return {
       ...envBackend,
-      workingDir: settings.externalGoosed?.workingDir,
+      workingDir: settings.externalAIBuddyd?.workingDir,
     };
   }
 
-  if (settings.externalGoosed?.enabled && settings.externalGoosed.url) {
+  if (settings.externalAIBuddyd?.enabled && settings.externalAIBuddyd.url) {
     return {
       source: 'settings',
-      url: settings.externalGoosed.url,
+      url: settings.externalAIBuddyd.url,
       secret: getServerSecret(settings),
-      certFingerprint: settings.externalGoosed.certFingerprint,
-      workingDir: settings.externalGoosed.workingDir,
+      certFingerprint: settings.externalAIBuddyd.certFingerprint,
+      workingDir: settings.externalAIBuddyd.workingDir,
     };
   }
 
@@ -898,32 +889,32 @@ const getActiveExternalBackend = (settings: Settings): ExternalBackend | null =>
 const getExternalBackendForCsp = (settings: Settings) => {
   const envUrl = getExternalBackendUrlFromEnv();
   if (!envUrl) {
-    return settings.externalGoosed;
+    return settings.externalAIBuddyd;
   }
 
   return {
-    ...settings.externalGoosed,
+    ...settings.externalAIBuddyd,
     enabled: true,
     url: envUrl,
   };
 };
 
 let appConfig = {
-  GOOSE_DEFAULT_PROVIDER: defaultProvider,
-  GOOSE_DEFAULT_MODEL: defaultModel,
-  GOOSE_PATH_ROOT,
-  GOOSE_WORKING_DIR: '',
+  AIBUDDY_DEFAULT_PROVIDER: defaultProvider,
+  AIBUDDY_DEFAULT_MODEL: defaultModel,
+  AIBUDDY_PATH_ROOT,
+  AIBUDDY_WORKING_DIR: '',
   // Whether the window is bound to an external backend (fixed at window
-  // creation via gooseServeLeases) and which URL it is bound to.
-  GOOSE_EXTERNAL_BACKEND: false,
-  GOOSE_EXTERNAL_BACKEND_URL: '',
-  GOOSE_EXTERNAL_BACKEND_SOURCE: '',
+  // creation via aibuddyServeLeases) and which URL it is bound to.
+  AIBUDDY_EXTERNAL_BACKEND: false,
+  AIBUDDY_EXTERNAL_BACKEND_URL: '',
+  AIBUDDY_EXTERNAL_BACKEND_SOURCE: '',
   // Start with the env-var override; the OS region locale is filled in after app.ready
   // (see updateLocaleFromSystem below) since getSystemLocale() cannot be called earlier.
-  GOOSE_LOCALE: process.env.GOOSE_LOCALE || undefined,
-  // If GOOSE_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
-  GOOSE_ALLOWLIST_WARNING: process.env.GOOSE_ALLOWLIST_WARNING === 'true',
-  GOOSE_DISABLE_NOSTR_SHARING: process.env.GOOSE_DISABLE_NOSTR_SHARING === 'true',
+  AIBUDDY_LOCALE: process.env.AIBUDDY_LOCALE || undefined,
+  // If AIBUDDY_ALLOWLIST_WARNING env var is not set, defaults to false (strict blocking mode)
+  AIBUDDY_ALLOWLIST_WARNING: process.env.AIBUDDY_ALLOWLIST_WARNING === 'true',
+  AIBUDDY_DISABLE_NOSTR_SHARING: process.env.AIBUDDY_DISABLE_NOSTR_SHARING === 'true',
 };
 
 const windowMap = new Map<number, BrowserWindow>();
@@ -954,7 +945,7 @@ function getRegularWindows(): BrowserWindow[] {
   return [...windowMap.values()].filter((w) => !w.isDestroyed());
 }
 
-const gooseServeLeases = new GooseServeLeaseRegistry(log);
+const aibuddyServeLeases = new AIBuddyServeLeaseRegistry(log);
 
 const windowPowerSaveBlockers = new Map<number, number>(); // windowId -> blockerId
 // Track pending initial messages per window
@@ -1028,8 +1019,8 @@ const createChat = async (
 
       if (response === 0) {
         updateSettings((s) => {
-          if (s.externalGoosed) {
-            s.externalGoosed.enabled = false;
+          if (s.externalAIBuddyd) {
+            s.externalAIBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1042,7 +1033,7 @@ const createChat = async (
 
   const serverSecret = externalBackend ? externalBackend.secret : GENERATED_SECRET;
   let workingDir = resolveWorkingDir(externalBackend?.workingDir, dir, os.homedir());
-  let gooseServeLease: GooseServeLease | null = null;
+  let aibuddyServeLease: AIBuddyServeLease | null = null;
 
   if (externalBackend) {
     let externalCertificateTrust: BackendCertificateTrustRegistration | null = null;
@@ -1060,7 +1051,7 @@ const createChat = async (
       const externalBackendReady = await checkBackendStatus({
         baseUrl: externalBaseUrl,
         serverSecret,
-        fetch: net.fetch as unknown as typeof globalThis.fetch,
+        fetch: electronFetch as unknown as typeof globalThis.fetch,
       });
       if (!externalBackendReady) {
         externalCertificateTrust?.release();
@@ -1070,7 +1061,7 @@ const createChat = async (
           title: 'External Backend Unreachable',
           message: `Could not connect to external backend at ${externalBaseUrl}`,
           detail:
-            'The external backend must be running and the configured secret must match GOOSE_SERVER__SECRET_KEY on the server.',
+            'The external backend must be running and the configured secret must match AIBUDDY_SERVER__SECRET_KEY on the server.',
           buttons: canDisableExternalBackend
             ? ['Disable External Backend & Retry', 'Quit']
             : ['Quit'],
@@ -1080,8 +1071,8 @@ const createChat = async (
 
         if (canDisableExternalBackend && response === 0) {
           updateSettings((s) => {
-            if (s.externalGoosed) {
-              s.externalGoosed.enabled = false;
+            if (s.externalAIBuddyd) {
+              s.externalAIBuddyd.enabled = false;
             }
           });
           return createChat(app, options);
@@ -1093,7 +1084,7 @@ const createChat = async (
 
       const leaseCertificateTrust = externalCertificateTrust;
       externalCertificateTrust = null;
-      gooseServeLease = gooseServeLeases.createExternal(
+      aibuddyServeLease = aibuddyServeLeases.createExternal(
         acpWebSocketUrlFromHttpBase(externalBaseUrl, serverSecret),
         serverSecret,
         leaseCertificateTrust ? async () => leaseCertificateTrust.release() : undefined
@@ -1116,8 +1107,8 @@ const createChat = async (
 
       if (canDisableExternalBackend && response === 0) {
         updateSettings((s) => {
-          if (s.externalGoosed) {
-            s.externalGoosed.enabled = false;
+          if (s.externalAIBuddyd) {
+            s.externalAIBuddyd.enabled = false;
           }
         });
         return createChat(app, options);
@@ -1131,49 +1122,49 @@ const createChat = async (
 
     const loginShellPath = await getLoginShellPath(log);
 
-    const siteRuntimeEnv = buildGooseServeEnv(
+    const siteRuntimeEnv = buildAIBuddyServeEnv(
       readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
-      GOOSE_PATH_ROOT
+      AIBUDDY_PATH_ROOT
     );
-    let gooseServeResult: Awaited<ReturnType<typeof startGooseServe>>;
+    let aibuddyServeResult: Awaited<ReturnType<typeof startAIBuddyServe>>;
     try {
-      gooseServeResult = await startGooseServe({
+      aibuddyServeResult = await startAIBuddyServe({
         serverSecret,
         dir: workingDir,
         tls: true,
-        env: { ...siteRuntimeEnv, GOOSE_PATH_ROOT },
+        env: { ...siteRuntimeEnv, AIBUDDY_PATH_ROOT },
         loginShellPath,
         isPackaged: app.isPackaged,
         resourcesPath: app.isPackaged ? process.resourcesPath : undefined,
         logger: log,
         diagnosticsDir: STARTUP_LOGS_DIR,
-        readinessFetch: net.fetch as unknown as typeof globalThis.fetch,
+        readinessFetch: electronFetch as unknown as typeof globalThis.fetch,
       });
-      if (!gooseServeResult.certFingerprint) {
-        await gooseServeResult.cleanup();
+      if (!aibuddyServeResult.certFingerprint) {
+        await aibuddyServeResult.cleanup();
         throw new Error(
-          'goose serve started with TLS but did not return a certificate fingerprint'
+          'aibuddy serve started with TLS but did not return a certificate fingerprint'
         );
       }
 
-      const localCertFingerprint = normalizeFingerprint(gooseServeResult.certFingerprint);
+      const localCertFingerprint = normalizeFingerprint(aibuddyServeResult.certFingerprint);
       if (
         localCertificateTrust.trust.fingerprint &&
         localCertificateTrust.trust.fingerprint !== localCertFingerprint
       ) {
-        await gooseServeResult.cleanup();
-        throw new Error('goose serve TLS certificate fingerprint did not match readiness probe');
+        await aibuddyServeResult.cleanup();
+        throw new Error('aibuddy serve TLS certificate fingerprint did not match readiness probe');
       }
       localCertificateTrust.trust.fingerprint = localCertFingerprint;
     } catch (error) {
       localCertificateTrust.release();
-      log.error('goose serve failed to start', error);
+      log.error('aibuddy serve failed to start', error);
       dialog.showMessageBoxSync({
         type: 'error',
         title: `${getAppDisplayName()} Failed to Start`,
         message: 'The backend server failed to start.',
         detail: [
-          'Backend: goose serve',
+          'Backend: aibuddy serve',
           'Readiness check: HTTPS GET /status',
           `Startup error:\n${errorMessage(error)}`,
         ].join('\n\n'),
@@ -1183,26 +1174,26 @@ const createChat = async (
       return;
     }
 
-    workingDir = gooseServeResult.workingDir;
-    const cleanupGooseServe = gooseServeResult.cleanup;
-    gooseServeResult.cleanup = async () => {
+    workingDir = aibuddyServeResult.workingDir;
+    const cleanupAIBuddyServe = aibuddyServeResult.cleanup;
+    aibuddyServeResult.cleanup = async () => {
       try {
-        await cleanupGooseServe();
+        await cleanupAIBuddyServe();
       } finally {
         localCertificateTrust.release();
       }
     };
-    gooseServeLease = gooseServeLeases.create(gooseServeResult, serverSecret);
+    aibuddyServeLease = aibuddyServeLeases.create(aibuddyServeResult, serverSecret);
   }
 
-  const cleanupUnregisteredGooseServeLease = async () => {
-    if (!gooseServeLease) {
+  const cleanupUnregisteredAIBuddyServeLease = async () => {
+    if (!aibuddyServeLease) {
       return;
     }
 
-    const lease = gooseServeLease;
-    gooseServeLease = null;
-    await gooseServeLeases.cleanupLease(lease);
+    const lease = aibuddyServeLease;
+    aibuddyServeLease = null;
+    await aibuddyServeLeases.cleanupLease(lease);
   };
 
   let mainWindowState: ReturnType<typeof windowStateKeeper>;
@@ -1262,13 +1253,13 @@ const createChat = async (
         additionalArguments: [
           JSON.stringify({
             ...appConfig,
-            GOOSE_LOCALE: getConfiguredGooseLocale(),
-            GOOSE_WORKING_DIR: workingDir,
-            GOOSE_EXTERNAL_BACKEND: externalBackend !== null,
-            GOOSE_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
-            GOOSE_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
+            AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
+            AIBUDDY_WORKING_DIR: workingDir,
+            AIBUDDY_EXTERNAL_BACKEND: externalBackend !== null,
+            AIBUDDY_EXTERNAL_BACKEND_URL: externalBackend?.url ?? '',
+            AIBUDDY_EXTERNAL_BACKEND_SOURCE: externalBackend?.source ?? '',
             REQUEST_DIR: dir,
-            GOOSE_VERSION: version,
+            AIBUDDY_VERSION: version,
             recipeDeeplink: recipeDeeplink,
             recipeId: recipeId,
             recipeParameters: recipeParameters,
@@ -1283,17 +1274,17 @@ const createChat = async (
       },
     });
   } catch (error) {
-    await cleanupUnregisteredGooseServeLease();
+    await cleanupUnregisteredAIBuddyServeLease();
     throw error;
   }
 
-  if (gooseServeLease) {
-    const lease = gooseServeLease;
+  if (aibuddyServeLease) {
+    const lease = aibuddyServeLease;
     mainWindow.once('closed', () => {
-      void gooseServeLeases.releaseWindow(mainWindow.id);
+      void aibuddyServeLeases.releaseWindow(mainWindow.id);
     });
-    gooseServeLeases.attachWindow(mainWindow.id, lease);
-    gooseServeLease = null;
+    aibuddyServeLeases.attachWindow(mainWindow.id, lease);
+    aibuddyServeLease = null;
   }
 
   if (!app.isPackaged) {
@@ -1372,7 +1363,7 @@ const createChat = async (
 
   // Handle new window creation for links (fallback for any links not handled by onClick)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredAIBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
     return { action: 'deny' };
@@ -1383,7 +1374,7 @@ const createChat = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mainWindow.webContents.on('new-window' as any, function (event: any, url: string) {
     event.preventDefault();
-    void openExternalUrl(url, mainWindow, getConfiguredGooseLocale()).catch((error) => {
+    void openExternalUrl(url, mainWindow, getConfiguredAIBuddyLocale()).catch((error) => {
       log.error('Failed to open external URL:', error);
     });
   });
@@ -1536,7 +1527,7 @@ const createLauncher = () => {
       additionalArguments: [
         JSON.stringify({
           ...appConfig,
-          GOOSE_LOCALE: getConfiguredGooseLocale(),
+          AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
         }),
       ],
       partition: 'persist:goose',
@@ -1693,7 +1684,7 @@ const openDirectoryDialog = async (): Promise<OpenDialogReturnValue> => {
   if (currentWindow) {
     try {
       const currentWorkingDir = await currentWindow.webContents.executeJavaScript(
-        `window.appConfig ? window.appConfig.get('GOOSE_WORKING_DIR') : null`
+        `window.appConfig ? window.appConfig.get('AIBUDDY_WORKING_DIR') : null`
       );
 
       if (currentWorkingDir && typeof currentWorkingDir === 'string') {
@@ -1888,7 +1879,7 @@ ipcMain.on('react-ready', (event) => {
 
 ipcMain.handle('open-external', async (event, url: string) => {
   const senderWindow = BrowserWindow.fromWebContents(event.sender) ?? undefined;
-  return openExternalUrl(url, senderWindow, getConfiguredGooseLocale());
+  return openExternalUrl(url, senderWindow, getConfiguredAIBuddyLocale());
 });
 
 ipcMain.handle('directory-chooser', async () => {
@@ -1924,7 +1915,7 @@ const validSettingKeys: Set<string> = new Set([
   'enableWakelock',
   'enableNotifications',
   'spellcheckEnabled',
-  'externalGoosed',
+  'externalAIBuddyd',
   'globalShortcut',
   'keyboardShortcuts',
   'theme',
@@ -1953,7 +1944,7 @@ ipcMain.handle('set-setting', (_event, key: SettingKey, value: unknown) => {
   fsSync.writeFileSync(SETTINGS_FILE, JSON.stringify(settings, null, 2));
 
   if (key === 'language') {
-    appConfig.GOOSE_LOCALE = getConfiguredGooseLocale();
+    appConfig.AIBUDDY_LOCALE = getConfiguredAIBuddyLocale();
   }
 
   // Re-register shortcuts if keyboard shortcuts changed
@@ -1978,7 +1969,7 @@ ipcMain.handle('clear-login-credentials', () => {
 
 registerAIBuddyAuthIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
-  fetchImpl: net.fetch,
+  fetchImpl: electronFetch,
   idempotencyKeyFactory: () => crypto.randomUUID(),
   writeCredentials: (credentials) =>
     writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
@@ -1986,7 +1977,7 @@ registerAIBuddyAuthIpc(ipcMain, {
 
 registerAIBuddyRuntimeIpc(ipcMain, {
   apiBaseUrl: authConfig.apiBaseUrl,
-  fetchImpl: net.fetch,
+  fetchImpl: electronFetch,
   readCredentials: () => readCredentials(CREDENTIALS_FILE, getCredentialsCodec()),
   writeCredentials: (credentials) =>
     writeCredentials(CREDENTIALS_FILE, credentials, getCredentialsCodec()),
@@ -2001,7 +1992,7 @@ ipcMain.handle('get-secret-key', (event) => {
   if (!windowId) {
     return null;
   }
-  return gooseServeLeases.getSecretKey(windowId) ?? null;
+  return aibuddyServeLeases.getSecretKey(windowId) ?? null;
 });
 
 ipcMain.handle('get-acp-url', async (event) => {
@@ -2009,7 +2000,7 @@ ipcMain.handle('get-acp-url', async (event) => {
   if (!windowId) {
     return null;
   }
-  return gooseServeLeases.getAcpUrl(windowId) ?? null;
+  return aibuddyServeLeases.getAcpUrl(windowId) ?? null;
 });
 
 // Handle menu bar icon visibility
@@ -2223,10 +2214,10 @@ ipcMain.handle('select-file-or-directory', async (_event, defaultPath?: string) 
 
 ipcMain.handle('select-recipe-file', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  const pathRoot = appConfig.GOOSE_PATH_ROOT as string | undefined;
+  const pathRoot = appConfig.AIBUDDY_PATH_ROOT as string | undefined;
   const recipeDirectory = pathRoot
     ? path.join(pathRoot, 'config', 'recipes')
-    : path.join(os.homedir(), '.config', 'goose', 'recipes');
+    : path.join(os.homedir(), '.config', 'aibuddy', 'recipes');
   let defaultPath = os.homedir();
   try {
     if ((await fs.stat(recipeDirectory)).isDirectory()) {
@@ -2248,14 +2239,14 @@ ipcMain.handle('select-recipe-file', async (event) => {
   return readSelectedRecipe(result.filePaths[0]);
 });
 
-ipcMain.handle('read-goosehints', async (event) => {
+ipcMain.handle('read-aibuddyhints', async (event) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.readGoosehints(senderWindow.id);
+  return desktopFileAccess.readAIBuddyhints(senderWindow.id);
 });
 
-ipcMain.handle('write-goosehints', async (event, content) => {
+ipcMain.handle('write-aibuddyhints', async (event, content) => {
   const senderWindow = requireRegularRendererWindow(event);
-  return desktopFileAccess.writeGoosehints(senderWindow.id, content);
+  return desktopFileAccess.writeAIBuddyhints(senderWindow.id, content);
 });
 
 // Native picker tailored for session imports: shows hidden files (so users can
@@ -2448,7 +2439,8 @@ async function appMain() {
     }
   });
 
-  await configureProxy();
+  const rendererSession = session.fromPartition('persist:goose');
+  await configureProxy(session.defaultSession, rendererSession);
 
   // Ensure Windows shims are available before any MCP processes are spawned
   await ensureWinShims();
@@ -2762,14 +2754,14 @@ async function appMain() {
       }
 
       // Create the About menu item with a submenu
-      const aboutGooseMenuItem = new MenuItem({
+      const aboutAIBuddyMenuItem = new MenuItem({
         label: menuT('About {app}'),
         submenu: Menu.buildFromTemplate([]), // Start with an empty submenu for About
       });
 
       // Add the Version menu item (display only) to the About submenu
-      if (aboutGooseMenuItem.submenu) {
-        aboutGooseMenuItem.submenu.append(
+      if (aboutAIBuddyMenuItem.submenu) {
+        aboutAIBuddyMenuItem.submenu.append(
           new MenuItem({
             label: `Version ${version || app.getVersion()}`,
             enabled: false,
@@ -2777,7 +2769,7 @@ async function appMain() {
         );
       }
 
-      helpMenu.submenu.append(aboutGooseMenuItem);
+      helpMenu.submenu.append(aboutAIBuddyMenuItem);
     }
   }
 
@@ -2934,7 +2926,7 @@ async function appMain() {
 
   const refreshAuthSession = createAuthSessionTransition({
     listWindows: () => BrowserWindow.getAllWindows(),
-    cleanupBackends: () => gooseServeLeases.cleanupAll(),
+    cleanupBackends: () => aibuddyServeLeases.cleanupAll(),
     createReplacementWindow: () => createNewWindow(app),
   });
 
@@ -2969,11 +2961,11 @@ async function appMain() {
     }
   });
 
-  // 重启前先清理 goose serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
+  // 重启前先清理 aibuddy serve 子进程：app.exit 不触发 will-quit，否则会泄漏孤儿进程
   // @author logic
   // @date 2026-08-13
   ipcMain.on('restart-app', async () => {
-    await gooseServeLeases.cleanupAll();
+    await aibuddyServeLeases.cleanupAll();
     app.relaunch();
     app.exit(0);
   });
@@ -2984,7 +2976,7 @@ async function appMain() {
   });
 
   ipcMain.on('get-app-locale', (event) => {
-    event.returnValue = getConfiguredGooseLocale();
+    event.returnValue = getConfiguredAIBuddyLocale();
   });
 
   ipcMain.handle('open-directory-in-explorer', async (_event, path: string) => {
@@ -2996,9 +2988,9 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('launch-app', async (event, gooseApp: GooseApp) => {
+  ipcMain.handle('launch-app', async (event, aibuddyApp: AIBuddyApp) => {
     try {
-      if (isRetiredGooseChatApp(gooseApp)) {
+      if (isRetiredAIBuddyChatApp(aibuddyApp)) {
         throw new Error('This built-in Chat app is no longer supported.');
       }
 
@@ -3008,13 +3000,13 @@ async function appMain() {
       }
 
       const launchingWindowId = launchingWindow.id;
-      const launchingGooseServeLease = gooseServeLeases.get(launchingWindowId);
-      if (!launchingGooseServeLease) {
+      const launchingAIBuddyServeLease = aibuddyServeLeases.get(launchingWindowId);
+      if (!launchingAIBuddyServeLease) {
         throw new Error('No backend lease found for launching window');
       }
 
       const launchingWorkingDir = await launchingWindow.webContents
-        .executeJavaScript(`window.appConfig ? window.appConfig.get('GOOSE_WORKING_DIR') : null`)
+        .executeJavaScript(`window.appConfig ? window.appConfig.get('AIBUDDY_WORKING_DIR') : null`)
         .catch((error) => {
           console.warn('Failed to get working directory from launching window:', error);
           return undefined;
@@ -3025,10 +3017,10 @@ async function appMain() {
         app.getPath('home')
       );
       const appWindow = new BrowserWindow({
-        title: formatAppName(gooseApp.name),
-        width: gooseApp.width ?? 800,
-        height: gooseApp.height ?? 600,
-        resizable: gooseApp.resizable ?? true,
+        title: formatAppName(aibuddyApp.name),
+        width: aibuddyApp.width ?? 800,
+        height: aibuddyApp.height ?? 600,
+        resizable: aibuddyApp.resizable ?? true,
         useContentSize: true,
         webPreferences: {
           preload: path.join(__dirname, 'preload.js'),
@@ -3038,32 +3030,32 @@ async function appMain() {
           additionalArguments: [
             JSON.stringify({
               ...appConfig,
-              GOOSE_LOCALE: getConfiguredGooseLocale(),
-              GOOSE_WORKING_DIR: workingDir,
-              GOOSE_VERSION: version,
+              AIBUDDY_LOCALE: getConfiguredAIBuddyLocale(),
+              AIBUDDY_WORKING_DIR: workingDir,
+              AIBUDDY_VERSION: version,
             }),
           ],
           partition: 'persist:goose',
         },
       });
 
-      gooseServeLeases.attachWindow(appWindow.id, launchingGooseServeLease);
+      aibuddyServeLeases.attachWindow(appWindow.id, launchingAIBuddyServeLease);
 
-      appWindows.set(gooseApp.name, appWindow);
+      appWindows.set(aibuddyApp.name, appWindow);
 
       appWindow.on('closed', () => {
-        void gooseServeLeases.releaseWindow(appWindow.id);
-        appWindows.delete(gooseApp.name);
+        void aibuddyServeLeases.releaseWindow(appWindow.id);
+        appWindows.delete(aibuddyApp.name);
       });
 
-      const extensionName = gooseApp.mcpServers?.[0] ?? '';
+      const extensionName = aibuddyApp.mcpServers?.[0] ?? '';
 
       const url = getAppUrl();
 
       const searchParams = new URLSearchParams();
-      searchParams.set('resourceUri', gooseApp.uri);
+      searchParams.set('resourceUri', aibuddyApp.uri);
       searchParams.set('extensionName', extensionName);
-      searchParams.set('appName', gooseApp.name);
+      searchParams.set('appName', aibuddyApp.name);
       searchParams.set('workingDir', workingDir);
 
       url.hash = `/standalone-app?${searchParams.toString()}`;
@@ -3075,11 +3067,11 @@ async function appMain() {
     }
   });
 
-  ipcMain.handle('refresh-app', async (_event, gooseApp: GooseApp) => {
+  ipcMain.handle('refresh-app', async (_event, aibuddyApp: AIBuddyApp) => {
     try {
-      const appWindow = appWindows.get(gooseApp.name);
+      const appWindow = appWindows.get(aibuddyApp.name);
       if (!appWindow || appWindow.isDestroyed()) {
-        console.log(`App window for '${gooseApp.name}' not found or destroyed, skipping refresh`);
+        console.log(`App window for '${aibuddyApp.name}' not found or destroyed, skipping refresh`);
         return;
       }
 
@@ -3124,11 +3116,11 @@ app.whenReady().then(async () => {
 });
 
 async function getAllowList(): Promise<string[]> {
-  if (!process.env.GOOSE_ALLOWLIST) {
+  if (!process.env.AIBUDDY_ALLOWLIST) {
     return [];
   }
 
-  const response = await fetch(process.env.GOOSE_ALLOWLIST);
+  const response = await fetch(process.env.AIBUDDY_ALLOWLIST);
 
   if (!response.ok) {
     throw new Error(
@@ -3154,10 +3146,10 @@ async function getAllowList(): Promise<string[]> {
 }
 
 app.on('will-quit', async () => {
-  const gooseServeLeaseCount = gooseServeLeases.activeLeaseCount();
-  if (gooseServeLeaseCount > 0) {
-    log.info(`App quitting, cleaning up ${gooseServeLeaseCount} backend lease(s)`);
-    await gooseServeLeases.cleanupAll();
+  const aibuddyServeLeaseCount = aibuddyServeLeases.activeLeaseCount();
+  if (aibuddyServeLeaseCount > 0) {
+    log.info(`App quitting, cleaning up ${aibuddyServeLeaseCount} backend lease(s)`);
+    await aibuddyServeLeases.cleanupAll();
   }
 
   for (const [windowId, blockerId] of windowPowerSaveBlockers.entries()) {

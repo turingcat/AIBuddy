@@ -78,32 +78,32 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install goose CLI
+      - name: Install aibuddy CLI
         run: |
           mkdir -p /home/runner/.local/bin
           curl -fsSL https://github.com/aaif-goose/goose/releases/download/stable/download_cli.sh \
-            | CONFIGURE=false GOOSE_BIN_DIR=/home/runner/.local/bin bash
+            | CONFIGURE=false AIBUDDY_BIN_DIR=/home/runner/.local/bin bash
           echo "/home/runner/.local/bin" >> $GITHUB_PATH
-          goose --version
+          aibuddy --version
       
-      - name: Configure goose for CI
+      - name: Configure aibuddy for CI
         env:
-          GOOSE_PROVIDER: ${{ vars.GOOSE_PROVIDER || 'anthropic' }}
-          GOOSE_MODEL: ${{ vars.GOOSE_MODEL || 'claude-opus-4-5' }}
+          AIBUDDY_PROVIDER: ${{ vars.AIBUDDY_PROVIDER || 'anthropic' }}
+          AIBUDDY_MODEL: ${{ vars.AIBUDDY_MODEL || 'claude-opus-4-5' }}
         run: |
-          mkdir -p ~/.config/goose
-          cat <<EOF > ~/.config/goose/config.yaml
-          GOOSE_PROVIDER: $GOOSE_PROVIDER
-          GOOSE_MODEL: $GOOSE_MODEL
+          mkdir -p ~/.config/aibuddy
+          cat <<EOF > ~/.config/aibuddy/config.yaml
+          AIBUDDY_PROVIDER: $AIBUDDY_PROVIDER
+          AIBUDDY_MODEL: $AIBUDDY_MODEL
           keyring: false
           EOF
 
           # Also export into the job environment so later steps can log the values
-          echo "GOOSE_PROVIDER=$GOOSE_PROVIDER" >> "$GITHUB_ENV"
-          echo "GOOSE_MODEL=$GOOSE_MODEL" >> "$GITHUB_ENV"
+          echo "AIBUDDY_PROVIDER=$AIBUDDY_PROVIDER" >> "$GITHUB_ENV"
+          echo "AIBUDDY_MODEL=$AIBUDDY_MODEL" >> "$GITHUB_ENV"
 
-          echo "✅ Created goose config:"
-          cat ~/.config/goose/config.yaml
+          echo "✅ Created aibuddy config:"
+          cat ~/.config/aibuddy/config.yaml
       
       - name: Determine versions to compare
         id: versions
@@ -146,10 +146,10 @@ jobs:
       
       - name: Extract and compare CLI structures
         id: extract
-        timeout-minutes: 30  # Building goose takes time
+        timeout-minutes: 30  # Building aibuddy takes time
         working-directory: documentation/automation/cli-command-tracking
         env:
-          GOOSE_REPO: ${{ github.workspace }}
+          AIBUDDY_REPO: ${{ github.workspace }}
         run: |
           set -o pipefail  # Ensure pipeline failures are caught
           
@@ -165,30 +165,30 @@ jobs:
             echo "✅ Changes detected"
           fi
       
-      - name: Update goose-cli-commands.md (AI synthesis)
+      - name: Update aibuddy-cli-commands.md (AI synthesis)
         if: steps.extract.outputs.has_changes == 'true'
         timeout-minutes: 10
         working-directory: documentation/automation/cli-command-tracking/output
         env:
-          CLI_COMMANDS_PATH: ${{ github.workspace }}/documentation/docs/guides/goose-cli-commands.md
+          CLI_COMMANDS_PATH: ${{ github.workspace }}/documentation/docs/guides/aibuddy-cli-commands.md
         run: |
           echo "🔍 Environment diagnostics:"
-          echo "  GOOSE_PROVIDER: $GOOSE_PROVIDER"
-          echo "  GOOSE_MODEL: $GOOSE_MODEL"
+          echo "  AIBUDDY_PROVIDER: $AIBUDDY_PROVIDER"
+          echo "  AIBUDDY_MODEL: $AIBUDDY_MODEL"
           echo "  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:0:8}..." # Show first 8 chars only
           echo "  CLI_COMMANDS_PATH: $CLI_COMMANDS_PATH"
           echo "  HOME: $HOME"
           echo "  PATH: $PATH"
           echo ""
-          echo "📁 Goose config file:"
-          cat ~/.config/goose/config.yaml || echo "Config file not found!"
+          echo "📁 AIBuddy config file:"
+          cat ~/.config/aibuddy/config.yaml || echo "Config file not found!"
           echo ""
           echo "📁 Current directory:"
           pwd
           ls -la
           echo ""
-          echo "🤖 Applying changes to goose-cli-commands.md..."
-          goose run --recipe ../recipes/update-cli-commands.yaml
+          echo "🤖 Applying changes to aibuddy-cli-commands.md..."
+          aibuddy run --recipe ../recipes/update-cli-commands.yaml
       
       - name: Upload automation outputs
         if: always()

@@ -6,7 +6,7 @@ import { appBrand } from '../brand';
  * Locale detection and message loading for the i18n system.
  *
  * Locale resolution order:
- *   1. GOOSE_LOCALE config value (manual setting or environment variable, passed through appConfig)
+ *   1. AIBUDDY_LOCALE config value (manual setting or environment variable, passed through appConfig)
  *   2. navigator.languages (full accept-language list from OS/browser)
  *   3. "en" (fallback)
  *
@@ -64,7 +64,7 @@ function resolveChineseAlias(tag: string): string {
 export function getLocale(): { locale: string; messageLocale: string } {
   const explicit =
     typeof window !== 'undefined' && window.appConfig
-      ? window.appConfig.get('GOOSE_LOCALE')
+      ? window.appConfig.get('AIBUDDY_LOCALE')
       : undefined;
 
   const candidates: string[] = [];

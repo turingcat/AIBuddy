@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
 
-import type { Logger } from './gooseServe';
+import type { Logger } from './aibuddyServe';
 
 const RESOLVE_TIMEOUT_MS = 5000;
 
@@ -8,9 +8,9 @@ const RESOLVE_TIMEOUT_MS = 5000;
  * Resolve the user's full PATH by running their login shell (bash/zsh).
  *
  * The desktop app launched from Finder/Dock inherits a minimal PATH from
- * launchd, so goosed can't find CLI-backed providers (claude, etc.). Sourcing
+ * launchd, so aibuddyd can't find CLI-backed providers (claude, etc.). Sourcing
  * the user's profile via a login+interactive shell recovers the real PATH.
- * Doing this here rather than in goosed keeps the plain `goose` CLI on the
+ * Doing this here rather than in aibuddyd keeps the plain `aibuddy` CLI on the
  * ambient PATH. Returns null on non-macOS platforms, timeout, or any failure.
  */
 const resolveLoginShellPath = (logger?: Logger): Promise<string | null> => {

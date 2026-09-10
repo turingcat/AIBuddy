@@ -1,6 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('preload file access boundary', () => {
+  it('uses the Electron 22 File.path API when webUtils is unavailable', async () => {
+    const exposed: Record<string, any> = {};
+    vi.doMock('electron', () => ({
+      default: {},
+      contextBridge: {
+        exposeInMainWorld: (name: string, value: unknown) => {
+          exposed[name] = value;
+        },
+      },
+      ipcRenderer: { on: vi.fn(), send: vi.fn(), invoke: vi.fn() },
+      webUtils: undefined,
+    }));
+    await import('./preload');
+    expect(exposed.electron.getPathForFile({ path: 'C:\\files\\notes.txt' })).toBe(
+      'C:\\files\\notes.txt'
+    );
+  });
+
   beforeEach(() => {
     vi.resetModules();
   });
@@ -33,11 +51,11 @@ describe('preload file access boundary', () => {
     expect(electron).not.toHaveProperty('readFile');
 
     electron.selectRecipeFile('/etc/passwd');
-    electron.readGoosehints('../secret');
-    electron.writeGoosehints('project guidance', '../secret');
+    electron.readAIBuddyhints('../secret');
+    electron.writeAIBuddyhints('project guidance', '../secret');
 
     expect(invoke).toHaveBeenNthCalledWith(1, 'select-recipe-file');
-    expect(invoke).toHaveBeenNthCalledWith(2, 'read-goosehints');
-    expect(invoke).toHaveBeenNthCalledWith(3, 'write-goosehints', 'project guidance');
+    expect(invoke).toHaveBeenNthCalledWith(2, 'read-aibuddyhints');
+    expect(invoke).toHaveBeenNthCalledWith(3, 'write-aibuddyhints', 'project guidance');
   });
 });

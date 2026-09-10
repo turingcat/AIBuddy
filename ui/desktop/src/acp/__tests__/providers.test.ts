@@ -106,7 +106,7 @@ describe('ACP providers', () => {
   it('rechecks an uninstalled ACP adapter without trying to start it', async () => {
     const entry = providerEntry({ configured: false, available: false });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi.fn().mockResolvedValue({ entries: [entry] }),
         providersReadinessCheck_unstable: vi.fn(),
         providersInventoryRefresh_unstable: vi.fn(),
@@ -120,8 +120,8 @@ describe('ACP providers', () => {
 
     expect(result.provider.is_configured).toBe(false);
     expect(result.connectionChecked).toBe(false);
-    expect(client.goose.providersInventoryRefresh_unstable).not.toHaveBeenCalled();
-    expect(client.goose.providersReadinessCheck_unstable).not.toHaveBeenCalled();
+    expect(client.aibuddy.providersInventoryRefresh_unstable).not.toHaveBeenCalled();
+    expect(client.aibuddy.providersReadinessCheck_unstable).not.toHaveBeenCalled();
   });
 
   it('keeps compatibility providers in inventory but omits them from setup lists', async () => {
@@ -138,7 +138,7 @@ describe('ACP providers', () => {
       configured: false,
     });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi
           .fn()
           .mockImplementation(({ providerIds }: { providerIds?: string[] }) => ({
@@ -165,17 +165,16 @@ describe('ACP providers', () => {
     expect((await acpGetProviderDetails('claude-code')).replacement).toBe('claude-acp');
   });
 
-  it('uses the explicit ACP capability instead of category or provider id', async () => {
+  it('uses the explicit ACP capability instead of provider id', async () => {
     const custom = providerEntry({
       providerId: 'custom_example-acp',
       providerType: 'Custom',
-      category: 'model',
       acp: false,
     });
-    const agent = providerEntry({ providerId: 'cursor-agent', category: 'agent', acp: false });
-    const acp = providerEntry({ providerId: 'pi-acp', category: 'agent', acp: true });
+    const agent = providerEntry({ providerId: 'cursor-agent', acp: false });
+    const acp = providerEntry({ providerId: 'pi-acp', acp: true });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi.fn().mockResolvedValue({ entries: [custom, agent, acp] }),
       },
     };
@@ -196,7 +195,7 @@ describe('ACP providers', () => {
       models: [{ id: 'claude-sonnet', name: 'Claude Sonnet', recommended: true }],
     });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi
           .fn()
           .mockResolvedValueOnce({ entries: [installed] })
@@ -219,7 +218,7 @@ describe('ACP providers', () => {
 
     expect(result.connectionChecked).toBe(true);
     expect(result.provider.metadata.known_models).toEqual([
-      { name: 'claude-sonnet', context_limit: 0, reasoning: undefined },
+      { name: 'claude-sonnet', context_limit: undefined, reasoning: undefined },
     ]);
   });
 
@@ -230,7 +229,7 @@ describe('ACP providers', () => {
       models: [{ id: 'claude-sonnet', name: 'Claude Sonnet', recommended: true }],
     });
     const client = {
-      goose: {
+      aibuddy: {
         providersConfigSave_unstable: vi.fn().mockResolvedValue({
           status: {},
           refresh: { started: ['claude-acp'], skipped: [] },
@@ -259,23 +258,23 @@ describe('ACP providers', () => {
 
     expect(checked.provider.is_configured).toBe(false);
     expect(checked.provider.metadata.known_models).toEqual([]);
-    expect(client.goose.providersConfigSave_unstable).toHaveBeenCalledWith({
+    expect(client.aibuddy.providersConfigSave_unstable).toHaveBeenCalledWith({
       providerId: 'claude-acp',
       fields: [],
     });
-    expect(client.goose.providersList_unstable).toHaveBeenCalledWith({
+    expect(client.aibuddy.providersList_unstable).toHaveBeenCalledWith({
       providerIds: ['claude-acp'],
     });
     expect(enabled.is_configured).toBe(true);
     expect(enabled.metadata.known_models).toEqual([
-      { name: 'claude-sonnet', context_limit: 0, reasoning: undefined },
+      { name: 'claude-sonnet', context_limit: undefined, reasoning: undefined },
     ]);
   });
 
   it('surfaces an ACP authentication failure without using model refresh as readiness', async () => {
     const installed = providerEntry({ configured: true });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi.fn().mockResolvedValue({ entries: [installed] }),
         providersReadinessCheck_unstable: vi.fn().mockResolvedValue({
           providerId: 'claude-acp',
@@ -293,14 +292,14 @@ describe('ACP providers', () => {
 
     expect(result.connectionChecked).toBe(true);
     expect(result.readinessError).toBe('OAuth session expired');
-    expect(client.goose.providersInventoryRefresh_unstable).not.toHaveBeenCalled();
+    expect(client.aibuddy.providersInventoryRefresh_unstable).not.toHaveBeenCalled();
   });
 
   it('stops polling provider inventory when the setup screen closes', async () => {
     const installed = providerEntry({ configured: true });
     const refreshing = providerEntry({ configured: true, refreshing: true });
     const client = {
-      goose: {
+      aibuddy: {
         providersList_unstable: vi
           .fn()
           .mockResolvedValueOnce({ entries: [installed] })
@@ -321,11 +320,11 @@ describe('ACP providers', () => {
     const controller = new AbortController();
 
     const refresh = acpRefreshProviderDetails('claude-acp', controller.signal);
-    await vi.waitFor(() => expect(client.goose.providersList_unstable).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(client.aibuddy.providersList_unstable).toHaveBeenCalledTimes(2));
     controller.abort();
 
     await expect(refresh).rejects.toMatchObject({ name: 'AbortError' });
-    expect(client.goose.providersList_unstable).toHaveBeenCalledTimes(2);
+    expect(client.aibuddy.providersList_unstable).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -338,7 +337,6 @@ function providerEntry(overrides: Record<string, unknown> = {}) {
     configured: true,
     available: true,
     providerType: 'Builtin',
-    category: 'agent',
     acp: true,
     visibleInSetup: true,
     deprecated: false,

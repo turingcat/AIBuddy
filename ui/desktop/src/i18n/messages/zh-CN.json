@@ -996,7 +996,7 @@
     "defaultMessage": "输入路径"
   },
   "dirSwitcher.enterPathPlaceholder": {
-    "defaultMessage": "输入绝对路径（例如 /home/goose/workspace）"
+    "defaultMessage": "输入绝对路径（例如 /home/aibuddy/workspace）"
   },
   "dirSwitcher.enterPathInvalid": {
     "defaultMessage": "工作目录必须是绝对路径"
@@ -1126,9 +1126,6 @@
   },
   "extensionInfoFields.typeLabel": {
     "defaultMessage": "类型"
-  },
-  "extensionInfoFields.typeSseUnsupported": {
-    "defaultMessage": "SSE（不支持）"
   },
   "extensionInfoFields.typeStandardIo": {
     "defaultMessage": "标准输入输出（STDIO）"
@@ -1326,7 +1323,7 @@
     "defaultMessage": "密钥"
   },
   "externalBackendSection.secretKeyHelp": {
-    "defaultMessage": "在外部后端上配置的密钥（GOOSE_SERVER__SECRET_KEY）"
+    "defaultMessage": "在外部后端上配置的密钥（AIBUDDY_SERVER__SECRET_KEY）"
   },
   "externalBackendSection.secretKeyPlaceholder": {
     "defaultMessage": "输入服务器的密钥"
@@ -1362,69 +1359,69 @@
     "defaultMessage": "外部后端上的绝对路径。留空时将发送本地工作目录。"
   },
   "externalBackendSection.workingDirPlaceholder": {
-    "defaultMessage": "/home/goose/workspace"
+    "defaultMessage": "/home/aibuddy/workspace"
   },
-  "goosehintsModal.close": {
+  "aibuddyhintsModal.close": {
     "defaultMessage": "关闭"
   },
-  "goosehintsModal.developer": {
+  "aibuddyhintsModal.developer": {
     "defaultMessage": "Developer"
   },
-  "goosehintsModal.dialogDescription": {
+  "aibuddyhintsModal.dialogDescription": {
     "defaultMessage": "为你的项目提供额外上下文，改善与 {appName} 的沟通"
   },
-  "goosehintsModal.dialogTitle": {
-    "defaultMessage": "配置项目提示（.goosehints）"
+  "aibuddyhintsModal.dialogTitle": {
+    "defaultMessage": "配置项目提示（.aibuddyhints）"
   },
-  "goosehintsModal.errorReading": {
-    "defaultMessage": "读取 .goosehints 文件出错：{error}"
+  "aibuddyhintsModal.errorReading": {
+    "defaultMessage": "读取 .aibuddyhints 文件出错：{error}"
   },
-  "goosehintsModal.failedToAccess": {
-    "defaultMessage": "访问 .goosehints 文件失败"
+  "aibuddyhintsModal.failedToAccess": {
+    "defaultMessage": "访问 .aibuddyhints 文件失败"
   },
-  "goosehintsModal.failedToSave": {
-    "defaultMessage": "保存 .goosehints 文件失败"
+  "aibuddyhintsModal.failedToSave": {
+    "defaultMessage": "保存 .aibuddyhints 文件失败"
   },
-  "goosehintsModal.fileCreating": {
-    "defaultMessage": "正在创建新的 .goosehints 文件：{filePath}"
+  "aibuddyhintsModal.fileCreating": {
+    "defaultMessage": "正在创建新的 .aibuddyhints 文件：{filePath}"
   },
-  "goosehintsModal.fileFound": {
-    "defaultMessage": "已找到 .goosehints 文件：{filePath}"
+  "aibuddyhintsModal.fileFound": {
+    "defaultMessage": "已找到 .aibuddyhints 文件：{filePath}"
   },
-  "goosehintsModal.helpText1": {
-    "defaultMessage": ".goosehints 是一个文本文件，用于为你的项目提供额外上下文，改善与 {appName} 的沟通。"
+  "aibuddyhintsModal.helpText1": {
+    "defaultMessage": ".aibuddyhints 是一个文本文件，用于为你的项目提供额外上下文，改善与 {appName} 的沟通。"
   },
-  "goosehintsModal.helpText2": {
-    "defaultMessage": "请确认已在扩展页面启用 {bold} 扩展。此扩展是使用 .goosehints 所必需的。你需要重启会话，.goosehints 的更新才会生效。"
+  "aibuddyhintsModal.helpText2": {
+    "defaultMessage": "请确认已在扩展页面启用 {bold} 扩展。此扩展是使用 .aibuddyhints 所必需的。你需要重启会话，.aibuddyhints 的更新才会生效。"
   },
-  "goosehintsModal.helpText3": {
+  "aibuddyhintsModal.helpText3": {
     "defaultMessage": "更多信息请参见 {link}。"
   },
-  "goosehintsModal.helpTextLink": {
-    "defaultMessage": "使用 .goosehints"
+  "aibuddyhintsModal.helpTextLink": {
+    "defaultMessage": "使用 .aibuddyhints"
   },
-  "goosehintsModal.placeholder": {
+  "aibuddyhintsModal.placeholder": {
     "defaultMessage": "在此输入项目提示…"
   },
-  "goosehintsModal.save": {
+  "aibuddyhintsModal.save": {
     "defaultMessage": "保存"
   },
-  "goosehintsModal.savedSuccessfully": {
+  "aibuddyhintsModal.savedSuccessfully": {
     "defaultMessage": "保存成功"
   },
-  "goosehintsModal.saving": {
+  "aibuddyhintsModal.saving": {
     "defaultMessage": "保存中…"
   },
-  "goosehintsSection.configure": {
+  "aibuddyhintsSection.configure": {
     "defaultMessage": "配置"
   },
-  "goosehintsSection.description": {
-    "defaultMessage": "配置项目的 .goosehints 文件，为 {appName} 提供额外上下文"
+  "aibuddyhintsSection.description": {
+    "defaultMessage": "配置项目的 .aibuddyhints 文件，为 {appName} 提供额外上下文"
   },
-  "goosehintsSection.title": {
-    "defaultMessage": "项目提示（.goosehints）"
+  "aibuddyhintsSection.title": {
+    "defaultMessage": "项目提示（.aibuddyhints）"
   },
-  "groupedExtensionLoadingToast.askGoose": {
+  "groupedExtensionLoadingToast.askAIBuddy": {
     "defaultMessage": "问问 {appName}"
   },
   "groupedExtensionLoadingToast.collapseDetails": {
@@ -1841,38 +1838,35 @@
   "launcher.placeholder": {
     "defaultMessage": "问 {appName} 任何问题…"
   },
-  "loadingGoose.compacting": {
+  "loadingAIBuddy.compacting": {
     "defaultMessage": "{appName} 正在压缩对话…"
   },
-  "loadingGoose.idle": {
+  "loadingAIBuddy.idle": {
     "defaultMessage": "{appName} 正在处理…"
   },
-  "loadingGoose.loadingConversation": {
+  "loadingAIBuddy.loadingConversation": {
     "defaultMessage": "正在加载对话…"
   },
-  "loadingGoose.restartingAgent": {
+  "loadingAIBuddy.restartingAgent": {
     "defaultMessage": "正在重启会话…"
   },
-  "loadingGoose.streaming": {
+  "loadingAIBuddy.streaming": {
     "defaultMessage": "{appName} 正在处理…"
   },
-  "loadingGoose.thinking": {
+  "loadingAIBuddy.thinking": {
     "defaultMessage": "{appName} 正在思考…"
   },
-  "loadingGoose.waiting": {
+  "loadingAIBuddy.waiting": {
     "defaultMessage": "{appName} 正在等待…"
   },
   "localInferenceSettings.deleteConfirm": {
     "defaultMessage": "删除此模型？之后可以重新下载。"
   },
   "localInferenceSettings.description": {
-    "defaultMessage": "下载和管理用于本地推理的大模型，无需 API 密钥。在 HuggingFace 搜索任意 GGUF 模型，或使用下方推荐。"
+    "defaultMessage": "下载和管理用于本地推理的大模型，无需 API 密钥。在 Hugging Face 搜索 GGUF 或 MLX 模型。"
   },
   "localInferenceSettings.dismiss": {
     "defaultMessage": "关闭"
-  },
-  "localInferenceSettings.download": {
-    "defaultMessage": "下载"
   },
   "localInferenceSettings.downloadCancelled": {
     "defaultMessage": "下载已取消"
@@ -1891,9 +1885,6 @@
   },
   "localInferenceSettings.evictFromMemory": {
     "defaultMessage": "从内存中卸载"
-  },
-  "localInferenceSettings.featuredModels": {
-    "defaultMessage": "推荐模型"
   },
   "localInferenceSettings.huggingFaceSignInNote": {
     "defaultMessage": "登录后可在搜索和下载模型时提高速率限制，并访问私有或受限的 Hugging Face 仓库。"
@@ -1918,12 +1909,6 @@
   },
   "localInferenceSettings.retry": {
     "defaultMessage": "重试"
-  },
-  "localInferenceSettings.showAllFeatured": {
-    "defaultMessage": "显示全部推荐（还有 {count} 个）"
-  },
-  "localInferenceSettings.showRecommendedOnly": {
-    "defaultMessage": "仅显示推荐"
   },
   "localInferenceSettings.title": {
     "defaultMessage": "本地推理模型"
@@ -3779,6 +3764,9 @@
   "sessionIndicators.streaming": {
     "defaultMessage": "流式传输中"
   },
+  "sessions.acpBadge": {
+    "defaultMessage": "ACP"
+  },
   "sessions.action.delete": {
     "defaultMessage": "删除会话"
   },
@@ -3853,6 +3841,9 @@
   },
   "sessions.importing": {
     "defaultMessage": "正在导入…"
+  },
+  "sessions.includeAcp": {
+    "defaultMessage": "包含 ACP 会话"
   },
   "sessions.loadingMore": {
     "defaultMessage": "正在加载更多会话…"
@@ -4089,7 +4080,7 @@
     "defaultMessage": "未找到匹配的技能"
   },
   "skillsView.noSkillsDescription": {
-    "defaultMessage": "技能从 ~/.config/agents/skills/、.goose/skills/ 或其他受支持目录中的 SKILL.md 文件加载。"
+    "defaultMessage": "技能从 ~/.config/agents/skills/、.aibuddy/skills/ 或其他受支持目录中的 SKILL.md 文件加载。"
   },
   "skillsView.noSkillsInstalled": {
     "defaultMessage": "未安装任何技能"
@@ -4367,7 +4358,7 @@
   "toolConfirmation.allowToolCallWithName": {
     "defaultMessage": "允许 {toolName} 吗？"
   },
-  "toolConfirmation.gooseWouldLikeToCallWithName": {
+  "toolConfirmation.aibuddyWouldLikeToCallWithName": {
     "defaultMessage": "{appName} 想调用 {toolName}，允许吗？"
   },
   "userMessage.cancel": {
